@@ -1,0 +1,1874 @@
+<?xml version="1.0" ?>
+<argos-configuration>
+  <framework>
+    <system threads="0"/>
+    <experiment length="0" ticks_per_second="10" random_seed="124"/>
+  </framework>
+  <controllers>
+    <footbot_diffusion_controller id="fdc" library="build/controllers/footbot_diffusion/libfootbot_diffusion">
+      <actuators>
+        <differential_steering implementation="default"/>
+      </actuators>
+      <sensors>
+        <footbot_proximity implementation="default" show_rays="true"/>
+        <positioning implementation="default"/>
+      </sensors>
+      <params alpha="7.5" omega="3.0" velocity="20" acceleration="16.0"/>
+    </footbot_diffusion_controller>
+  </controllers>
+  <arena size="161,63,1" center="-80.0,-31.0,0">
+    <foot-bot id="fb_113_59">
+      <body position="-59,-113,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_9">
+      <body position="-9,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_10">
+      <body position="-10,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_115_37">
+      <body position="-37,-115,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_64_46">
+      <body position="-46,-64,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_117_1">
+      <body position="-1,-117,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_153_1">
+      <body position="-1,-153,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_156_41">
+      <body position="-41,-156,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_1">
+      <body position="-1,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_145_21">
+      <body position="-21,-145,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_153_43">
+      <body position="-43,-153,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_57">
+      <body position="-57,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_129_4">
+      <body position="-4,-129,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_158_32">
+      <body position="-32,-158,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_52">
+      <body position="-52,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_28">
+      <body position="-28,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_99_25">
+      <body position="-25,-99,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_14">
+      <body position="-14,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_81_10">
+      <body position="-10,-81,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_21">
+      <body position="-21,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_141_55">
+      <body position="-55,-141,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_81_37">
+      <body position="-37,-81,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_144_8">
+      <body position="-8,-144,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_139_57">
+      <body position="-57,-139,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_130_52">
+      <body position="-52,-130,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_47_35">
+      <body position="-35,-47,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_153_2">
+      <body position="-2,-153,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_124_45">
+      <body position="-45,-124,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_50">
+      <body position="-50,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_158_11">
+      <body position="-11,-158,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_102_55">
+      <body position="-55,-102,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_57_31">
+      <body position="-31,-57,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_124_41">
+      <body position="-41,-124,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_15">
+      <body position="-15,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_156_51">
+      <body position="-51,-156,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_87_43">
+      <body position="-43,-87,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_43">
+      <body position="-43,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_122_7">
+      <body position="-7,-122,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_153_56">
+      <body position="-56,-153,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_54_52">
+      <body position="-52,-54,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_59">
+      <body position="-59,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_68_22">
+      <body position="-22,-68,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_12">
+      <body position="-12,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_22">
+      <body position="-22,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_6">
+      <body position="-6,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_150_7">
+      <body position="-7,-150,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_81_43">
+      <body position="-43,-81,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_124_17">
+      <body position="-17,-124,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_22">
+      <body position="-22,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_5">
+      <body position="-5,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_60_25">
+      <body position="-25,-60,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_150_39">
+      <body position="-39,-150,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_21">
+      <body position="-21,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_130_13">
+      <body position="-13,-130,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_28">
+      <body position="-28,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_43_52">
+      <body position="-52,-43,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_139_53">
+      <body position="-53,-139,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_159_9">
+      <body position="-9,-159,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_133_13">
+      <body position="-13,-133,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_13">
+      <body position="-13,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_16">
+      <body position="-16,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_88_1">
+      <body position="-1,-88,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_53">
+      <body position="-53,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_100_16">
+      <body position="-16,-100,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_159_55">
+      <body position="-55,-159,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_104_34">
+      <body position="-34,-104,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_133_43">
+      <body position="-43,-133,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_142_18">
+      <body position="-18,-142,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_56">
+      <body position="-56,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_149_55">
+      <body position="-55,-149,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_44">
+      <body position="-44,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_21">
+      <body position="-21,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_24">
+      <body position="-24,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_120_34">
+      <body position="-34,-120,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_58">
+      <body position="-58,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_117_43">
+      <body position="-43,-117,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_38_1">
+      <body position="-1,-38,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_87_49">
+      <body position="-49,-87,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_124_27">
+      <body position="-27,-124,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_55">
+      <body position="-55,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_32_1">
+      <body position="-1,-32,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_158_3">
+      <body position="-3,-158,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_60">
+      <body position="-60,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_91_50">
+      <body position="-50,-91,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_48_34">
+      <body position="-34,-48,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_141_60">
+      <body position="-60,-141,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_50">
+      <body position="-50,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_149_1">
+      <body position="-1,-149,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_158_47">
+      <body position="-47,-158,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_51_58">
+      <body position="-58,-51,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_75_19">
+      <body position="-19,-75,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_50_31">
+      <body position="-31,-50,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_141_23">
+      <body position="-23,-141,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_3">
+      <body position="-3,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_3">
+      <body position="-3,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_113_61">
+      <body position="-61,-113,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_143_13">
+      <body position="-13,-143,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_136_4">
+      <body position="-4,-136,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_42_49">
+      <body position="-49,-42,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_133_10">
+      <body position="-10,-133,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_109_49">
+      <body position="-49,-109,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_84_19">
+      <body position="-19,-84,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_132_49">
+      <body position="-49,-132,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_22">
+      <body position="-22,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_46_40">
+      <body position="-40,-46,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_141_34">
+      <body position="-34,-141,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_56">
+      <body position="-56,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_58">
+      <body position="-58,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_58_44">
+      <body position="-44,-58,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_59_34">
+      <body position="-34,-59,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_133_40">
+      <body position="-40,-133,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_159_42">
+      <body position="-42,-159,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_110_52">
+      <body position="-52,-110,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_69_41">
+      <body position="-41,-69,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_127_19">
+      <body position="-19,-127,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_138_6">
+      <body position="-6,-138,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_38">
+      <body position="-38,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_5">
+      <body position="-5,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_146_28">
+      <body position="-28,-146,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_3">
+      <body position="-3,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_13">
+      <body position="-13,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_10">
+      <body position="-10,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_1">
+      <body position="-1,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_107_52">
+      <body position="-52,-107,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_150_28">
+      <body position="-28,-150,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_47">
+      <body position="-47,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_147_10">
+      <body position="-10,-147,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_70_49">
+      <body position="-49,-70,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_7">
+      <body position="-7,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_138_23">
+      <body position="-23,-138,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_138_55">
+      <body position="-55,-138,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_137_21">
+      <body position="-21,-137,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_3">
+      <body position="-3,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_155_40">
+      <body position="-40,-155,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_57_61">
+      <body position="-61,-57,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_76_58">
+      <body position="-58,-76,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_155_61">
+      <body position="-61,-155,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_12">
+      <body position="-12,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_99_46">
+      <body position="-46,-99,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_39_43">
+      <body position="-43,-39,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_39">
+      <body position="-39,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_140_32">
+      <body position="-32,-140,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_111_19">
+      <body position="-19,-111,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_142_37">
+      <body position="-37,-142,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_157_25">
+      <body position="-25,-157,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_81_46">
+      <body position="-46,-81,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_16">
+      <body position="-16,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_43">
+      <body position="-43,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_17">
+      <body position="-17,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_108_40">
+      <body position="-40,-108,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_156_11">
+      <body position="-11,-156,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_146_43">
+      <body position="-43,-146,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_37">
+      <body position="-37,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_143_18">
+      <body position="-18,-143,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_140_36">
+      <body position="-36,-140,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_157_1">
+      <body position="-1,-157,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_138_58">
+      <body position="-58,-138,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_148_43">
+      <body position="-43,-148,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_7">
+      <body position="-7,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_129_34">
+      <body position="-34,-129,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_113_50">
+      <body position="-50,-113,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_142_9">
+      <body position="-9,-142,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_137_10">
+      <body position="-10,-137,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_4">
+      <body position="-4,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_34_31">
+      <body position="-31,-34,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_58_20">
+      <body position="-20,-58,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_157_17">
+      <body position="-17,-157,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_5">
+      <body position="-5,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_115_40">
+      <body position="-40,-115,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_59">
+      <body position="-59,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_26">
+      <body position="-26,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_124_11">
+      <body position="-11,-124,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_102_14">
+      <body position="-14,-102,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_159_38">
+      <body position="-38,-159,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_124_36">
+      <body position="-36,-124,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_14">
+      <body position="-14,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_156_22">
+      <body position="-22,-156,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_34_1">
+      <body position="-1,-34,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_25">
+      <body position="-25,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_42">
+      <body position="-42,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_55_55">
+      <body position="-55,-55,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_12">
+      <body position="-12,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_61">
+      <body position="-61,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_155_54">
+      <body position="-54,-155,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_149_37">
+      <body position="-37,-149,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_159_11">
+      <body position="-11,-159,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_50">
+      <body position="-50,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_142_45">
+      <body position="-45,-142,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_132_61">
+      <body position="-61,-132,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_43">
+      <body position="-43,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_80_39">
+      <body position="-39,-80,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_136_10">
+      <body position="-10,-136,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_148_4">
+      <body position="-4,-148,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_124_46">
+      <body position="-46,-124,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_155_19">
+      <body position="-19,-155,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_155_47">
+      <body position="-47,-155,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_104_19">
+      <body position="-19,-104,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_102_49">
+      <body position="-49,-102,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_4">
+      <body position="-4,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_2">
+      <body position="-2,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_122_25">
+      <body position="-25,-122,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_142_13">
+      <body position="-13,-142,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_91_36">
+      <body position="-36,-91,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_33_49">
+      <body position="-49,-33,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_17">
+      <body position="-17,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_41_7">
+      <body position="-7,-41,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_155_5">
+      <body position="-5,-155,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_136_33">
+      <body position="-33,-136,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_96_22">
+      <body position="-22,-96,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_74_52">
+      <body position="-52,-74,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_15">
+      <body position="-15,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_141_56">
+      <body position="-56,-141,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_137_54">
+      <body position="-54,-137,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_150_27">
+      <body position="-27,-150,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_54_49">
+      <body position="-49,-54,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_9">
+      <body position="-9,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_145_15">
+      <body position="-15,-145,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_15">
+      <body position="-15,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_144_17">
+      <body position="-17,-144,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_154_26">
+      <body position="-26,-154,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_28">
+      <body position="-28,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_159_61">
+      <body position="-61,-159,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_146_18">
+      <body position="-18,-146,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_5">
+      <body position="-5,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_107_19">
+      <body position="-19,-107,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_120_7">
+      <body position="-7,-120,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_157_8">
+      <body position="-8,-157,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_145_5">
+      <body position="-5,-145,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_87_37">
+      <body position="-37,-87,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_38">
+      <body position="-38,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_74_25">
+      <body position="-25,-74,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_2">
+      <body position="-2,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_14">
+      <body position="-14,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_28">
+      <body position="-28,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_35">
+      <body position="-35,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_137_13">
+      <body position="-13,-137,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_67_7">
+      <body position="-7,-67,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_71_22">
+      <body position="-22,-71,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_73_22">
+      <body position="-22,-73,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_11">
+      <body position="-11,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_43">
+      <body position="-43,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_143_26">
+      <body position="-26,-143,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_57">
+      <body position="-57,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_149_21">
+      <body position="-21,-149,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_67_22">
+      <body position="-22,-67,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_157_44">
+      <body position="-44,-157,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_37">
+      <body position="-37,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_8">
+      <body position="-8,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_147_1">
+      <body position="-1,-147,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_27">
+      <body position="-27,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_34">
+      <body position="-34,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_54">
+      <body position="-54,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_113_37">
+      <body position="-37,-113,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_131_19">
+      <body position="-19,-131,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_58">
+      <body position="-58,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_45_34">
+      <body position="-34,-45,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_113_43">
+      <body position="-43,-113,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_139_58">
+      <body position="-58,-139,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_47">
+      <body position="-47,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_83_16">
+      <body position="-16,-83,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_72_16">
+      <body position="-16,-72,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_43">
+      <body position="-43,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_73_49">
+      <body position="-49,-73,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_134_34">
+      <body position="-34,-134,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_120_28">
+      <body position="-28,-120,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_150_38">
+      <body position="-38,-150,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_150_24">
+      <body position="-24,-150,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_51_13">
+      <body position="-13,-51,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_4">
+      <body position="-4,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_155_1">
+      <body position="-1,-155,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_91_46">
+      <body position="-46,-91,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_15">
+      <body position="-15,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_58_50">
+      <body position="-50,-58,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_156_44">
+      <body position="-44,-156,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_22">
+      <body position="-22,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_124_58">
+      <body position="-58,-124,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_24">
+      <body position="-24,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_60_49">
+      <body position="-49,-60,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_47">
+      <body position="-47,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_8">
+      <body position="-8,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_39_13">
+      <body position="-13,-39,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_9">
+      <body position="-9,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_4">
+      <body position="-4,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_82_31">
+      <body position="-31,-82,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_64_55">
+      <body position="-55,-64,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_57">
+      <body position="-57,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_129_22">
+      <body position="-22,-129,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_17">
+      <body position="-17,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_148_9">
+      <body position="-9,-148,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_90_52">
+      <body position="-52,-90,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_142_23">
+      <body position="-23,-142,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_61">
+      <body position="-61,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_39">
+      <body position="-39,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_11">
+      <body position="-11,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_151_54">
+      <body position="-54,-151,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_150_40">
+      <body position="-40,-150,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_158_61">
+      <body position="-61,-158,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_95_31">
+      <body position="-31,-95,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_149_60">
+      <body position="-60,-149,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_137_25">
+      <body position="-25,-137,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_65_52">
+      <body position="-52,-65,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_40">
+      <body position="-40,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_81_61">
+      <body position="-61,-81,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_138_3">
+      <body position="-3,-138,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_42_22">
+      <body position="-22,-42,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_35">
+      <body position="-35,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_154_16">
+      <body position="-16,-154,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_114_46">
+      <body position="-46,-114,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_108_58">
+      <body position="-58,-108,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_117_25">
+      <body position="-25,-117,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_59_52">
+      <body position="-52,-59,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_154_21">
+      <body position="-21,-154,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_114_10">
+      <body position="-10,-114,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_32">
+      <body position="-32,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_16">
+      <body position="-16,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_89_4">
+      <body position="-4,-89,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_104_7">
+      <body position="-7,-104,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_159_4">
+      <body position="-4,-159,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_123_13">
+      <body position="-13,-123,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_158_21">
+      <body position="-21,-158,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_17">
+      <body position="-17,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_37_55">
+      <body position="-55,-37,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_36_57">
+      <body position="-57,-36,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_31">
+      <body position="-31,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_137_17">
+      <body position="-17,-137,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_61">
+      <body position="-61,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_139_12">
+      <body position="-12,-139,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_133_52">
+      <body position="-52,-133,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_96_16">
+      <body position="-16,-96,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_141_38">
+      <body position="-38,-141,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_50_13">
+      <body position="-13,-50,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_148_29">
+      <body position="-29,-148,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_45_16">
+      <body position="-16,-45,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_83_37">
+      <body position="-37,-83,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_29">
+      <body position="-29,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_2">
+      <body position="-2,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_10">
+      <body position="-10,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_1">
+      <body position="-1,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_60">
+      <body position="-60,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_55_49">
+      <body position="-49,-55,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_141_57">
+      <body position="-57,-141,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_91_39">
+      <body position="-39,-91,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_25">
+      <body position="-25,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_142_61">
+      <body position="-61,-142,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_126_10">
+      <body position="-10,-126,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_57">
+      <body position="-57,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_99_34">
+      <body position="-34,-99,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_25">
+      <body position="-25,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_136_20">
+      <body position="-20,-136,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_139_35">
+      <body position="-35,-139,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_148_23">
+      <body position="-23,-148,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_159_59">
+      <body position="-59,-159,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_147_6">
+      <body position="-6,-147,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_37_19">
+      <body position="-19,-37,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_94_58">
+      <body position="-58,-94,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_134_19">
+      <body position="-19,-134,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_34_37">
+      <body position="-37,-34,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_158_2">
+      <body position="-2,-158,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_96_7">
+      <body position="-7,-96,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_61">
+      <body position="-61,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_117_4">
+      <body position="-4,-117,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_23">
+      <body position="-23,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_123_46">
+      <body position="-46,-123,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_53">
+      <body position="-53,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_124_13">
+      <body position="-13,-124,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_49">
+      <body position="-49,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_27">
+      <body position="-27,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_151_16">
+      <body position="-16,-151,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_93_40">
+      <body position="-40,-93,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_46">
+      <body position="-46,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_49">
+      <body position="-49,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_60">
+      <body position="-60,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_23">
+      <body position="-23,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_80_13">
+      <body position="-13,-80,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_38">
+      <body position="-38,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_125_31">
+      <body position="-31,-125,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_16">
+      <body position="-16,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_63_52">
+      <body position="-52,-63,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_80_53">
+      <body position="-53,-80,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_141_36">
+      <body position="-36,-141,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_159_1">
+      <body position="-1,-159,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_42">
+      <body position="-42,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_136_1">
+      <body position="-1,-136,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_2">
+      <body position="-2,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_54_43">
+      <body position="-43,-54,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_61">
+      <body position="-61,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_56">
+      <body position="-56,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_158_49">
+      <body position="-49,-158,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_137_32">
+      <body position="-32,-137,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_4">
+      <body position="-4,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_50_22">
+      <body position="-22,-50,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_47">
+      <body position="-47,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_58_58">
+      <body position="-58,-58,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_152_4">
+      <body position="-4,-152,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_69_61">
+      <body position="-61,-69,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_23">
+      <body position="-23,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_35">
+      <body position="-35,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_55">
+      <body position="-55,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_78_61">
+      <body position="-61,-78,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_12">
+      <body position="-12,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_112_40">
+      <body position="-40,-112,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_149_59">
+      <body position="-59,-149,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_83_40">
+      <body position="-40,-83,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_130_4">
+      <body position="-4,-130,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_125_43">
+      <body position="-43,-125,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_48">
+      <body position="-48,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_115_43">
+      <body position="-43,-115,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_155_46">
+      <body position="-46,-155,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_11">
+      <body position="-11,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_4">
+      <body position="-4,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_59">
+      <body position="-59,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_59">
+      <body position="-59,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_117_46">
+      <body position="-46,-117,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_154_46">
+      <body position="-46,-154,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_16">
+      <body position="-16,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_39_4">
+      <body position="-4,-39,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_120_55">
+      <body position="-55,-120,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_36_7">
+      <body position="-7,-36,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_109_46">
+      <body position="-46,-109,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_57_1">
+      <body position="-1,-57,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_84_4">
+      <body position="-4,-84,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_51">
+      <body position="-51,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_149_26">
+      <body position="-26,-149,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_128_40">
+      <body position="-40,-128,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_18">
+      <body position="-18,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_139_36">
+      <body position="-36,-139,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_144_45">
+      <body position="-45,-144,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_60_58">
+      <body position="-58,-60,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_75_4">
+      <body position="-4,-75,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_66_7">
+      <body position="-7,-66,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_152_56">
+      <body position="-56,-152,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_123_55">
+      <body position="-55,-123,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_135_19">
+      <body position="-19,-135,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_62_61">
+      <body position="-61,-62,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_80_4">
+      <body position="-4,-80,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_66_52">
+      <body position="-52,-66,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_157_9">
+      <body position="-9,-157,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_98_43">
+      <body position="-43,-98,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_158_31">
+      <body position="-31,-158,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_157_35">
+      <body position="-35,-157,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_7">
+      <body position="-7,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_35">
+      <body position="-35,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_38">
+      <body position="-38,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_12">
+      <body position="-12,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_42_46">
+      <body position="-46,-42,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_55">
+      <body position="-55,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_10">
+      <body position="-10,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_154_28">
+      <body position="-28,-154,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_39">
+      <body position="-39,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_155_23">
+      <body position="-23,-155,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_153_10">
+      <body position="-10,-153,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_43_37">
+      <body position="-37,-43,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_1">
+      <body position="-1,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_36_53">
+      <body position="-53,-36,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_91_59">
+      <body position="-59,-91,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_35_1">
+      <body position="-1,-35,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_107_43">
+      <body position="-43,-107,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_135_6">
+      <body position="-6,-135,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_48_31">
+      <body position="-31,-48,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_15">
+      <body position="-15,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+  </arena>
+  <physics_engines>
+    <dynamics2d id="dyn2d"/>
+  </physics_engines>
+  <media/>
+  <visualization>
+    <qt-opengl>
+      <camera>
+        <placements>
+          <placement index="0" position="-80.0,-31.0,161" look_at="-80.0,-31.0,0" up="1,0,0" lens_focal_length="20"/>
+        </placements>
+      </camera>
+    </qt-opengl>
+  </visualization>
+</argos-configuration>

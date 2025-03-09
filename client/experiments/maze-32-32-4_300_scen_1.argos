@@ -1,0 +1,1936 @@
+<?xml version="1.0" ?>
+<argos-configuration>
+  <framework>
+    <system threads="0"/>
+    <experiment length="0" ticks_per_second="10" random_seed="124"/>
+  </framework>
+  <controllers>
+    <footbot_diffusion_controller id="fdc" library="build/controllers/footbot_diffusion/libfootbot_diffusion">
+      <actuators>
+        <differential_steering implementation="default"/>
+      </actuators>
+      <sensors>
+        <footbot_proximity implementation="default" show_rays="true"/>
+        <positioning implementation="default"/>
+      </sensors>
+      <params alpha="7.5" omega="3.0" velocity="5000" acceleration="100.0" portNumber="37001" outputDir="metaData37001/"/>
+    </footbot_diffusion_controller>
+  </controllers>
+  <arena size="32,32,1" center="-15.5,-15.5,0">
+    <box id="box_0_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_1_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-1,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_2_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-2,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_3_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-3,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_4_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-4,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_6_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-6,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_7_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-7,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_8_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-8,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_9_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-9,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_11_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-11,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_12_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-12,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_13_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-13,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_14_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-14,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_16_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-16,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_17_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-17,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_18_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-18,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_19_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-19,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_21_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-21,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_22_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-22,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_23_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-23,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_24_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-24,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_26_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-26,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_27_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-27,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_28_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-28,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_29_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-29,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_31_0" size="0.9,0.9,0.1" movable="false">
+      <body position="0,-31,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_1" size="0.9,0.9,0.1" movable="false">
+      <body position="-1,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_1" size="0.9,0.9,0.1" movable="false">
+      <body position="-1,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_1" size="0.9,0.9,0.1" movable="false">
+      <body position="-1,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_2" size="0.9,0.9,0.1" movable="false">
+      <body position="-2,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_2" size="0.9,0.9,0.1" movable="false">
+      <body position="-2,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_2" size="0.9,0.9,0.1" movable="false">
+      <body position="-2,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_3" size="0.9,0.9,0.1" movable="false">
+      <body position="-3,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_3" size="0.9,0.9,0.1" movable="false">
+      <body position="-3,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_3" size="0.9,0.9,0.1" movable="false">
+      <body position="-3,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_4" size="0.9,0.9,0.1" movable="false">
+      <body position="-4,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_4" size="0.9,0.9,0.1" movable="false">
+      <body position="-4,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_4" size="0.9,0.9,0.1" movable="false">
+      <body position="-4,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_6_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-6,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_7_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-7,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_8_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-8,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_9_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-9,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_16_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-16,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_17_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-17,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_18_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-18,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_19_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-19,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_26_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-26,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_27_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-27,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_28_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-28,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_29_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-29,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_5" size="0.9,0.9,0.1" movable="false">
+      <body position="-5,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_6" size="0.9,0.9,0.1" movable="false">
+      <body position="-6,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_6" size="0.9,0.9,0.1" movable="false">
+      <body position="-6,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_7" size="0.9,0.9,0.1" movable="false">
+      <body position="-7,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_7" size="0.9,0.9,0.1" movable="false">
+      <body position="-7,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_8" size="0.9,0.9,0.1" movable="false">
+      <body position="-8,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_8" size="0.9,0.9,0.1" movable="false">
+      <body position="-8,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_9" size="0.9,0.9,0.1" movable="false">
+      <body position="-9,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_9" size="0.9,0.9,0.1" movable="false">
+      <body position="-9,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_1_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-1,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_2_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-2,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_3_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-3,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_4_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-4,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_6_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-6,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_7_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-7,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_8_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-8,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_9_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-9,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_11_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-11,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_12_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-12,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_13_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-13,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_14_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-14,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_26_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-26,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_27_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-27,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_28_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-28,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_29_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-29,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_31_10" size="0.9,0.9,0.1" movable="false">
+      <body position="-10,-31,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_11" size="0.9,0.9,0.1" movable="false">
+      <body position="-11,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_11" size="0.9,0.9,0.1" movable="false">
+      <body position="-11,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_11" size="0.9,0.9,0.1" movable="false">
+      <body position="-11,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_12" size="0.9,0.9,0.1" movable="false">
+      <body position="-12,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_12" size="0.9,0.9,0.1" movable="false">
+      <body position="-12,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_12" size="0.9,0.9,0.1" movable="false">
+      <body position="-12,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_13" size="0.9,0.9,0.1" movable="false">
+      <body position="-13,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_13" size="0.9,0.9,0.1" movable="false">
+      <body position="-13,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_13" size="0.9,0.9,0.1" movable="false">
+      <body position="-13,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_14" size="0.9,0.9,0.1" movable="false">
+      <body position="-14,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_14" size="0.9,0.9,0.1" movable="false">
+      <body position="-14,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_14" size="0.9,0.9,0.1" movable="false">
+      <body position="-14,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_6_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-6,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_7_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-7,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_8_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-8,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_9_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-9,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_11_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-11,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_12_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-12,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_13_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-13,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_14_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-14,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_16_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-16,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_17_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-17,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_18_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-18,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_19_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-19,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_21_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-21,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_22_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-22,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_23_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-23,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_24_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-24,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_15" size="0.9,0.9,0.1" movable="false">
+      <body position="-15,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_16" size="0.9,0.9,0.1" movable="false">
+      <body position="-16,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_16" size="0.9,0.9,0.1" movable="false">
+      <body position="-16,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_17" size="0.9,0.9,0.1" movable="false">
+      <body position="-17,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_17" size="0.9,0.9,0.1" movable="false">
+      <body position="-17,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_18" size="0.9,0.9,0.1" movable="false">
+      <body position="-18,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_18" size="0.9,0.9,0.1" movable="false">
+      <body position="-18,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_19" size="0.9,0.9,0.1" movable="false">
+      <body position="-19,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_19" size="0.9,0.9,0.1" movable="false">
+      <body position="-19,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_6_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-6,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_7_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-7,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_8_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-8,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_9_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-9,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_11_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-11,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_12_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-12,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_13_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-13,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_14_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-14,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_16_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-16,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_17_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-17,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_18_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-18,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_19_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-19,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_26_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-26,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_27_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-27,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_28_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-28,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_29_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-29,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_31_20" size="0.9,0.9,0.1" movable="false">
+      <body position="-20,-31,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_21" size="0.9,0.9,0.1" movable="false">
+      <body position="-21,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_21" size="0.9,0.9,0.1" movable="false">
+      <body position="-21,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_21" size="0.9,0.9,0.1" movable="false">
+      <body position="-21,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_21" size="0.9,0.9,0.1" movable="false">
+      <body position="-21,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_22" size="0.9,0.9,0.1" movable="false">
+      <body position="-22,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_22" size="0.9,0.9,0.1" movable="false">
+      <body position="-22,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_22" size="0.9,0.9,0.1" movable="false">
+      <body position="-22,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_22" size="0.9,0.9,0.1" movable="false">
+      <body position="-22,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_23" size="0.9,0.9,0.1" movable="false">
+      <body position="-23,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_23" size="0.9,0.9,0.1" movable="false">
+      <body position="-23,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_23" size="0.9,0.9,0.1" movable="false">
+      <body position="-23,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_23" size="0.9,0.9,0.1" movable="false">
+      <body position="-23,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_24" size="0.9,0.9,0.1" movable="false">
+      <body position="-24,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_24" size="0.9,0.9,0.1" movable="false">
+      <body position="-24,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_24" size="0.9,0.9,0.1" movable="false">
+      <body position="-24,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_24" size="0.9,0.9,0.1" movable="false">
+      <body position="-24,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_16_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-16,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_17_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-17,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_18_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-18,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_19_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-19,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_21_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-21,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_22_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-22,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_23_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-23,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_24_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-24,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_26_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-26,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_27_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-27,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_28_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-28,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_29_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-29,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_25" size="0.9,0.9,0.1" movable="false">
+      <body position="-25,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_26" size="0.9,0.9,0.1" movable="false">
+      <body position="-26,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_26" size="0.9,0.9,0.1" movable="false">
+      <body position="-26,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_26" size="0.9,0.9,0.1" movable="false">
+      <body position="-26,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_27" size="0.9,0.9,0.1" movable="false">
+      <body position="-27,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_27" size="0.9,0.9,0.1" movable="false">
+      <body position="-27,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_27" size="0.9,0.9,0.1" movable="false">
+      <body position="-27,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_28" size="0.9,0.9,0.1" movable="false">
+      <body position="-28,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_28" size="0.9,0.9,0.1" movable="false">
+      <body position="-28,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_28" size="0.9,0.9,0.1" movable="false">
+      <body position="-28,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_29" size="0.9,0.9,0.1" movable="false">
+      <body position="-29,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_29" size="0.9,0.9,0.1" movable="false">
+      <body position="-29,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_29" size="0.9,0.9,0.1" movable="false">
+      <body position="-29,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_1_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-1,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_2_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-2,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_3_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-3,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_4_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-4,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_5_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-5,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_10_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-10,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_11_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-11,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_12_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-12,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_13_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-13,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_14_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-14,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_15_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-15,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_16_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-16,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_17_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-17,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_18_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-18,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_19_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-19,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_20_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-20,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_21_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-21,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_22_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-22,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_23_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-23,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_24_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-24,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_25_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-25,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_30" size="0.9,0.9,0.1" movable="false">
+      <body position="-30,-30,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_0_31" size="0.9,0.9,0.1" movable="false">
+      <body position="-31,0,0" orientation="0,0,0"/>
+    </box>
+    <box id="box_30_31" size="0.9,0.9,0.1" movable="false">
+      <body position="-31,-30,0" orientation="0,0,0"/>
+    </box>
+    <foot-bot id="fb_28_13">
+      <body position="-13,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_21">
+      <body position="-21,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_19">
+      <body position="-19,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_27">
+      <body position="-27,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_13">
+      <body position="-13,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_16">
+      <body position="-16,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_8">
+      <body position="-8,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_19">
+      <body position="-19,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_3">
+      <body position="-3,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_5">
+      <body position="-5,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_26">
+      <body position="-26,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_2">
+      <body position="-2,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_22">
+      <body position="-22,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_16">
+      <body position="-16,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_28">
+      <body position="-28,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_14">
+      <body position="-14,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_21">
+      <body position="-21,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_28">
+      <body position="-28,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_7">
+      <body position="-7,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_26">
+      <body position="-26,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_14">
+      <body position="-14,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_1">
+      <body position="-1,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_18">
+      <body position="-18,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_2">
+      <body position="-2,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_23">
+      <body position="-23,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_28">
+      <body position="-28,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_8">
+      <body position="-8,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_7">
+      <body position="-7,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_18">
+      <body position="-18,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_5">
+      <body position="-5,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_31">
+      <body position="-31,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_28">
+      <body position="-28,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_18">
+      <body position="-18,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_1">
+      <body position="-1,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_23">
+      <body position="-23,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_4">
+      <body position="-4,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_8">
+      <body position="-8,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_2">
+      <body position="-2,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_27">
+      <body position="-27,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_24">
+      <body position="-24,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_26">
+      <body position="-26,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_27">
+      <body position="-27,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_23">
+      <body position="-23,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_24">
+      <body position="-24,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_1">
+      <body position="-1,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_26">
+      <body position="-26,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_7">
+      <body position="-7,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_16">
+      <body position="-16,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_3">
+      <body position="-3,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_19">
+      <body position="-19,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_16">
+      <body position="-16,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_21">
+      <body position="-21,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_20">
+      <body position="-20,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_30_6">
+      <body position="-6,-30,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_3">
+      <body position="-3,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_18">
+      <body position="-18,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_19">
+      <body position="-19,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_14">
+      <body position="-14,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_24">
+      <body position="-24,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_16">
+      <body position="-16,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_1">
+      <body position="-1,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_29">
+      <body position="-29,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_8">
+      <body position="-8,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_28">
+      <body position="-28,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_12">
+      <body position="-12,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_3">
+      <body position="-3,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_26">
+      <body position="-26,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_22">
+      <body position="-22,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_7">
+      <body position="-7,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_30_4">
+      <body position="-4,-30,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_11">
+      <body position="-11,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_30">
+      <body position="-30,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_21">
+      <body position="-21,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_28">
+      <body position="-28,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_14">
+      <body position="-14,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_14">
+      <body position="-14,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_12">
+      <body position="-12,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_9">
+      <body position="-9,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_24">
+      <body position="-24,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_22">
+      <body position="-22,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_6">
+      <body position="-6,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_15">
+      <body position="-15,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_13">
+      <body position="-13,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_8">
+      <body position="-8,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_1">
+      <body position="-1,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_29">
+      <body position="-29,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_4">
+      <body position="-4,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_18">
+      <body position="-18,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_12">
+      <body position="-12,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_24">
+      <body position="-24,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_3">
+      <body position="-3,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_27">
+      <body position="-27,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_8">
+      <body position="-8,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_9">
+      <body position="-9,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_29">
+      <body position="-29,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_4">
+      <body position="-4,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_19">
+      <body position="-19,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_18">
+      <body position="-18,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_24">
+      <body position="-24,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_9">
+      <body position="-9,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_14">
+      <body position="-14,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_27">
+      <body position="-27,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_12">
+      <body position="-12,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_19">
+      <body position="-19,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_28">
+      <body position="-28,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_29">
+      <body position="-29,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_19">
+      <body position="-19,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_17">
+      <body position="-17,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_3">
+      <body position="-3,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_5">
+      <body position="-5,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_12">
+      <body position="-12,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_22">
+      <body position="-22,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_3">
+      <body position="-3,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_21">
+      <body position="-21,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_30_14">
+      <body position="-14,-30,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_12">
+      <body position="-12,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_23">
+      <body position="-23,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_8">
+      <body position="-8,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_22">
+      <body position="-22,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_8">
+      <body position="-8,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_27">
+      <body position="-27,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_15">
+      <body position="-15,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_28">
+      <body position="-28,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_8">
+      <body position="-8,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_22">
+      <body position="-22,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_2">
+      <body position="-2,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_11">
+      <body position="-11,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_18">
+      <body position="-18,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_27">
+      <body position="-27,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_12">
+      <body position="-12,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_19">
+      <body position="-19,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_3">
+      <body position="-3,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_21">
+      <body position="-21,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_13">
+      <body position="-13,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_29">
+      <body position="-29,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_31">
+      <body position="-31,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_1">
+      <body position="-1,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_12">
+      <body position="-12,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_27">
+      <body position="-27,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_22">
+      <body position="-22,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_12">
+      <body position="-12,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_11">
+      <body position="-11,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_31">
+      <body position="-31,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_24">
+      <body position="-24,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_2">
+      <body position="-2,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_17">
+      <body position="-17,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_22">
+      <body position="-22,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_21">
+      <body position="-21,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_8">
+      <body position="-8,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_6">
+      <body position="-6,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_29">
+      <body position="-29,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_9">
+      <body position="-9,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_10">
+      <body position="-10,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_2">
+      <body position="-2,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_28">
+      <body position="-28,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_14">
+      <body position="-14,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_31">
+      <body position="-31,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_27">
+      <body position="-27,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_8">
+      <body position="-8,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_6">
+      <body position="-6,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_11">
+      <body position="-11,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_25">
+      <body position="-25,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_21">
+      <body position="-21,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_26">
+      <body position="-26,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_27">
+      <body position="-27,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_20">
+      <body position="-20,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_16">
+      <body position="-16,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_25_19">
+      <body position="-19,-25,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_1">
+      <body position="-1,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_22">
+      <body position="-22,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_9">
+      <body position="-9,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_9">
+      <body position="-9,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_12">
+      <body position="-12,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_28">
+      <body position="-28,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_13">
+      <body position="-13,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_6">
+      <body position="-6,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_14">
+      <body position="-14,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_9">
+      <body position="-9,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_22">
+      <body position="-22,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_26">
+      <body position="-26,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_5">
+      <body position="-5,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_6">
+      <body position="-6,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_18">
+      <body position="-18,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_31">
+      <body position="-31,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_26">
+      <body position="-26,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_23">
+      <body position="-23,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_22">
+      <body position="-22,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_2">
+      <body position="-2,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_13">
+      <body position="-13,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_24">
+      <body position="-24,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_4">
+      <body position="-4,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_2">
+      <body position="-2,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_4">
+      <body position="-4,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_23">
+      <body position="-23,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_27">
+      <body position="-27,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_12">
+      <body position="-12,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_29">
+      <body position="-29,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_22">
+      <body position="-22,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_2">
+      <body position="-2,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_22">
+      <body position="-22,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_29">
+      <body position="-29,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_27">
+      <body position="-27,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_16">
+      <body position="-16,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_31">
+      <body position="-31,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_11_27">
+      <body position="-27,-11,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_5">
+      <body position="-5,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_23">
+      <body position="-23,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_30_21">
+      <body position="-21,-30,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_1">
+      <body position="-1,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_11">
+      <body position="-11,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_26">
+      <body position="-26,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_19">
+      <body position="-19,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_6">
+      <body position="-6,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_7">
+      <body position="-7,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_12">
+      <body position="-12,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_31">
+      <body position="-31,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_9">
+      <body position="-9,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_25">
+      <body position="-25,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_22">
+      <body position="-22,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_11">
+      <body position="-11,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_13">
+      <body position="-13,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_29">
+      <body position="-29,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_6">
+      <body position="-6,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_24">
+      <body position="-24,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_27">
+      <body position="-27,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_22">
+      <body position="-22,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_21">
+      <body position="-21,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_12">
+      <body position="-12,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_9">
+      <body position="-9,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_28_2">
+      <body position="-2,-28,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_23">
+      <body position="-23,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_26">
+      <body position="-26,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_1">
+      <body position="-1,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_31">
+      <body position="-31,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_21">
+      <body position="-21,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_14">
+      <body position="-14,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_29">
+      <body position="-29,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_8_16">
+      <body position="-16,-8,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_22">
+      <body position="-22,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_14">
+      <body position="-14,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_17">
+      <body position="-17,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_23">
+      <body position="-23,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_28">
+      <body position="-28,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_8">
+      <body position="-8,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_12_25">
+      <body position="-25,-12,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_13">
+      <body position="-13,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_30_23">
+      <body position="-23,-30,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_21">
+      <body position="-21,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_30">
+      <body position="-30,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_1">
+      <body position="-1,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_18">
+      <body position="-18,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_13_28">
+      <body position="-28,-13,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_4">
+      <body position="-4,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_10_4">
+      <body position="-4,-10,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_1">
+      <body position="-1,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_29">
+      <body position="-29,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_1">
+      <body position="-1,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_19">
+      <body position="-19,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_26">
+      <body position="-26,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_11">
+      <body position="-11,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_9">
+      <body position="-9,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_13">
+      <body position="-13,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_2_31">
+      <body position="-31,-2,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_23_7">
+      <body position="-7,-23,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_22">
+      <body position="-22,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_26_3">
+      <body position="-3,-26,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_29_11">
+      <body position="-11,-29,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_23">
+      <body position="-23,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_1_28">
+      <body position="-28,-1,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_31">
+      <body position="-31,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_7">
+      <body position="-7,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_16">
+      <body position="-16,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_5_13">
+      <body position="-13,-5,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_24">
+      <body position="-24,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_8">
+      <body position="-8,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_17_11">
+      <body position="-11,-17,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_3_31">
+      <body position="-31,-3,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_31_7">
+      <body position="-7,-31,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_7">
+      <body position="-7,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_9_3">
+      <body position="-3,-9,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_16">
+      <body position="-16,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_10">
+      <body position="-10,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_7">
+      <body position="-7,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_11">
+      <body position="-11,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_18_13">
+      <body position="-13,-18,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_4_4">
+      <body position="-4,-4,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_21_23">
+      <body position="-23,-21,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_15_18">
+      <body position="-18,-15,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_9">
+      <body position="-9,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_16_6">
+      <body position="-6,-16,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_24_19">
+      <body position="-19,-24,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_22_6">
+      <body position="-6,-22,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_28">
+      <body position="-28,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_6_3">
+      <body position="-3,-6,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_27_18">
+      <body position="-18,-27,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_14_8">
+      <body position="-8,-14,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_30_26">
+      <body position="-26,-30,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_19_4">
+      <body position="-4,-19,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_7_4">
+      <body position="-4,-7,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+    <foot-bot id="fb_20_7">
+      <body position="-7,-20,0" orientation="0,0,0"/>
+      <controller config="fdc"/>
+    </foot-bot>
+  </arena>
+  <physics_engines>
+    <dynamics2d id="dyn2d"/>
+  </physics_engines>
+  <media/>
+  <visualization>
+    <qt-opengl>
+      <camera>
+        <placements>
+          <placement index="0" position="-15.5,-15.5,32" look_at="-15.5,-15.5,0" up="1,0,0" lens_focal_length="20"/>
+        </placements>
+      </camera>
+    </qt-opengl>
+  </visualization>
+</argos-configuration>

@@ -1,0 +1,9 @@
+#agents, runtime,is solved,#high-level expanded,#high-level generated,#low-level expanded,#low-level generated,#low-level re-expanded,#low-level motion solver called,solution cost,root g value,#PBS-called,runtime of detecting conflicts,runtime of building constraint tables,runtime of building CATs,runtime of path finding,runtime of generating child nodes,preprocessing runtime,#low-level expand runtime,#low-level motion runtime,solver name,instance name
+10,0.002795,1, 4,6,422,1596,768,0,422.182,416.073,0,7.4e-05,0,0,0.0020342,0.001888,0,0.000831223,0.000733007,BAS,./data/maze-32-32-4/maze-32-32-4.map
+20,0.010803,1, 18,34,2485,9503,4843,0,900.567,777.939,0,0.000452,0,0,0.00739214,0.009575,0,0.00296331,0.00221047,BAS,./data/maze-32-32-4/maze-32-32-4.map
+30,0.135078,1, 32,62,14874,81419,58021,0,1933.55,1481.31,0,0.001929,0,0,0.0994931,0.130878,0,0.0355266,0.0320555,BAS,./data/maze-32-32-4/maze-32-32-4.map
+40,300.004,0, 5227,5262,0,0,99915343,0,-2,2021.03,0,0.421652,0,0,221.938,299.81,0,74.3339,67.484,BAS,./data/maze-32-32-4/maze-32-32-4.map
+50,2.41854,1, 57,106,139731,890388,708020,0,4251.22,2415.35,0,0.010015,0,0,1.77096,2.40608,0,0.605299,0.48887,BAS,./data/maze-32-32-4/maze-32-32-4.map
+60,7.73782,1, 87,157,432916,2675004,2158458,0,5458.55,2898.04,0,0.021931,0,0,5.54581,7.72578,0,1.83988,1.49647,BAS,./data/maze-32-32-4/maze-32-32-4.map
+70,300.231,0, 1565,1639,0,0,103583900,0,-2,3480.03,0,0.858121,0,0,219.094,300.145,0,83.0684,58.3917,BAS,./data/maze-32-32-4/maze-32-32-4.map
+80,300.32,0, 759,845,0,0,75775363,0,-2,4088.68,0,0.618483,0,0,218.03,300.259,0,86.8852,51.1647,BAS,./data/maze-32-32-4/maze-32-32-4.map

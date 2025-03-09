@@ -1,0 +1,12 @@
+[submodule "client/externalDependencies/rpclib"]
+	path = client/externalDependencies/rpclib
+	url = https://github.com/rpclib/rpclib
+[submodule "planner/LNS"]
+	path = planner/LNS
+	url = https://github.com/lunjohnzhang/MAPF-LNS2.git
+[submodule "planner/RHCR"]
+	path = planner/RHCR
+	url = https://github.com/Jiaoyang-Li/RHCR.git
+[submodule "planner/PBS"]
+	path = planner/PBS
+	url = https://github.com/JingtianYan/PBS-Lifelong.git

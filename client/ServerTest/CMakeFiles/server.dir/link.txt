@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/server.dir/mock_adg.cpp.o  -o server   -L/usr/local/lib  -Wl,-rpath,/usr/local/lib externalDependencies/rpclib/librpc.a -pthread 
