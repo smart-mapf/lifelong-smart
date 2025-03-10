@@ -149,6 +149,9 @@ public:
      */
     virtual void Destroy() {}
 
+    CVector3 getCurrGoal() {return curr_goal;};
+
+
 private:
 
 
@@ -254,7 +257,7 @@ private:
     std::string outputDir;
 
     bool is_initialized = false;
-
+    CVector3 curr_goal{-1,-1,-1};
 };
 
 #endif

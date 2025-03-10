@@ -56,43 +56,6 @@ def read_scen(file_path):
     return column_data, num_agent
 
 
-def create_xml(map_data, output_file_path, width, height, robot_init_pos):
-    arena = ET.Element("arena",
-                       size=f"{width},{height},1",
-                       center=f"{width/2},{height/2},0")
-    arena.text = "\n  "
-    # Adding new line
-
-    for y, row in enumerate(map_data):
-        for x, cell in enumerate(row):
-            if cell in obstacles:
-                # Creating four walls for each box
-                box = ET.SubElement(arena,
-                                    "box",
-                                    id=f"box_{x}_{y}",
-                                    size="0.9,0.9,0.1",
-                                    movable="false")
-                body = ET.SubElement(box,
-                                     "body",
-                                     position=f"{-y},{-x},0",
-                                     orientation="0,0,0")
-
-    tree = ET.ElementTree(arena)
-
-    for x, y in robot_init_pos:
-        foot_bot = ET.SubElement(arena, "foot-bot", id=f"fb_{x}_{y}")
-        x, y = -int(y), -int(x)
-        body = ET.SubElement(foot_bot,
-                             "body",
-                             position=f"{x},{y},0",
-                             orientation="0,0,0")
-        controller = ET.SubElement(foot_bot, "controller", config="fdc")
-
-    prettify(arena)
-
-    tree.write(output_file_path, encoding='utf-8', xml_declaration=True)
-
-
 def create_Argos(map_data,
                  output_file_path,
                  width,
@@ -134,7 +97,7 @@ def create_Argos(map_data,
         controllers,
         "footbot_diffusion_controller",
         id="fdc",
-        library="/usr/project/MAPF-Benchmark-Argos/client/build/controllers/footbot_diffusion/libfootbot_diffusion")
+        library="build/controllers/footbot_diffusion/libfootbot_diffusion")
 
     # Actuators
     actuators = ET.SubElement(footbot_controller, "actuators")
@@ -155,8 +118,10 @@ def create_Argos(map_data,
     # Parameters
     params = ET.SubElement(footbot_controller,
                            "params",
-                           alpha="7.5",
-                           omega="3.0",
+                           alpha="30.0",
+                           omega="12.0",
+                          #  alpha="7.5",
+                          #  omega="3.0",
                            velocity="500",
                            acceleration="10.0",
                            portNumber=f"{port_num}",
@@ -171,6 +136,61 @@ def create_Argos(map_data,
 
     # arena.text = "\n  "
     # Adding new line
+    #     <box id="wall_north" size="8,0.1,0.5" movable="false">
+    #   <body position="-3.5,0.5,0" orientation="0,0,0" />
+    # </box>
+    # <box id="wall_east" size="8,0.1,0.5" movable="false">
+    #   <body position="-3.5,-7.5,0" orientation="0,0,0" />
+    # </box>
+    # <box id="wall_west" size="0.1,8,0.5" movable="false">
+    #   <body position="0.5,-3.5,0" orientation="0,0,0" />
+    # </box>
+    # <box id="wall_sourth" size="0.1,8,0.5" movable="false">
+    #   <body position="-7.5,-3.5,0" orientation="0,0,0" />
+    # </box>
+    wall_thick = 0.05
+    wall_height = 0.5
+
+    box = ET.SubElement(arena,
+                        "box",
+                        id=f"wall_north",
+                        size=f"{wall_thick},{width},{wall_height}",
+                        movable="false")
+    body = ET.SubElement(box,
+                          "body",
+                          position=f"0.5,{map_center_y},0",
+                          orientation="0,0,0")
+    
+    box = ET.SubElement(arena,
+                        "box",
+                        id=f"wall_west",
+                        size=f"{height},{wall_thick},{wall_height}",
+                        movable="false")
+    body = ET.SubElement(box,
+                          "body",
+                          position=f"{map_center_x},{-width+0.5},0",
+                          orientation="0,0,0")
+    
+    box = ET.SubElement(arena,
+                        "box",
+                        id=f"wall_south",
+                        size=f"{wall_thick},{width},{wall_height}",
+                        movable="false")
+    body = ET.SubElement(box,
+                          "body",
+                          position=f"{-height+0.5},{map_center_y},0",
+                          orientation="0,0,0")
+    
+    box = ET.SubElement(arena,
+                        "box",
+                        id=f"wall_east",
+                        size=f"{height},{wall_thick},{wall_height}",
+                        movable="false")
+    body = ET.SubElement(box,
+                          "body",
+                          position=f"{map_center_x},0.5,0",
+                          orientation="0,0,0")
+    
 
     for y, row in enumerate(map_data):
         for x, cell in enumerate(row):
@@ -179,7 +199,7 @@ def create_Argos(map_data,
                 box = ET.SubElement(arena,
                                     "box",
                                     id=f"box_{x}_{y}",
-                                    size="0.9,0.9,0.1",
+                                    size="0.8,0.8,0.5",
                                     movable="false")
                 body = ET.SubElement(box,
                                      "body",
@@ -236,6 +256,8 @@ def create_Argos(map_data,
         visualization = ET.SubElement(argos_config, "visualization")
         # qt_opengl = ET.SubElement(visualization, "qt-opengl", autoplay="true")
         qt_opengl = ET.SubElement(visualization, "qt-opengl")
+
+        goal_loc = ET.SubElement(qt_opengl, "user_functions", library="build/loop_functions/mpga_loop_functions/libmpga_phototaxis_loop_functions", label="trajectory_qtuser_functions")
 
         # autoplay = ET.SubElement(qt_opengl, "autoplay",
         #                           autoplay="true")

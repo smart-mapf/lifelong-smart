@@ -2,6 +2,7 @@
 #define MPGA_LOOP_FUNCTIONS_H
 
 #include <argos3/core/simulator/loop_functions.h>
+#include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
 
 using namespace argos;
 
@@ -43,6 +44,11 @@ public:
     * Returns the score associated to the current trial.
     */
    virtual Real Score() = 0;
+
+
+   // virtual void PostStep();
+
+   std::vector<CVector3> task_goals;
 
 private:
 

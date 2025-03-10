@@ -10,7 +10,9 @@ endif(NOT APPLE)
 
 # Compile phototaxis example
 add_library(mpga_phototaxis_loop_functions SHARED
-  mpga_phototaxis_loop_functions.h mpga_phototaxis_loop_functions.cpp)
+  mpga_phototaxis_loop_functions.h mpga_phototaxis_loop_functions.cpp
+  trajectory_qtuser_functions.h
+  trajectory_qtuser_functions.cpp)
 
 target_link_libraries(mpga_phototaxis_loop_functions
   footbot_nn
@@ -20,4 +22,5 @@ target_link_libraries(mpga_phototaxis_loop_functions
   argos3plugin_simulator_footbot
   argos3plugin_simulator_genericrobot
   argos3plugin_simulator_media
+  argos3plugin_simulator_qtopengl
   mpga)

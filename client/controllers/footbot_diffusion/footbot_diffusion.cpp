@@ -113,6 +113,7 @@ void CFootBotDiffusion::Init(TConfigurationNode &t_node) {
     m_linearVelocity = 1.22 * m_angularVelocity;
     m_currVelocity = 0.0;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
+    curr_goal = currPos;
     robot_id = std::to_string((int) ChangeCoordinateFromArgosToMap(currPos.GetY())) + "_" +
                std::to_string((int) ChangeCoordinateFromArgosToMap(currPos.GetX()));
     // std::cout << "Robot ID: " << robot_id << std::endl;
@@ -251,6 +252,7 @@ void CFootBotDiffusion::ControlStep() {
     }
     Real left_v, right_v;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
+    curr_goal = CVector3{std::round(currPos.GetX()), std::round(currPos.GetY()), std::round(currPos.GetZ())};
 //    //std::cout << robot_id << "Current Orientation: " << ToDegrees(cZAngle).GetValue() << std::endl;
     if (count % 10 == 0) {
         ////std::cout << "Robot ID: " << robot_id << std::endl;
