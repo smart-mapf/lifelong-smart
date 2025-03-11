@@ -1,6 +1,8 @@
 #pragma once
 #include <utility>
 #include <cassert>
+#include <boost/tokenizer.hpp>
+
 #include "parser.h"
 
 struct Task
@@ -8,9 +10,28 @@ struct Task
     int id;
     int agent_id;
     std::pair<int, int> goal_position;
+    std::pair<int, int> obj_position;
     int goal_orient=0;
     bool status=true; // false if finished, true otherwise
-    Task(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {}
+    Task(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
+        obj_position=goal_position;
+    }
+    Task(int id, int agent_id, std::pair<int, int> goal_position, std::pair<int, int> obj_pos):
+        id(id), agent_id(agent_id), goal_position(std::move(goal_position)), obj_position(std::move(obj_pos)) {}
+};
+
+class userMap {
+public:
+    userMap();
+    bool isValid(int x, int y) {
+        return true;
+    }
+    bool readMap(std::string& map_fname);
+
+private:
+    int num_of_rows;
+    int num_of_cols;
+    std::vector<std::vector<bool>> my_map;
 };
 
 class TaskManager
@@ -33,8 +54,14 @@ public:
     }
 
 
-private:
+protected:
     std::vector<std::deque<Task>> all_tasks;
+    std::vector<std::shared_ptr<Station>> all_stations;
+    std::map<int, std::shared_ptr<Station>> active_stations;
+    std::map<int, std::shared_ptr<Station>> occupied_stations;
+    std::vector<std::shared_ptr<Pod>> all_pods;
+    std::map<int, std::shared_ptr<Pod>> active_pods;
+    std::map<int, std::shared_ptr<Pod>> occupied_pods;
     std::vector<int> finished_tasks;
     int curr_task_idx  = 0;
     int num_char_ = 0;

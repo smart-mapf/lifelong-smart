@@ -8,10 +8,11 @@
 #include <iomanip>  // For setting precision in double formatting
 #include <cmath>
 
-
+#define MAX_LOADS 5
 using namespace std;
 
 const double EPS = 1e-8;
+
 
 // Define a structure to hold coordinate points and time.
 struct Point {
@@ -23,6 +24,22 @@ struct Point {
 struct Step {
     int x, y, orientation;
     double time;
+};
+
+struct Pod {
+    int x, y, orientation;
+    int idx = -1;
+    // true if assigned, false if not assigned
+    bool status = false;
+
+    Pod(int x, int y, int orientation, int idx): x(x), y(y), orientation(orientation), idx(idx) {}
+};
+
+struct Station {
+    int x, y, orientation;
+    int idx = -1;
+    bool status = false;
+    Station(int x, int y, int orientation, int idx): x(x), y(y), orientation(orientation), idx(idx) {}
 };
 
 // Definition of the Action struct

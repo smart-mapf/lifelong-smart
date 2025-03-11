@@ -2,6 +2,49 @@
 
 #include <boost/mpl/assert.hpp>
 
+bool userMap::readMap(std::string& map_fname) {
+    using namespace boost;
+    using namespace std;
+    ifstream myfile(map_fname.c_str());
+    if (!myfile.is_open())
+        return false;
+    string line;
+    tokenizer< char_separator<char> >::iterator beg;
+    getline(myfile, line);
+    if (line[0] == 't') // Nathan's benchmark
+    {
+        char_separator<char> sep(" ");
+        getline(myfile, line);
+        tokenizer< char_separator<char> > tok(line, sep);
+        beg = tok.begin();
+        beg++;
+        num_of_rows = atoi((*beg).c_str()); // read number of rows
+        getline(myfile, line);
+        tokenizer< char_separator<char> > tok2(line, sep);
+        beg = tok2.begin();
+        beg++;
+        num_of_cols = atoi((*beg).c_str()); // read number of cols
+        getline(myfile, line); // skip "map"
+    }
+    map_size = num_of_cols * num_of_rows;
+    my_map.resize(map_size, false);
+    // read map (and start/goal locations)
+    for (int i = 0; i < num_of_rows; i++) {
+        getline(myfile, line);
+        for (int j = 0; j < num_of_cols; j++) {
+            my_map[i][j] = (line[j] != '.');
+            if (line[j] == 'S') {
+                // If station
+                ;
+            } else if (line[j] == 'E') {
+                // If Pods
+                ;
+            }
+        }
+    }
+    myfile.close();
+    return true;
+}
 
 TaskManager::TaskManager(int num_total_robots, int map_size_x, int map_size_y) {
     num_robots_ = num_total_robots;
