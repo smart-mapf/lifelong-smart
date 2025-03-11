@@ -29,7 +29,7 @@ struct Step {
 struct Pod {
     int x, y, orientation;
     int idx = -1;
-    // true if assigned, false if not assigned
+    // true if assigned, false if free
     bool status = false;
 
     Pod(int x, int y, int orientation, int idx): x(x), y(y), orientation(orientation), idx(idx) {}
