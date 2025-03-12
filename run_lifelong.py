@@ -162,7 +162,7 @@ def run_simulator(args):
     client_process = subprocess.Popen(client_command)
 
     # Wait for the client process to complete
-
+    # time.sleep(5)
     os.chdir("..")
     planner_process = subprocess.Popen(planner_command)
 
@@ -225,8 +225,6 @@ def main():
         run_args += ["-m", f"./{map_file_path}"]
         run_args += ["-k", str(curr_num_agent)]
         run_args += ["--portNum", str(port_num)]
-        run_planner(run_args)
-        print("Planner create path successful.")
         run_simulator((server_command, client_command, run_args))
     except KeyboardInterrupt:
         print("KeyboardInterrupt: Stopping the experiment ...")

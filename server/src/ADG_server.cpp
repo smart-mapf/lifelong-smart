@@ -73,6 +73,7 @@ void ADG_Server::saveStats() {
 std::shared_ptr<ADG_Server> server_ptr = nullptr;
 
 std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
+    std::cout << "Get robot location query received!" << std::endl;
     std::vector<std::pair<double, double>> robots_location = server_ptr->adg->computeCommitCut(look_ahead_dist);
     if (server_ptr->flipped_coord)
     {
