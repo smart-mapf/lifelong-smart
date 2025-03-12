@@ -17,24 +17,35 @@ static const Real MIN_DISTANCE_SQUARED = MIN_DISTANCE * MIN_DISTANCE;
 /****************************************/
 
 void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
-   /*
-    * Go through all the robots in the environment
-    * and create an entry in the waypoint map for each of them
-    */
-   /* Get the map of all foot-bots from the space */
-   CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
-   /* Go through them */
-   for(CSpace::TMapPerType::iterator it = tFBMap.begin();
-       it != tFBMap.end();
-       ++it) {
-      /* Create a pointer to the current foot-bot */
-      CFootBotEntity* pcFB = any_cast<CFootBotEntity*>(it->second);
-      /* Create a waypoint vector */
-      m_tWaypoints[pcFB] = std::vector<CVector3>();
-      /* Add the initial position of the foot-bot */
-      m_tWaypoints[pcFB].push_back(pcFB->GetEmbodiedEntity().GetOriginAnchor().Position);
-   }
-
+  /*
+  * Go through all the robots in the environment
+  * and create an entry in the waypoint map for each of them
+  */
+  /* Get the map of all foot-bots from the space */
+  CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
+  /* Go through them */
+  for(CSpace::TMapPerType::iterator it = tFBMap.begin();
+      it != tFBMap.end();
+      ++it) {
+    /* Create a pointer to the current foot-bot */
+    CFootBotEntity* pcFB = any_cast<CFootBotEntity*>(it->second);
+    /* Create a waypoint vector */
+    m_tWaypoints[pcFB] = std::vector<CVector3>();
+    /* Add the initial position of the foot-bot */
+    m_tWaypoints[pcFB].push_back(pcFB->GetEmbodiedEntity().GetOriginAnchor().Position);
+  }
+  int num_station = 0;
+  TConfigurationNode& tParams = GetNode(t_tree, "num_stations");
+  GetNodeAttribute(tParams, "value", num_station);
+  for (int i = 0; i < num_station; i++) {
+    Real x, y, z;
+    TConfigurationNode& tStation = GetNode(t_tree, "station" + std::to_string(i));
+    GetNodeAttribute(tStation, "x", x);
+    GetNodeAttribute(tStation, "y", y);
+    GetNodeAttribute(tStation, "z", z);
+    all_stations.emplace_back(x, y, z);
+    std::cout << "Station: " << x << ", " << y << ", " << z << std::endl;
+  }
 //   task_goals.emplace_back(-3.0, -0.0, 0.0);
 //   task_goals.emplace_back(-0.0, -3.0, 0.0);
 }

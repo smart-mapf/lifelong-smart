@@ -19,8 +19,8 @@ import os
 #     else:
 #         if level and (not elem.tail or not elem.tail.strip()):
 #             elem.tail = newline + indent * level
-obstacles = ['@', 'T']
-
+obstacles = ['@', 'P']
+stations = ['S', 'T']
 
 def prettify(elem):
     """Return a pretty-printed XML string for the Element."""
@@ -127,6 +127,28 @@ def create_Argos(map_data,
                            portNumber=f"{port_num}",
                            outputDir=f"metaData{port_num}/")
 
+    # Loop functions
+    loop_functions = ET.SubElement(argos_config,
+                          "loop_functions",
+                          library="build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions",
+                          label="trajectory_loop_functions")
+    
+    station_count = 0
+    for y, row in enumerate(map_data):
+        for x, cell in enumerate(row):
+            if cell in stations:
+                # Creating four walls for each box
+                station = ET.SubElement(loop_functions,
+                                    f"station{station_count}",
+                                    x = f"{-y}",
+                                    y = f"{-x}",
+                                    z = "0")
+                station_count += 1
+    
+    ET.SubElement(loop_functions,
+                  f"num_stations",
+                  value = f"{station_count}")
+    
     map_center_x = -height / 2 + 0.5
     map_center_y = -width / 2 + 0.5
     arena = ET.SubElement(argos_config,
@@ -257,7 +279,7 @@ def create_Argos(map_data,
         # qt_opengl = ET.SubElement(visualization, "qt-opengl", autoplay="true")
         qt_opengl = ET.SubElement(visualization, "qt-opengl")
 
-        goal_loc = ET.SubElement(qt_opengl, "user_functions", library="build/loop_functions/mpga_loop_functions/libmpga_phototaxis_loop_functions", label="trajectory_qtuser_functions")
+        goal_loc = ET.SubElement(qt_opengl, "user_functions", library="build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions", label="trajectory_qtuser_functions")
 
         # autoplay = ET.SubElement(qt_opengl, "autoplay",
         #                           autoplay="true")

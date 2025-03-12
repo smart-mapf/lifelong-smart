@@ -20,7 +20,11 @@
   <!-- * Loop functions * -->
   <!-- ****************** -->
   <loop_functions library="build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions"
-                    label="trajectory_loop_functions" />
+                    label="trajectory_loop_functions">
+    <num_stations value= "2"/>
+    <station0 x="-5" y="-1" z="0.0"/>
+    <station1 x="-3" y="-2" z="0.0"/>
+  </loop_functions>
   <arena size="7,7,1" center="-3.0,-3.0,0">
     <box id="wall_north" size="7,0.1,0.5" movable="false">
       <body position="-3.0,0.5,0" orientation="0,0,0" />
@@ -85,7 +89,7 @@
   <media/>
   <visualization>
     <qt-opengl>
-      <user_functions library="build/loop_functions/mpga_loop_functions/libmpga_phototaxis_loop_functions"
+      <user_functions library="build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions"
                               label="trajectory_qtuser_functions" />
       <camera>
         <placements>

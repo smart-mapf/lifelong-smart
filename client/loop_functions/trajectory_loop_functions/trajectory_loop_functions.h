@@ -30,6 +30,7 @@ public:
 
    std::vector<CVector3> task_pods;
    std::vector<CVector3> task_stations;
+   std::vector<CVector3> all_stations;
 
 private:
 

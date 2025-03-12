@@ -18,15 +18,18 @@ def parse_arguments():
         description="Argument parser for map_name and scen_name.")
     parser.add_argument("--map_name",
                         type=str,
-                        required=True,
+                        required=False,
+                        default="warehouse-small.map",
                         help="Name of the map file")
     parser.add_argument("--scen_name",
                         type=str,
-                        required=True,
+                        required=False,
+                        default="warehouse-small.scen",
                         help="Name of the scenario file")
     parser.add_argument("--num_agents",
                         type=int,
-                        required=True,
+                        required=False,
+                        default=10,
                         help="Number of agents in the scenario")
     parser.add_argument("--headless",
                         type=bool,
@@ -168,19 +171,19 @@ def run_simulator(args):
 
 
 def main():
-    # args = parse_arguments()
-    # print(f"Map Name: {args.map_name}")
-    # print(f"Scenario Name: {args.scen_name}")
+    args = parse_arguments()
+    print(f"Map Name: {args.map_name}")
+    print(f"Scenario Name: {args.scen_name}")
 
-    # # Configs
-    # scen_file_path = args.scen_name
-    # map_file_path = args.map_name
-    # curr_num_agent = args.num_agents
-    # port_num = args.port_num
-    # path_filename = args.path_filename
-    # sim_stats_filename = args.stats_name
-    # n_threads = args.n_threads
-    # monitor_interval = args.monitor_interval
+    # Configs
+    scen_file_path = args.scen_name
+    map_file_path = args.map_name
+    curr_num_agent = args.num_agents
+    port_num = args.port_num
+    path_filename = args.path_filename
+    sim_stats_filename = args.stats_name
+    n_threads = args.n_threads
+    config_filename = args.argos_config_name
 
     # # Run planner to find solution for the specified problem
     # print("Running planner ...")
@@ -192,25 +195,34 @@ def main():
     # monitoring_process = Process(target=monitor_system,
     #                              args=(logdir.logdir, monitor_interval))
     # monitoring_process.start()
-    config_filename = "./experiments/empty-7-7.argos"
-    port_num = 8080
+        # Transform the map and scen to Argos config file, obstacles: '@', 'T'
+    print("Creating Argos config file ...")
+    robot_init_pos, scen_num_agent = ArgosConfig.read_scen(scen_file_path)
+    map_data, width, height = ArgosConfig.parse_map_file(map_file_path)
+    if scen_num_agent < curr_num_agent:
+        print("Number of agents exceed maximum number. exiting ...")
+        exit(-1)
+    ArgosConfig.create_Argos(map_data, config_filename, width, height,
+                             robot_init_pos, curr_num_agent, port_num,
+                             n_threads, not args.headless)
+    print("Argos config file created.")
 
     try:
         print("Running simulator ...")
         server_executable_path = "./server/build/ADG_server"
         # server_executable_path = "server/build/ADG_server"
         server_command = [
-            server_executable_path, "-k", str(11), "-n",
-            str(port_num), f"--method_name=PBS"
+            server_executable_path, "-k", str(curr_num_agent), "-n",
+            str(port_num), f"--method_name=PBS", "-m", f"./{map_file_path}"
         ]
-        client_command = ["argos3", "-c", f"{config_filename}"]
+        client_command = ["argos3", "-c", f"../{config_filename}"]
         print(client_command)
 
         executable_path = "./planner/PBS/build/pbs"
         run_args = []
         run_args += [executable_path]
-        run_args += ["-m", "./planner/PBS/empty-7-7.map"]
-        run_args += ["-k", str(11)]
+        run_args += ["-m", f"./{map_file_path}"]
+        run_args += ["-k", str(curr_num_agent)]
         run_planner(run_args)
         print("Planner create path successful.")
         run_simulator((server_command, client_command, run_args))
