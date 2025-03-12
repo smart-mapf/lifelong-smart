@@ -180,6 +180,7 @@ def main():
     map_file_path = args.map_name
     curr_num_agent = args.num_agents
     port_num = args.port_num
+    print(port_num)
     path_filename = args.path_filename
     sim_stats_filename = args.stats_name
     n_threads = args.n_threads
@@ -223,6 +224,7 @@ def main():
         run_args += [executable_path]
         run_args += ["-m", f"./{map_file_path}"]
         run_args += ["-k", str(curr_num_agent)]
+        run_args += ["--portNum", str(port_num)]
         run_planner(run_args)
         print("Planner create path successful.")
         run_simulator((server_command, client_command, run_args))
