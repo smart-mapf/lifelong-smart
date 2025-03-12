@@ -11,7 +11,7 @@
 #include <iomanip>
 
 #include "parser.h"
-#include "task_assigner.h"
+#include "random_task.h"
 
 typedef std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>>> SIM_PLAN;
 
@@ -107,6 +107,23 @@ public:
         }
         // std::cerr << "Robot ID of 13 is: " << robotIDToStartIndex[13] << std::endl;
         std::cout << std::endl;
+    }
+
+    void getLastAction(std::vector<bool>& goal_status) {
+        goal_status.clear();
+        goal_status.resize(num_robots);
+        for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+            if (graph[agent_id].empty()) {
+                goal_status[agent_id] = true;
+            } else {
+                if (graph[agent_id].back().action.type == 'S' or
+                    graph[agent_id].back().action.type == 'P') {
+                    goal_status[agent_id] = true;
+                } else {
+                    goal_status[agent_id] = false;
+                }
+            }
+        }
     }
 
 private:

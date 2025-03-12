@@ -1,5 +1,7 @@
 #include "ADG_server.h"
 
+#include <random_task.h>
+
 std::vector<std::chrono::steady_clock::time_point> startTimers; // Start times for each robot
     // =======================
 
@@ -9,81 +11,8 @@ ADG_Server::ADG_Server(int num_robots,
     std::string scen_name,
     std::string method_name): curr_map_name(map_name), curr_scen_name(scen_name), curr_method_name(method_name)
  {
-    // if (path_filename == "none") {
-    //     plans.clear();
-    //     plans.resize(1);
-    //     // 0, 2, 0, 1, 3, 0, 2, 3, 1, 0, 3, 0, 1, 3, 2, 1, 3, 2, 3, 1, 0, 2, 3, 0, 2, 0, 1, 3, 1, 0, 2, 3
-    //     std::vector<double> all_angles = {};
-    //     for (int i = 0; i < all_angles.size(); i++) {
-    //         Action processedAction;
-    //         processedAction.robot_id = 0;
-    //         processedAction.time = i;
-    //         processedAction.type = 'T';
-    //         processedAction.start.first = 4;
-    //         processedAction.start.second = 1;
-    //         processedAction.goal.first = 4;
-    //         processedAction.goal.second = 1;
-    //         processedAction.orientation = all_angles[i];
-    //         processedAction.nodeID = i;
-    //         plans[0].push_back(processedAction);
-    //     }
-    //     // Action processedAction;
-    //     // processedAction.robot_id = 0;
-    //     // processedAction.time = 0;
-    //     // processedAction.type = 'T';
-    //     // processedAction.start.first = 1;
-    //     // processedAction.start.second = 7;
-    //     // processedAction.goal.first = 1;
-    //     // processedAction.goal.second = 4;
-    //     // processedAction.orientation = 2;
-    //     // processedAction.nodeID = 0;
-    //     // plans[0].push_back(processedAction);
-    //     Action processedAction;
-    //     processedAction.robot_id = 0;
-    //     processedAction.time = 0;
-    //     processedAction.type = 'M';
-    //     processedAction.start.first = 1;
-    //     processedAction.start.second = 7;
-    //     processedAction.goal.first = 1;
-    //     processedAction.goal.second = 6;
-    //     processedAction.orientation = 0;
-    //     processedAction.nodeID = 0;
-    //     plans[0].push_back(processedAction);
-    //     // Action processedAction2;
-    //     // processedAction2.robot_id = 0;
-    //     // processedAction2.time = 1;
-    //     // processedAction2.type = 'M';
-    //     // processedAction2.start.first = 1;
-    //     // processedAction2.start.second = 7;
-    //     // processedAction2.goal.first = 7;
-    //     // processedAction2.goal.second = 7;
-    //     // processedAction2.orientation = 1;
-    //     // processedAction2.nodeID = 1;
-    //     // plans[0].push_back(processedAction2);
-    //     // Action process_rotate = processedAction;
-    //     // process_rotate.nodeID = 2;
-    //     // plans[0].push_back(processedAction);
-    //     // Action processedAction3;
-    //     // processedAction3.robot_id = 0;
-    //     // processedAction3.time = 2;
-    //     // processedAction3.type = 'M';
-    //     // processedAction3.start.first = 7;
-    //     // processedAction3.start.second = 7;
-    //     // processedAction3.goal.first = 1;
-    //     // processedAction3.goal.second = 7;
-    //     // processedAction3.orientation = 1;
-    //     // processedAction3.nodeID = 3;
-    //     // plans[0].push_back(processedAction3);
-    // } else {
-    //     bool success = parseEntirePlan(path_filename, plans, raw_plan_cost);
-    //     if (not success){
-    //         std::cerr << "Incorrect path, no ADG constructed! exiting ..." << std::endl;
-    //         exit(-1);
-    //     }
-    // }
-
     adg = std::make_shared<ADG> (num_robots);
-    task_manager_ptr = std::make_shared<TaskManager>(num_robots, -1, -1);
+    task_manager_ptr = std::make_shared<RandomTask>(num_robots, map_name);
     output_filename = target_output_filename;
     numRobots = adg->numRobots();
     agent_finish_time.resize(numRobots, -1);
@@ -177,13 +106,30 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
 
     std::vector<std::vector<Action>> plans;
     plans = processActions(raw_plan, server_ptr->flipped_coord);
+    for (int i = 0; i < static_cast<int>(plans.size()); i++) {
+        Action tmp_act;
+        tmp_act.robot_id = (int) i;
+        // @jingtian Note: change action start time, to be consistent with the continuous case
+        tmp_act.time = plans[i].back().time;
+        tmp_act.start = server_ptr->curr_tasks[i].front()->goal_position;
+        tmp_act.goal = server_ptr->curr_tasks[i].front()->goal_position;
+        tmp_act.orientation = 0;
+        tmp_act.nodeID = 0;
+        if (server_ptr->curr_tasks[i].front()->flag == 0) {
+            // If station
+            tmp_act.type = 'S';
+        } else {
+            tmp_act.type = 'P';
+        }
+        plans[i].push_back(tmp_act);
+    }
     // showActionsPlan(plans);
     server_ptr->adg->addMAPFPlan(plans);
-    for (int id = 0; id < server_ptr->numRobots; id++)
-    {
-        std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(id);
-        server_ptr->task_manager_ptr->isAgentFinished(id, curr_pos);
-    }
+    // for (int id = 0; id < server_ptr->numRobots; id++)
+    // {
+    //     std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(id);
+    //     server_ptr->task_manager_ptr->isAgentFinished(id, curr_pos);
+    // }
 }
 
 std::string receive_update(std::string& RobotID, int node_ID) {
@@ -198,16 +144,17 @@ std::string receive_update(std::string& RobotID, int node_ID) {
     std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(Robot_ID);
     printf("goal::(%f, %f), curr_pos::(%f, %f)\n", server_ptr->adg->getActionGoal(Robot_ID, node_ID).first,
         server_ptr->adg->getActionGoal(Robot_ID, node_ID).second, curr_pos.first, curr_pos.second);
-    if (server_ptr->task_manager_ptr->isAgentFinished(Robot_ID, curr_pos)) {
-        auto endTime = std::chrono::steady_clock::now();
-        auto diff = endTime - startTimers[Robot_ID];
-        double duration = std::chrono::duration_cast<std::chrono::duration<double>>(diff).count();
-        printf("Agent %d reach its goal!\n", Robot_ID);
-        // if (server_ptr->agent_finish_time[Robot_ID] < 0) {
-        //     server_ptr->agent_finish_time[Robot_ID] = duration;
-        //     server_ptr->agents_finish[Robot_ID] = true;
-        // }
-    }
+    // if (server_ptr->task_manager_ptr->isAgentFinished(Robot_ID, curr_pos)) {
+    //     auto endTime = std::chrono::steady_clock::now();
+    //     auto diff = endTime - startTimers[Robot_ID];
+    //     double duration = std::chrono::duration_cast<std::chrono::duration<double>>(diff).count();
+    //     printf("Agent %d reach its goal!\n", Robot_ID);
+    //     // if (server_ptr->agent_finish_time[Robot_ID] < 0) {
+    //     //     server_ptr->agent_finish_time[Robot_ID] = duration;
+    //     //     server_ptr->agents_finish[Robot_ID] = true;
+    //     // }
+    // }
+
     //
     // server_ptr->all_agents_finished = true;
     // for (auto status: server_ptr->agents_finish) {
@@ -252,31 +199,39 @@ void addNewGoals(std::vector<std::vector<std::tuple<int, int, double>>>& new_goa
 std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
 {
     std::lock_guard<std::mutex> guard(globalMutex);
-    std::vector<std::deque<Task>> new_tasks;
-    server_ptr->task_manager_ptr->getCharTask(new_tasks);
+    std::vector<bool> task_status;
+    server_ptr->adg->getLastAction(task_status);
+    for (int i = 0; i < task_status.size(); i++) {
+        if (task_status[i] ) {
+            server_ptr->task_manager_ptr->setTask(i, server_ptr->curr_tasks[i].front(), false);
+        }
+    }
+    std::vector<std::deque<std::shared_ptr<Task>>> new_tasks;
+    server_ptr->task_manager_ptr->getTask(new_tasks);
+    server_ptr->curr_tasks = new_tasks;
     std::vector<std::vector<std::tuple<int, int, double>>> new_goals;
     new_goals.resize(server_ptr->numRobots);
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
         for (auto& task : new_tasks[agent_id]) {
-            int tmp_x = task.goal_position.first;
-            int tmp_y = task.goal_position.second;
+            int tmp_x = task->goal_position.first;
+            int tmp_y = task->goal_position.second;
             if (server_ptr->flipped_coord)
             {
-                tmp_x = task.goal_position.second;
-                tmp_y = task.goal_position.first;
+                tmp_x = task->goal_position.second;
+                tmp_y = task->goal_position.first;
             }
 
             // printf("goal locs::(%d, %d)\n", tmp_x, tmp_y);
-            new_goals[agent_id].emplace_back(tmp_x, tmp_y, task.goal_orient);
+            new_goals[agent_id].emplace_back(tmp_x, tmp_y, task->goal_orient);
         }
     }
     return new_goals;
 }
 
-std::vector<bool> checkGoalsStatus(std::vector<std::vector<std::tuple<int, int, double>>>& new_goals)
-{
-    ;
-}
+// std::vector<bool> checkGoalsStatus(std::vector<std::vector<std::tuple<int, int, double>>>& new_goals)
+// {
+//     ;
+// }
 
 std::string getScenConfigName()
 {
@@ -337,7 +292,7 @@ int main(int argc, char **argv) {
 //            ("path_file,p", po::value<string>()->default_value("../data/maze-32-32-4_paths.txt"), "input file for path")
             ("port_number,n", po::value<int>()->default_value(8080), "rpc port number")
             ("output_file,o", po::value<string>()->default_value("stats.csv"), "output statistic filename")
-            ("map_file,m", po::value<string>()->default_value("empty-8-8"), "map filename")
+            ("map_file,m", po::value<string>()->default_value("empty-8-8.map"), "map filename")
             ("scen_file,s", po::value<string>()->default_value("empty-8-8-random-1"), "scen filename")
             ("method_name", po::value<string>()->default_value("PBS"), "method we used")
             ;

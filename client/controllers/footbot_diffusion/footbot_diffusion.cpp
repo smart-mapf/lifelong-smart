@@ -57,6 +57,10 @@ void CFootBotDiffusion::insertActions(std::vector<outputTuple> actions)
             q.push_back({x, y, angle, prev_ids, Action::MOVE});
         } else if (action1 == "T") {
             q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::TURN});
+        } else if (action1 == "S") {
+            q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::STATION});
+        } else if (action1 == "P") {
+            q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::POD});
         } else {
             q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::STOP});
         }
@@ -113,7 +117,6 @@ void CFootBotDiffusion::Init(TConfigurationNode &t_node) {
     m_linearVelocity = 1.22 * m_angularVelocity;
     m_currVelocity = 0.0;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
-    curr_goal = currPos;
     robot_id = std::to_string((int) ChangeCoordinateFromArgosToMap(currPos.GetY())) + "_" +
                std::to_string((int) ChangeCoordinateFromArgosToMap(currPos.GetX()));
     // std::cout << "Robot ID: " << robot_id << std::endl;
@@ -252,7 +255,6 @@ void CFootBotDiffusion::ControlStep() {
     }
     Real left_v, right_v;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
-    curr_goal = CVector3{std::round(currPos.GetX()), std::round(currPos.GetY()), std::round(currPos.GetZ())};
 //    //std::cout << robot_id << "Current Orientation: " << ToDegrees(cZAngle).GetValue() << std::endl;
     if (count % 10 == 0) {
         ////std::cout << "Robot ID: " << robot_id << std::endl;
@@ -325,6 +327,22 @@ void CFootBotDiffusion::ControlStep() {
             q.pop_front();
 //            exit(0);
             continue;
+        } else if (a.type == Action::POD and pod_timer <= 0) {
+            a.type = Action::STOP;
+            receive_msg = client->call("receive_update", robot_id, a.nodeIDS.front()).as<std::string>();
+            q.pop_front();
+            pod_timer = 100;
+            curr_pod = CVector3{-1,-1,-100};
+            //            exit(0);
+            continue;
+        } else if (a.type == Action::STATION and station_timer <= 0) {
+            a.type = Action::STOP;
+            receive_msg = client->call("receive_update", robot_id, a.nodeIDS.front()).as<std::string>();
+            q.pop_front();
+            station_timer = 100;
+            curr_station = CVector3{-1,-1,-100};
+            //            exit(0);
+            continue;
         }
         break;
     }
@@ -340,7 +358,14 @@ void CFootBotDiffusion::ControlStep() {
         std::pair<Real, Real> turn_velocities = Turn(a.angle, currAngle, 1.0f);
         left_v = turn_velocities.first;
         right_v = turn_velocities.second;
-
+    } else if (a.type == Action::POD) {
+        m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
+        curr_pod = CVector3{a.x, a.y, 0.0f};
+        pod_timer--;
+    } else if (a.type == Action::STATION) {
+        m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
+        curr_station = CVector3{a.x, a.y, 0.0f};
+        station_timer--;
     } else {
         // stop state, waiting for next instruction
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);

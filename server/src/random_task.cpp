@@ -21,9 +21,11 @@ void RandomTask::getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tas
       if (tmp_new_task == nullptr) {
         // Do nothing
         std::cerr << "Failed to generate new random task" << std::endl;
+        exit(-1);
         continue;
       }
       agent_task_status[agent_idx].assigned_tasks.emplace_back(tmp_new_task);
+      setTask(agent_idx, tmp_new_task, true);
     }
   }
 
@@ -38,17 +40,17 @@ void RandomTask::getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tas
 std::shared_ptr<Task> RandomTask::genRandomTask(int agent_id) {
   if (agent_task_status[agent_id].curr_loads < MAX_LOADS) {
     auto new_task = pickRandomPod(agent_id);
-    if (new_task != nullptr) {
-      setPod(agent_id, true);
-    }
+    // if (new_task != nullptr) {
+    //   setPod(new_task->operate_obj_idx, true);
+    // }
     return new_task;
   } else {
     auto new_task = pickRandomStation(agent_id);
-    if (new_task != nullptr) {
-      // TODO@jingtian: set this after a goal is reached
-      // agent_task_status[agent_id].curr_loads = 0;
-      setStation(agent_id, true);
-    }
+    // if (new_task != nullptr) {
+    //   // TODO@jingtian: set this after a goal is reached
+    //   // agent_task_status[agent_id].curr_loads = 0;
+    //   setStation(new_task->operate_obj_idx, true);
+    // }
     return new_task;
   }
 }
@@ -65,21 +67,20 @@ std::shared_ptr<Task> RandomTask::pickRandomPod(int agent_id) {
   int y = tmp_pod->y;
   // TODO@jingtian: check correctness here
   if (user_map.isValid(x+1, y)) {
-    return std::make_shared<Task>{curr_task_idx++, agent_id, std::make_pair(x+1, y), std::make_pair(x, y)};
+    return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x+1, y), std::make_pair(x, y), pod_idx, 1);
   }
   if (user_map.isValid(x-1, y)) {
-    return std::make_shared<Task>{curr_task_idx++, agent_id, std::make_pair(x-1, y), std::make_pair(x, y)};
+    return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x-1, y), std::make_pair(x, y), pod_idx, 1);
   }
   if (user_map.isValid(x, y+1)) {
-    return std::make_shared<Task>{curr_task_idx++, agent_id, std::make_pair(x, y+1), std::make_pair(x, y)};
+    return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y+1), std::make_pair(x, y), pod_idx, 1);
   }
   if (user_map.isValid(x, y-1)) {
-    return std::make_shared<Task>{curr_task_idx++, agent_id, std::make_pair(x, y-1), std::make_pair(x, y)};
+    return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y-1), std::make_pair(x, y), pod_idx, 1);
   }
   std::cerr << "Error in finding available position to pod!" << std::endl;
   return nullptr;
 }
-
 
 std::shared_ptr<Task> RandomTask::pickRandomStation(int agent_id) {
 //  Task tmp_task;
@@ -91,7 +92,27 @@ std::shared_ptr<Task> RandomTask::pickRandomStation(int agent_id) {
   auto tmp_station = active_stations.at(station_idx);
   int x = tmp_station->x;
   int y = tmp_station->y;
-  return std::make_shared<Task>{curr_task_idx++, agent_id, std::make_pair(x, y), std::make_pair(x, y)};
+  return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y), std::make_pair(x, y), station_idx, 0);
+}
+
+void RandomTask::setTask(int agent_id, std::shared_ptr<Task>& task, bool status) {
+  if (task->flag == 0) {
+    setStation(task->operate_obj_idx, status);
+  } else if (task->flag == 1) {
+    setPod(task->operate_obj_idx, status);
+  } else {
+    std::cerr << "Error in task type!" << std::endl;
+    exit(-1);
+  }
+
+  if (status) {
+    // Add new task to the agent
+    agent_task_status[agent_id].assigned_tasks.emplace_back(task);
+  } else {
+    // Remove finished task
+    agent_task_status[agent_id].assigned_tasks.pop_front();
+    agent_task_status[agent_id].curr_loads += 1;
+  }
 }
 
 bool RandomTask::setPod(int pod_idx, bool status) {

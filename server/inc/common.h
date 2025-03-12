@@ -47,7 +47,7 @@ struct Action {
     int robot_id;
     double time; // time that start an action
     double orientation;
-    char type;  // 'M' for move, 'T' for turn
+    char type;  // 'M' for move, 'T' for turn, 'S' for station, 'P' for pod
     std::pair<double, double> start;
     std::pair<double, double> goal;
     int nodeID;

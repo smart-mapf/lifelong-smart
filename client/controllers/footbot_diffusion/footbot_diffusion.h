@@ -68,7 +68,9 @@ struct Action {
     enum Type {
         MOVE,
         TURN,
-        STOP
+        STOP,
+        POD,
+        STATION
     } type;
 };
 
@@ -149,11 +151,12 @@ public:
      */
     virtual void Destroy() {}
 
-    CVector3 getCurrGoal() {return curr_goal;};
-
+    CVector3 getCurrPod() {return curr_pod;};
+    CVector3 getCurrStation() {return curr_station;}
 
 private:
-
+    int pod_timer = 100;
+    int station_timer = 100;
 
     /* Pointer to the differential steering actuator */
     CCI_DifferentialSteeringActuator *m_pcWheels;
@@ -257,7 +260,8 @@ private:
     std::string outputDir;
 
     bool is_initialized = false;
-    CVector3 curr_goal{-1,-1,-1};
+    CVector3 curr_pod{-1,-1,-100};
+    CVector3 curr_station{-1,-1,-100};
 };
 
 #endif

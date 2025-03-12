@@ -14,10 +14,14 @@ class RandomTask : private TaskManager {
 public:
   RandomTask(int num_agents, std::string& map_fname);
   std::shared_ptr<Task> genRandomTask(int agent_id);
+  void getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks);
+  // void getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks, std::vector<int> num_new_tasks) override;
+  void setTask(int agent_id, std::shared_ptr<Task>& task, bool status);
+  // ~RandomTask() override = default;
+
+private:
   std::shared_ptr<Task> pickRandomPod(int agent_id);
   std::shared_ptr<Task> pickRandomStation(int agent_id);
-  void getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks) override;
-  void getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks, std::vector<int> num_new_tasks) override;
   bool setPod(int pod_idx, bool status);
   bool setStation(int station_idx, bool status);
 

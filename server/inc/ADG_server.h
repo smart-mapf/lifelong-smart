@@ -1,3 +1,6 @@
+#pragma once
+
+
 #include <rpc/server.h>
 #include <string>
 #include <iostream>
@@ -15,6 +18,7 @@
 #include <map>        // For mapping robot actions
 #include <numeric> // For std::accumulate
 #include "json.hpp"
+// #include "random_task.h"
 using json = nlohmann::json;
 
 // #define DEBUG
@@ -35,7 +39,7 @@ public:
     
     // TODO@jingtian: move some of them into private
     std::shared_ptr<ADG> adg;
-    std::shared_ptr<TaskManager> task_manager_ptr;
+    std::shared_ptr<RandomTask> task_manager_ptr;
     bool flipped_coord = true;
 
     // std::vector<int> flags;
@@ -43,6 +47,7 @@ public:
     // std::map<int, std::string> robotIDTOStartIndex;
     // std::map<std::string, int> startIndexToRobotID;
     std::vector<std::vector<Action>> plans;
+    std::vector<std::deque<std::shared_ptr<Task>>> curr_tasks;
     std::vector<std::vector<int>> outgoingEdgesByRobot;
     std::vector<double> agent_finish_time;
     std::vector<int> agent_finish_sim_step;

@@ -19,7 +19,7 @@ void CTrajectoryQTUserFunctions::DrawInWorld() {
 //      DrawWaypoints(it->second);
 //   }
    /* Go through all the robot waypoints and draw them */
-   for(auto loc: m_cTrajLF.task_goals) {
+   for(auto loc: m_cTrajLF.task_pods) {
       // DrawWaypoints(it->second);
       //  const CVector3& c_position,
       //              const CQuaternion& c_orientation,
@@ -27,6 +27,20 @@ void CTrajectoryQTUserFunctions::DrawInWorld() {
       CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
       CVector3 c_size = CVector3(0.85, 0.85, 0.6);
       CColor c_color = CColor(120, 255, 120);
+      DrawBox(loc, c_orient, c_size, c_color);
+      CVector3 loc_tmp = loc;
+      loc_tmp.SetX(loc_tmp.GetX());
+      DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, c_color);
+   }
+
+   for(auto loc: m_cTrajLF.task_stations) {
+      // DrawWaypoints(it->second);
+      //  const CVector3& c_position,
+      //              const CQuaternion& c_orientation,
+      //              const CVector3& c_size
+      CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
+      CVector3 c_size = CVector3(0.9, 0.9, 0.05);
+      CColor c_color = CColor(255, 120, 120);
       DrawBox(loc, c_orient, c_size, c_color);
       CVector3 loc_tmp = loc;
       loc_tmp.SetX(loc_tmp.GetX());

@@ -6,7 +6,7 @@
 class CharTask final : private TaskManager{
 public:
     CharTask(int num_agents, std::string& map_fname);
-    void getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks) override;
+    void getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks);
     void generateTask(int num_char = 3);
     bool isAgentFinished(int robot_id, const std::pair<double, double>& curr_pos) {
         //        std::cout << "finished_node_idx[robot_id]:" << robot_id << ": " << finished_node_idx[robot_id]
@@ -18,7 +18,7 @@ public:
         }
         return false;
     }
-    ~CharTask() override = default;
+    // ~CharTask() override = default;
 private:
     int num_char_ = 0;
 };

@@ -68,7 +68,8 @@ void CTrajectoryLoopFunctions::PostStep() {
    /* Get the map of all foot-bots from the space */
    CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
    /* Go through them */
-   task_goals.clear();
+   task_pods.clear();
+   task_stations.clear();
    for(CSpace::TMapPerType::iterator it = tFBMap.begin();
        it != tFBMap.end();
        ++it) {
@@ -89,8 +90,14 @@ void CTrajectoryLoopFunctions::PostStep() {
       if (pcController) {
          // Retrieve step count or any other return value
          // LOG << "Step Count: " << pcController->getCurrGoal() << std::endl;
-         auto tmp_goal = pcController->getCurrGoal();
-         task_goals.push_back(tmp_goal);
+         auto tmp_goal = pcController->getCurrPod();
+         if (tmp_goal.GetZ() != -100) {
+            task_pods.push_back(tmp_goal);
+         }
+         auto tmp_station = pcController->getCurrStation();
+         if (tmp_station.GetZ() != -100) {
+            task_stations.push_back(tmp_station);
+         }
       }
    }
 }

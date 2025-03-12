@@ -28,7 +28,8 @@ public:
       return m_tWaypoints;
    }
 
-   std::vector<CVector3> task_goals;
+   std::vector<CVector3> task_pods;
+   std::vector<CVector3> task_stations;
 
 private:
 
