@@ -10,6 +10,7 @@ Instance::Instance(const string& map_fname, int num_of_rows, int num_of_cols, in
 	map_fname(map_fname)
 {
 	bool succ = loadMap();
+  printMap();
 	if (!succ)
 	{
 		if (num_of_rows > 0 && num_of_cols > 0 && num_of_obstacles >= 0 &&
@@ -191,7 +192,7 @@ bool Instance::loadMap()
 	for (int i = 0; i < num_of_rows; i++) {
 		getline(myfile, line);
 		for (int j = 0; j < num_of_cols; j++) {
-			my_map[linearizeCoordinate(i, j)] = (line[j] != '.');
+			my_map[linearizeCoordinate(i, j)] = (line[j] != '.' and line[j] != 'T');
 		}
 	}
 	myfile.close();

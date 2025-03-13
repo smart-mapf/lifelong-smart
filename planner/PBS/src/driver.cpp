@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 		("cutoffTime,t", po::value<double>()->default_value(7200), "cutoff time (seconds)")
 		("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
 		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
-		("portNum", po::value<int>()->default_value(8080), "port number")
+    ("portNum", po::value<int>()->default_value(8080), "port number for the server")
 		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
 		;
 	po::variables_map vm;

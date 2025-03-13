@@ -66,12 +66,12 @@ std::shared_ptr<Task> RandomTask::pickRandomPod(int agent_id) {
   int x = tmp_pod->x;
   int y = tmp_pod->y;
   // TODO@jingtian: check correctness here
-  if (user_map.isValid(x+1, y)) {
-    return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x+1, y), std::make_pair(x, y), pod_idx, 1);
-  }
-  if (user_map.isValid(x-1, y)) {
-    return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x-1, y), std::make_pair(x, y), pod_idx, 1);
-  }
+  // if (user_map.isValid(x+1, y)) {
+  //   return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x+1, y), std::make_pair(x, y), pod_idx, 1);
+  // }
+  // if (user_map.isValid(x-1, y)) {
+  //   return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x-1, y), std::make_pair(x, y), pod_idx, 1);
+  // }
   if (user_map.isValid(x, y+1)) {
     return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y+1), std::make_pair(x, y), pod_idx, 1);
   }

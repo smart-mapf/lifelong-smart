@@ -44,7 +44,7 @@ void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
     GetNodeAttribute(tStation, "y", y);
     GetNodeAttribute(tStation, "z", z);
     all_stations.emplace_back(x, y, z);
-    std::cout << "Station: " << x << ", " << y << ", " << z << std::endl;
+    // std::cout << "Station: " << x << ", " << y << ", " << z << std::endl;
   }
 //   task_goals.emplace_back(-3.0, -0.0, 0.0);
 //   task_goals.emplace_back(-0.0, -3.0, 0.0);

@@ -40,7 +40,7 @@ public:
     // TODO@jingtian: move some of them into private
     std::shared_ptr<ADG> adg;
     std::shared_ptr<RandomTask> task_manager_ptr;
-    bool flipped_coord = true;
+    bool flipped_coord = false;
 
     // std::vector<int> flags;
     // std::vector<int> adg_queue;

@@ -107,23 +107,23 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
 
     std::vector<std::vector<Action>> plans;
     plans = processActions(raw_plan, server_ptr->flipped_coord);
-    for (int i = 0; i < static_cast<int>(plans.size()); i++) {
-        Action tmp_act;
-        tmp_act.robot_id = (int) i;
-        // @jingtian Note: change action start time, to be consistent with the continuous case
-        tmp_act.time = plans[i].back().time;
-        tmp_act.start = server_ptr->curr_tasks[i].front()->goal_position;
-        tmp_act.goal = server_ptr->curr_tasks[i].front()->goal_position;
-        tmp_act.orientation = 0;
-        tmp_act.nodeID = 0;
-        if (server_ptr->curr_tasks[i].front()->flag == 0) {
-            // If station
-            tmp_act.type = 'S';
-        } else {
-            tmp_act.type = 'P';
-        }
-        plans[i].push_back(tmp_act);
-    }
+    // for (int i = 0; i < static_cast<int>(plans.size()); i++) {
+    //     Action tmp_act;
+    //     tmp_act.robot_id = (int) i;
+    //     // @jingtian Note: change action start time, to be consistent with the continuous case
+    //     tmp_act.time = plans[i].back().time;
+    //     tmp_act.start = server_ptr->curr_tasks[i].front()->goal_position;
+    //     tmp_act.goal = server_ptr->curr_tasks[i].front()->goal_position;
+    //     tmp_act.orientation = 0;
+    //     tmp_act.nodeID = 0;
+    //     if (server_ptr->curr_tasks[i].front()->flag == 0) {
+    //         // If station
+    //         tmp_act.type = 'S';
+    //     } else {
+    //         tmp_act.type = 'P';
+    //     }
+    //     plans[i].push_back(tmp_act);
+    // }
     // showActionsPlan(plans);
     server_ptr->adg->addMAPFPlan(plans);
     // for (int id = 0; id < server_ptr->numRobots; id++)
@@ -179,6 +179,7 @@ void init(std::string RobotID) {
     if (is_all_init)
     {
         ;
+        std::cout << "All agents are initialized\n";
     }
     // int Robot_ID = server_ptr->startIndexToRobotID[RobotID];
 #ifdef DEBUG
@@ -200,17 +201,24 @@ void addNewGoals(std::vector<std::vector<std::tuple<int, int, double>>>& new_goa
 std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
 {
     std::lock_guard<std::mutex> guard(globalMutex);
+    std::vector<std::vector<std::tuple<int, int, double>>> new_goals;
+    if (not server_ptr->adg->initialized) {
+        return new_goals;
+    }
     std::vector<bool> task_status;
-    server_ptr->adg->getLastAction(task_status);
-    for (int i = 0; i < task_status.size(); i++) {
-        if (task_status[i] ) {
-            server_ptr->task_manager_ptr->setTask(i, server_ptr->curr_tasks[i].front(), false);
+    std::cout << "retrieving last actions" << std::endl;
+    auto success_status = server_ptr->adg->getLastAction(task_status);
+    std::cout << "retrieved last actions" << std::endl;
+    if (success_status) {
+        for (int i = 0; i < task_status.size(); i++) {
+            if (task_status[i] ) {
+                server_ptr->task_manager_ptr->setTask(i, server_ptr->curr_tasks[i].front(), false);
+            }
         }
     }
     std::vector<std::deque<std::shared_ptr<Task>>> new_tasks;
     server_ptr->task_manager_ptr->getTask(new_tasks);
     server_ptr->curr_tasks = new_tasks;
-    std::vector<std::vector<std::tuple<int, int, double>>> new_goals;
     new_goals.resize(server_ptr->numRobots);
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
         for (auto& task : new_tasks[agent_id]) {
@@ -317,23 +325,36 @@ int main(int argc, char **argv) {
         vm["scen_file"].as<string>(), vm["method_name"].as<string>());
 
     int port_number = vm["port_number"].as<int>();
-    try {
-        rpc::server srv(port_number);  // Setup the server to listen on the specified port number
-        srv.bind("receive_update", &receive_update);  // Bind the function to the server
-        srv.bind("init", &init);
-        srv.bind("get_location", &getRobotsLocation);
-        srv.bind("get_goals", &getGoals);
-        srv.bind("add_plan", &addNewPlan);
-        srv.bind("update", &update);
-        srv.bind("get_config", &getScenConfigName);
-        srv.bind("update_finish_agent", &updateSimFinishTime);
-        srv.bind("closeServer", [&srv]() {
-            closeServer(srv);
-        });
-        srv.run();  // Start the server, blocking call
-    } catch (...) {
-        // Catch any other exceptions
-        std::cerr << "Fail to starting the server for scen "<< vm["scen_file"].as<string>() << " at port number: " << port_number << std::endl;
-    }
+    rpc::server srv(port_number);  // Setup the server to listen on the specified port number
+    srv.bind("receive_update", &receive_update);  // Bind the function to the server
+    srv.bind("init", &init);
+    srv.bind("get_location", &getRobotsLocation);
+    srv.bind("get_goals", &getGoals);
+    srv.bind("add_plan", &addNewPlan);
+    srv.bind("update", &update);
+    srv.bind("get_config", &getScenConfigName);
+    srv.bind("update_finish_agent", &updateSimFinishTime);
+    srv.bind("closeServer", [&srv]() {
+        closeServer(srv);
+    });
+    srv.run();  // Start the server, blocking call
+    // try {
+    //     rpc::server srv(port_number);  // Setup the server to listen on the specified port number
+    //     srv.bind("receive_update", &receive_update);  // Bind the function to the server
+    //     srv.bind("init", &init);
+    //     srv.bind("get_location", &getRobotsLocation);
+    //     srv.bind("get_goals", &getGoals);
+    //     srv.bind("add_plan", &addNewPlan);
+    //     srv.bind("update", &update);
+    //     srv.bind("get_config", &getScenConfigName);
+    //     srv.bind("update_finish_agent", &updateSimFinishTime);
+    //     srv.bind("closeServer", [&srv]() {
+    //         closeServer(srv);
+    //     });
+    //     srv.run();  // Start the server, blocking call
+    // } catch (...) {
+    //     // Catch any other exceptions
+    //     std::cerr << "Fail to starting the server for scen "<< vm["scen_file"].as<string>() << " at port number: " << port_number << std::endl;
+    // }
     return 0;
 }

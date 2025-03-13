@@ -109,13 +109,19 @@ public:
         std::cout << std::endl;
     }
 
-    void getLastAction(std::vector<bool>& goal_status) {
+    bool getLastAction(std::vector<bool>& goal_status) {
         goal_status.clear();
-        goal_status.resize(num_robots);
+        goal_status.resize(num_robots, true);
+        if (graph.empty()) {
+            std::cout << "Graph is empty" << std::endl;
+            return false;
+        }
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
             if (graph[agent_id].empty()) {
+                // std::cout << "Get last actions" << std::endl;
                 goal_status[agent_id] = true;
             } else {
+                // std::cout << "Get last actions" << std::endl;
                 if (graph[agent_id].back().action.type == 'S' or
                     graph[agent_id].back().action.type == 'P') {
                     goal_status[agent_id] = true;
@@ -124,6 +130,7 @@ public:
                 }
             }
         }
+        return true;
     }
 
 private:
