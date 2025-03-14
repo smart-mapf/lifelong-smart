@@ -209,7 +209,7 @@ bool Instance::loadMap()
 
 void Instance::printMap() const
 {
-  std::cout << "num of rows: " << num_of_rows << " num of cols: " << num_of_cols << std::endl;
+  // std::cout << "num of rows: " << num_of_rows << " num of cols: " << num_of_cols << std::endl;
 	for (int i = 0; i< num_of_rows; i++)
 	{
 		for (int j = 0; j < num_of_cols; j++)
