@@ -9,6 +9,8 @@
 #include <cmath>
 
 #define MAX_LOADS 1
+#define DEBUG
+
 using namespace std;
 
 const double EPS = 1e-8;

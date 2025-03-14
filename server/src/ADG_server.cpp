@@ -122,20 +122,19 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
             std::cout << "No plan" << std::endl;
             continue;
         }
-        std::cout << "original plan size: " << plans[i].size() << std::endl;
         Action tmp_act;
         tmp_act.robot_id = (int) i;
         // @jingtian Note: change action start time, to be consistent with the continuous case
         tmp_act.time = plans[i].back().time;
-        tmp_act.start = server_ptr->curr_tasks[i].front()->goal_position;
-        tmp_act.goal = server_ptr->curr_tasks[i].front()->obj_position;
+        tmp_act.start = server_ptr->curr_tasks[i].front()->obj_position;
+        tmp_act.goal = server_ptr->curr_tasks[i].front()->goal_position;
         if (server_ptr->flipped_coord) {
             double tmp = tmp_act.goal.first;
             tmp_act.goal.first = tmp_act.goal.second;
             tmp_act.goal.second = tmp;
             std::swap(tmp_act.start.first, tmp_act.start.second);
         }
-        tmp_act.orientation = 0;
+        tmp_act.orientation = plans[i].back().orientation;
         tmp_act.nodeID = 0;
         if (server_ptr->curr_tasks[i].front()->flag == 0) {
             // If station
@@ -168,8 +167,18 @@ std::string receive_update(std::string& RobotID, int node_ID) {
     int Robot_ID = server_ptr->adg->startIndexToRobotID[RobotID];
     bool status_update = server_ptr->adg->updateFinishedNode(Robot_ID, node_ID);
     std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(Robot_ID);
-    printf("goal::(%f, %f), curr_pos::(%f, %f)\n", server_ptr->adg->getActionGoal(Robot_ID, node_ID).first,
-        server_ptr->adg->getActionGoal(Robot_ID, node_ID).second, curr_pos.first, curr_pos.second);
+    if (server_ptr->adg->isTaskNode(Robot_ID, node_ID)) {
+        std::cout << "receive confirmation for robot id: " << Robot_ID << ", at node id: "<< node_ID << "with current position at: " <<
+        curr_pos.first << ", " << curr_pos.second << std::endl;
+        if (not server_ptr->curr_tasks[Robot_ID].empty()) {
+            if (server_ptr->curr_tasks[Robot_ID].front()->status == true) {
+                server_ptr->task_manager_ptr->setTask(Robot_ID, server_ptr->curr_tasks[Robot_ID].front(), false);
+            }
+        }
+    }
+
+    // printf("goal::(%f, %f), curr_pos::(%f, %f)\n", server_ptr->adg->getActionGoal(Robot_ID, node_ID).first,
+    //     server_ptr->adg->getActionGoal(Robot_ID, node_ID).second, curr_pos.first, curr_pos.second);
     // if (server_ptr->task_manager_ptr->isAgentFinished(Robot_ID, curr_pos)) {
     //     auto endTime = std::chrono::steady_clock::now();
     //     auto diff = endTime - startTimers[Robot_ID];
@@ -230,17 +239,17 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     if (not server_ptr->adg->initialized) {
         return new_goals;
     }
-    std::vector<bool> task_status;
-    std::cout << "retrieving last actions" << std::endl;
-    auto success_status = server_ptr->adg->getLastAction(task_status);
-    std::cout << "retrieved last actions" << std::endl;
-    if (success_status) {
-        for (int i = 0; i < task_status.size(); i++) {
-            if (task_status[i] ) {
-                server_ptr->task_manager_ptr->setTask(i, server_ptr->curr_tasks[i].front(), false);
-            }
-        }
-    }
+    // std::vector<bool> task_status;
+    // std::cout << "retrieving last actions" << std::endl;
+    // auto success_status = server_ptr->adg->getLastAction(task_status);
+    // std::cout << "retrieved last actions" << std::endl;
+    // if (success_status) {
+    //     for (int i = 0; i < task_status.size(); i++) {
+    //         if (task_status[i] ) {
+    //             server_ptr->task_manager_ptr->setTask(i, server_ptr->curr_tasks[i].front(), false);
+    //         }
+    //     }
+    // }
     std::vector<std::deque<std::shared_ptr<Task>>> new_tasks;
     server_ptr->task_manager_ptr->getTask(new_tasks);
     server_ptr->curr_tasks = new_tasks;

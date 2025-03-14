@@ -47,7 +47,6 @@ int main(int argc, char** argv)
 
 	///////////////////////////////////////////////////////////////////////////
 	// load the instance
-	Instance instance(vm["map"].as<string>());
 	srand(0);
 
 	rpc::client client("127.0.0.1", vm["portNum"].as<int>());
@@ -71,6 +70,7 @@ int main(int argc, char** argv)
 			continue;
 		}
 		// TODO@jingtian: update this to get new instance
+		Instance instance(vm["map"].as<string>());
 		instance.loadAgents(commit_cut, goals);
 		PBS pbs(instance, vm["sipp"].as<bool>(), vm["screen"].as<int>());
 		// run

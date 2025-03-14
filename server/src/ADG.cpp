@@ -164,8 +164,17 @@ std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_nod
         if (num_commit_actions < num_enqueue_node) {
             commited_actions[agent_id].second = std::min((int) graph[agent_id].size(), commited_actions[agent_id].first+num_enqueue_node);
         }
+        std::cout << "Agent " << agent_id << "commited actions: " << commited_actions[agent_id].first << " -> " << commited_actions[agent_id].second << std::endl;
+
     }
     fixInconsistentIncomingEdge(commited_actions);
+#ifdef DEBUG
+    std::cout << "commited actions after fix: " << std::endl;
+    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+        std::cout << "Agent " << agent_id << ": " << commited_actions[agent_id].first << " -> " << commited_actions[agent_id].second << std::endl;
+    }
+#endif
+
     // pop out unused actions
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
         assert(commited_actions[agent_id].second <= graph[agent_id].size());
@@ -313,6 +322,15 @@ bool ADG::updateFinishedNode(int robot_id, int node_id) {
             return true;
         }
     }
+}
+
+bool ADG::isTaskNode(int robot_id, int node_id) {
+    if (not graph.empty()) {
+        if (graph[robot_id][node_id].action.type == 'S' or graph[robot_id][node_id].action.type == 'P') {
+            return true;
+        }
+    }
+    return false;
 }
 
 void ADG::setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes) {

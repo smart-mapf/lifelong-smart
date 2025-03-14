@@ -21,7 +21,6 @@
 // #include "random_task.h"
 using json = nlohmann::json;
 
-#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_AGENT 13

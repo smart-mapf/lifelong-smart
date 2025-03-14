@@ -10,7 +10,7 @@ Instance::Instance(const string& map_fname, int num_of_rows, int num_of_cols, in
 	map_fname(map_fname)
 {
 	bool succ = loadMap();
-  printMap();
+  // printMap();
 	if (!succ)
 	{
 		if (num_of_rows > 0 && num_of_cols > 0 && num_of_obstacles >= 0 &&

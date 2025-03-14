@@ -16,6 +16,9 @@ RandomTask::RandomTask(int num_agents, std::string& map_fname): TaskManager(num_
 void RandomTask::getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks) {
   for (int agent_idx = 0; agent_idx < num_robots_; agent_idx++) {
     assert(agent_task_status[agent_idx].curr_loads >= 0);
+#ifdef DEBUG
+    std::cout << "Total task for Agent " << agent_idx << ", is: " << agent_task_status[agent_idx].assigned_tasks.size() << std::endl;
+#endif
     if (agent_task_status[agent_idx].assigned_tasks.empty()) {
       auto tmp_new_task = genRandomTask(agent_idx);
       if (tmp_new_task == nullptr) {
@@ -24,8 +27,14 @@ void RandomTask::getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tas
         exit(-1);
         continue;
       }
-      agent_task_status[agent_idx].assigned_tasks.emplace_back(tmp_new_task);
       setTask(agent_idx, tmp_new_task, true);
+      std::cout << "Create new task for agent " << agent_idx << ", with goal at: "
+      << tmp_new_task->goal_position.first << ", " << tmp_new_task->goal_position.second << std::endl;
+    } else {
+      auto tmp_new_task = agent_task_status[agent_idx].assigned_tasks.front();
+      std::cout << "Existing task for agent " << agent_idx << ", with goal at: "
+      << tmp_new_task->goal_position.first << ", " << tmp_new_task->goal_position.second << ", status: "
+      << tmp_new_task->status << std::endl;
     }
   }
 
@@ -39,12 +48,14 @@ void RandomTask::getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tas
 
 std::shared_ptr<Task> RandomTask::genRandomTask(int agent_id) {
   if (agent_task_status[agent_id].curr_loads < MAX_LOADS) {
+    std::cout << "Pick a new random pod" << std::endl;
     auto new_task = pickRandomPod(agent_id);
     // if (new_task != nullptr) {
     //   setPod(new_task->operate_obj_idx, true);
     // }
     return new_task;
   } else {
+    std::cout << "Pick a new random Station" << std::endl;
     auto new_task = pickRandomStation(agent_id);
     // if (new_task != nullptr) {
     //   // TODO@jingtian: set this after a goal is reached
@@ -60,13 +71,15 @@ std::shared_ptr<Task> RandomTask::pickRandomPod(int agent_id) {
   if (active_pods.empty()) {
     return nullptr;
   }
-  std::srand(std::time(0));  // Seed the random number generator
+  // std::srand(std::time(0));  // Seed the random number generator
+  std::srand(0);  // Seed the random number generator
+
   int pod_idx = std::rand() % (active_pods.size() - 1);
-  auto tmp_pod = active_pods.at(pod_idx);
+  auto it = active_pods.begin();
+  std::advance(it, pod_idx);
+  auto tmp_pod = it->second;
   int x = tmp_pod->x;
   int y = tmp_pod->y;
-  // TODO@jingtian: check correctness here
-
   if (user_map.isValid(x, y+1)) {
     return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y+1), std::make_pair(x, y), pod_idx, 1);
   }
@@ -88,9 +101,13 @@ std::shared_ptr<Task> RandomTask::pickRandomStation(int agent_id) {
   if (active_stations.empty()) {
     return nullptr;
   }
-  std::srand(std::time(0));  // Seed the random number generator
+  // std::srand(std::time(0));  // Seed the random number generator
+  std::srand(0);  // Seed the random number generator
+
   int station_idx = std::rand() % (active_stations.size() - 1);
-  auto tmp_station = active_stations.at(station_idx);
+  auto it = active_stations.begin();
+  std::advance(it, station_idx);
+  auto tmp_station = it->second;
   int x = tmp_station->x;
   int y = tmp_station->y;
   return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y), std::make_pair(x, y), station_idx, 0);
@@ -108,12 +125,29 @@ void RandomTask::setTask(int agent_id, std::shared_ptr<Task>& task, bool status)
 
   if (status) {
     // Add new task to the agent
+#ifdef DEBUG
+    std::cout << "adding new task with id: " << task->id << std::endl;
+#endif
     agent_task_status[agent_id].assigned_tasks.emplace_back(task);
   } else {
     // Remove finished task
+#ifdef DEBUG
+    std::cout << "remove finished task with id: " << task->id << std::endl;
+    for (auto& tmp_new_task: agent_task_status[agent_id].assigned_tasks) {
+      std::cout << "task for agent " << agent_id << ", with goal at: "
+      << tmp_new_task->goal_position.first << ", " << tmp_new_task->goal_position.second << ", status: "
+      << tmp_new_task->status << std::endl;
+    }
+#endif
+    assert(task == agent_task_status[agent_id].assigned_tasks.front());
     agent_task_status[agent_id].assigned_tasks.pop_front();
-    agent_task_status[agent_id].curr_loads += 1;
+    if (task->flag == 0) {
+      agent_task_status[agent_id].curr_loads = 0;
+    } else {
+      agent_task_status[agent_id].curr_loads += 1;
+    }
   }
+  task->status = status;
 }
 
 bool RandomTask::setPod(int pod_idx, bool status) {

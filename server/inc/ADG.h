@@ -76,6 +76,8 @@ public:
     std::pair<double, double> getRobotPosition(int agent_id) {
         return robot_states[agent_id].position;
     }
+    bool isTaskNode(int robot_id, int node_id);
+
 
     std::pair<double, double> getActionGoal(int agent_id, int node_id)
     {

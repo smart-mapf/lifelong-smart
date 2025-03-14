@@ -30,6 +30,9 @@ void CFootBotDiffusion::insertActions(std::vector<outputTuple> actions)
         std::string action1 = std::get<3>(action);
         int nodeID = std::get<1>(action);
 //        std::cout << "NodeID init: " << nodeID << std::endl;
+        std::tuple<double, double> start_pos = std::get<4>(action);
+        double start_x = ChangeCoordinateFromMapToArgos(std::get<1>(start_pos));
+        double start_y = ChangeCoordinateFromMapToArgos(std::get<0>(start_pos));
         std::tuple<double, double> end_pos = std::get<5>(action);
 //        std::cout << "End Position init: " << std::get<0>(end_pos) << " " << std::get<1>(end_pos) << std::endl;
         double x = ChangeCoordinateFromMapToArgos(std::get<1>(end_pos));
@@ -60,7 +63,7 @@ void CFootBotDiffusion::insertActions(std::vector<outputTuple> actions)
         } else if (action1 == "S") {
             q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::STATION});
         } else if (action1 == "P") {
-            q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::POD});
+            q.push_back({start_x, start_y, angle, std::deque<int>{nodeID}, Action::POD});
         } else {
             q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::STOP});
         }
@@ -270,9 +273,9 @@ void CFootBotDiffusion::ControlStep() {
         std::vector<outputTuple> updateActions = client->call("update", robot_id).as<std::vector<outputTuple>>();
         if (updateActions.size() != 0) {
             insertActions(updateActions);
-            if (debug_id == robot_id) {
-                //std::cout << "Received actions update" << std::endl;
-            }
+            // if (debug_id == robot_id) {
+            //     std::cout << "Received actions update" << std::endl;
+            // }
         }
     }
     count++;
@@ -294,15 +297,15 @@ void CFootBotDiffusion::ControlStep() {
             continue;
         }
         else if (a.type == Action::MOVE && (abs((currPos - targetPos).Length() + 0.5*(-static_cast<double>(a.nodeIDS.size()) + 1))) < EPS) {
-            if (robot_id == debug_id) {
-                std::cout << "Action: " << a.type << ", Target Position: (" << a.x << ", " << a.y << ")" <<
-                ", Current Position: (" << currPos.GetX() << ", " << currPos.GetY() << "). Previous speed is: "
-                << prevVelocity_ << std::endl;
-                std::cout << "size of node id: " << a.nodeIDS.size() << std::endl;
-                for (auto nodeId : a.nodeIDS) {
-                        std::cout << "Node ID: " << nodeId << std::endl;
-                    }
-            }
+            // if (robot_id == debug_id) {
+            //     std::cout << "Action: " << a.type << ", Target Position: (" << a.x << ", " << a.y << ")" <<
+            //     ", Current Position: (" << currPos.GetX() << ", " << currPos.GetY() << "). Previous speed is: "
+            //     << prevVelocity_ << std::endl;
+            //     std::cout << "size of node id: " << a.nodeIDS.size() << std::endl;
+            //     for (auto nodeId : a.nodeIDS) {
+            //             std::cout << "Node ID: " << nodeId << std::endl;
+            //         }
+            // }
             if (a.nodeIDS.size() > 1) {
                 receive_msg = client->call("receive_update", robot_id, a.nodeIDS.front()).as<std::string>();
                 q.front().nodeIDS.pop_front();
@@ -360,7 +363,7 @@ void CFootBotDiffusion::ControlStep() {
         right_v = turn_velocities.second;
     } else if (a.type == Action::POD) {
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
-        curr_pod = CVector3{a.x, a.y, 0.5f};
+        curr_pod = CVector3{a.x, a.y, 0.25f};
         pod_timer--;
     } else if (a.type == Action::STATION) {
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
@@ -513,22 +516,22 @@ std::pair<Real, Real> CFootBotDiffusion::Move(CVector3& targetPos, CVector3& cur
     Real maxDeltaV = m_linearAcceleration*dt;
     Real linearVelocity = prevVelocity_ + std::clamp(control_acc,  - maxDeltaV, maxDeltaV);;
 //    std::cout << "linearVelocity: " << linearVelocity << std::endl;
-    if (debug_id == robot_id){
-        std::cout << "PID::start###########################################################" << std::endl;
-        std::cout << "Distance error: " << distance << ", PID::Angle Error: " << angleError << ", curr angle: " <<
-                  currAngle << ", target angle: " << targetAngle <<", flag is: " << flag << std::endl;
-        std::cout << "PID::Linear Velocity: " << linearVelocity << ", refer vel: " << refer_velocity
-            << "Prev vel: " << prevVelocity_ << std::endl;
-        std::cout << "PID::Angular Velocity: " << angularVelocity.first << ", " << angularVelocity.second << std::endl;
-        std::cout << "control acc: " << control_acc << std::endl;
-        std::cout << "curr pos (" << currPos.GetX() << ", " << currPos.GetY()
-                  << "). curr angle: " << currAngle
-                  << ", target angle: " << targetAngle
-                  << ", target angle2: " << targetAngle2
-                  << ", delta_x: " << deltaX
-                  << ", delta_y: " << deltaY
-                  << std::endl;
-    }
+    // if (debug_id == robot_id){
+    //     std::cout << "PID::start###########################################################" << std::endl;
+    //     std::cout << "Distance error: " << distance << ", PID::Angle Error: " << angleError << ", curr angle: " <<
+    //               currAngle << ", target angle: " << targetAngle <<", flag is: " << flag << std::endl;
+    //     std::cout << "PID::Linear Velocity: " << linearVelocity << ", refer vel: " << refer_velocity
+    //         << "Prev vel: " << prevVelocity_ << std::endl;
+    //     std::cout << "PID::Angular Velocity: " << angularVelocity.first << ", " << angularVelocity.second << std::endl;
+    //     std::cout << "control acc: " << control_acc << std::endl;
+    //     std::cout << "curr pos (" << currPos.GetX() << ", " << currPos.GetY()
+    //               << "). curr angle: " << currAngle
+    //               << ", target angle: " << targetAngle
+    //               << ", target angle2: " << targetAngle2
+    //               << ", delta_x: " << deltaX
+    //               << ", delta_y: " << deltaY
+    //               << std::endl;
+    // }
     Real left_v_total = linearVelocity;
     Real right_v_total = linearVelocity;
 //    left_v_total = std::clamp(left_v_total, prevLeftVelocity_ - maxDeltaV, prevLeftVelocity_ + maxDeltaV);
