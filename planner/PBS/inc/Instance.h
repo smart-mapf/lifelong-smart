@@ -62,6 +62,7 @@ public:
 	int getDefaultNumberOfAgents() const { return num_of_agents; }
 
 	bool loadAgents(std::vector<std::pair<double, double>>& start_locs, std::vector<std::vector<std::tuple<int, int, double>>>& goal_locs);
+  void printMap() const;
 
 private:
 	  // int moves_offset[MOVE_COUNT];
@@ -74,7 +75,6 @@ private:
 	  vector<int> goal_locations;
 
 	  bool loadMap();
-	  void printMap() const;
 	  void saveMap() const;
 	  //
 	  // bool loadAgents();

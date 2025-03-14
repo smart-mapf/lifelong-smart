@@ -21,7 +21,7 @@
 // #include "random_task.h"
 using json = nlohmann::json;
 
-// #define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_AGENT 13
@@ -40,7 +40,7 @@ public:
     // TODO@jingtian: move some of them into private
     std::shared_ptr<ADG> adg;
     std::shared_ptr<RandomTask> task_manager_ptr;
-    bool flipped_coord = false;
+    bool flipped_coord = true;
 
     // std::vector<int> flags;
     // std::vector<int> adg_queue;

@@ -86,6 +86,7 @@ int main(int argc, char** argv)
 		auto new_mapf_plan = pbs.getPaths();
 		pbs.clearSearchEngines();
 		client.call("add_plan", new_mapf_plan);
+    // instance.printMap();
 		sleep(3);
 	}
 

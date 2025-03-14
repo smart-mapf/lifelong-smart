@@ -8,7 +8,7 @@
 #include <iomanip>  // For setting precision in double formatting
 #include <cmath>
 
-#define MAX_LOADS 5
+#define MAX_LOADS 1
 using namespace std;
 
 const double EPS = 1e-8;

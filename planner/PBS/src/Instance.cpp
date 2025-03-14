@@ -209,10 +209,17 @@ bool Instance::loadMap()
 
 void Instance::printMap() const
 {
+  std::cout << "num of rows: " << num_of_rows << " num of cols: " << num_of_cols << std::endl;
 	for (int i = 0; i< num_of_rows; i++)
 	{
 		for (int j = 0; j < num_of_cols; j++)
 		{
+      if (not start_locations.empty()) {
+        if (start_locations.front() == linearizeCoordinate(i, j)) {
+          std::cout << "*";
+          continue;
+        }
+      }
 			if (this->my_map[linearizeCoordinate(i, j)])
 				cout << '@';
 			else
@@ -264,11 +271,11 @@ bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs, st
 	char_separator<char> sep("\t");
 	for (int i = 0; i < num_of_agents; i++)
 	{
-		int col = static_cast<int>(start_locs[i].first);
-		int row = static_cast<int>(start_locs[i].second);
+		int row = static_cast<int>(start_locs[i].first);
+		int col = static_cast<int>(start_locs[i].second);
 		start_locations[i] = linearizeCoordinate(row, col);
-		col = std::get<0> (goal_locs[i][0]);
-		row = std::get<1> (goal_locs[i][0]);
+		row = std::get<0> (goal_locs[i][0]);
+		col = std::get<1> (goal_locs[i][0]);
 		goal_locations[i] = linearizeCoordinate(row, col);
 	}
 

@@ -29,7 +29,7 @@ def parse_arguments():
     parser.add_argument("--num_agents",
                         type=int,
                         required=False,
-                        default=10,
+                        default=1,
                         help="Number of agents in the scenario")
     parser.add_argument("--headless",
                         type=bool,
@@ -155,7 +155,7 @@ def run_simulator(args):
     server_process = subprocess.Popen(server_command)
 
     # Wait for a short period to ensure the server has started
-    time.sleep(5)
+    time.sleep(3)
     # Start the client process
     os.chdir("./client")
     # os.chdir("client")

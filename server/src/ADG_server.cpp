@@ -98,7 +98,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         std::vector<Step> tmp_plan;
         for (auto& step : plan)
         {
-            points.emplace_back(std::get<0>(step), std::get<1>(step), std::get<2>(step));
+            points.emplace_back(std::get<1>(step), std::get<0>(step), std::get<2>(step));
         }
         processAgentActions(points, tmp_plan, server_ptr->adg->curr_commit[agent_id].orient, agent_id);
         agent_id++;
@@ -107,30 +107,55 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
 
     std::vector<std::vector<Action>> plans;
     plans = processActions(raw_plan, server_ptr->flipped_coord);
-    // for (int i = 0; i < static_cast<int>(plans.size()); i++) {
-    //     Action tmp_act;
-    //     tmp_act.robot_id = (int) i;
-    //     // @jingtian Note: change action start time, to be consistent with the continuous case
-    //     tmp_act.time = plans[i].back().time;
-    //     tmp_act.start = server_ptr->curr_tasks[i].front()->goal_position;
-    //     tmp_act.goal = server_ptr->curr_tasks[i].front()->goal_position;
-    //     tmp_act.orientation = 0;
-    //     tmp_act.nodeID = 0;
-    //     if (server_ptr->curr_tasks[i].front()->flag == 0) {
-    //         // If station
-    //         tmp_act.type = 'S';
-    //     } else {
-    //         tmp_act.type = 'P';
-    //     }
-    //     plans[i].push_back(tmp_act);
-    // }
-    // showActionsPlan(plans);
+#ifdef  DEBUG
+    std::cout << "Finish action process, plan size: " << plans.size() << std::endl;
+#endif
+
+    for (int i = 0; i < static_cast<int>(plans.size()); i++) {
+        if (server_ptr->curr_tasks[i].empty()) {
+            std::cout << "curr task is empty" << std::endl;
+            continue;
+        } else if (server_ptr->curr_tasks[i].front() == nullptr) {
+            std::cout << "Invalid task" << std::endl;
+            continue;
+        } else if (plans[i].empty()) {
+            std::cout << "No plan" << std::endl;
+            continue;
+        }
+        std::cout << "original plan size: " << plans[i].size() << std::endl;
+        Action tmp_act;
+        tmp_act.robot_id = (int) i;
+        // @jingtian Note: change action start time, to be consistent with the continuous case
+        tmp_act.time = plans[i].back().time;
+        tmp_act.start = server_ptr->curr_tasks[i].front()->goal_position;
+        tmp_act.goal = server_ptr->curr_tasks[i].front()->obj_position;
+        if (server_ptr->flipped_coord) {
+            double tmp = tmp_act.goal.first;
+            tmp_act.goal.first = tmp_act.goal.second;
+            tmp_act.goal.second = tmp;
+            std::swap(tmp_act.start.first, tmp_act.start.second);
+        }
+        tmp_act.orientation = 0;
+        tmp_act.nodeID = 0;
+        if (server_ptr->curr_tasks[i].front()->flag == 0) {
+            // If station
+            tmp_act.type = 'S';
+        } else {
+            tmp_act.type = 'P';
+        }
+        plans[i].push_back(tmp_act);
+    }
+    showActionsPlan(plans);
     server_ptr->adg->addMAPFPlan(plans);
     // for (int id = 0; id < server_ptr->numRobots; id++)
     // {
     //     std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(id);
     //     server_ptr->task_manager_ptr->isAgentFinished(id, curr_pos);
     // }
+#ifdef DEBUG
+    std::cout << "Finish add plan" << std::endl;
+#endif
+
 }
 
 std::string receive_update(std::string& RobotID, int node_ID) {
@@ -182,13 +207,13 @@ void init(std::string RobotID) {
         std::cout << "All agents are initialized\n";
     }
     // int Robot_ID = server_ptr->startIndexToRobotID[RobotID];
-#ifdef DEBUG
-    std::cerr << "TMP::Receive init request from agent " << RobotID << " with: " << Robot_ID << std::endl;
-    if (Robot_ID == DEBUG_AGENT) {
-        std::cerr << "Receive init request from agent " << Robot_ID << std::endl;
-        exit(0);
-    }
-#endif
+// #ifdef DEBUG
+//     std::cerr << "TMP::Receive init request from agent " << RobotID << " with: " << Robot_ID << std::endl;
+//     if (Robot_ID == DEBUG_AGENT) {
+//         std::cerr << "Receive init request from agent " << Robot_ID << std::endl;
+//         exit(0);
+//     }
+// #endif
     // startTimers[Robot_ID] = std::chrono::steady_clock::now();
     // return server_ptr->adg->getPlan(Robot_ID);
 }
@@ -220,15 +245,16 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     server_ptr->task_manager_ptr->getTask(new_tasks);
     server_ptr->curr_tasks = new_tasks;
     new_goals.resize(server_ptr->numRobots);
+    std::cout << "get new tasks" << std::endl;
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
         for (auto& task : new_tasks[agent_id]) {
             int tmp_x = task->goal_position.first;
             int tmp_y = task->goal_position.second;
-            if (server_ptr->flipped_coord)
-            {
-                tmp_x = task->goal_position.second;
-                tmp_y = task->goal_position.first;
-            }
+            // if (server_ptr->flipped_coord)
+            // {
+            //     tmp_x = task->goal_position.second;
+            //     tmp_y = task->goal_position.first;
+            // }
 
             // printf("goal locs::(%d, %d)\n", tmp_x, tmp_y);
             new_goals[agent_id].emplace_back(tmp_x, tmp_y, task->goal_orient);
