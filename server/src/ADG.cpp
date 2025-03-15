@@ -36,6 +36,23 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
         tmp_entry.resize(plans.size(), false);
     }
 
+    // for (int i = 0; i < plans.size(); i++) {
+    //     for (int j = 0; j < plans[i].size(); j++) {
+    //         for (int robot_id = 0; robot_id < num_robots; robot_id++) {
+    //             int latest_finished_idx = finished_node_idx[robot_id];
+    //             // Indicating no node is finished yet
+    //             int next_node_idx = latest_finished_idx + 1;
+    //             for (int prev_idx = next_node_idx; prev_idx < graph_offset[robot_id]; prev_idx++) {
+    //                 if (graph[robot_id][prev_idx].action.start == plans[i][j].goal) {
+    //                     std::shared_ptr<Edge> tmp_edge = std::make_shared<Edge>(robot_id, i, prev_idx, j+graph_offset[i]);
+    //                     graph[i][j+graph_offset[i]].incomeEdges.push_back(tmp_edge);
+    //                     graph[robot_id][prev_idx].outEdges.push_back(tmp_edge);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
     // Create Type 2 edges
     for (int i = 0; i < plans.size(); i++) {
         adg_stats.type1EdgeCount += static_cast<int>(plans[i].size()) - 1;
@@ -65,7 +82,6 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
                         graph[i][j+graph_offset[i]].outEdges.push_back(tmp_edge);
                         graph[k][l+graph_offset[k]].incomeEdges.push_back(tmp_edge);
                         found_conflict = true;
-
                     }
                     else if (plans[k][l].start == plans[i][j].goal && plans[k][l].time <= plans[i][j].time) {
                         std::shared_ptr<Edge> tmp_edge = std::make_shared<Edge>(k, i, l+graph_offset[k], j+graph_offset[i]);
