@@ -363,7 +363,7 @@ void CFootBotDiffusion::ControlStep() {
         right_v = turn_velocities.second;
     } else if (a.type == Action::POD) {
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
-        curr_pod = CVector3{a.x, a.y, 0.25f};
+        curr_pod = CVector3{a.x, a.y, 0.0f};
         pod_timer--;
     } else if (a.type == Action::STATION) {
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);

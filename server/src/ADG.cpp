@@ -23,8 +23,13 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
     // Initialize nodes in the graph
     for (int i = 0; i < num_robots; i++) {
         int j = 0;
+        std::cout << "Agent " << i << ": " << std::endl;
         for (const auto& action : plans[i]) {
             ADGNode node {action, j, {}, {}};
+            std::cout << "        {" << action.robot_id << ", " << action.time << ", "
+                      << std::fixed << std::setprecision(1) << action.orientation << ", '"
+                      << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
+                      << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << "}," << std::endl;
             graph[i].push_back(node);
             j++;
             total_nodes_cnt ++;
@@ -36,22 +41,22 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
         tmp_entry.resize(plans.size(), false);
     }
 
-    // for (int i = 0; i < plans.size(); i++) {
-    //     for (int j = 0; j < plans[i].size(); j++) {
-    //         for (int robot_id = 0; robot_id < num_robots; robot_id++) {
-    //             int latest_finished_idx = finished_node_idx[robot_id];
-    //             // Indicating no node is finished yet
-    //             int next_node_idx = latest_finished_idx + 1;
-    //             for (int prev_idx = next_node_idx; prev_idx < graph_offset[robot_id]; prev_idx++) {
-    //                 if (graph[robot_id][prev_idx].action.start == plans[i][j].goal) {
-    //                     std::shared_ptr<Edge> tmp_edge = std::make_shared<Edge>(robot_id, i, prev_idx, j+graph_offset[i]);
-    //                     graph[i][j+graph_offset[i]].incomeEdges.push_back(tmp_edge);
-    //                     graph[robot_id][prev_idx].outEdges.push_back(tmp_edge);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+    for (int i = 0; i < plans.size(); i++) {
+        for (int j = 0; j < plans[i].size(); j++) {
+            for (int robot_id = 0; robot_id < num_robots; robot_id++) {
+                int latest_finished_idx = finished_node_idx[robot_id];
+                // Indicating no node is finished yet
+                int next_node_idx = latest_finished_idx + 1;
+                for (int prev_idx = next_node_idx; prev_idx < graph_offset[robot_id]; prev_idx++) {
+                    if (graph[robot_id][prev_idx].action.start == plans[i][j].goal) {
+                        std::shared_ptr<Edge> tmp_edge = std::make_shared<Edge>(robot_id, i, prev_idx, j+graph_offset[i]);
+                        graph[i][j+graph_offset[i]].incomeEdges.push_back(tmp_edge);
+                        graph[robot_id][prev_idx].outEdges.push_back(tmp_edge);
+                    }
+                }
+            }
+        }
+    }
 
     // Create Type 2 edges
     for (int i = 0; i < plans.size(); i++) {
@@ -68,6 +73,8 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
                 }
             } else if (plans[i][j].type == 'T') {
                 adg_stats.rotateActionCount++;
+                consecutive_move = false;
+            } else if (plans[i][j].type == 'S' or plans[i][j].type == 'P') {
                 consecutive_move = false;
             } else {
                 std::cerr << "Invalid type!\n" << std::endl;
@@ -156,10 +163,9 @@ std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_nod
     if (not initialized) {
         return {};
     }
-    std::vector<std::pair<double, double>> commitCut(num_robots);
-    curr_commit.clear();
     // If it is never initialized
     if (graph.size() == 0) {
+        commitCut.resize(num_robots);
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
             commitCut[agent_id] = init_locs[agent_id].position;
             curr_commit.emplace_back(init_locs[agent_id].position, 0);
@@ -196,6 +202,13 @@ std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_nod
         assert(commited_actions[agent_id].second <= graph[agent_id].size());
         assert(commited_actions[agent_id].first <= commited_actions[agent_id].second);
         // when remove nodes not commited, also remove the type-2 edges
+#ifdef DEBUG
+        std::cout << "Clean commited actions for agent " << agent_id << std::endl;
+#endif
+        if (graph[agent_id].empty()) {
+            // commitCut[agent_id] = init_locs[agent_id].position;
+            continue;
+        }
         for (int node_idx = commited_actions[agent_id].second; node_idx < graph[agent_id].size(); node_idx++) {
             // we can ignore outgoing edges
             for (auto& tmp_in_edge: graph[agent_id][node_idx].incomeEdges) {
@@ -208,6 +221,9 @@ std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_nod
         commitCut[agent_id] = last_node.action.goal;
         curr_commit.emplace_back(last_node.action.goal, static_cast<int> (last_node.action.orientation));
     }
+#ifdef DEBUG
+    std::cout << "Find commit Cut " << std::endl;
+#endif
     return commitCut;
 }
 

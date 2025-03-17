@@ -152,6 +152,8 @@ public:
 
 private:
     std::vector<std::vector<ADGNode>> graph;
+    std::vector<std::pair<double, double>> commitCut;
+
     int num_robots = 0;
     int total_nodes_cnt = 0;
     size_t look_ahead_dist = 0;

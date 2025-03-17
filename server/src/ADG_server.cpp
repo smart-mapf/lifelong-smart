@@ -74,6 +74,11 @@ std::shared_ptr<ADG_Server> server_ptr = nullptr;
 
 std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     std::cout << "Get robot location query received!" << std::endl;
+    // if (server_ptr->adg->initialized and not server_ptr->debug_set_flag) {
+    //     server_ptr->debug_set_flag = true;
+    // } else {
+    //     return {};
+    // }
     std::vector<std::pair<double, double>> robots_location = server_ptr->adg->computeCommitCut(look_ahead_dist);
     if (server_ptr->flipped_coord)
     {
@@ -84,6 +89,18 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     }
 
     std::vector<std::pair<double, double>> goal_location;
+
+    std::vector<bool> task_status;
+    std::cout << "retrieving last actions" << std::endl;
+    auto success_status = server_ptr->adg->getLastAction(task_status);
+    std::cout << "retrieved last actions" << std::endl;
+    if (success_status) {
+        for (int i = 0; i < task_status.size(); i++) {
+            if (task_status[i] ) {
+                server_ptr->task_manager_ptr->setTask(i, server_ptr->curr_tasks[i].front(), false);
+            }
+        }
+    }
     return robots_location;
 }
 
@@ -100,7 +117,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         {
             points.emplace_back(std::get<1>(step), std::get<0>(step), std::get<2>(step));
         }
-        processAgentActions(points, tmp_plan, server_ptr->adg->curr_commit[agent_id].orient, agent_id);
+        processAgentActions(points, tmp_plan, -1, agent_id);
         agent_id++;
         raw_plan.push_back(tmp_plan);
     }
@@ -126,7 +143,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         tmp_act.robot_id = (int) i;
         // @jingtian Note: change action start time, to be consistent with the continuous case
         tmp_act.time = plans[i].back().time;
-        tmp_act.start = server_ptr->curr_tasks[i].front()->obj_position;
+        tmp_act.start = server_ptr->curr_tasks[i].front()->goal_position;
         tmp_act.goal = server_ptr->curr_tasks[i].front()->goal_position;
         if (server_ptr->flipped_coord) {
             double tmp = tmp_act.goal.first;
@@ -167,15 +184,15 @@ std::string receive_update(std::string& RobotID, int node_ID) {
     int Robot_ID = server_ptr->adg->startIndexToRobotID[RobotID];
     bool status_update = server_ptr->adg->updateFinishedNode(Robot_ID, node_ID);
     std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(Robot_ID);
-    if (server_ptr->adg->isTaskNode(Robot_ID, node_ID)) {
-        std::cout << "receive confirmation for robot id: " << Robot_ID << ", at node id: "<< node_ID << "with current position at: " <<
-        curr_pos.first << ", " << curr_pos.second << std::endl;
-        if (not server_ptr->curr_tasks[Robot_ID].empty()) {
-            if (server_ptr->curr_tasks[Robot_ID].front()->status == true) {
-                server_ptr->task_manager_ptr->setTask(Robot_ID, server_ptr->curr_tasks[Robot_ID].front(), false);
-            }
-        }
-    }
+    // if (server_ptr->adg->isTaskNode(Robot_ID, node_ID)) {
+    //     std::cout << "receive confirmation for robot id: " << Robot_ID << ", at node id: "<< node_ID << "with current position at: " <<
+    //     curr_pos.first << ", " << curr_pos.second << std::endl;
+    //     if (not server_ptr->curr_tasks[Robot_ID].empty()) {
+    //         if (server_ptr->curr_tasks[Robot_ID].front()->status == true) {
+    //             server_ptr->task_manager_ptr->setTask(Robot_ID, server_ptr->curr_tasks[Robot_ID].front(), false);
+    //         }
+    //     }
+    // }
 
     // printf("goal::(%f, %f), curr_pos::(%f, %f)\n", server_ptr->adg->getActionGoal(Robot_ID, node_ID).first,
     //     server_ptr->adg->getActionGoal(Robot_ID, node_ID).second, curr_pos.first, curr_pos.second);
@@ -239,17 +256,6 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     if (not server_ptr->adg->initialized) {
         return new_goals;
     }
-    // std::vector<bool> task_status;
-    // std::cout << "retrieving last actions" << std::endl;
-    // auto success_status = server_ptr->adg->getLastAction(task_status);
-    // std::cout << "retrieved last actions" << std::endl;
-    // if (success_status) {
-    //     for (int i = 0; i < task_status.size(); i++) {
-    //         if (task_status[i] ) {
-    //             server_ptr->task_manager_ptr->setTask(i, server_ptr->curr_tasks[i].front(), false);
-    //         }
-    //     }
-    // }
     std::vector<std::deque<std::shared_ptr<Task>>> new_tasks;
     server_ptr->task_manager_ptr->getTask(new_tasks);
     server_ptr->curr_tasks = new_tasks;
@@ -297,10 +303,6 @@ std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, 
     //     server_ptr->adg->printProgress();
     // }
     server_ptr->step_cnt++;
-#ifdef DEBUG
-    if (Robot_ID == DEBUG_AGENT)
-        std::cerr << "Receive update request from agent " << Robot_ID << std::endl;
-#endif
     return server_ptr->adg->getPlan(Robot_ID);
 }
 

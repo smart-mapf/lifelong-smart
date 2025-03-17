@@ -60,6 +60,8 @@ public:
     int numRobots = 0;
     int step_cnt = 0;
 
+    bool debug_set_flag = false;
+
 private:
 //    int type1EdgeCount = 0;
 //    int type2EdgeCount = 0;
