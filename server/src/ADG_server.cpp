@@ -96,7 +96,7 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     std::cout << "retrieved last actions" << std::endl;
     if (success_status) {
         for (int i = 0; i < task_status.size(); i++) {
-            if (task_status[i] ) {
+            if (task_status[i] and server_ptr->curr_tasks[i].front()->status == true) {
                 server_ptr->task_manager_ptr->setTask(i, server_ptr->curr_tasks[i].front(), false);
             }
         }

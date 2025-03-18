@@ -166,6 +166,7 @@ bool RandomTask::setPod(int pod_idx, bool status) {
       return false;
     }
     tmp_pod->second->status = status;
+    assert(tmp_pod != nullptr);
     active_pods.erase(tmp_pod);
     occupied_pods.insert({tmp_pod->first, tmp_pod->second});
   } else {
@@ -175,6 +176,7 @@ bool RandomTask::setPod(int pod_idx, bool status) {
       return false;
     }
     tmp_pod->second->status = status;
+    assert(tmp_pod != nullptr);
     occupied_pods.erase(tmp_pod);
     active_pods.insert({tmp_pod->first, tmp_pod->second});
   }
@@ -189,6 +191,7 @@ bool RandomTask::setStation(int station_idx, bool status) {
       return false;
     }
     tmp_station->second->status = status;
+    assert(tmp_station != nullptr);
     active_stations.erase(tmp_station);
     occupied_stations.insert({station_idx, tmp_station->second});
   } else {
@@ -198,6 +201,7 @@ bool RandomTask::setStation(int station_idx, bool status) {
       return false;
     }
     tmp_station->second->status = status;
+    assert(tmp_station != nullptr);
     occupied_stations.erase(tmp_station);
     active_stations.insert({station_idx, tmp_station->second});
   }

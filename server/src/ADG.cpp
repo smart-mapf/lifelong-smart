@@ -163,6 +163,7 @@ std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_nod
     if (not initialized) {
         return {};
     }
+    curr_commit.clear();
     // If it is never initialized
     if (graph.size() == 0) {
         commitCut.resize(num_robots);
@@ -203,7 +204,7 @@ std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_nod
         assert(commited_actions[agent_id].first <= commited_actions[agent_id].second);
         // when remove nodes not commited, also remove the type-2 edges
 #ifdef DEBUG
-        std::cout << "Clean commited actions for agent " << agent_id << std::endl;
+        std::cout << "Clean commited actions for agent " << agent_id << ", total actions: " << graph[agent_id].size() << std::endl;
 #endif
         if (graph[agent_id].empty()) {
             // commitCut[agent_id] = init_locs[agent_id].position;
@@ -216,10 +217,20 @@ std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_nod
                 vec.erase(std::remove(vec.begin(), vec.end(), tmp_in_edge), vec.end());
             }
         }
+        std::cout << "Clean commited actions for agent " << agent_id << ": " << std::endl;
         graph[agent_id].erase(graph[agent_id].begin()+commited_actions[agent_id].second, graph[agent_id].end());
+        std::cout << "curr size of commited is: " << curr_commit.size() << ": graph size: " << graph.size() << std::endl;
+
         ADGNode last_node = graph[agent_id].back();
+        auto action = last_node.action;
+        std::cout << "        {" << action.robot_id << ", " << action.time << ", "
+                  << std::fixed << std::setprecision(1) << action.orientation << ", '"
+                  << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
+                  << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << "}," << std::endl;
         commitCut[agent_id] = last_node.action.goal;
         curr_commit.emplace_back(last_node.action.goal, static_cast<int> (last_node.action.orientation));
+        std::cout << "Loop end for agent " << agent_id << ": " << std::endl;
+
     }
 #ifdef DEBUG
     std::cout << "Find commit Cut " << std::endl;
