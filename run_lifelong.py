@@ -29,7 +29,7 @@ def parse_arguments():
     parser.add_argument("--num_agents",
                         type=int,
                         required=False,
-                        default=10,
+                        default=20,
                         help="Number of agents in the scenario")
     parser.add_argument("--headless",
                         type=bool,

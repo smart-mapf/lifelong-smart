@@ -73,7 +73,7 @@ void ADG_Server::saveStats() {
 std::shared_ptr<ADG_Server> server_ptr = nullptr;
 
 std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
-    std::cout << "Get robot location query received!" << std::endl;
+    std::cout << "Get robot location query received! lookahead dist: " << look_ahead_dist << std::endl;
     // if (server_ptr->adg->initialized and not server_ptr->debug_set_flag) {
     //     server_ptr->debug_set_flag = true;
     // } else {
@@ -132,7 +132,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         if (server_ptr->curr_tasks[i].empty()) {
             std::cout << "curr task is empty" << std::endl;
             continue;
-        } else if (server_ptr->curr_tasks[i].front() == nullptr) {
+        } else if (server_ptr->curr_tasks[i].front() == nullptr or server_ptr->curr_tasks[i].front()->status == false) {
             std::cout << "Invalid task" << std::endl;
             continue;
         } else if (plans[i].empty()) {
@@ -161,7 +161,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         }
         plans[i].push_back(tmp_act);
     }
-    showActionsPlan(plans);
+    // showActionsPlan(plans);
     server_ptr->adg->addMAPFPlan(plans);
     // for (int id = 0; id < server_ptr->numRobots; id++)
     // {
@@ -257,12 +257,22 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
         return new_goals;
     }
     std::vector<std::deque<std::shared_ptr<Task>>> new_tasks;
+    assert(new_tasks.size() == server_ptr->numRobots);
     server_ptr->task_manager_ptr->getTask(new_tasks);
-    server_ptr->curr_tasks = new_tasks;
+    if (server_ptr->curr_tasks.empty()) {
+        server_ptr->curr_tasks = new_tasks;
+    } else {
+        for (int i = 0; i < server_ptr->numRobots; i++) {
+            if (not new_tasks[i].empty() and new_tasks[i].front() != nullptr) {
+                server_ptr->curr_tasks[i] = new_tasks[i];
+            }
+        }
+    }
     new_goals.resize(server_ptr->numRobots);
     std::cout << "get new tasks" << std::endl;
-    for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
-        for (auto& task : new_tasks[agent_id]) {
+    for (int agent_id = 0; agent_id < server_ptr->curr_tasks.size(); agent_id++) {
+        printf("agent_id: %d\n", agent_id);
+        for (auto& task : server_ptr->curr_tasks[agent_id]) {
             int tmp_x = task->goal_position.first;
             int tmp_y = task->goal_position.second;
             // if (server_ptr->flipped_coord)
@@ -271,7 +281,7 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
             //     tmp_y = task->goal_position.first;
             // }
 
-            // printf("goal locs::(%d, %d)\n", tmp_x, tmp_y);
+            printf("goal locs::(%d, %d)\n", tmp_x, tmp_y);
             new_goals[agent_id].emplace_back(tmp_x, tmp_y, task->goal_orient);
         }
     }

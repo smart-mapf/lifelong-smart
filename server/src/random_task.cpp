@@ -24,7 +24,6 @@ void RandomTask::getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tas
       if (tmp_new_task == nullptr) {
         // Do nothing
         std::cerr << "Failed to generate new random task" << std::endl;
-        exit(-1);
         continue;
       }
       setTask(agent_idx, tmp_new_task, true);
@@ -105,16 +104,20 @@ std::shared_ptr<Task> RandomTask::pickRandomStation(int agent_id) {
   // std::srand(std::time(0));  // Seed the random number generator
   std::srand(0);  // Seed the random number generator
 
-  int station_idx = std::rand() % (active_stations.size() - 1);
+  int station_idx = std::rand() % active_stations.size();
+  std::cout << "active stations size: " << active_stations.size() << ", picked station idx: " << station_idx << std::endl;
   auto it = active_stations.begin();
   std::advance(it, station_idx);
   auto tmp_station = it->second;
   int x = tmp_station->x;
   int y = tmp_station->y;
-  return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y), std::make_pair(x, y), station_idx, 0);
+  return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y), std::make_pair(x, y), tmp_station->idx, 0);
 }
 
 void RandomTask::setTask(int agent_id, std::shared_ptr<Task>& task, bool status) {
+  if (task->status == status and status == false) {
+    return;
+  }
   if (task->flag == 0) {
     setStation(task->operate_obj_idx, status);
   } else if (task->flag == 1) {
@@ -140,6 +143,10 @@ void RandomTask::setTask(int agent_id, std::shared_ptr<Task>& task, bool status)
       << tmp_new_task->status << std::endl;
     }
 #endif
+    if (agent_task_status[agent_id].assigned_tasks.empty()) {
+      std::cout << "No task for agent " << agent_id << std::endl;
+      exit(-1);
+    }
     assert(task == agent_task_status[agent_id].assigned_tasks.front());
     agent_task_status[agent_id].assigned_tasks.pop_front();
     if (task->flag == 0) {
