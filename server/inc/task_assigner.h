@@ -2,26 +2,7 @@
 #include <utility>
 #include "user_map.h"
 
-struct Task
-{
-    int id;
-    int agent_id;
-    std::pair<int, int> goal_position;
-    std::pair<int, int> obj_position;
-    int goal_orient=0;
-    // Maybe find a better way?
-    // For now, 0 is to station, 1 is to pod
-    int flag = -1;
-    int operate_obj_idx = -1;
 
-    bool status=true; // false if finished, true otherwise
-    Task(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
-        obj_position=goal_position;
-    }
-    Task(int id, int agent_id, std::pair<int, int> goal_position, std::pair<int, int> obj_pos, int obj_idx, int flag):
-        id(id), agent_id(agent_id), goal_position(std::move(goal_position)), obj_position(std::move(obj_pos)),
-        operate_obj_idx(obj_idx), flag(flag) {}
-};
 
 
 

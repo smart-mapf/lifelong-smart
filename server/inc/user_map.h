@@ -14,6 +14,7 @@ public:
 public:
     std::vector<std::shared_ptr<Station>> all_stations;
     std::vector<std::shared_ptr<Pod>> all_pods;
+    std::vector< std::vector< std::shared_ptr<Pod> > > pods_by_genre;
     int num_of_rows;
     int num_of_cols;
 

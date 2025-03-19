@@ -1,26 +1,15 @@
 type octile
-height 36
+height 43
 width 48
 map
 ..T....T....T....T....T...T....T....T....T....T.
 ................................................
 ................................................
 ................................................
-................................................
 .PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
 .PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
 .PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
 .PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
-.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
-.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
-.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
-.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
-.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
-.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
-.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
-.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
-................................................
-................................................
 .PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
 .PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
 .PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
@@ -34,6 +23,24 @@ map
 .PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
 .PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
 ................................................
+................................................
+................................................
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
+.PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP..PP.
 ................................................
 ................................................
 ................................................

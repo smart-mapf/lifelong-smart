@@ -172,6 +172,7 @@ def create_Argos(map_data,
     # </box>
     wall_thick = 0.05
     wall_height = 0.5
+    y_offset = 0.0
 
     box = ET.SubElement(arena,
                         "box",
@@ -180,7 +181,7 @@ def create_Argos(map_data,
                         movable="false")
     body = ET.SubElement(box,
                           "body",
-                          position=f"0.5,{map_center_y},0",
+                          position=f"0.5,{map_center_y},{y_offset}",
                           orientation="0,0,0")
     
     box = ET.SubElement(arena,
@@ -190,7 +191,7 @@ def create_Argos(map_data,
                         movable="false")
     body = ET.SubElement(box,
                           "body",
-                          position=f"{map_center_x},{-width+0.5},0",
+                          position=f"{map_center_x},{-width+0.5},{y_offset}",
                           orientation="0,0,0")
     
     box = ET.SubElement(arena,
@@ -200,7 +201,7 @@ def create_Argos(map_data,
                         movable="false")
     body = ET.SubElement(box,
                           "body",
-                          position=f"{-height+0.5},{map_center_y},0",
+                          position=f"{-height+0.5},{map_center_y},{y_offset}",
                           orientation="0,0,0")
     
     box = ET.SubElement(arena,
@@ -210,7 +211,7 @@ def create_Argos(map_data,
                         movable="false")
     body = ET.SubElement(box,
                           "body",
-                          position=f"{map_center_x},0.5,0",
+                          position=f"{map_center_x},0.5,{y_offset}",
                           orientation="0,0,0")
     
 

@@ -10,7 +10,7 @@ struct AgentTaskStatus {
   explicit AgentTaskStatus(int agent_idx): agent_idx(agent_idx) {}
 };
 
-class RandomTask : private TaskManager {
+class RandomTask : TaskManager {
 public:
   RandomTask(int num_agents, std::string& map_fname);
   std::shared_ptr<Task> genRandomTask(int agent_id);
