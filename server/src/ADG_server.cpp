@@ -3,6 +3,9 @@
 #include <random_task.h>
 
 std::vector<std::chrono::steady_clock::time_point> startTimers; // Start times for each robot
+std::shared_ptr<ADG_Server> server_ptr = nullptr;
+// TODO@jingtian: find a better way
+int num_genre = 12;
     // =======================
 
 ADG_Server::ADG_Server(int num_robots,
@@ -12,7 +15,9 @@ ADG_Server::ADG_Server(int num_robots,
     std::string method_name): curr_map_name(map_name), curr_scen_name(scen_name), curr_method_name(method_name)
  {
     adg = std::make_shared<ADG> (num_robots);
-    task_manager_ptr = std::make_shared<RandomTask>(num_robots, map_name);
+    mobile_manager = std::make_shared<MobileTaskManager>(num_robots, map_name);
+    picker_manager = std::make_shared<PickTaskManager>(num_robots, num_genre, map_name);
+
     output_filename = target_output_filename;
     numRobots = adg->numRobots();
     agent_finish_time.resize(numRobots, -1);
@@ -22,7 +27,6 @@ ADG_Server::ADG_Server(int num_robots,
     // robotIDTOStartIndex = name_mapping.first;
     // startIndexToRobotID = name_mapping.second;
 
-    outgoingEdgesByRobot.resize(numRobots);
     startTimers.resize(numRobots);
 }
 
@@ -69,8 +73,6 @@ void ADG_Server::saveStats() {
     std::cout << result.dump() << std::endl; 
 }
 
-
-std::shared_ptr<ADG_Server> server_ptr = nullptr;
 
 std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     std::cout << "Get robot location query received! lookahead dist: " << look_ahead_dist << std::endl;
@@ -129,13 +131,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
 #endif
 
     for (int i = 0; i < static_cast<int>(plans.size()); i++) {
-        if (server_ptr->curr_tasks[i].empty()) {
-            std::cout << "curr task is empty" << std::endl;
-            continue;
-        } else if (server_ptr->curr_tasks[i].front() == nullptr or server_ptr->curr_tasks[i].front()->status == false) {
-            std::cout << "Invalid task" << std::endl;
-            continue;
-        } else if (plans[i].empty()) {
+        if (plans[i].empty()) {
             std::cout << "No plan" << std::endl;
             continue;
         }
@@ -174,7 +170,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
 
 }
 
-std::string receive_update(std::string& RobotID, int node_ID) {
+std::string actionFinished(std::string& RobotID, int node_ID) {
     std::lock_guard<std::mutex> guard(globalMutex);
     if (not server_ptr->adg->initialized) {
         std::cerr << "ADG_Server::ADG_Server: server_ptr is not initialized" << std::endl;
@@ -206,48 +202,14 @@ std::string receive_update(std::string& RobotID, int node_ID) {
     //     //     server_ptr->agents_finish[Robot_ID] = true;
     //     // }
     // }
-
-    //
-    // server_ptr->all_agents_finished = true;
-    // for (auto status: server_ptr->agents_finish) {
-    //     if (not status) {
-    //         server_ptr->all_agents_finished = false;
-    //     }
-    // }
-    // if (server_ptr->all_agents_finished) {
-    //     return "exit";
-    // }
-    // if (server_ptr->agents_finish[Robot_ID]) {
-    //     return "end";
-    // }
     return "None";
 }
 
 void init(std::string RobotID) {
     std::lock_guard<std::mutex> guard(globalMutex);
-    printf("robot ID: %s\n", RobotID.c_str());
-    bool is_all_init = server_ptr->adg->createRobotIDToStartIndexMaps(RobotID);
-    if (is_all_init)
-    {
-        ;
-        std::cout << "All agents are initialized\n";
-    }
-    // int Robot_ID = server_ptr->startIndexToRobotID[RobotID];
-// #ifdef DEBUG
-//     std::cerr << "TMP::Receive init request from agent " << RobotID << " with: " << Robot_ID << std::endl;
-//     if (Robot_ID == DEBUG_AGENT) {
-//         std::cerr << "Receive init request from agent " << Robot_ID << std::endl;
-//         exit(0);
-//     }
-// #endif
-    // startTimers[Robot_ID] = std::chrono::steady_clock::now();
-    // return server_ptr->adg->getPlan(Robot_ID);
+    server_ptr->adg->createRobotIDToStartIndexMaps(RobotID);
 }
 
-void addNewGoals(std::vector<std::vector<std::tuple<int, int, double>>>& new_goals)
-{
-    ;
-}
 
 std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
 {
@@ -293,6 +255,14 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
 //     ;
 // }
 
+void getPickerTask();
+
+void confirmPickerTask();
+
+void requestMobileTask();
+
+void confirmMobileTask();
+
 std::string getScenConfigName()
 {
     std::string target_path = server_ptr->curr_method_name + "/" + server_ptr->curr_map_name + "/" + std::to_string(server_ptr->numRobots) + "/" + server_ptr->curr_scen_name;
@@ -327,11 +297,6 @@ void updateSimFinishTime(std::string& robot_id_str, int sim_step)
 
 void closeServer(rpc::server& srv)
 {
-    // if (server_ptr->all_agents_finished) {
-    //     std::cout << "Finish all actions, exiting..." << std::endl;
-    // } else {
-    //     std::cout << "BUG::exiting without finish all actions" << std::endl;
-    // }
     server_ptr->saveStats();
     srv.stop();
 }
@@ -345,7 +310,6 @@ int main(int argc, char **argv) {
             // params for the input instance and experiment settings
             ("path_file,p", po::value<string>(), "input file for path")
             ("num_robots,k", po::value<int>()->required(), "number of robots in server")
-//            ("path_file,p", po::value<string>()->default_value("../data/maze-32-32-4_paths.txt"), "input file for path")
             ("port_number,n", po::value<int>()->default_value(8080), "rpc port number")
             ("output_file,o", po::value<string>()->default_value("stats.csv"), "output statistic filename")
             ("map_file,m", po::value<string>()->default_value("empty-8-8.map"), "map filename")
@@ -373,7 +337,7 @@ int main(int argc, char **argv) {
 
     int port_number = vm["port_number"].as<int>();
     rpc::server srv(port_number);  // Setup the server to listen on the specified port number
-    srv.bind("receive_update", &receive_update);  // Bind the function to the server
+    srv.bind("receive_update", &actionFinished);  // Bind the function to the server
     srv.bind("init", &init);
     srv.bind("get_location", &getRobotsLocation);
     srv.bind("get_goals", &getGoals);

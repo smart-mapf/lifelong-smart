@@ -10,6 +10,7 @@
 
 #define MAX_LOADS 1
 #define MAX_TASKS 100
+#define MAX_NUM_GOALS 1
 #define DEBUG
 
 using namespace std;
@@ -56,7 +57,46 @@ struct Action {
     int nodeID;
 };
 
-struct Task
+// struct Task
+// {
+//     int id;
+//     int agent_id;
+//     std::pair<int, int> goal_position;
+//     std::pair<int, int> obj_position;
+//     int goal_orient=0;
+//     // Maybe find a better way?
+//     // For now, 0 is to station, 1 is to pod
+//     int flag = -1;
+//     int operate_obj_idx = -1;
+//
+//     bool status=true; // false if finished, true otherwise
+//     Task(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
+//         obj_position=goal_position;
+//     }
+//     Task(int id, int agent_id, std::pair<int, int> goal_position, std::pair<int, int> obj_pos, int obj_idx, int flag):
+//         id(id), agent_id(agent_id), goal_position(std::move(goal_position)), obj_position(std::move(obj_pos)),
+//         operate_obj_idx(obj_idx), flag(flag) {}
+// };
+
+struct PickerTask
+{
+    int id;
+    int genre;
+    std::pair<int, int> goal_position;
+    std::pair<int, int> obj_position;
+    int operate_obj_idx = -1;
+
+    bool status=true; // false if finished, true otherwise
+    PickerTask(int id, int genre, std::pair<int, int> goal_position): id(id), genre(genre), goal_position(std::move(goal_position)) {
+        obj_position=goal_position;
+    }
+};
+
+enum MobileAction {
+    DELIVER = 0, PICK = 1, NONE = 2
+};
+
+struct MobileRobotTask
 {
     int id;
     int agent_id;
@@ -65,16 +105,16 @@ struct Task
     int goal_orient=0;
     // Maybe find a better way?
     // For now, 0 is to station, 1 is to pod
-    int flag = -1;
+    MobileAction act = NONE;
     int operate_obj_idx = -1;
 
     bool status=true; // false if finished, true otherwise
-    Task(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
+    MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
         obj_position=goal_position;
     }
-    Task(int id, int agent_id, std::pair<int, int> goal_position, std::pair<int, int> obj_pos, int obj_idx, int flag):
+    MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position, std::pair<int, int> obj_pos, int obj_idx, MobileAction flag):
         id(id), agent_id(agent_id), goal_position(std::move(goal_position)), obj_position(std::move(obj_pos)),
-        operate_obj_idx(obj_idx), flag(flag) {}
+        operate_obj_idx(obj_idx), act(flag) {}
 };
 
 inline bool positionCompare(std::pair<double, double> a, std::pair<int, int> b) {

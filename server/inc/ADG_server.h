@@ -4,8 +4,6 @@
 #include <rpc/server.h>
 #include <string>
 #include <iostream>
-#include "ADG.h"
-#include <iostream>
 #include <vector>
 #include <tuple>
 #include <stdexcept>
@@ -17,8 +15,12 @@
 #include <fstream>    // For file operations
 #include <map>        // For mapping robot actions
 #include <numeric> // For std::accumulate
+
+#include "ADG.h"
 #include "json.hpp"
-// #include "random_task.h"
+#include "mobile_task.h"
+#include "picker_task.h"
+
 using json = nlohmann::json;
 
 
@@ -38,20 +40,15 @@ public:
     
     // TODO@jingtian: move some of them into private
     std::shared_ptr<ADG> adg;
-    std::shared_ptr<RandomTask> task_manager_ptr;
+    std::shared_ptr<MobileTaskManager> mobile_manager;
+    std::shared_ptr<PickTaskManager> picker_manager;
     bool flipped_coord = true;
 
-    // std::vector<int> flags;
-    // std::vector<int> adg_queue;
-    // std::map<int, std::string> robotIDTOStartIndex;
-    // std::map<std::string, int> startIndexToRobotID;
-    std::vector<std::vector<Action>> plans;
-    std::vector<std::deque<std::shared_ptr<Task>>> curr_tasks;
-    std::vector<std::vector<int>> outgoingEdgesByRobot;
+    // std::vector<std::deque<std::shared_ptr<Task>>> curr_tasks;
+
+    // stats data
     std::vector<double> agent_finish_time;
     std::vector<int> agent_finish_sim_step;
-    int latest_arr_sim_step = 0;
-    bool all_agents_finished = false;
     std::vector<bool> agents_finish;
     std::string output_filename;
     std::string curr_map_name;
@@ -59,6 +56,7 @@ public:
     std::string curr_method_name;
     int numRobots = 0;
     int step_cnt = 0;
+    double latest_arr_sim_step = 0;
 
     bool debug_set_flag = false;
 

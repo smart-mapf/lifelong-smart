@@ -11,7 +11,6 @@
 #include <iomanip>
 
 #include "parser.h"
-#include "random_task.h"
 
 typedef std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>>> SIM_PLAN;
 

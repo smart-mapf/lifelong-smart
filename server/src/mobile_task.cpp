@@ -4,36 +4,28 @@ MobileTaskManager::MobileTaskManager(int num_agents, std::string& map_fname): Ta
   for (auto& tmp_station: user_map.all_stations) {
     active_stations.insert({tmp_station->idx, tmp_station});
   }
-  for (auto& tmp_pod: user_map.all_pods) {
-    active_pods.insert({tmp_pod->idx, tmp_pod});
-  }
   for (int i = 0; i < num_agents; ++i) {
     agent_task_status.emplace_back(i);
   }
 }
 
 
-void MobileTaskManager::getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks) {
+void MobileTaskManager::getTask(std::vector<std::deque<std::shared_ptr<MobileRobotTask>>>& new_tasks) {
   for (int agent_idx = 0; agent_idx < num_robots_; agent_idx++) {
     assert(agent_task_status[agent_idx].curr_loads >= 0);
 #ifdef DEBUG
     std::cout << "Total task for Agent " << agent_idx << ", is: " << agent_task_status[agent_idx].assigned_tasks.size() << std::endl;
 #endif
-    if (agent_task_status[agent_idx].assigned_tasks.empty()) {
-      auto tmp_new_task = genRandomTask(agent_idx);
+    while (agent_task_status[agent_idx].assigned_tasks.size() < MAX_NUM_GOALS) {
+      auto tmp_new_task = genTask(agent_idx);
       if (tmp_new_task == nullptr) {
         // Do nothing
         std::cerr << "Failed to generate new random task" << std::endl;
-        continue;
+        break;
       }
       setTask(agent_idx, tmp_new_task, true);
       std::cout << "Create new task for agent " << agent_idx << ", with goal at: "
       << tmp_new_task->goal_position.first << ", " << tmp_new_task->goal_position.second << std::endl;
-    } else {
-      auto tmp_new_task = agent_task_status[agent_idx].assigned_tasks.front();
-      std::cout << "Existing task for agent " << agent_idx << ", with goal at: "
-      << tmp_new_task->goal_position.first << ", " << tmp_new_task->goal_position.second << ", status: "
-      << tmp_new_task->status << std::endl;
     }
   }
 
@@ -45,58 +37,36 @@ void MobileTaskManager::getTask(std::vector<std::deque<std::shared_ptr<Task>>>& 
   }
 }
 
-std::shared_ptr<Task> MobileTaskManager::genRandomTask(int agent_id) {
+std::shared_ptr<MobileRobotTask> MobileTaskManager::genTask(int agent_id) {
   if (agent_task_status[agent_id].curr_loads < MAX_LOADS) {
     std::cout << "Pick a new random pod" << std::endl;
-    auto new_task = pickRandomPod(agent_id);
-    // if (new_task != nullptr) {
-    //   setPod(new_task->operate_obj_idx, true);
-    // }
+    auto new_task = pickPicker(agent_id);
     return new_task;
   } else {
     std::cout << "Pick a new random Station" << std::endl;
-    auto new_task = pickRandomStation(agent_id);
-    // if (new_task != nullptr) {
-    //   // TODO@jingtian: set this after a goal is reached
-    //   // agent_task_status[agent_id].curr_loads = 0;
-    //   setStation(new_task->operate_obj_idx, true);
-    // }
+    auto new_task = pickStation(agent_id);
     return new_task;
   }
 }
 
-std::shared_ptr<Task> MobileTaskManager::pickRandomPod(int agent_id) {
-//  Task tmp_task;
-  if (active_pods.empty()) {
+std::shared_ptr<MobileRobotTask> MobileTaskManager::pickPicker(int agent_id) {
+  if (picker_tasks.empty()) {
     return nullptr;
   }
   // std::srand(std::time(0));  // Seed the random number generator
   std::srand(0);  // Seed the random number generator
-  std::cout << "active pods size: " << active_pods.size() << std::endl;
 
-  int pod_idx = std::rand() % (active_pods.size() - 1);
-  auto it = active_pods.begin();
-  std::advance(it, pod_idx);
-  auto tmp_pod = it->second;
-  int x = tmp_pod->x;
-  int y = tmp_pod->y;
-  if (user_map.isValid(x, y+1)) {
-    return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y+1), std::make_pair(x, y), tmp_pod->idx, 1);
-  }
-  if (user_map.isValid(x, y-1)) {
-    return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y-1), std::make_pair(x, y), tmp_pod->idx, 1);
-  }
-  // if (user_map.isValid(x+1, y)) {
-  //   return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x+1, y), std::make_pair(x, y), pod_idx, 1);
-  // }
-  // if (user_map.isValid(x-1, y)) {
-  //   return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x-1, y), std::make_pair(x, y), pod_idx, 1);
-  // }
-  std::cerr << "Error in finding available position to pod!" << std::endl;
-  return nullptr;
+  int picker_idx = std::rand() % active_stations.size();
+  auto it = picker_tasks.begin();
+  std::advance(it, picker_idx);
+  auto tmp_pick_task = *it;
+  picker_tasks.erase(it);
+  tmp_pick_task->agent_id = agent_id;
+  return tmp_pick_task;
 }
 
-std::shared_ptr<Task> MobileTaskManager::pickRandomStation(int agent_id) {
+
+std::shared_ptr<MobileRobotTask> MobileTaskManager::pickStation(int agent_id) {
 //  Task tmp_task;
   if (active_stations.empty()) {
     return nullptr;
@@ -111,22 +81,17 @@ std::shared_ptr<Task> MobileTaskManager::pickRandomStation(int agent_id) {
   auto tmp_station = it->second;
   int x = tmp_station->x;
   int y = tmp_station->y;
-  return std::make_shared<Task>(curr_task_idx++, agent_id, std::make_pair(x, y), std::make_pair(x, y), tmp_station->idx, 0);
+  return std::make_shared<MobileRobotTask>(curr_task_idx++, agent_id, std::make_pair(x, y),
+    std::make_pair(x, y), tmp_station->idx, MobileAction::DELIVER);
 }
 
-void MobileTaskManager::setTask(int agent_id, std::shared_ptr<Task>& task, bool status) {
+void MobileTaskManager::setTask(int agent_id, std::shared_ptr<MobileRobotTask>& task, bool status) {
   if (task->status == status and status == false) {
     return;
   }
-  if (task->flag == 0) {
+  if (task->act == MobileAction::DELIVER) {
     setStation(task->operate_obj_idx, status);
-  } else if (task->flag == 1) {
-    setPod(task->operate_obj_idx, status);
-  } else {
-    std::cerr << "Error in task type!" << std::endl;
-    exit(-1);
   }
-
   if (status) {
     // Add new task to the agent
 #ifdef DEBUG
@@ -149,38 +114,13 @@ void MobileTaskManager::setTask(int agent_id, std::shared_ptr<Task>& task, bool 
     }
     assert(task == agent_task_status[agent_id].assigned_tasks.front());
     agent_task_status[agent_id].assigned_tasks.pop_front();
-    if (task->flag == 0) {
+    if (task->act == MobileAction::DELIVER) {
       agent_task_status[agent_id].curr_loads = 0;
     } else {
       agent_task_status[agent_id].curr_loads += 1;
     }
   }
   task->status = status;
-}
-
-bool MobileTaskManager::setPod(int pod_idx, bool status) {
-  if (status) {
-    auto tmp_pod = active_pods.find(pod_idx);
-    if (tmp_pod == active_pods.end()) {
-      std::cerr << "pod_idx " << pod_idx << " is not free!" << std::endl;
-      return false;
-    }
-    tmp_pod->second->status = status;
-    assert(tmp_pod != nullptr);
-    active_pods.erase(tmp_pod);
-    occupied_pods.insert({tmp_pod->first, tmp_pod->second});
-  } else {
-    auto tmp_pod = occupied_pods.find(pod_idx);
-    if (tmp_pod == occupied_pods.end()) {
-      std::cerr << "pod_idx " << pod_idx << " is not in use!" << std::endl;
-      return false;
-    }
-    tmp_pod->second->status = status;
-    assert(tmp_pod != nullptr);
-    occupied_pods.erase(tmp_pod);
-    active_pods.insert({tmp_pod->first, tmp_pod->second});
-  }
-  return true;
 }
 
 bool MobileTaskManager::setStation(int station_idx, bool status) {
