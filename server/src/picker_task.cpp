@@ -10,9 +10,14 @@ num_task_genre(num_genre)
 }
 
 
-void PickTask::getTask(std::vector<std::deque<std::shared_ptr<PickerTask>>>& new_tasks) {
+void PickTask::getTask(std::vector<std::shared_ptr<PickerTask>>& new_tasks) {
   genRandomTask();
-
+  new_tasks.clear();
+  for (auto& genre_task : tasks_by_genre) {
+    for (auto& task : genre_task) {
+      new_tasks.push_back(task.second);
+    }
+  }
 }
 
 void PickTask::genRandomTask() {
@@ -45,5 +50,22 @@ std::shared_ptr<PickerTask> PickTask::pickRandomPod(int genre) {
 
 
 bool PickTask::confirmTask(int agent_id, std::shared_ptr<PickerTask>& task) {
+  if (task->status == false) {
+    std::cerr << "Task already finished!" << std::endl;
+    return false;
+  }
+  task->status = false;
+  // TODO@jingtian, here we use agent_id as the task genre id, need to change it
+  auto it = tasks_by_genre[task->agent_id].find(task->id);
+  tasks_by_genre[task->agent_id].erase(it);
+  pickers[agent_id].curr_loads += 1;
+  return true;
+}
 
+// void PickTask::mobileRobotRequest() {
+//
+// }
+
+void PickTask::mobileRobotUpdate(int agent_id) {
+  pickers[agent_id].curr_loads = 0;
 }

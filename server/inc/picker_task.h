@@ -58,13 +58,13 @@ public:
     // TODO@jingtian
   }
 
-  void getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks);
+  void getTask(std::vector<std::shared_ptr<Task>>& new_tasks);
 
   bool confirmTask(int agent_id, std::shared_ptr<Task>& task);
 
-  void mobileRobotRequest();
+  // void mobileRobotRequest();
 
-  void mobileRobotUpdate();
+  void mobileRobotUpdate(int agent_id);
 
 private:
   int num_task_genre;
