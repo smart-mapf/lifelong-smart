@@ -11,6 +11,7 @@ using namespace argos;
 struct PickerRobot {
    std::pair<int, int> position;
    int loads = 0;
+   int stay_timer = 10;
 };
 
 class CTrajectoryLoopFunctions : public CLoopFunctions {
