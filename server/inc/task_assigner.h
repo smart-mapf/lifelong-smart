@@ -15,7 +15,6 @@ public:
     // virtual ~TaskManager() {};
 
 protected:
-    std::vector<std::deque<std::shared_ptr<Task>>> all_tasks;
     std::vector<int> finished_tasks;
     userMap user_map;
     int curr_task_idx  = 0;

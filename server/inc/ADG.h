@@ -69,7 +69,7 @@ public:
     bool getAvailableNodes(int robot_id, std::vector<int>& available_nodes);
     bool updateFinishedNode(int robot_id, int node_id);
     void setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes);
-    std::vector<std::pair<double, double>> computeCommitCut(int num_enqueue_node);
+    std::vector<robotState> computeCommitCut(int num_enqueue_node);
     void addMAPFPlan(const std::vector<std::vector<Action>>& plans);
     SIM_PLAN getPlan(int agent_id);
     std::pair<double, double> getRobotPosition(int agent_id) {
@@ -151,7 +151,7 @@ public:
 
 private:
     std::vector<std::vector<ADGNode>> graph;
-    std::vector<std::pair<double, double>> commitCut;
+    // std::vector<std::pair<double, double>> commitCut;
 
     int num_robots = 0;
     int total_nodes_cnt = 0;

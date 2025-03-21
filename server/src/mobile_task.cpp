@@ -82,7 +82,7 @@ std::shared_ptr<MobileRobotTask> MobileTaskManager::pickStation(int agent_id) {
   int x = tmp_station->x;
   int y = tmp_station->y;
   return std::make_shared<MobileRobotTask>(curr_task_idx++, agent_id, std::make_pair(x, y),
-    std::make_pair(x, y), tmp_station->idx, MobileAction::DELIVER);
+    tmp_station->idx, MobileAction::DELIVER);
 }
 
 void MobileTaskManager::setTask(int agent_id, std::shared_ptr<MobileRobotTask>& task, bool status) {
@@ -146,4 +146,10 @@ bool MobileTaskManager::setStation(int station_idx, bool status) {
     active_stations.insert({station_idx, tmp_station->second});
   }
   return true;
+}
+
+void MobileTaskManager::insertPickerTask(int goal_x, int goal_y) {
+  std::shared_ptr<MobileRobotTask> new_pickup_task = std::make_shared<MobileRobotTask>(curr_task_idx++, -1,
+    std::make_pair(goal_x, goal_y), -1, MobileAction::PICK);
+  picker_tasks.push_back(new_pickup_task);
 }

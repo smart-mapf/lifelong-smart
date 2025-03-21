@@ -48,14 +48,22 @@ std::shared_ptr<PickerTask> PickTaskManager::pickRandomPod(int genre) {
 
 
 
-bool PickTaskManager::confirmTask(int agent_id, std::shared_ptr<PickerTask>& task) {
-  if (task->status == false) {
+bool PickTaskManager::confirmTask(int agent_id, int task_id) {
+  std::shared_ptr<PickerTask> tmp_task = nullptr;
+  for (int genre = 0; genre < num_task_genre; genre++) {
+    auto it = tasks_by_genre[genre].find(task_id);
+    if (it != tasks_by_genre[genre].end()) {
+      tmp_task = it->second;
+      break;
+    }
+  }
+  assert(tmp_task != nullptr and tmp_task->id == task_id);
+  if (tmp_task->status == false) {
     std::cerr << "Task already finished!" << std::endl;
     return false;
   }
-  task->status = false;
-  auto it = tasks_by_genre[task->genre].find(task->id);
-  tasks_by_genre[task->genre].erase(it);
+  tmp_task->status = false;
+  tasks_by_genre[tmp_task->genre].erase(tasks_by_genre[tmp_task->genre].find(tmp_task->id));
   pickers[agent_id].curr_loads += 1;
   return true;
 }

@@ -1,6 +1,7 @@
 #include "random_task.h"
 
 RandomTask::RandomTask(int num_agents, std::string& map_fname): TaskManager(num_agents, map_fname) {
+  all_tasks.resize(num_robots_);
   for (auto& tmp_station: user_map.all_stations) {
     active_stations.insert({tmp_station->idx, tmp_station});
   }

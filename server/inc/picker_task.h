@@ -38,7 +38,7 @@ public:
 
   void getTask(std::vector<std::shared_ptr<PickerTask>>& new_tasks);
 
-  bool confirmTask(int agent_id, std::shared_ptr<PickerTask>& task);
+  bool confirmTask(int agent_id, int task_id);
 
   // void mobileRobotRequest();
 

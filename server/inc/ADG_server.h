@@ -44,7 +44,8 @@ public:
     std::shared_ptr<PickTaskManager> picker_manager;
     bool flipped_coord = true;
 
-    // std::vector<std::deque<std::shared_ptr<Task>>> curr_tasks;
+    std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> curr_mobile_tasks;
+    std::vector<robotState> curr_robot_states;
 
     // stats data
     std::vector<double> agent_finish_time;

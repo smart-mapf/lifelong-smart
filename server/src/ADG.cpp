@@ -159,19 +159,20 @@ bool ADG::fixInconsistentIncomingEdge(std::vector<std::pair<int, int>>& commited
     return true;
 }
 
-std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_node) {
+std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
     if (not initialized) {
         return {};
     }
-    curr_commit.clear();
+    // std::vector<robotState> curr_commit;
     // If it is never initialized
+    curr_commit.clear();
     if (graph.size() == 0) {
-        commitCut.resize(num_robots);
+        // commitCut.resize(num_robots);
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-            commitCut[agent_id] = init_locs[agent_id].position;
+            // commitCut[agent_id] = init_locs[agent_id].position;
             curr_commit.emplace_back(init_locs[agent_id].position, 0);
         }
-        return commitCut;
+        return curr_commit;
     }
 
     std::vector<std::pair<int, int>> commited_actions(num_robots);
@@ -227,7 +228,7 @@ std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_nod
                   << std::fixed << std::setprecision(1) << action.orientation << ", '"
                   << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
                   << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << "}," << std::endl;
-        commitCut[agent_id] = last_node.action.goal;
+        // commitCut[agent_id] = last_node.action.goal;
         curr_commit.emplace_back(last_node.action.goal, static_cast<int> (last_node.action.orientation));
         std::cout << "Loop end for agent " << agent_id << ": " << std::endl;
 
@@ -235,7 +236,7 @@ std::vector<std::pair<double, double>> ADG::computeCommitCut(int num_enqueue_nod
 #ifdef DEBUG
     std::cout << "Find commit Cut " << std::endl;
 #endif
-    return commitCut;
+    return curr_commit;
 }
 
 void printEdge()

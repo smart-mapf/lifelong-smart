@@ -1,6 +1,7 @@
 #include "user_map.h"
 
 userMap::userMap(std::string& map_fname) {
+    pods_by_genre.resize(NUM_GENRE);
     bool success = readMap(map_fname);
     if (!success) {
         std::cerr << "Error reading map file " << map_fname << std::endl;
@@ -52,7 +53,9 @@ bool userMap::readMap(std::string& map_fname) {
                 station_id++;
             } else if (line[j] == 'P') {
                 // If Pods
-                all_pods.emplace_back(std::make_shared<Pod>(i, j, 0, pod_id));
+                std::shared_ptr<Pod> new_pod = std::make_shared<Pod>(i, j, 0, pod_id);
+                all_pods.push_back(new_pod);
+                pods_by_genre[j/4].push_back(new_pod);
                 pod_id++;
             }
         }
