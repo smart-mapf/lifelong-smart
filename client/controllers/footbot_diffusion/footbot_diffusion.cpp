@@ -5,7 +5,6 @@
 /* 2D vector definition */
 #include <argos3/core/utility/math/vector2.h>
 #include <argos3/core/utility/math/vector3.h>
-#include <rpc/client.h>
 
 /****************************************/
 /****************************************/

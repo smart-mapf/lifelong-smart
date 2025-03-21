@@ -13,6 +13,10 @@ static const Real MIN_DISTANCE = 0.05f;
 /* Convenience constant to avoid calculating the square root in PostStep() */
 static const Real MIN_DISTANCE_SQUARED = MIN_DISTANCE * MIN_DISTANCE;
 
+// srv.bind("get_picker_task", &getPickerTask);
+// srv.bind("confirm_picker_task", &confirmPickerTask);
+// srv.bind("request_mobile_robot", &requestMobileTask);
+
 /****************************************/
 /****************************************/
 
@@ -37,6 +41,10 @@ void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
   int num_station = 0;
   TConfigurationNode& tParams = GetNode(t_tree, "num_stations");
   GetNodeAttribute(tParams, "value", num_station);
+  TConfigurationNode& portParams = GetNode(t_tree, "num_stations");
+  GetNodeAttribute(portParams, "value", port_number);
+  TConfigurationNode& pickerParams = GetNode(t_tree, "num_pickers");
+  GetNodeAttribute(pickerParams, "value", num_picker);
   for (int i = 0; i < num_station; i++) {
     Real x, y, z;
     TConfigurationNode& tStation = GetNode(t_tree, "station" + std::to_string(i));
@@ -76,6 +84,17 @@ void CTrajectoryLoopFunctions::Reset() {
 /****************************************/
 
 void CTrajectoryLoopFunctions::PostStep() {
+    if (not is_initialized) {
+      if (is_port_open("127.0.0.1", port_number)) {
+        client = std::make_shared<rpc::client>("127.0.0.1", port_number);
+      } else {
+        // std::cout << "Failed to connect to server. Retrying..." << std::endl;
+        // std::this_thread::sleep_for(std::chrono::seconds(5)); // Wait for 1 second before retrying
+        return;
+      }
+      is_initialized = true;
+    }
+
    /* Get the map of all foot-bots from the space */
    CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
    /* Go through them */

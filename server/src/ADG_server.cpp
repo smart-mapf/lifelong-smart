@@ -14,7 +14,7 @@ ADG_Server::ADG_Server(int num_robots,
  {
     adg = std::make_shared<ADG> (num_robots);
     mobile_manager = std::make_shared<MobileTaskManager>(num_robots, map_name);
-    picker_manager = std::make_shared<PickTaskManager>(num_robots, NUM_GENRE, map_name);
+    picker_manager = std::make_shared<PickTaskManager>(num_robots/2, NUM_GENRE, map_name);
 
     output_filename = target_output_filename;
     numRobots = adg->numRobots();

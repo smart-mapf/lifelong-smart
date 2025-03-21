@@ -64,7 +64,8 @@ def create_Argos(map_data,
                  curr_num_agent,
                  port_num,
                  n_threads,
-                 visualization=False):
+                 visualization=False,
+                 num_pickers = -1):
     # Create the root element
     argos_config = ET.Element("argos-configuration")
 
@@ -148,6 +149,20 @@ def create_Argos(map_data,
     ET.SubElement(loop_functions,
                   f"num_stations",
                   value = f"{station_count}")
+    
+    ET.SubElement(loop_functions,
+                  f"port_number",
+                  value = f"{port_num}")
+    
+    if num_pickers == -1:
+        # num_pickers = curr_num_agent//2
+        # num_pickers = max(12, num_pickers - num_pickers%12)
+        # TODO@jingitan: Change this according to number of mobile robots
+        num_pickers = 12
+
+    ET.SubElement(loop_functions,
+                  f"num_pickers",
+                  value = f"{num_pickers}")
     
     map_center_x = -height / 2 + 0.5
     map_center_y = -width / 2 + 0.5
