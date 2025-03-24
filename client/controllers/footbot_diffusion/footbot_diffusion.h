@@ -153,6 +153,8 @@ public:
 
     CVector3 getCurrPod() {return curr_pod;};
     CVector3 getCurrStation() {return curr_station;}
+public:
+    std::map< int, std::pair<bool, bool> > picker_task;
 
 private:
     int pod_timer = 100;

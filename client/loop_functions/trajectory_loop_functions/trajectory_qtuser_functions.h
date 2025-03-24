@@ -23,7 +23,6 @@ private:
    void DrawWaypoints(const std::vector<CVector3>& c_waypoints);
 
 private:
-
    CTrajectoryLoopFunctions& m_cTrajLF;
 
 };

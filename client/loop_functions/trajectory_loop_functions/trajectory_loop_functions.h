@@ -4,14 +4,49 @@
 #include <argos3/core/simulator/loop_functions.h>
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
 
+#include <utility>
+
 #include "controllers/footbot_diffusion/footbot_diffusion.h"
 
+#define PICK_T 100
+#define MOVE_T 100
+#define UNLOAD_T 100
+#define LOAD_NUM 5
+
 using namespace argos;
+
+enum ACT_TYPE {
+   NONE = 0,
+   MOVE = 1,
+   PICK = 2,
+   UNLOAD = 3
+};
+
+struct PickerAction {
+   int timer;
+   ACT_TYPE act;
+   int step_id;
+   int task_id;
+   std::pair<int, int> start;
+   std::pair<int, int> end;
+   // std::pair<int, int> obj;
+   PickerAction(int t, ACT_TYPE act_type, std::pair<int, int> s, std::pair<int, int> e, int move_step_id = -1,
+      int task_id = -1):
+      timer(t), act(act_type), start(std::move(s)), end(std::move(e)), step_id(move_step_id), task_id(task_id) {}
+};
 
 struct PickerRobot {
    std::pair<int, int> position;
    int loads = 0;
    int stay_timer = 10;
+   int curr_load = 0;
+   std::deque<PickerAction> acts;
+};
+
+struct pair_hash {
+   std::size_t operator()(const std::pair<int, int>& p) const {
+      return std::hash<int>()(p.first) ^ (std::hash<int>()(p.second) << 1);
+   }
 };
 
 class CTrajectoryLoopFunctions : public CLoopFunctions {
@@ -53,14 +88,47 @@ public:
       }
    }
 
+private:
+   void getNextAction(int agent_id);
+   void readPickerPath();
+   inline int nextloc(int agent_id, int curr_loc_id, std::pair<int, int>& next_loc) {
+      const auto& picker_path = all_picker_paths[agent_id];
+      int next_loc_id = curr_loc_id + 1;
+      if (next_loc_id < picker_path.size()) {
+         ;
+      } else if (next_loc_id == picker_path.size()) {
+         next_loc_id = 0;
+      } else {
+         std::cerr << "ERROR: next_loc_id out of range" << std::endl;
+         exit(-1);
+      }
+      next_loc = picker_path[next_loc_id];
+      return next_loc_id;
+   }
+   int requestMobileRobot();
+   void sendPickConfirmation();
+   bool executeMove(int agent_id, PickerAction& act);
+   bool executePick(int agent_id, PickerAction& act);
+   bool executeUnload(int agent_id, PickerAction& act);
+   CVector3 coordPlanner2Sim(std::pair<int, int>& loc);
+   std::pair<int, int> coordSim2Planner(CVector3& loc);
+
+public:
    std::vector<CVector3> task_pods;
    std::vector<CVector3> task_stations;
    std::vector<CVector3> all_stations;
 
+   /* Indicates the states of the picker robots, mainly for visualization */
+   std::vector<CVector3> picker_curr_locs;
+   std::vector<CVector3> curr_picking_objs;
+   std::vector<CVector3> picker_unload_locs;
+
 private:
    bool is_initialized = false;
    std::shared_ptr<rpc::client> client;
-   std::unordered_map<std::pair<int, int>, int> all_pick_tasks;
+   std::unordered_map<std::pair<int, int>, std::deque<int>, pair_hash> all_pick_tasks;
+   std::vector<std::vector<std::pair<int, int>>> all_picker_paths;
+   std::vector<PickerRobot> all_pickers;
    int port_number = 0;
    int num_picker = 0;
 };
