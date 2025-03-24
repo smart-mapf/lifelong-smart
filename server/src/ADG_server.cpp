@@ -156,6 +156,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         } else {
             tmp_act.type = 'P';
         }
+        tmp_act.task_id = server_ptr->curr_mobile_tasks[i].front()->id;
         plans[i].push_back(tmp_act);
     }
     // showActionsPlan(plans);
@@ -271,11 +272,12 @@ std::vector< PickData > getPickerTask() {
 }
 
 void confirmPickerTask(int agent_id, int task_id) {
+    assert(task_id != -1);
     server_ptr->picker_manager->confirmTask(agent_id, task_id);
 }
 
-void requestMobileTask(std::pair<int, int> target_pos) {
-    server_ptr->mobile_manager->insertPickerTask(target_pos.first, target_pos.second);
+int requestMobileTask(std::pair<int, int> target_pos) {
+    return server_ptr->mobile_manager->insertPickerTask(target_pos.first, target_pos.second);
 }
 
 // void confirmMobileTask();
@@ -287,7 +289,7 @@ std::string getScenConfigName()
 }
 
 
-std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>>> update(std::string RobotID) {
+std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>, int>> update(std::string RobotID) {
     std::lock_guard<std::mutex> guard(globalMutex);
     if (not server_ptr->adg->initialized or not server_ptr->adg->get_initial_plan) {
         return {};

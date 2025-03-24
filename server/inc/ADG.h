@@ -12,7 +12,7 @@
 
 #include "parser.h"
 
-typedef std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>>> SIM_PLAN;
+typedef std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>, int>> SIM_PLAN;
 
 struct Edge {
     int from_agent_id;

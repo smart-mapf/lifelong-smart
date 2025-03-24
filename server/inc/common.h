@@ -56,6 +56,7 @@ struct Action {
     std::pair<double, double> start;
     std::pair<double, double> goal;
     int nodeID;
+    int task_id = -1;
 };
 
 struct PickerTask

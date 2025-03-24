@@ -3,16 +3,15 @@
 /* Function definitions for XML parsing */
 #include <argos3/core/utility/configuration/argos_configuration.h>
 /* 2D vector definition */
-#include <argos3/core/utility/math/vector2.h>
 #include <argos3/core/utility/math/vector3.h>
 
 /****************************************/
 /****************************************/
 
 CFootBotDiffusion::CFootBotDiffusion() :
-        m_pcWheels(NULL),
-        m_pcProximity(NULL),
-        m_pcPosSens(NULL),
+        m_pcWheels(nullptr),
+        m_pcProximity(nullptr),
+        m_pcPosSens(nullptr),
         m_cAlpha(10.0f),
         m_angularVelocity(0.5f),
         m_fWheelVelocity(2.5f),
@@ -21,7 +20,7 @@ CFootBotDiffusion::CFootBotDiffusion() :
 
 /****************************************/
 /****************************************/
-void CFootBotDiffusion::insertActions(std::vector<outputTuple> actions)
+void CFootBotDiffusion::insertActions(const std::vector<outputTuple>& actions)
 {
     // std::vector<action> tmp_cache;
     for (const auto &action: actions) {
@@ -46,6 +45,7 @@ void CFootBotDiffusion::insertActions(std::vector<outputTuple> actions)
         } else {
             angle = 90.0;
         }
+        int task_id = std::get<6> (action);
         if (robot_id == debug_id) {
             std::cout << "Action: " << action1 << " NodeID: " << nodeID << " End Position: " << x << " " << y << " Angle: " << angle << std::endl;
         }
@@ -56,15 +56,20 @@ void CFootBotDiffusion::insertActions(std::vector<outputTuple> actions)
                 q.pop_back();
             }
             prev_ids.push_back(nodeID);
-            q.push_back({x, y, angle, prev_ids, Action::MOVE});
+            q.emplace_back(x, y, angle, prev_ids, Action::MOVE);
         } else if (action1 == "T") {
-            q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::TURN});
+            q.emplace_back(x, y, angle, std::deque<int>{nodeID}, Action::TURN);
         } else if (action1 == "S") {
-            q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::STATION});
+            q.emplace_back(x, y, angle, std::deque<int>{nodeID}, Action::STATION, DELIVER_T, task_id);
         } else if (action1 == "P") {
-            q.push_back({start_x, start_y, angle, std::deque<int>{nodeID}, Action::POD});
+            q.emplace_back(start_x, start_y, angle, std::deque<int>{nodeID}, Action::PICKER, PICK_T, task_id);
+            if (picker_task.find(task_id) != picker_task.end()) {
+                std::cerr << "Accept same task for two times! Exiting..." << std::endl;
+                exit(-1);
+            }
+            picker_task[task_id] = std::make_pair(false, false);
         } else {
-            q.push_back({x, y, angle, std::deque<int>{nodeID}, Action::STOP});
+            q.emplace_back(x, y, angle, std::deque<int>{nodeID}, Action::STOP);
         }
     }
     // q.back_insert(q.begin(), tmp_cache.begin(), tmp_cache.end());
@@ -90,7 +95,7 @@ void CFootBotDiffusion::Init(TConfigurationNode &t_node) {
      * internally, on the basis of the lists provided the configuration
      * file at the <controllers><footbot_diffusion><actuators> and
      * <controllers><footbot_diffusion><sensors> sections. If you forgot to
-     * list a device in the XML and then you request it here, an error
+     * list a device in the XML, and then you request it here, an error
      * occurs.
      */
     m_pcWheels = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
@@ -103,7 +108,7 @@ void CFootBotDiffusion::Init(TConfigurationNode &t_node) {
      * Parse the configuration file
      *
      * The user defines this part. Here, the algorithm accepts three
-     * parameters and it's nice to put them in the config file so we don't
+     * parameters, and it's nice to put them in the config file so we don't
      * have to recompile if we want to try other settings.
      */
     GetNodeAttributeOrDefault(t_node, "alpha", m_cAlpha, m_cAlpha);
@@ -119,8 +124,8 @@ void CFootBotDiffusion::Init(TConfigurationNode &t_node) {
     m_linearVelocity = 1.22 * m_angularVelocity;
     m_currVelocity = 0.0;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
-    robot_id = std::to_string((int) ChangeCoordinateFromArgosToMap(currPos.GetY())) + "_" +
-               std::to_string((int) ChangeCoordinateFromArgosToMap(currPos.GetX()));
+    robot_id = std::to_string(static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetY()))) + "_" +
+               std::to_string(static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetX())));
     // std::cout << "Robot ID: " << robot_id << std::endl;
 }
 
@@ -242,7 +247,7 @@ void CFootBotDiffusion::ControlStep() {
             // outputFile.close();
         } else {
             // Output an error message if the file could not be opened
-            std::cerr << "Unable to open output, errono:" << strerror(errno) << std::endl;
+            std::cerr << "Unable to open output, errno:" << strerror(errno) << std::endl;
         }
         return;
     }
@@ -268,9 +273,8 @@ void CFootBotDiffusion::ControlStep() {
 //                //std::cout << "action left: " << q.size() << ", first one with type: " << q.front().type << std::endl;
 //            }
 //        }
-
-        std::vector<outputTuple> updateActions = client->call("update", robot_id).as<std::vector<outputTuple>>();
-        if (updateActions.size() != 0) {
+        auto updateActions = client->call("update", robot_id).as<std::vector<outputTuple>>();
+        if (not updateActions.empty()) {
             insertActions(updateActions);
             // if (debug_id == robot_id) {
             //     std::cout << "Received actions update" << std::endl;
@@ -278,15 +282,11 @@ void CFootBotDiffusion::ControlStep() {
         }
     }
     count++;
-    std::string receive_msg = "";
+    std::string receive_msg;
     updateQueue();
     while (!q.empty()) {
         a = q.front();
-        CVector3 currPos = m_pcPosSens->GetReading().Position;
         CVector3 targetPos = CVector3(a.x, a.y, 0.0f);
-
-        
-        // std::cout << "Node distance: " << abs((currPos - targetPos).Length() + 0.5*(-static_cast<double>(a.nodeIDS.size()) + 1)) << std::endl;
         if (a.type == Action::MOVE && ((currPos - targetPos).Length() < EPS) and (abs(prevVelocity_)) <= dt*m_fWheelVelocity) {
             a.type = Action::STOP;
             q.pop_front();
@@ -329,19 +329,17 @@ void CFootBotDiffusion::ControlStep() {
             q.pop_front();
 //            exit(0);
             continue;
-        } else if (a.type == Action::POD and pod_timer <= 0) {
+        } else if (a.type == Action::PICKER and a.timer <= 0) {
             a.type = Action::STOP;
             receive_msg = client->call("receive_update", robot_id, a.nodeIDS.front()).as<std::string>();
             q.pop_front();
-            pod_timer = 100;
             curr_pod = CVector3{-1,-1,-100};
             //            exit(0);
             continue;
-        } else if (a.type == Action::STATION and station_timer <= 0) {
+        } else if (a.type == Action::STATION and a.timer <= 0) {
             a.type = Action::STOP;
             receive_msg = client->call("receive_update", robot_id, a.nodeIDS.front()).as<std::string>();
             q.pop_front();
-            station_timer = 100;
             curr_station = CVector3{-1,-1,-100};
             //            exit(0);
             continue;
@@ -351,7 +349,6 @@ void CFootBotDiffusion::ControlStep() {
 
     if (a.type == Action::MOVE) {
         CVector3 targetPos = CVector3(a.x, a.y, 0.0f);
-        CVector3 currPos = m_pcPosSens->GetReading().Position;
         std::pair<Real, Real> velocities = Move(targetPos, currPos, currAngle, 1.0f);
         left_v = velocities.first;
         right_v = velocities.second;
@@ -360,14 +357,19 @@ void CFootBotDiffusion::ControlStep() {
         std::pair<Real, Real> turn_velocities = Turn(a.angle, currAngle, 1.0f);
         left_v = turn_velocities.first;
         right_v = turn_velocities.second;
-    } else if (a.type == Action::POD) {
+    } else if (a.type == Action::PICKER) {
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
-        curr_pod = CVector3{a.x, a.y, 0.0f};
-        pod_timer--;
+        if (not picker_task[a.task_id].first) {
+            picker_task[a.task_id].first = true;
+        }
+        if (picker_task[a.task_id].second) {
+            curr_pod = CVector3{a.x, a.y, 0.0f};
+            a.timer--;
+        }
     } else if (a.type == Action::STATION) {
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
         curr_station = CVector3{a.x, a.y, 0.0f};
-        station_timer--;
+        a.timer--;
     } else {
         // stop state, waiting for next instruction
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
@@ -469,8 +471,7 @@ inline Real toAngle(Real deltaX, Real deltaY) {
     return tmp_angle;
 }
 
-double CFootBotDiffusion::getReferenceSpeed(double dist)
-{
+double CFootBotDiffusion::getReferenceSpeed(double dist) const {
     int dist_flag = 0;
     if (dist < 0) {
         dist_flag = -1;
@@ -480,7 +481,7 @@ double CFootBotDiffusion::getReferenceSpeed(double dist)
     return dist_flag * sqrt(2*m_linearAcceleration*std::abs(dist))/dt;
 }
 
-std::pair<Real, Real> CFootBotDiffusion::Move(CVector3& targetPos, CVector3& currPos, Real currAngle, Real tolerance = 1.0f)
+std::pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos, const CVector3& currPos, Real currAngle, Real tolerance = 1.0f)
 {
     // Calculate the distance and angle to the target
     Real deltaX = targetPos.GetX() - currPos.GetX();
@@ -553,7 +554,7 @@ std::pair<Real, Real> CFootBotDiffusion::Move(CVector3& targetPos, CVector3& cur
     return std::make_pair(left_v_total, right_v_total);
 }
 
-void CFootBotDiffusion::TurnLeft(Real targetAngle, Real currAngle, Real tolerance = 1.0f) {
+void CFootBotDiffusion::TurnLeft(Real targetAngle, Real currAngle, Real tolerance = 1.0f) const {
     Real angleDifference = targetAngle - currAngle;
     Real left_v, right_v;
     if (angleDifference > 0.0 && angleDifference < 180.0) {

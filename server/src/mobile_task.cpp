@@ -148,8 +148,21 @@ bool MobileTaskManager::setStation(int station_idx, bool status) {
   return true;
 }
 
-void MobileTaskManager::insertPickerTask(int goal_x, int goal_y) {
+std::pair<int, int> MobileTaskManager::findNearbyFreeCell(int x, int y) {
+  if (user_map.isValid(x, y+1)) {
+    return std::make_pair(x, y+1);
+  }
+  if (user_map.isValid(x, y-1)) {
+    return std::make_pair(x, y-1);
+  }
+  std::cerr << "Error in finding available position to pod! Error in location! Exiting" << std::endl;
+  exit(-1);
+}
+
+int MobileTaskManager::insertPickerTask(int goal_x, int goal_y) {
+  std::pair<int, int> free_loc = findNearbyFreeCell(goal_x, goal_y);
   std::shared_ptr<MobileRobotTask> new_pickup_task = std::make_shared<MobileRobotTask>(curr_task_idx++, -1,
-    std::make_pair(goal_x, goal_y), -1, MobileAction::PICK);
+    free_loc, -1, MobileAction::PICK);
   picker_tasks.push_back(new_pickup_task);
+  return new_pickup_task->id;
 }

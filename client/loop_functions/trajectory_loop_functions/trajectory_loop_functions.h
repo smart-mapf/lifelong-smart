@@ -12,6 +12,7 @@
 #define MOVE_T 100
 #define UNLOAD_T 100
 #define LOAD_NUM 5
+#define WINDOW_SIE 5
 
 using namespace argos;
 
@@ -105,13 +106,16 @@ private:
       next_loc = picker_path[next_loc_id];
       return next_loc_id;
    }
-   int requestMobileRobot();
-   void sendPickConfirmation();
+   int requestMobileRobot(std::pair<int, int>& loc);
    bool executeMove(int agent_id, PickerAction& act);
    bool executePick(int agent_id, PickerAction& act);
    bool executeUnload(int agent_id, PickerAction& act);
-   CVector3 coordPlanner2Sim(std::pair<int, int>& loc);
-   std::pair<int, int> coordSim2Planner(CVector3& loc);
+   void initActionQueue();
+   void requestNewPickTasks();
+   void addMobileVisualization();
+
+   static CVector3 coordPlanner2Sim(std::pair<int, int>& loc);
+   static std::pair<int, int> coordSim2Planner(CVector3& loc);
 
 public:
    std::vector<CVector3> task_pods;

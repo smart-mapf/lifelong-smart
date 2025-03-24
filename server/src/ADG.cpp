@@ -445,7 +445,7 @@ SIM_PLAN ADG::getPlan(int agent_id) {
         // std::pair<int, int> intEnd = action.goal;
         // std::pair<double, double> doubleStart = {static_cast<double>(intStart.first), static_cast<double>(intStart.second)};
         // std::pair<double, double> doubleEnd = {static_cast<double>(intEnd.first), static_cast<double>(intEnd.second)};
-        sim_plan.emplace_back(robotIDToStartIndex[action.robot_id], enque_id, action.orientation, std::string(1, action.type), action.start, action.goal);
+        sim_plan.emplace_back(robotIDToStartIndex[action.robot_id], enque_id, action.orientation, std::string(1, action.type), action.start, action.goal, action.task_id);
         enqueue_nodes_idx[agent_id].push_back(enque_id);
     }
     return sim_plan;

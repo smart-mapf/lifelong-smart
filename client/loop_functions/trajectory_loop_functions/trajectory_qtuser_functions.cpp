@@ -48,18 +48,65 @@ void CTrajectoryQTUserFunctions::DrawInWorld() {
    }
 
    for(auto loc: m_cTrajLF.all_stations) {
-    // DrawWaypoints(it->second);
-    //  const CVector3& c_position,
-    //              const CQuaternion& c_orientation,
-    //              const CVector3& c_size
-    CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
-    CVector3 c_size = CVector3(0.9, 0.9, 0.05);
-    CColor c_color = CColor(120, 120, 255);
-    DrawBox(loc, c_orient, c_size, c_color);
-    CVector3 loc_tmp = loc;
-    loc_tmp.SetX(loc_tmp.GetX());
-    DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, c_color);
- }
+      // DrawWaypoints(it->second);
+      //  const CVector3& c_position,
+      //              const CQuaternion& c_orientation,
+      //              const CVector3& c_size
+      CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
+      CVector3 c_size = CVector3(0.9, 0.9, 0.05);
+      CColor c_color = CColor(120, 120, 255);
+      DrawBox(loc, c_orient, c_size, c_color);
+      CVector3 loc_tmp = loc;
+      loc_tmp.SetX(loc_tmp.GetX());
+      DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, c_color);
+   }
+
+   // std::vector<CVector3> picker_curr_locs;
+   // std::vector<CVector3> curr_picking_objs;
+   // std::vector<CVector3> picker_unload_locs;
+   // for(auto loc: m_cTrajLF.picker_curr_locs) {
+   //    // DrawWaypoints(it->second);
+   //    //  const CVector3& c_position,
+   //    //              const CQuaternion& c_orientation,
+   //    //              const CVector3& c_size
+   //    CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
+   //    CVector3 c_size = CVector3(0.9, 0.9, 0.05);
+   //    CColor c_color = CColor(120, 120, 255);
+   //    DrawBox(loc, c_orient, c_size, c_color);
+   //    CVector3 loc_tmp = loc;
+   //    loc_tmp.SetX(loc_tmp.GetX());
+   //    DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, c_color);
+   // }
+   //
+   // for(auto loc: m_cTrajLF.curr_picking_objs) {
+   //    // DrawWaypoints(it->second);
+   //    //  const CVector3& c_position,
+   //    //              const CQuaternion& c_orientation,
+   //    //              const CVector3& c_size
+   //    CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
+   //    CVector3 c_size = CVector3(0.9, 0.9, 0.05);
+   //    CColor c_color = CColor(120, 120, 255);
+   //    DrawBox(loc, c_orient, c_size, c_color);
+   //    CVector3 loc_tmp = loc;
+   //    loc_tmp.SetX(loc_tmp.GetX());
+   //    DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, c_color);
+   // }
+   //
+   // for(auto loc: m_cTrajLF.picker_unload_locs) {
+   //    // DrawWaypoints(it->second);
+   //    //  const CVector3& c_position,
+   //    //              const CQuaternion& c_orientation,
+   //    //              const CVector3& c_size
+   //    CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
+   //    CVector3 c_size = CVector3(0.9, 0.9, 0.05);
+   //    CColor c_color = CColor(120, 120, 255);
+   //    DrawBox(loc, c_orient, c_size, c_color);
+   //    CVector3 loc_tmp = loc;
+   //    loc_tmp.SetX(loc_tmp.GetX());
+   //    DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, c_color);
+   // }
+
+
    // iter_val++;
    // CFootBotEntity* pcFootBot = dynamic_cast<CFootBotEntity*>(
    //         GetSpace().GetEntity("fb0")  // Assuming "fb0" is the robot's ID in the .argos file

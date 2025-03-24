@@ -13,10 +13,6 @@ static const Real MIN_DISTANCE = 0.05f;
 /* Convenience constant to avoid calculating the square root in PostStep() */
 static const Real MIN_DISTANCE_SQUARED = MIN_DISTANCE * MIN_DISTANCE;
 
-// srv.bind("get_picker_task", &getPickerTask);
-// srv.bind("confirm_picker_task", &confirmPickerTask);
-// srv.bind("request_mobile_robot", &requestMobileTask);
-
 /****************************************/
 /****************************************/
 
@@ -141,8 +137,9 @@ void CTrajectoryLoopFunctions::Reset() {
  *
  * @return Task id for the request
  */
-int CTrajectoryLoopFunctions::requestMobileRobot() {
-
+int CTrajectoryLoopFunctions::requestMobileRobot(std::pair<int, int>& loc) {
+  int new_mobile_task_id = client->call("request_mobile_robot", loc).as<int>();
+  return new_mobile_task_id;
 }
 
 /**
@@ -156,13 +153,13 @@ void CTrajectoryLoopFunctions::getNextAction(int agent_id) {
   assert(last_act.act == MOVE);
   auto pick_task_it = all_pick_tasks.find(last_act.end);
   if (pick_task_it != all_pick_tasks.end()) {
-    for (auto tmp_task_id : pick_task_it->second.begin()) {
-      curr_agent.acts.emplace_back(PICK_T, PICK, pick_task_it->first, pick_task_it->first);
+    for (auto tmp_task_id : pick_task_it->second) {
+      curr_agent.acts.emplace_back(PICK_T, PICK, pick_task_it->first, pick_task_it->first, -1, tmp_task_id);
       curr_agent.curr_load += 1;
       if (curr_agent.curr_load >= LOAD_NUM) {
-        // TODO@jingtian: need to change this to communicate
-        int tmp_task_id = requestMobileRobot();
-        curr_agent.acts.emplace_back(UNLOAD_T, UNLOAD, pick_task_it->first, pick_task_it->first, -1, tmp_task_id);
+        // OK@jingtian: need to change this to communicate
+        int new_mobile_task_id = requestMobileRobot(last_act.end);
+        curr_agent.acts.emplace_back(UNLOAD_T, UNLOAD, pick_task_it->first, pick_task_it->first, -1, new_mobile_task_id);
         curr_agent.curr_load = 0;
       }
     }
@@ -221,8 +218,6 @@ inline std::pair<int, int> CTrajectoryLoopFunctions::coordSim2Planner(CVector3& 
   }
   return std::make_pair(map_x, map_y);
 }
-
-
 
 /**
  * Execute the move action
@@ -314,6 +309,62 @@ bool CTrajectoryLoopFunctions::executeUnload(int agent_id, PickerAction& act) {
   return false;
 }
 
+typedef std::tuple<int, int, int> PickData;
+
+void CTrajectoryLoopFunctions::requestNewPickTasks() {
+  all_pick_tasks.clear();
+  std::vector< PickData > picker_data = client->call("get_picker_task").as< std::vector<PickData> >();
+  for (auto& tmp_task: picker_data) {
+    std::pair<int, int> task_loc = std::make_pair(std::get<0> (tmp_task), std::get<1> (tmp_task));
+    auto entry = all_pick_tasks.find(task_loc);
+    if (entry != all_pick_tasks.end()) {
+      entry->second.push_back(std::get<2> (tmp_task));
+    } else {
+      all_pick_tasks[task_loc] = std::deque<int>{std::get<2> (tmp_task)};
+    }
+  }
+}
+
+void CTrajectoryLoopFunctions::initActionQueue() {
+  requestNewPickTasks();
+  // Insert initial actions
+  for (int i = 0; i < num_picker; i++) {
+    for (int j = 0; j < WINDOW_SIE; j++) {
+      getNextAction(i);
+    }
+  }
+}
+
+void CTrajectoryLoopFunctions::addMobileVisualization() {
+
+  /* Get the map of all foot-bots from the space */
+  CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
+  /* Go through them */
+  task_pods.clear();
+  task_stations.clear();
+  for (CSpace::TMapPerType::iterator it = tFBMap.begin(); it != tFBMap.end(); ++it) {
+    /* Create a pointer to the current foot-bot */
+    CFootBotEntity* pcFB = any_cast<CFootBotEntity*>(it->second);
+
+    // Get the controller
+    CFootBotDiffusion* pcController = dynamic_cast<CFootBotDiffusion*>(
+        &(pcFB->GetControllableEntity().GetController())
+    );
+
+    if (pcController) {
+      // Retrieve step count or any other return value
+      // LOG << "Step Count: " << pcController->getCurrGoal() << std::endl;
+      auto tmp_goal = pcController->getCurrPod();
+      if (tmp_goal.GetZ() != -100) {
+        task_pods.push_back(tmp_goal);
+      }
+      auto tmp_station = pcController->getCurrStation();
+      if (tmp_station.GetZ() != -100) {
+        task_stations.push_back(tmp_station);
+      }
+    }
+  }
+}
 /****************************************/
 
 void CTrajectoryLoopFunctions::PostStep() {
@@ -332,43 +383,33 @@ void CTrajectoryLoopFunctions::PostStep() {
   curr_picking_objs.clear();
   picker_unload_locs.clear();
 
-  /* Get the map of all foot-bots from the space */
-  CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
-  /* Go through them */
-  task_pods.clear();
-  task_stations.clear();
-  for(CSpace::TMapPerType::iterator it = tFBMap.begin();
-     it != tFBMap.end();
-     ++it) {
-    /* Create a pointer to the current foot-bot */
-    CFootBotEntity* pcFB = any_cast<CFootBotEntity*>(it->second);
+  for (int agent_id = 0; agent_id < num_picker; agent_id++) {
+    auto& curr_picker = all_pickers[agent_id];
+    auto& front_act = curr_picker.acts.front();
+    bool act_status = false;
+    assert(front_act.timer > 0);
+    if (front_act.act == MOVE) {
+      act_status = executeMove(agent_id, front_act);
+    } else if (front_act.act == PICK) {
+      act_status = executePick(agent_id, front_act);
+    } else if (front_act.act == UNLOAD) {
+      act_status = executeUnload(agent_id, front_act);
+    } else {
+      std::cerr << "Unrecognized action type! Exiting" << std::endl;
+      exit(-1);
+    }
 
-    // /* Add the current position of the foot-bot if it's sufficiently far from the last */
-    // if(SquareDistance(pcFB->GetEmbodiedEntity().GetOriginAnchor().Position,
-    //                   m_tWaypoints[pcFB].back()) > MIN_DISTANCE_SQUARED) {
-    //    m_tWaypoints[pcFB].push_back(pcFB->GetEmbodiedEntity().GetOriginAnchor().Position);
-    // }
-
-    // Get the controller
-    CFootBotDiffusion* pcController = dynamic_cast<CFootBotDiffusion*>(
-        &(pcFB->GetControllableEntity().GetController())
-    );
-
-
-
-    if (pcController) {
-       // Retrieve step count or any other return value
-       // LOG << "Step Count: " << pcController->getCurrGoal() << std::endl;
-       auto tmp_goal = pcController->getCurrPod();
-       if (tmp_goal.GetZ() != -100) {
-          task_pods.push_back(tmp_goal);
-       }
-       auto tmp_station = pcController->getCurrStation();
-       if (tmp_station.GetZ() != -100) {
-          task_stations.push_back(tmp_station);
-       }
+    if (act_status) {
+      if (front_act.act == MOVE) {
+        getNextAction(agent_id);
+      } else if (front_act.act == PICK) {
+        client->call("confirm_picker_task", agent_id, front_act.task_id);
+      }
+      curr_picker.acts.pop_front();
     }
   }
+
+  addMobileVisualization();
 }
 
 /****************************************/

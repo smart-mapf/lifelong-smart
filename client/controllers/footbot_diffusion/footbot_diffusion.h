@@ -51,27 +51,36 @@
 #include <boost/asio.hpp>
 
 #define EPS 0.01f
+#define DELIVER_T 100
+#define PICK_T 100
 /*
  * All the ARGoS stuff in the 'argos' namespace.
  * With this statement, you save typing argos:: every time.
  */
 using namespace argos;
-using outputTuple = std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>>;
+using outputTuple = std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>, int>;
 
 struct Action {
     // target position and orientation
     Real x;
     Real y;
     Real angle;
-//    int nodeID;
     std::deque<int> nodeIDS;
+    int timer = -1;
+    int task_id = -1;
     enum Type {
         MOVE,
         TURN,
         STOP,
-        POD,
+        PICKER,
         STATION
     } type;
+    Action() {
+        x = 0.0, y = 0.0, angle = 0.0;
+        type= STOP;
+    }
+    Action(Real x, Real y, Real angle, std::deque<int> node_ids, Type act_type, int time_dura = -1, int task_id = -1):
+        x(x), y(y), angle(angle), nodeIDS(std::move(node_ids)), timer(time_dura), type(act_type), task_id(task_id) {}
 };
 
 struct Pos {
@@ -152,14 +161,26 @@ public:
     virtual void Destroy() {}
 
     CVector3 getCurrPod() {return curr_pod;};
+
     CVector3 getCurrStation() {return curr_station;}
+
+private:
+    Real pidLinear(Real error);
+    std::pair<Real, Real> Move(const CVector3& targetPos, const CVector3& currPos, Real currAngle, Real tolerance);
+    std::pair<Real, Real> inline pidAngular(Real error);
+    std::pair<Real, Real> Turn(Real targetAngle, Real currAngle, Real tolerance);
+    void TurnLeft(Real angle, Real currAngle, Real tolerance) const;
+
+    static Real ChangeCoordinateFromMapToArgos(Real x);
+    static Real ChangeCoordinateFromArgosToMap(Real x);
+    void insertActions(const std::vector<outputTuple>& actions);
+    double getReferenceSpeed(double dist) const;
+    void updateQueue();
+
 public:
     std::map< int, std::pair<bool, bool> > picker_task;
 
 private:
-    int pod_timer = 100;
-    int station_timer = 100;
-
     /* Pointer to the differential steering actuator */
     CCI_DifferentialSteeringActuator *m_pcWheels;
     /* Pointer to the foot-bot proximity sensor */
@@ -168,24 +189,7 @@ private:
     int m_tickPerSec = 10;
     // CPositionalEntity* m_pcPosEntity;
     std::string robot_id;
-
-    /*
-     * The following variables are used as parameters for the
-     * algorithm. You can set their value in the <parameters> section
-     * of the XML configuration file, under the
-     * <controllers><footbot_diffusion_controller> section.
-     */
-
-    /* Maximum tolerance for the angle between
-     * the robot heading direction and
-     * the closest obstacle detected. */
     CDegrees m_cAlpha;
-    /* Maximum tolerance for the proximity reading between
-     * the robot and the closest obstacle.
-     * The proximity reading is 0 when nothing is detected
-     * and grows exponentially to 1 when the obstacle is
-     * touching the robot.
-     */
     int port_number;
     Real m_linearVelocity;
     Real m_angularVelocity;
@@ -193,35 +197,8 @@ private:
     Real m_currVelocity;
     /* Wheel speed. */
     Real m_fWheelVelocity;
-    /* Angle tolerance range to go straight.
-     * It is set to [-alpha,alpha]. */
     CRange<CRadians> m_cGoStraightAngleRange;
     std::string m_outputDir;
-
-    Real pidLinear(Real error);
-
-    std::pair<Real, Real> Move(CVector3& targetPos, CVector3& currPos, Real currAngle, Real tolerance);
-
-    void MoveForward(Real x, Real y, Real tolerance);
-
-    std::pair<Real, Real> inline pidAngular(Real error);
-
-    std::pair<Real, Real> Turn(Real targetAngle, Real currAngle, Real tolerance);
-
-    void TurnLeft(Real angle, Real currAngle, Real tolerance);
-
-    void CalculateVelocity(Real x, Real y);
-
-    Real ChangeCoordinateFromMapToArgos(Real x);
-
-    Real ChangeCoordinateFromArgosToMap(Real x);
-
-    void insertActions(std::vector<outputTuple> actions);
-
-    double getReferenceSpeed(double dist);
-
-    void updateQueue();
-
 
     std::deque<Action> q;
     std::queue<Real> velocityQueue;
