@@ -1,0 +1,3 @@
+./build/pbs -m ../../warehouse-small.map -k 1 --portNum=8182
+argos3 -c ../output.argos
+./ADG_server --num_robots=1 -m ../../warehouse-small.map -n 8182 --num_pickers=48
