@@ -39,7 +39,6 @@ struct PickerAction {
 struct PickerRobot {
    std::pair<int, int> position;
    int loads = 0;
-   int stay_timer = 10;
    int curr_load = 0;
    std::deque<PickerAction> acts;
 };
@@ -91,6 +90,7 @@ public:
 
 private:
    void getNextAction(int agent_id);
+   void initRobot(int agent_id);
    void readPickerPath();
    inline int nextloc(int agent_id, int curr_loc_id, std::pair<int, int>& next_loc) {
       const auto& picker_path = all_picker_paths[agent_id];

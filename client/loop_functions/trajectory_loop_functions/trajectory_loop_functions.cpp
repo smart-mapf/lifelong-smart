@@ -91,10 +91,10 @@ void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
   int num_station = 0;
   TConfigurationNode& tParams = GetNode(t_tree, "num_stations");
   GetNodeAttribute(tParams, "value", num_station);
-  TConfigurationNode& portParams = GetNode(t_tree, "num_stations");
+  TConfigurationNode& portParams = GetNode(t_tree, "port_number");
   GetNodeAttribute(portParams, "value", port_number);
-  TConfigurationNode& pickerParams = GetNode(t_tree, "num_pickers");
-  GetNodeAttribute(pickerParams, "value", num_picker);
+  // TConfigurationNode& pickerParams = GetNode(t_tree, "num_pickers");
+  // GetNodeAttribute(pickerParams, "value", num_picker);
   for (int i = 0; i < num_station; i++) {
     Real x, y, z;
     TConfigurationNode& tStation = GetNode(t_tree, "station" + std::to_string(i));
@@ -104,6 +104,9 @@ void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
     all_stations.emplace_back(x, y, z);
     // std::cout << "Station: " << x << ", " << y << ", " << z << std::endl;
   }
+  readPickerPath();
+  num_picker = static_cast<int>(all_picker_paths.size());
+  all_pickers.resize(num_picker);
 //   task_goals.emplace_back(-3.0, -0.0, 0.0);
 //   task_goals.emplace_back(-0.0, -3.0, 0.0);
 }
@@ -148,6 +151,7 @@ int CTrajectoryLoopFunctions::requestMobileRobot(std::pair<int, int>& loc) {
  * @param agent_id id of the agent
  */
 void CTrajectoryLoopFunctions::getNextAction(int agent_id) {
+  printf("Get next action for agent %d\n", agent_id);
   auto& curr_agent = all_pickers[agent_id];
   auto& last_act = curr_agent.acts.back();
   assert(last_act.act == MOVE);
@@ -169,6 +173,18 @@ void CTrajectoryLoopFunctions::getNextAction(int agent_id) {
   std::pair<int, int> next_loc;
   int next_step_id = nextloc(agent_id, last_act.step_id, next_loc);
   curr_agent.acts.emplace_back(MOVE_T, MOVE, last_act.end, next_loc, next_step_id);
+}
+
+/**
+ * Get the actions at the next location for the agent
+ *
+ * @param agent_id id of the agent
+ */
+void CTrajectoryLoopFunctions::initRobot(int agent_id) {
+  printf("Get first action for agent %d\n", agent_id);
+  auto& curr_agent = all_pickers[agent_id];
+  curr_agent.acts.emplace_back(MOVE_T, MOVE, all_picker_paths[agent_id].front(), all_picker_paths[agent_id].front(), 0);
+  printf("Finish first action for agent %d\n", agent_id);
 }
 
 /**
@@ -314,6 +330,7 @@ typedef std::tuple<int, int, int> PickData;
 void CTrajectoryLoopFunctions::requestNewPickTasks() {
   all_pick_tasks.clear();
   std::vector< PickData > picker_data = client->call("get_picker_task").as< std::vector<PickData> >();
+  printf("Get picker tasks\n");
   for (auto& tmp_task: picker_data) {
     std::pair<int, int> task_loc = std::make_pair(std::get<0> (tmp_task), std::get<1> (tmp_task));
     auto entry = all_pick_tasks.find(task_loc);
@@ -323,12 +340,14 @@ void CTrajectoryLoopFunctions::requestNewPickTasks() {
       all_pick_tasks[task_loc] = std::deque<int>{std::get<2> (tmp_task)};
     }
   }
+  printf("Finish request new tasks\n");
 }
 
 void CTrajectoryLoopFunctions::initActionQueue() {
   requestNewPickTasks();
   // Insert initial actions
   for (int i = 0; i < num_picker; i++) {
+    initRobot(i);
     for (int j = 0; j < WINDOW_SIE; j++) {
       getNextAction(i);
     }
@@ -368,6 +387,8 @@ void CTrajectoryLoopFunctions::addMobileVisualization() {
 /****************************************/
 
 void CTrajectoryLoopFunctions::PostStep() {
+  std::cout << "Try to connect to server with port num: " << port_number << std::endl;
+
   if (not is_initialized) {
     if (is_port_open("127.0.0.1", port_number)) {
       client = std::make_shared<rpc::client>("127.0.0.1", port_number);
@@ -376,6 +397,7 @@ void CTrajectoryLoopFunctions::PostStep() {
       // std::this_thread::sleep_for(std::chrono::seconds(5)); // Wait for 1 second before retrying
       return;
     }
+    initActionQueue();
     is_initialized = true;
   }
 
@@ -383,9 +405,12 @@ void CTrajectoryLoopFunctions::PostStep() {
   curr_picking_objs.clear();
   picker_unload_locs.clear();
 
+  printf("start execution!\n");
   for (int agent_id = 0; agent_id < num_picker; agent_id++) {
     auto& curr_picker = all_pickers[agent_id];
     auto& front_act = curr_picker.acts.front();
+    // std::cout << "For agent " << agent_id << ", the action type is: " << front_act.act << ", curr time: " << front_act.timer;
+    printf("For agent %d, the action type is: %d, curr time: %d\n", agent_id, front_act.act, front_act.timer);
     bool act_status = false;
     assert(front_act.timer > 0);
     if (front_act.act == MOVE) {

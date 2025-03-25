@@ -6,6 +6,7 @@ num_task_genre(num_genre)
   for (int i = 0; i < num_agents; i++) {
     pickers.emplace_back(i);
   }
+  tasks_by_genre.resize(num_genre);
   genRandomTask();
 }
 

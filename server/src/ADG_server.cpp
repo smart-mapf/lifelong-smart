@@ -261,6 +261,7 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
 typedef std::tuple<int, int, int> PickData;
 
 std::vector< PickData > getPickerTask() {
+    std::cout << "Request new picker task!" << std::endl;
     std::vector<std::shared_ptr<PickerTask>> all_tasks;
     server_ptr->picker_manager->getTask(all_tasks);
     assert(not all_tasks.empty());

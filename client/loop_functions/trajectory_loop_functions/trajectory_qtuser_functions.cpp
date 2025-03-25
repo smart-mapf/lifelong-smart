@@ -70,7 +70,7 @@ void CTrajectoryQTUserFunctions::DrawInWorld() {
       //              const CQuaternion& c_orientation,
       //              const CVector3& c_size
       CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
-      CVector3 c_size = CVector3(0.9, 0.9, 0.05);
+      CVector3 c_size = CVector3(0.9, 0.9, 1.05);
       CColor c_color = CColor(0, 0, 255);
       DrawBox(loc, c_orient, c_size, c_color);
       CVector3 loc_tmp = loc;
@@ -84,7 +84,7 @@ void CTrajectoryQTUserFunctions::DrawInWorld() {
       //              const CQuaternion& c_orientation,
       //              const CVector3& c_size
       CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
-      CVector3 c_size = CVector3(0.9, 0.9, 0.05);
+      CVector3 c_size = CVector3(0.9, 0.9, 1.05);
       CColor c_color = CColor(0, 255, 0);
       DrawBox(loc, c_orient, c_size, c_color);
       CVector3 loc_tmp = loc;
@@ -98,7 +98,7 @@ void CTrajectoryQTUserFunctions::DrawInWorld() {
       //              const CQuaternion& c_orientation,
       //              const CVector3& c_size
       CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
-      CVector3 c_size = CVector3(0.9, 0.9, 0.05);
+      CVector3 c_size = CVector3(0.9, 0.9, 1.05);
       CColor c_color = CColor(255, 0, 0);
       DrawBox(loc, c_orient, c_size, c_color);
       CVector3 loc_tmp = loc;
