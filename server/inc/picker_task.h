@@ -9,8 +9,8 @@
 class PickerRobotState {
   public:
     explicit PickerRobotState(int agent_idx): agent_idx(agent_idx) {}
-    void deliverPkg();
-    void pickPkg();
+    // void deliverPkg();
+    // void pickPkg();
     // num of packs agent is carrying
     int curr_loads = 0;
     int agent_idx;

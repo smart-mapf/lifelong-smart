@@ -7,6 +7,7 @@ std::shared_ptr<ADG_Server> server_ptr = nullptr;
     // =======================
 
 ADG_Server::ADG_Server(int num_robots,
+    int num_pickers,
     std::string& target_output_filename, 
     std::string map_name, 
     std::string scen_name,
@@ -14,7 +15,7 @@ ADG_Server::ADG_Server(int num_robots,
  {
     adg = std::make_shared<ADG> (num_robots);
     mobile_manager = std::make_shared<MobileTaskManager>(num_robots, map_name);
-    picker_manager = std::make_shared<PickTaskManager>(num_robots/2, NUM_GENRE, map_name);
+    picker_manager = std::make_shared<PickTaskManager>(num_pickers, NUM_GENRE, map_name);
 
     output_filename = target_output_filename;
     numRobots = adg->numRobots();
@@ -80,7 +81,14 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     //     return {};
     // }
     server_ptr->curr_robot_states = server_ptr->adg->computeCommitCut(look_ahead_dist);
-    assert(server_ptr->curr_robot_states.size() == server_ptr->numRobots);
+    assert(static_cast<int>(server_ptr->curr_robot_states.size()) == server_ptr->numRobots);
+    std::cout << "Commit cut number: " << server_ptr->curr_robot_states.size() << ", total number of robots: "
+        << server_ptr->numRobots << std::endl;
+#ifdef NDEBUG
+    std::cout << "Assertions are DISABLED (NDEBUG is defined)" << std::endl;
+#else
+    std::cout << "Assertions are ENABLED" << std::endl;
+#endif
     std::vector<std::pair<double, double>> robots_location;
     for (auto& robot : server_ptr->curr_robot_states)
     {
@@ -91,7 +99,6 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
         }
     }
 
-    std::vector<std::pair<double, double>> goal_location;
     // TODO@jingtian: set a task as finished when it is enqueued
     std::vector<bool> task_status;
     std::cout << "retrieving last actions" << std::endl;
@@ -225,17 +232,21 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     server_ptr->mobile_manager->getTask(new_tasks);
     server_ptr->curr_mobile_tasks = new_tasks;
     new_goals.resize(server_ptr->numRobots);
-
-    std::cout << "get new tasks" << std::endl;
+    std::cout << "Total number of robots: " << server_ptr->numRobots << "Total tasks: " << new_tasks.size() << std::endl;
     assert(new_tasks.size() == server_ptr->numRobots);
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
         printf("agent_id: %d\n", agent_id);
         if (new_tasks[agent_id].empty()) {
             // If no task can be found, use the current locations
-            auto& curr_robot_loc = server_ptr->curr_robot_states[agent_id];
-            new_goals[agent_id].emplace_back(curr_robot_loc.position.first,
-                curr_robot_loc.position.second, curr_robot_loc.orient);
+            std::cout << "Size of the curr robot states: " << server_ptr->curr_robot_states.size() << std::endl;
+            assert(server_ptr->curr_robot_states.size() == server_ptr->numRobots);
+            robotState curr_robot_loc = server_ptr->curr_robot_states[agent_id];
+            std::cout << "New task to be inserted: " << curr_robot_loc.position.second << ", " <<
+                curr_robot_loc.position.first << ", " << curr_robot_loc.orient;
+            new_goals[agent_id].emplace_back(curr_robot_loc.position.second,
+                curr_robot_loc.position.first, curr_robot_loc.orient);
         } else {
+            std::cout << "Size of the new tasks for agent " << agent_id << ", is: " << new_tasks[agent_id].size() << std::endl;
             for (auto& task : new_tasks[agent_id]) {
                 int tmp_x = task->goal_position.first;
                 int tmp_y = task->goal_position.second;
@@ -274,10 +285,12 @@ std::vector< PickData > getPickerTask() {
 
 void confirmPickerTask(int agent_id, int task_id) {
     assert(task_id != -1);
+    // std::cout << "send confirmation to agent " << agent_id << " with task id " << task_id << std::endl;
     server_ptr->picker_manager->confirmTask(agent_id, task_id);
 }
 
 int requestMobileTask(std::pair<int, int> target_pos) {
+    std::cout << "Request mobile task!" << std::endl;
     return server_ptr->mobile_manager->insertPickerTask(target_pos.first, target_pos.second);
 }
 
@@ -330,6 +343,7 @@ int main(int argc, char **argv) {
             // params for the input instance and experiment settings
             ("path_file,p", po::value<string>(), "input file for path")
             ("num_robots,k", po::value<int>()->required(), "number of robots in server")
+            ("num_pickers", po::value<int>()->required(), "number of picker robots in server")
             ("port_number,n", po::value<int>()->default_value(8080), "rpc port number")
             ("output_file,o", po::value<string>()->default_value("stats.csv"), "output statistic filename")
             ("map_file,m", po::value<string>()->default_value("empty-8-8.map"), "map filename")
@@ -352,7 +366,7 @@ int main(int argc, char **argv) {
     }
     // std::cout << "Solving for path name: " << filename << std::endl;
     std::string out_filename = vm["output_file"].as<string>();
-    server_ptr = std::make_shared<ADG_Server>(vm["num_robots"].as<int>(), out_filename, vm["map_file"].as<string>(),
+    server_ptr = std::make_shared<ADG_Server>(vm["num_robots"].as<int>(), vm["num_pickers"].as<int>(), out_filename, vm["map_file"].as<string>(),
         vm["scen_file"].as<string>(), vm["method_name"].as<string>());
 
     int port_number = vm["port_number"].as<int>();

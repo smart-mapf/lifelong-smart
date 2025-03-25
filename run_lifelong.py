@@ -164,7 +164,7 @@ def run_simulator(args):
     # Wait for the client process to complete
     # time.sleep(5)
     os.chdir("..")
-    # planner_process = subprocess.Popen(planner_command)
+    planner_process = subprocess.Popen(planner_command)
 
     client_process.wait()
     server_process.wait()
@@ -214,7 +214,7 @@ def main():
         # server_executable_path = "server/build/ADG_server"
         server_command = [
             server_executable_path, "-k", str(curr_num_agent), "-n",
-            str(port_num), f"--method_name=PBS", "-m", f"./{map_file_path}"
+            str(port_num), f"--method_name=PBS", "-m", f"./{map_file_path}", "--num_pickers=48"
         ]
         client_command = ["argos3", "-c", f"../{config_filename}"]
         print(client_command)

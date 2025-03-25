@@ -161,6 +161,7 @@ bool ADG::fixInconsistentIncomingEdge(std::vector<std::pair<int, int>>& commited
 
 std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
     if (not initialized) {
+        std::cout << "computeCommitCut::Not initialized!" << std::endl;
         return {};
     }
     // std::vector<robotState> curr_commit;
@@ -208,7 +209,7 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
         std::cout << "Clean commited actions for agent " << agent_id << ", total actions: " << graph[agent_id].size() << std::endl;
 #endif
         if (graph[agent_id].empty()) {
-            // commitCut[agent_id] = init_locs[agent_id].position;
+            curr_commit.emplace_back(init_locs[agent_id].position, 0);
             continue;
         }
         for (int node_idx = commited_actions[agent_id].second; node_idx < graph[agent_id].size(); node_idx++) {

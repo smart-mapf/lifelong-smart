@@ -35,7 +35,7 @@ std::mutex globalMutex;
 
 class ADG_Server{
 public:
-    ADG_Server(int num_robots, std::string& target_output_filename, std::string map_name, std::string scen_name, std::string method_name);
+    ADG_Server(int num_robots, int num_pickers, std::string& target_output_filename, std::string map_name, std::string scen_name, std::string method_name);
     void saveStats();
     
     // TODO@jingtian: move some of them into private

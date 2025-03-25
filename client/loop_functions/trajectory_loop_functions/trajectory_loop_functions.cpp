@@ -141,7 +141,7 @@ void CTrajectoryLoopFunctions::Reset() {
  * @return Task id for the request
  */
 int CTrajectoryLoopFunctions::requestMobileRobot(std::pair<int, int>& loc) {
-  int new_mobile_task_id = client->call("request_mobile_robot", loc).as<int>();
+  int new_mobile_task_id = client->call("request_mobile_robot", std::make_pair(loc.second, loc.first)).as<int>();
   return new_mobile_task_id;
 }
 
@@ -332,7 +332,8 @@ void CTrajectoryLoopFunctions::requestNewPickTasks() {
   std::vector< PickData > picker_data = client->call("get_picker_task").as< std::vector<PickData> >();
   printf("Get picker tasks\n");
   for (auto& tmp_task: picker_data) {
-    std::pair<int, int> task_loc = std::make_pair(std::get<0> (tmp_task), std::get<1> (tmp_task));
+    std::pair<int, int> task_loc = std::make_pair(std::get<1> (tmp_task), std::get<0> (tmp_task));
+    printf("Pick task at (%d, %d), task id: %d\n", task_loc.first, task_loc.second, std::get<2> (tmp_task));
     auto entry = all_pick_tasks.find(task_loc);
     if (entry != all_pick_tasks.end()) {
       entry->second.push_back(std::get<2> (tmp_task));
@@ -387,8 +388,7 @@ void CTrajectoryLoopFunctions::addMobileVisualization() {
 /****************************************/
 
 void CTrajectoryLoopFunctions::PostStep() {
-  std::cout << "Try to connect to server with port num: " << port_number << std::endl;
-
+  // std::cout << "Try to connect to server with port num: " << port_number << std::endl;
   if (not is_initialized) {
     if (is_port_open("127.0.0.1", port_number)) {
       client = std::make_shared<rpc::client>("127.0.0.1", port_number);
@@ -405,12 +405,12 @@ void CTrajectoryLoopFunctions::PostStep() {
   curr_picking_objs.clear();
   picker_unload_locs.clear();
 
-  printf("start execution!\n");
+  // printf("start execution!\n");
   for (int agent_id = 0; agent_id < num_picker; agent_id++) {
     auto& curr_picker = all_pickers[agent_id];
     auto& front_act = curr_picker.acts.front();
     // std::cout << "For agent " << agent_id << ", the action type is: " << front_act.act << ", curr time: " << front_act.timer;
-    printf("For agent %d, the action type is: %d, curr time: %d\n", agent_id, front_act.act, front_act.timer);
+    // printf("For agent %d, the action type is: %d, curr time: %d\n", agent_id, front_act.act, front_act.timer);
     bool act_status = false;
     assert(front_act.timer > 0);
     if (front_act.act == MOVE) {

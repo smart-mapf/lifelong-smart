@@ -32,19 +32,21 @@ void PickTaskManager::genRandomTask() {
 
 std::shared_ptr<PickerTask> PickTaskManager::pickRandomPod(int genre) {
   // std::srand(std::time(0));  // Seed the random number generator
-  std::srand(0);  // Seed the random number generator
+  std::srand(genre*tasks_by_genre[genre].size());  // Seed the random number generator
   int pod_idx = std::rand() % static_cast<int> (user_map.pods_by_genre[genre].size());
   auto tmp_pod = user_map.pods_by_genre[genre][pod_idx];
   int x = tmp_pod->x;
   int y = tmp_pod->y;
-  if (user_map.isValid(x, y+1)) {
-    return std::make_shared<PickerTask>(curr_task_idx++, genre, std::make_pair(x, y+1));
-  }
-  if (user_map.isValid(x, y-1)) {
-    return std::make_shared<PickerTask>(curr_task_idx++, genre, std::make_pair(x, y-1));
-  }
-  std::cerr << "Error in finding available position to pod!" << std::endl;
-  exit(-1);
+  std::cout << "Genre id " << genre <<  ", choose pod: " << pod_idx << ", at loc " << x << ", " << y << std::endl;
+  return std::make_shared<PickerTask>(curr_task_idx++, genre, std::make_pair(x, y));
+  // if (user_map.isValid(x, y+1)) {
+  //   return std::make_shared<PickerTask>(curr_task_idx++, genre, std::make_pair(x, y+1));
+  // }
+  // if (user_map.isValid(x, y-1)) {
+  //   return std::make_shared<PickerTask>(curr_task_idx++, genre, std::make_pair(x, y-1));
+  // }
+  // std::cerr << "Error in finding available position to pod!" << std::endl;
+  // exit(-1);
 }
 
 
