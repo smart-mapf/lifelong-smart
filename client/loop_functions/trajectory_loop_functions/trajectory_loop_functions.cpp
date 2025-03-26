@@ -292,7 +292,7 @@ bool CTrajectoryLoopFunctions::executeUnload(int agent_id, PickerAction& act) {
 
   bool task_assigned = false;
   std::map<int, std::pair<bool, bool>>::iterator task_status_it;
-  printf("Executing unload action with id %d... Search task in mobile robot's queue\n", act_task_id);
+  // printf("Executing unload action with id %d... Search task in mobile robot's queue\n", act_task_id);
   /* Get the map of all foot-bots from the space */
   CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
   for(CSpace::TMapPerType::iterator it = tFBMap.begin(); it != tFBMap.end(); ++it) {
@@ -303,10 +303,10 @@ bool CTrajectoryLoopFunctions::executeUnload(int agent_id, PickerAction& act) {
         &(pcFB->GetControllableEntity().GetController())
     );
     if (pcController) {
-      for (auto tmp_mobile_picker_task: pcController->picker_task) {
-        printf("Picker task with id %d, status of (%d, %d)\n", tmp_mobile_picker_task.first,
-          tmp_mobile_picker_task.second.first, tmp_mobile_picker_task.second.second);
-      }
+      // for (auto tmp_mobile_picker_task: pcController->picker_task) {
+      //   printf("Picker task with id %d, status of (%d, %d)\n", tmp_mobile_picker_task.first,
+      //     tmp_mobile_picker_task.second.first, tmp_mobile_picker_task.second.second);
+      // }
       auto tmp_task_it = pcController->picker_task.find(act_task_id);
       if (tmp_task_it != pcController->picker_task.end()) {
         printf("Find task in mobile robot's queue\n");

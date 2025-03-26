@@ -62,7 +62,7 @@ void CFootBotDiffusion::insertActions(const std::vector<outputTuple>& actions)
         } else if (action1 == "S") {
             q.emplace_back(x, y, angle, std::deque<int>{nodeID}, Action::STATION, DELIVER_T, task_id);
         } else if (action1 == "P") {
-            q.emplace_back(start_x, start_y, angle, std::deque<int>{nodeID}, Action::PICKER, PICK_T, task_id);
+            q.emplace_back(start_x, start_y, angle, std::deque<int>{nodeID}, Action::PICKER, PICKER_T, task_id);
             if (picker_task.find(task_id) != picker_task.end()) {
                 std::cerr << "Accept same task for two times! Exiting..." << std::endl;
                 exit(-1);
@@ -358,18 +358,22 @@ void CFootBotDiffusion::ControlStep() {
         left_v = turn_velocities.first;
         right_v = turn_velocities.second;
     } else if (a.type == Action::PICKER) {
+        std::cout << "Executing picker task, with start time of " << a.timer << " seconds" << std::endl;
+
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
         if (not picker_task[a.task_id].first) {
             picker_task[a.task_id].first = true;
         }
         if (picker_task[a.task_id].second) {
             curr_pod = CVector3{a.x, a.y, 0.0f};
-            a.timer--;
+            q.front().timer--;
+            std::cout << "Picker is there, minus one step!" << std::endl;
         }
+        std::cout << "Executing picker task, with remaining time of " << a.timer << " seconds" << std::endl;
     } else if (a.type == Action::STATION) {
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
         curr_station = CVector3{a.x, a.y, 0.0f};
-        a.timer--;
+        q.front().timer--;
     } else {
         // stop state, waiting for next instruction
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
