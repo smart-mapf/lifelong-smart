@@ -8,8 +8,7 @@ num_group = int(48/POD_WIDTH)
 agent_per_group = 4
 
 
-start_y = np.random.randint(MIN_Y, MAX_Y, agent_per_group)
-start_y = np.sort(start_y)
+
 
 def move_next(x, y):
   if x % 2 == 0:
@@ -29,6 +28,8 @@ if __name__ == '__main__':
   all_path = []
   print("std::vector<std::vector<std::pair<int, int>>> all_picker_path = {")
   for i in range(num_group):
+    start_y = np.random.randint(MIN_Y, MAX_Y, agent_per_group)
+    start_y = np.sort(start_y)
     group_path = []
     for j in range(agent_per_group):
       print("{", end=" ")

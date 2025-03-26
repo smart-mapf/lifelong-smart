@@ -56,7 +56,7 @@ std::shared_ptr<MobileRobotTask> MobileTaskManager::pickPicker(int agent_id) {
   // std::srand(std::time(0));  // Seed the random number generator
   std::srand(0);  // Seed the random number generator
 
-  int picker_idx = std::rand() % active_stations.size();
+  int picker_idx = std::rand() % picker_tasks.size();
   auto it = picker_tasks.begin();
   std::advance(it, picker_idx);
   auto tmp_pick_task = *it;

@@ -290,8 +290,10 @@ void confirmPickerTask(int agent_id, int task_id) {
 }
 
 int requestMobileTask(std::pair<int, int> target_pos) {
-    std::cout << "Request mobile task!" << std::endl;
-    return server_ptr->mobile_manager->insertPickerTask(target_pos.first, target_pos.second);
+    std::cout << "Request mobile task! " << "with x: " << target_pos.first << ", y: " << target_pos.second << std::endl;
+    int new_task_id = server_ptr->mobile_manager->insertPickerTask(target_pos.first, target_pos.second);
+    std::cout << "New mobile task id: " << new_task_id << std::endl;
+    return new_task_id;
 }
 
 // void confirmMobileTask();

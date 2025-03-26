@@ -26,7 +26,7 @@ void CTrajectoryQTUserFunctions::DrawInWorld() {
       //              const CVector3& c_size
       CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
       CVector3 c_size = CVector3(0.85, 0.85, 0.05);
-      CColor c_color = CColor(120, 255, 120);
+      CColor c_color = CColor(255, 0, 0);
       DrawBox(loc, c_orient, c_size, c_color);
       CVector3 loc_tmp = loc;
       loc_tmp.SetX(loc_tmp.GetX());
