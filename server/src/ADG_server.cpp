@@ -84,11 +84,6 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     assert(static_cast<int>(server_ptr->curr_robot_states.size()) == server_ptr->numRobots);
     std::cout << "Commit cut number: " << server_ptr->curr_robot_states.size() << ", total number of robots: "
         << server_ptr->numRobots << std::endl;
-#ifdef NDEBUG
-    std::cout << "Assertions are DISABLED (NDEBUG is defined)" << std::endl;
-#else
-    std::cout << "Assertions are ENABLED" << std::endl;
-#endif
     std::vector<std::pair<double, double>> robots_location;
     for (auto& robot : server_ptr->curr_robot_states)
     {
@@ -166,7 +161,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         tmp_act.task_id = server_ptr->curr_mobile_tasks[i].front()->id;
         plans[i].push_back(tmp_act);
     }
-    // showActionsPlan(plans);
+    showActionsPlan(plans);
     server_ptr->adg->addMAPFPlan(plans);
     // for (int id = 0; id < server_ptr->numRobots; id++)
     // {
@@ -232,17 +227,17 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     server_ptr->mobile_manager->getTask(new_tasks);
     server_ptr->curr_mobile_tasks = new_tasks;
     new_goals.resize(server_ptr->numRobots);
-    std::cout << "Total number of robots: " << server_ptr->numRobots << "Total tasks: " << new_tasks.size() << std::endl;
+    std::cout << "Total number of robots: " << server_ptr->numRobots << ", Total tasks: " << new_tasks.size() << std::endl;
     assert(new_tasks.size() == server_ptr->numRobots);
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
         printf("agent_id: %d\n", agent_id);
         if (new_tasks[agent_id].empty()) {
             // If no task can be found, use the current locations
-            std::cout << "Size of the curr robot states: " << server_ptr->curr_robot_states.size() << std::endl;
+            // std::cout << "Size of the curr robot states: " << server_ptr->curr_robot_states.size() << std::endl;
             assert(server_ptr->curr_robot_states.size() == server_ptr->numRobots);
             robotState curr_robot_loc = server_ptr->curr_robot_states[agent_id];
-            std::cout << "New task to be inserted: " << curr_robot_loc.position.second << ", " <<
-                curr_robot_loc.position.first << ", " << curr_robot_loc.orient;
+            // std::cout << "New task to be inserted: " << curr_robot_loc.position.second << ", " <<
+            //     curr_robot_loc.position.first << ", " << curr_robot_loc.orient;
             new_goals[agent_id].emplace_back(curr_robot_loc.position.second,
                 curr_robot_loc.position.first, curr_robot_loc.orient);
         } else {

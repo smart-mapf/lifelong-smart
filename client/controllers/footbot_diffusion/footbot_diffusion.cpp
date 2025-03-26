@@ -118,15 +118,11 @@ void CFootBotDiffusion::Init(TConfigurationNode &t_node) {
     GetNodeAttributeOrDefault(t_node, "acceleration", m_linearAcceleration, m_linearAcceleration);
     GetNodeAttributeOrDefault(t_node, "portNumber", port_number, 8080);
     GetNodeAttributeOrDefault(t_node, "outputDir", m_outputDir,std::string("metaData/"));
-    // std::cout << "port number: " << port_number << std::endl;
-    // std::cout << "print m_fWheelVelocity: " << m_fWheelVelocity << std::endl;
-    // std::cout << "print acceleration: " << m_linearAcceleration << std::endl;
     m_linearVelocity = 1.22 * m_angularVelocity;
     m_currVelocity = 0.0;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
     robot_id = std::to_string(static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetY()))) + "_" +
                std::to_string(static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetX())));
-    // std::cout << "Robot ID: " << robot_id << std::endl;
 }
 
 /****************************************/
@@ -192,22 +188,13 @@ void CFootBotDiffusion::ControlStep() {
             client = std::make_shared<rpc::client>("127.0.0.1", port_number);
         } else {
             // std::cout << "Failed to connect to server. Retrying..." << std::endl;
-            // std::this_thread::sleep_for(std::chrono::seconds(5)); // Wait for 1 second before retrying
             return;
         }
         is_initialized = true;
-
-        //client = std::make_shared<rpc::client>("127.0.0.1", port_number);
-        //std::cout << "Connected to server" <<port_number<< std::endl;
-        // std::vector<outputTuple> actions = client->call("init", robot_id).as<std::vector<outputTuple>>();
         client->call("init", robot_id);
 
         outputDir = client->call("get_config").as<std::string>();
         outputDir = "client_output/"+outputDir+"/";
-        //std::cout << "Received actions init and outputDir" << std::endl;
-        //std::cout << "OutputDir: " << outputDir << std::endl;
-        // insertActions(actions);
-        //std::cout << "Finished init and get actions" << std::endl;
 
         // Check if the directory exists, if not create it
         std::filesystem::path dirPath(outputDir);
@@ -262,7 +249,6 @@ void CFootBotDiffusion::ControlStep() {
     }
     Real left_v, right_v;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
-//    //std::cout << robot_id << "Current Orientation: " << ToDegrees(cZAngle).GetValue() << std::endl;
     if (count % 10 == 0) {
         ////std::cout << "Robot ID: " << robot_id << std::endl;
 //        if (count % 200 == 0) {
@@ -358,7 +344,7 @@ void CFootBotDiffusion::ControlStep() {
         left_v = turn_velocities.first;
         right_v = turn_velocities.second;
     } else if (a.type == Action::PICKER) {
-        std::cout << "Executing picker task, with start time of " << a.timer << " seconds" << std::endl;
+        // std::cout << "Executing picker task, with start time of " << a.timer << " seconds" << std::endl;
 
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
         if (not picker_task[a.task_id].first) {
@@ -367,9 +353,9 @@ void CFootBotDiffusion::ControlStep() {
         if (picker_task[a.task_id].second) {
             curr_pod = CVector3{a.x, a.y, 0.0f};
             q.front().timer--;
-            std::cout << "Picker is there, minus one step!" << std::endl;
+            // std::cout << "Picker is there, minus one step!" << std::endl;
         }
-        std::cout << "Executing picker task, with remaining time of " << a.timer << " seconds" << std::endl;
+        // std::cout << "Executing picker task, with remaining time of " << a.timer << " seconds" << std::endl;
     } else if (a.type == Action::STATION) {
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
         curr_station = CVector3{a.x, a.y, 0.0f};

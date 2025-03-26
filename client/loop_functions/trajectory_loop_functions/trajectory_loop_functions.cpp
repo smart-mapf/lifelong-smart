@@ -246,7 +246,13 @@ inline std::pair<int, int> CTrajectoryLoopFunctions::coordSim2Planner(CVector3& 
  **/
 bool CTrajectoryLoopFunctions::executeMove(int agent_id, PickerAction& act) {
   act.timer--;
-  CVector3 curr_picker_curr = coordPlanner2Sim(act.start);
+  CVector3 picker_start = coordPlanner2Sim(act.start);
+  CVector3 picker_end = coordPlanner2Sim(act.end);
+  double curr_x = static_cast<double>(act.timer)/static_cast<double>(MOVE_T) * picker_start.GetX() +
+    static_cast<double>(MOVE_T - act.timer)/static_cast<double>(MOVE_T) * picker_end.GetX();
+  double curr_y = static_cast<double>(act.timer)/static_cast<double>(MOVE_T) * picker_start.GetY() +
+    static_cast<double>(MOVE_T - act.timer)/static_cast<double>(MOVE_T) * picker_end.GetY();
+  CVector3 curr_picker_curr = CVector3(curr_x, curr_y, picker_start.GetZ());
   picker_curr_locs.emplace_back(curr_picker_curr);
   if (act.timer == 0) {
     return true;

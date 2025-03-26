@@ -34,6 +34,7 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
             j++;
             total_nodes_cnt ++;
         }
+        std::cout << "Plan of agent " << i << " become " << graph[i].size() << " after add new plan!" << std::endl;
     }
     std::vector<std::vector<bool>> conflict_pair_table;
     conflict_pair_table.resize(plans.size());
