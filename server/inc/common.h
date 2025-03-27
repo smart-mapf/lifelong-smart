@@ -9,9 +9,9 @@
 #include <cmath>
 
 #define MAX_LOADS 1
-#define MAX_TASKS 10
+#define MAX_TASKS 20
 #define MAX_NUM_GOALS 1
-#define NUM_GENRE 12
+#define NUM_GENRE 10
 #define DEBUG
 
 using namespace std;
@@ -92,7 +92,7 @@ struct MobileRobotTask
 
     MobileAction act = NONE;
     int operate_obj_idx = -1;
-
+    int estimate_time = 0;
     bool status=true; // false if finished, true otherwise
     // MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
     // }

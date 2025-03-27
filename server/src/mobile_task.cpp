@@ -39,7 +39,7 @@ void MobileTaskManager::getTask(std::vector<std::deque<std::shared_ptr<MobileRob
 
 std::shared_ptr<MobileRobotTask> MobileTaskManager::genTask(int agent_id) {
   if (agent_task_status[agent_id].curr_loads < MAX_LOADS) {
-    std::cout << "Pick a new random pod" << std::endl;
+    std::cout << "Pick a new random picker" << std::endl;
     auto new_task = pickPicker(agent_id);
     return new_task;
   } else {
@@ -54,13 +54,16 @@ std::shared_ptr<MobileRobotTask> MobileTaskManager::pickPicker(int agent_id) {
     return nullptr;
   }
   // std::srand(std::time(0));  // Seed the random number generator
-  std::srand(0);  // Seed the random number generator
-
-  int picker_idx = std::rand() % picker_tasks.size();
-  auto it = picker_tasks.begin();
-  std::advance(it, picker_idx);
-  auto tmp_pick_task = *it;
-  picker_tasks.erase(it);
+  // std::srand(0);  // Seed the random number generator
+  //
+  // int picker_idx = std::rand() % picker_tasks.size();
+  // auto it = picker_tasks.begin();
+  // std::advance(it, picker_idx);
+  // auto tmp_pick_task = *it;
+  // picker_tasks.erase(it);
+  // tmp_pick_task->agent_id = agent_id;
+  auto tmp_pick_task = picker_tasks.front();
+  picker_tasks.pop_front();
   tmp_pick_task->agent_id = agent_id;
   return tmp_pick_task;
 }

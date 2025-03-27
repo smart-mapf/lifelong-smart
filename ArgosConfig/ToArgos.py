@@ -117,14 +117,24 @@ def create_Argos(map_data,
                                 implementation="default")
 
     # Parameters
+    # params = ET.SubElement(footbot_controller,
+    #                        "params",
+    #                        alpha="30.0",
+    #                        omega="12.0",
+    #                       #  alpha="7.5",
+    #                       #  omega="3.0",
+    #                        velocity="400",
+    #                        acceleration="10.0",
+    #                        portNumber=f"{port_num}",
+    #                        outputDir=f"metaData{port_num}/")
     params = ET.SubElement(footbot_controller,
                            "params",
-                           alpha="30.0",
-                           omega="12.0",
+                           alpha="7.5",
+                           omega="3.0",
                           #  alpha="7.5",
                           #  omega="3.0",
-                           velocity="500",
-                           acceleration="10.0",
+                           velocity="100",
+                           acceleration="2.5",
                            portNumber=f"{port_num}",
                            outputDir=f"metaData{port_num}/")
 

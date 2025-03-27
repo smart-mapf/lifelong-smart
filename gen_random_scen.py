@@ -99,9 +99,9 @@ def write_scen_file(scen_filename, map_filename, map_width, map_height, assignme
 
 if __name__ == "__main__":
     # Input map file (octile-format) and number of robots
-    octile_map_file = "warehouse-small.map"    # Replace with your map file
-    scen_file = "warehouse-small.scen"     # Output scenario file name
-    map_filename_for_scen = "warehouse-small.map"  # This is the map name to be printed in the scen file.
+    octile_map_file = "supermarket.map"    # Replace with your map file
+    scen_file = "supermarket.scen"     # Output scenario file name
+    map_filename_for_scen = "supermarket.map"  # This is the map name to be printed in the scen file.
     
     num_robots = 80  # Change this to the desired number of robots/scenarios
 

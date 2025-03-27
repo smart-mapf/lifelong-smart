@@ -8,11 +8,11 @@
 
 #include "controllers/footbot_diffusion/footbot_diffusion.h"
 
-#define PICK_T 100
+#define PICK_T 240
 #define MOVE_T 100
-#define UNLOAD_T 100
-#define LOAD_NUM 5
-#define WINDOW_SIE 5
+#define UNLOAD_T 60
+#define LOAD_NUM 4
+#define WINDOW_SIE 20
 
 using namespace argos;
 

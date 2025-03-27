@@ -3,7 +3,13 @@
 #include "common.h"
 #include <boost/tokenizer.hpp>
 #include <random>
+#include <unordered_set>
 
+struct FreeCell {
+    std::pair<int, int> position;
+    bool occupied = false;
+    FreeCell(int x, int y) : position(x, y) {}
+};
 
 class userMap {
 public:
@@ -13,18 +19,29 @@ public:
     }
     bool readMap(std::string& map_fname);
 
-    std::pair<int, int> findRandomPos() {
+    std::pair<int, int> findRandomPos(unordered_set<std::pair<int, int>, pair_hash>& occupied_locs_set) {
         std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));  // random number generator
-        std::uniform_int_distribution<int> dist_row(0, num_of_rows - 1);
-        std::uniform_int_distribution<int> dist_col(0, num_of_cols - 1);
+        std::uniform_int_distribution<int> dist_idx(0, free_cells.size() - 1);
 
-        int x, y;
+        int idx;
+        std::pair<int, int> pos;
         do {
-            x = dist_row(rng);
-            y = dist_col(rng);
-        } while (!isValid(x, y));  // keep trying until a valid position is found
+            idx = dist_idx(rng);
+            pos = free_cells[idx].position;
+        } while (occupied_locs_set.contains(pos));  // keep trying until a valid position is found
 
-        return std::make_pair(x, y);
+        return pos;
+    }
+
+    bool isStation(std::pair<int, int> pos) {
+        for (auto& station: all_stations) {
+            std::cout << "pos x is: " << pos.first << " y is: " << pos.second << ", while the station x is: "
+            << station->x << " the station y is: " << station->y << std::endl;
+            if (station->x == pos.second and station->y == pos.first) {
+                return true;
+            }
+        }
+        return false;
     }
 
 public:
@@ -36,4 +53,5 @@ public:
 
 private:
     std::vector<std::vector<bool>> my_map;
+    std::vector<FreeCell> free_cells;
 };

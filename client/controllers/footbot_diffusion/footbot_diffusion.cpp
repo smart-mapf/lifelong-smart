@@ -347,11 +347,11 @@ void CFootBotDiffusion::ControlStep() {
         // std::cout << "Executing picker task, with start time of " << a.timer << " seconds" << std::endl;
 
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
+        curr_pod = CVector3{a.x, a.y, 0.0f};
         if (not picker_task[a.task_id].first) {
             picker_task[a.task_id].first = true;
         }
         if (picker_task[a.task_id].second) {
-            curr_pod = CVector3{a.x, a.y, 0.0f};
             q.front().timer--;
             // std::cout << "Picker is there, minus one step!" << std::endl;
         }

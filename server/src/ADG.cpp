@@ -220,7 +220,8 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
                 vec.erase(std::remove(vec.begin(), vec.end(), tmp_in_edge), vec.end());
             }
         }
-        std::cout << "Clean commited actions for agent " << agent_id << ": " << std::endl;
+        std::cout << "Clean commited actions for agent " << agent_id << ". total graph size: "
+            << graph[agent_id].size() << ",remove start from: " << commited_actions[agent_id].second << std::endl;
         graph[agent_id].erase(graph[agent_id].begin()+commited_actions[agent_id].second, graph[agent_id].end());
 
         ADGNode last_node = graph[agent_id].back();

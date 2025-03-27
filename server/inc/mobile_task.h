@@ -29,7 +29,7 @@ private:
 
 private:
   std::vector<MobileRobotState> agent_task_status;
-  std::list<std::shared_ptr<MobileRobotTask>> picker_tasks;
+  std::deque<std::shared_ptr<MobileRobotTask>> picker_tasks;
   std::unordered_map<int, std::shared_ptr<Station>> active_stations;
   std::unordered_map<int, std::shared_ptr<Station>> occupied_stations;
 };

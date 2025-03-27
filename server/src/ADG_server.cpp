@@ -256,21 +256,23 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
             // std::cout << "New task to be inserted: " << curr_robot_loc.position.second << ", " <<
             //     curr_robot_loc.position.first << ", " << curr_robot_loc.orient;
             int x, y;
-            if (all_targets.contains(curr_robot_loc.position)) {
-                while (true) {
-                    std::pair<int, int> random_loc = server_ptr->mobile_manager->user_map.findRandomPos();
-                    if (not all_targets.contains(random_loc)) {
-                        x = random_loc.second;
-                        y = random_loc.first;
-                        break;
-                    }
-                }
+            if (all_targets.contains(curr_robot_loc.position) or
+                server_ptr->mobile_manager->user_map.isStation(curr_robot_loc.position)) {
+                std::pair<int, int> random_loc = server_ptr->mobile_manager->user_map.findRandomPos(all_targets);
+                x = random_loc.first;
+                y = random_loc.second;
             } else {
                 x = static_cast<int>(curr_robot_loc.position.second);
                 y = static_cast<int>(curr_robot_loc.position.first);
             }
+
+
+            // x = static_cast<int>(curr_robot_loc.position.second);
+            // y = static_cast<int>(curr_robot_loc.position.first);
             new_goals[agent_id].emplace_back(x, y, curr_robot_loc.orient);
             all_targets.insert(std::make_pair(x, y));
+            printf("Random goal locs::(%d, %d)\n", std::get<0>(new_goals[agent_id].front()), std::get<1>(new_goals[agent_id].front()));
+
         } else {
             std::cout << "Size of the new tasks for agent " << agent_id << ", is: " << new_tasks[agent_id].size() << std::endl;
             for (auto& task : new_tasks[agent_id]) {
@@ -281,10 +283,11 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
                     tmp_x = task->goal_position.second;
                     tmp_y = task->goal_position.first;
                 }
-                printf("goal locs::(%d, %d)\n", tmp_x, tmp_y);
                 new_goals[agent_id].emplace_back(tmp_x, tmp_y, task->goal_orient);
-                all_targets.insert(std::make_pair(tmp_x, tmp_y));
+                // all_targets.insert(std::make_pair(tmp_x, tmp_y));
             }
+            printf("Assigned goal locs::(%d, %d)\n", std::get<0>(new_goals[agent_id].front()), std::get<1>(new_goals[agent_id].front()));
+
         }
     }
 

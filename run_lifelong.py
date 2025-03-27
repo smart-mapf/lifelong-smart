@@ -19,17 +19,17 @@ def parse_arguments():
     parser.add_argument("--map_name",
                         type=str,
                         required=False,
-                        default="warehouse-small.map",
+                        default="supermarket.map",
                         help="Name of the map file")
     parser.add_argument("--scen_name",
                         type=str,
                         required=False,
-                        default="warehouse-small.scen",
+                        default="supermarket.scen",
                         help="Name of the scenario file")
     parser.add_argument("--num_agents",
                         type=int,
                         required=False,
-                        default=10,
+                        default=24,
                         help="Number of agents in the scenario")
     parser.add_argument("--headless",
                         type=bool,
