@@ -9,6 +9,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <unordered_set>
 
 #include "parser.h"
 
@@ -110,24 +111,15 @@ public:
         std::cout << std::endl;
     }
 
-    bool getLastAction(std::vector<bool>& goal_status) {
-        goal_status.clear();
-        goal_status.resize(num_robots, true);
-        if (graph.empty()) {
-            std::cout << "Graph is empty" << std::endl;
+    bool getFinishedTasks(std::vector<std::unordered_set<int>>& finish_tasks) {
+        if (curr_commit.empty() or graph.empty()) {
             return false;
         }
+        finish_tasks.resize(num_robots);
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-            if (graph[agent_id].empty()) {
-                // std::cout << "Get last actions" << std::endl;
-                goal_status[agent_id] = true;
-            } else {
-                // std::cout << "Get last actions" << std::endl;
-                if (graph[agent_id].back().action.type == 'S' or
-                    graph[agent_id].back().action.type == 'P') {
-                    goal_status[agent_id] = true;
-                } else {
-                    goal_status[agent_id] = false;
+            for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
+                if (graph[agent_id][node_id].action.type == 'P' or graph[agent_id][node_id].action.type == 'S') {
+                    finish_tasks[agent_id].insert(graph[agent_id][node_id].action.task_id);
                 }
             }
         }
@@ -151,6 +143,7 @@ public:
 
 private:
     std::vector<std::vector<ADGNode>> graph;
+    std::vector<std::unordered_set<int>> finished_tasks_;
     // std::vector<std::pair<double, double>> commitCut;
 
     int num_robots = 0;

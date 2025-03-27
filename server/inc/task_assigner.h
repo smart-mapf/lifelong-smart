@@ -13,10 +13,11 @@ public:
     // virtual void getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks);
     // virtual void getTask(std::vector<std::deque<std::shared_ptr<Task>>>& new_tasks, std::vector<int> num_new_tasks);
     // virtual ~TaskManager() {};
+    userMap user_map;
+
 
 protected:
     std::vector<int> finished_tasks;
-    userMap user_map;
     int curr_task_idx  = 0;
     int num_robots_;
     int map_size_x_;

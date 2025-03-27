@@ -13,7 +13,7 @@ struct MobileRobotState {
   explicit MobileRobotState(int agent_idx): agent_idx(agent_idx) {}
 };
 
-class MobileTaskManager : TaskManager {
+class MobileTaskManager : public TaskManager {
 public:
   MobileTaskManager(int num_agents, std::string& map_fname);
   void getTask(std::vector<std::deque<std::shared_ptr<MobileRobotTask>>>& new_tasks);

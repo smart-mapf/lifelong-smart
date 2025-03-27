@@ -222,18 +222,17 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
         }
         std::cout << "Clean commited actions for agent " << agent_id << ": " << std::endl;
         graph[agent_id].erase(graph[agent_id].begin()+commited_actions[agent_id].second, graph[agent_id].end());
-        std::cout << "curr size of commited is: " << curr_commit.size() << ": graph size: " << graph.size() << std::endl;
 
         ADGNode last_node = graph[agent_id].back();
         auto action = last_node.action;
-        std::cout << "        {" << action.robot_id << ", " << action.time << ", "
-                  << std::fixed << std::setprecision(1) << action.orientation << ", '"
-                  << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
-                  << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << ", " << action.task_id << "}," << std::endl;
         // commitCut[agent_id] = last_node.action.goal;
         curr_commit.emplace_back(last_node.action.goal, static_cast<int> (last_node.action.orientation));
         std::cout << "Loop end for agent " << agent_id << ": " << std::endl;
-
+        std::cout << "curr size of commited is: " << curr_commit.size() << ": graph size: " << graph.size() << std::endl;
+        std::cout << "        {" << action.robot_id << ", " << action.time << ", "
+          << std::fixed << std::setprecision(1) << action.orientation << ", '"
+          << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
+          << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << ", " << action.task_id << "}," << std::endl;
     }
 #ifdef DEBUG
     std::cout << "Find commit Cut " << std::endl;

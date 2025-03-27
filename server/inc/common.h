@@ -77,6 +77,12 @@ enum MobileAction {
     DELIVER = 0, PICK = 1, NONE = 2
 };
 
+struct pair_hash {
+    std::size_t operator()(const std::pair<int, int>& p) const {
+        return std::hash<int>()(p.first) ^ (std::hash<int>()(p.second) << 1);
+    }
+};
+
 struct MobileRobotTask
 {
     int id;
