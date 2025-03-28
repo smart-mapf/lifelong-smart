@@ -35,8 +35,8 @@ public:
 
     bool isStation(std::pair<int, int> pos) {
         for (auto& station: all_stations) {
-            std::cout << "pos x is: " << pos.first << " y is: " << pos.second << ", while the station x is: "
-            << station->x << " the station y is: " << station->y << std::endl;
+            // std::cout << "pos x is: " << pos.first << " y is: " << pos.second << ", while the station x is: "
+            // << station->x << " the station y is: " << station->y << std::endl;
             if (station->x == pos.second and station->y == pos.first) {
                 return true;
             }

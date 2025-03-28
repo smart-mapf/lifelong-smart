@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
 	rpc::client client("127.0.0.1", vm["portNum"].as<int>());
 	while (true) {
-		auto commit_cut = client.call("get_location", 10).as<std::vector<std::pair<double, double>>>();
+		auto commit_cut = client.call("get_location", 5).as<std::vector<std::pair<double, double>>>();
 		printf("Agent locations:\n");
 		for (auto loc: commit_cut)
 		{

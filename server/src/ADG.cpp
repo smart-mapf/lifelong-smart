@@ -42,9 +42,12 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
         tmp_entry.resize(plans.size(), false);
     }
 
-    for (int i = 0; i < plans.size(); i++) {
+    for (int i = 0; i < num_robots; i++) {
         for (int j = 0; j < plans[i].size(); j++) {
             for (int robot_id = 0; robot_id < num_robots; robot_id++) {
+                if (i == robot_id) {
+                    continue;
+                }
                 int latest_finished_idx = finished_node_idx[robot_id];
                 // Indicating no node is finished yet
                 int next_node_idx = latest_finished_idx + 1;
@@ -234,10 +237,12 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
           << std::fixed << std::setprecision(1) << action.orientation << ", '"
           << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
           << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << ", " << action.task_id << "}," << std::endl;
+
     }
 #ifdef DEBUG
     std::cout << "Find commit Cut " << std::endl;
 #endif
+    printProgress();
     return curr_commit;
 }
 
