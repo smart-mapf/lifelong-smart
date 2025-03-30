@@ -126,6 +126,23 @@ public:
         return true;
     }
 
+    void showGraph() {
+        for (size_t i = 0; i < numRobots(); i++) {
+            printf("Path of agent: %lu\n", i);
+            int j = 0;
+            for (auto &action_node: graph[i]) {
+                auto action = action_node.action;
+                std::cout << "        {" << action.robot_id << ", " << action.time << ", "
+                          << std::fixed << std::setprecision(1) << action.orientation << ", '"
+                          << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
+                          << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << "}. Node idx: "
+                 << action_node.node_id << ", idx in graph is:" << j << std::endl;
+                j++;
+            }
+            printf("\n");
+        }
+    }
+
 private:
     void printActions(const std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>>>& actions);
     void findConstraining(int robot_id);

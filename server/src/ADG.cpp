@@ -25,7 +25,7 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
         int j = 0;
         // std::cout << "Agent " << i << ": " << std::endl;
         for (const auto& action : plans[i]) {
-            ADGNode node {action, j, {}, {}};
+            ADGNode node {action, graph_offset[i] + j, {}, {}};
             // std::cout << "        {" << action.robot_id << ", " << action.time << ", "
             //           << std::fixed << std::setprecision(1) << action.orientation << ", '"
             //           << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"

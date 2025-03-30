@@ -55,7 +55,7 @@ struct Action {
     char type;  // 'M' for move, 'T' for turn, 'S' for station, 'P' for pod
     std::pair<double, double> start;
     std::pair<double, double> goal;
-    int nodeID;
+    // int nodeID;
     int task_id = -1;
 };
 

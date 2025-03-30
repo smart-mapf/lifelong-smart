@@ -162,8 +162,9 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         tmp_act.task_id = server_ptr->curr_mobile_tasks[i].front()->id;
         plans[i].push_back(tmp_act);
     }
-    showActionsPlan(plans);
+    // showActionsPlan(plans);
     server_ptr->adg->addMAPFPlan(plans);
+    server_ptr->adg->showGraph();
     // for (int id = 0; id < server_ptr->numRobots; id++)
     // {
     //     std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(id);
