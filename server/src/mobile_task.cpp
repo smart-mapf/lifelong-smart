@@ -152,6 +152,13 @@ bool MobileTaskManager::setStation(int station_idx, bool status) {
 }
 
 std::pair<int, int> MobileTaskManager::findNearbyFreeCell(int x, int y) {
+  if ((y / 4) % 2 == 0 ) {
+    return std::make_pair(x-1, y);
+
+  } else {
+    return std::make_pair(x+1, y);
+  }
+
   if (user_map.isValid(x, y+1)) {
     return std::make_pair(x, y+1);
   }

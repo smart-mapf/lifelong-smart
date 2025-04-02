@@ -50,7 +50,7 @@
 #include <filesystem>
 #include <boost/asio.hpp>
 
-#define EPS 0.01f
+#define EPS 0.03f
 #define DELIVER_T 60
 #define PICKER_T 60
 /*
