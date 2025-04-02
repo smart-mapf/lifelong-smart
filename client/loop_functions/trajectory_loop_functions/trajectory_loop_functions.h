@@ -30,10 +30,14 @@ struct PickerAction {
    int task_id;
    std::pair<int, int> start;
    std::pair<int, int> end;
+   std::pair<int, int> start_obj;
+   std::pair<int, int> end_obj;
    // std::pair<int, int> obj;
-   PickerAction(int t, ACT_TYPE act_type, std::pair<int, int> s, std::pair<int, int> e, int move_step_id = -1,
+   PickerAction(int t, ACT_TYPE act_type, std::pair<int, int> s, std::pair<int, int> e, std::pair<int, int> s_obj,
+      std::pair<int, int> e_obj, int move_step_id = -1,
       int task_id = -1):
-      timer(t), act(act_type), start(std::move(s)), end(std::move(e)), step_id(move_step_id), task_id(task_id) {}
+      timer(t), act(act_type), start(std::move(s)), end(std::move(e)), start_obj(std::move(s_obj)),
+      end_obj(std::move(e_obj)), step_id(move_step_id), task_id(task_id) {}
 };
 
 struct PickerRobot {
@@ -132,6 +136,7 @@ private:
    std::shared_ptr<rpc::client> client;
    std::unordered_map<std::pair<int, int>, std::deque<int>, pair_hash> all_pick_tasks;
    std::vector<std::vector<std::pair<int, int>>> all_picker_paths;
+   std::vector<std::vector<std::pair<int, int>>> picker_objs;
    std::vector<PickerRobot> all_pickers;
    int port_number = 0;
    int num_picker = 0;

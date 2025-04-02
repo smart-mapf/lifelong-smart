@@ -56,7 +56,7 @@ def move_next_rotate(x, y):
 if __name__ == '__main__':
   # Define the parameters
   all_path = []
-  print("std::vector<std::vector<std::pair<int, int>>> read_picker_path = {")
+  print("std::vector<std::vector<std::pair<int, int>>> read_picker_obj = {")
   np.random.seed(0)  # For reproducibility, you can remove this in production
   for i in range(num_group):
     start_y = np.random.randint(MIN_Y, MAX_Y, agent_per_group)
@@ -68,11 +68,13 @@ if __name__ == '__main__':
         tmp_agent_traj = []
         if (j % 2 == 0):
           s_x = POD_WIDTH * i - 2
+          flag = 1
         else:
           s_x = POD_WIDTH * i + 1
+          flag = -1
         s_y = start_y[j]
         tmp_agent_traj.append([s_x, s_y])
-        print("{{ {0}, {1} }}".format(s_x, s_y), end=", ")
+        print("{{ {0}, {1} }}".format(s_x+flag, s_y), end=", ")
         tmp_x, tmp_y = s_x, s_y
         while True:
           tmp_x, tmp_y = move_next(tmp_x, tmp_y)
@@ -80,7 +82,7 @@ if __name__ == '__main__':
           #     exit(-1)
           if tmp_x == s_x and tmp_y == s_y:
               break
-          print("{{ {0}, {1} }}".format(tmp_x, tmp_y), end=", ")
+          print("{{ {0}, {1} }}".format(tmp_x+flag, tmp_y), end=", ")
           tmp_agent_traj.append([tmp_x, tmp_y])
         print("},")
     else:
@@ -89,17 +91,19 @@ if __name__ == '__main__':
         tmp_agent_traj = []
         if (j % 2 == 0):
           s_x = POD_WIDTH * i + 1
+          flag = -1
         else:
           s_x = POD_WIDTH * i + 6
+          flag = 1
         s_y = start_y[j]
         tmp_agent_traj.append([s_x, s_y])
-        print("{{ {0}, {1} }}".format(s_x, s_y), end=", ")
+        print("{{ {0}, {1} }}".format(s_x+flag, s_y), end=", ")
         tmp_x, tmp_y = s_x, s_y
         while True:
           tmp_x, tmp_y = move_next_rotate(tmp_x, tmp_y)
           if tmp_x == s_x and tmp_y == s_y:
               break
-          print("{{ {0}, {1} }}".format(tmp_x, tmp_y), end=", ")
+          print("{{ {0}, {1} }}".format(tmp_x+flag, tmp_y), end=", ")
           tmp_agent_traj.append([tmp_x, tmp_y])   
         print("},")
         # group_path.append(tmp_agent_traj)
