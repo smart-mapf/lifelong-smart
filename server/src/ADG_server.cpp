@@ -142,7 +142,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         Action tmp_act;
         tmp_act.robot_id = i;
         // @jingtian Note: change action start time, to be consistent with the continuous case
-        tmp_act.time = plans[i].back().time;
+        tmp_act.time = plans[i].back().time + 1;
         tmp_act.start = server_ptr->curr_mobile_tasks[i].front()->goal_position;
         tmp_act.goal = server_ptr->curr_mobile_tasks[i].front()->goal_position;
         if (server_ptr->flipped_coord) {
@@ -152,7 +152,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
             std::swap(tmp_act.start.first, tmp_act.start.second);
         }
         tmp_act.orientation = plans[i].back().orientation;
-        tmp_act.nodeID = 0;
+        tmp_act.nodeID = plans[i].back().nodeID + 1;
         if (server_ptr->curr_mobile_tasks[i].front()->act == MobileAction::DELIVER) {
             // If station
             tmp_act.type = 'S';
@@ -164,7 +164,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
     }
     // showActionsPlan(plans);
     server_ptr->adg->addMAPFPlan(plans);
-    server_ptr->adg->showGraph();
+    // server_ptr->adg->showGraph();
     // for (int id = 0; id < server_ptr->numRobots; id++)
     // {
     //     std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(id);
@@ -229,10 +229,10 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     server_ptr->mobile_manager->getTask(new_tasks);
     server_ptr->curr_mobile_tasks = new_tasks;
     new_goals.resize(server_ptr->numRobots);
-    std::cout << "Total number of robots: " << server_ptr->numRobots << ", Total tasks: " << new_tasks.size() << std::endl;
     assert(new_tasks.size() == server_ptr->numRobots);
     std::unordered_set<std::pair<int, int>, pair_hash> all_targets;
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
+        std::cout << "agent_id: " << agent_id << std::endl;
         if (not new_tasks[agent_id].empty()) {
             for (auto& task : new_tasks[agent_id]) {
                 int tmp_x = task->goal_position.first;
@@ -243,6 +243,7 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
                     tmp_y = task->goal_position.first;
                 }
                 all_targets.insert(std::make_pair(tmp_x, tmp_y));
+                std::cout << "task goal location: " << tmp_x << ", " << tmp_y << ", status: " << task->status << std::endl;
             }
         }
     }
@@ -254,8 +255,11 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
             // std::cout << "Size of the curr robot states: " << server_ptr->curr_robot_states.size() << std::endl;
             assert(server_ptr->curr_robot_states.size() == server_ptr->numRobots);
             robotState curr_robot_loc = server_ptr->curr_robot_states[agent_id];
-            // std::cout << "New task to be inserted: " << curr_robot_loc.position.second << ", " <<
-            //     curr_robot_loc.position.first << ", " << curr_robot_loc.orient;
+            if (server_ptr->mobile_manager->user_map.isStation(curr_robot_loc.position)) {
+                std::cout << "Robot is at station now: " << curr_robot_loc.position.second << ", " <<
+                    curr_robot_loc.position.first << ", " << curr_robot_loc.orient;
+            }
+
             int x, y;
             if (all_targets.contains(curr_robot_loc.position) or
                 server_ptr->mobile_manager->user_map.isStation(curr_robot_loc.position)) {

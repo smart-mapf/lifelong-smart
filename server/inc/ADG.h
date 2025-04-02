@@ -115,6 +115,7 @@ public:
         if (curr_commit.empty() or graph.empty()) {
             return false;
         }
+        finish_tasks.clear();
         finish_tasks.resize(num_robots);
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
             for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
@@ -136,7 +137,15 @@ public:
                           << std::fixed << std::setprecision(1) << action.orientation << ", '"
                           << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
                           << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << "}. Node idx: "
-                 << action_node.node_id << ", idx in graph is:" << j << std::endl;
+                 << action_node.node_id << ", idx in graph is:" << j << ", Out edges: ";
+                for (auto &tmp_out_edge: action_node.outEdges) {
+                    std::cout << "agent " << tmp_out_edge->to_agent_id << ", node " << tmp_out_edge->to_node_id << ", status " << tmp_out_edge->valid << ";";
+                }
+                std::cout << "\tIn edges: ";
+                for (auto &tmp_in_edge: action_node.incomeEdges) {
+                    std::cout << "agent " << tmp_in_edge->from_agent_id << ", node " << tmp_in_edge->from_node_id << ", status " << tmp_in_edge->valid << ";";
+                }
+                std::cout << std::endl;
                 j++;
             }
             printf("\n");
@@ -147,6 +156,47 @@ private:
     void printActions(const std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>>>& actions);
     void findConstraining(int robot_id);
     bool fixInconsistentIncomingEdge(std::vector<std::pair<int, int>>& commited_actions);
+    // Helper DFS function
+    bool dfs(int agent_id, int node_id,
+             std::unordered_map<int, std::unordered_set<int>>& visited,
+             std::unordered_map<int, std::unordered_set<int>>& recStack,
+             const std::vector<std::vector<ADGNode>>& graph) {
+        visited[agent_id].insert(node_id);
+        recStack[agent_id].insert(node_id);
+
+        const ADGNode& node = graph[agent_id][node_id];
+        for (const auto& edge : node.outEdges) {
+            if (!edge->valid) continue;
+            int next_agent = edge->to_agent_id;
+            int next_node = edge->to_node_id;
+
+            if (visited[next_agent].count(next_node) == 0) {
+                if (dfs(next_agent, next_node, visited, recStack, graph))
+                    return true;
+            } else if (recStack[next_agent].count(next_node)) {
+                return true; // cycle detected
+            }
+        }
+
+        recStack[agent_id].erase(node_id);
+        return false;
+    }
+
+    bool hasCycle(const std::vector<std::vector<ADGNode>>& graph) {
+        std::unordered_map<int, std::unordered_set<int>> visited;
+        std::unordered_map<int, std::unordered_set<int>> recStack;
+
+        for (int agent_id = 0; agent_id < graph.size(); ++agent_id) {
+            for (const auto& node : graph[agent_id]) {
+                if (visited[agent_id].count(node.node_id) == 0) {
+                    if (dfs(agent_id, node.node_id, visited, recStack, graph))
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
 public:
     std::vector< int > finished_node_idx;

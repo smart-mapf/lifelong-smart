@@ -66,5 +66,9 @@ bool userMap::readMap(std::string& map_fname) {
         }
     }
     myfile.close();
+    for (auto& station: all_stations) {
+        std::cout << "The station x is: "
+        << station->x << " the station y is: " << station->y << std::endl;
+    }
     return true;
 }

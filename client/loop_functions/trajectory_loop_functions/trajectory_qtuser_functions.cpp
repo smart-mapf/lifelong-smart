@@ -33,6 +33,52 @@ void CTrajectoryQTUserFunctions::DrawInWorld() {
       DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, c_color);
    }
 
+   // Ground for msic
+   double scale = 1.0;
+   double ground_cell_size = 0.97;
+   std::pair<double,double> top_left = {-3.0, -0.0};
+   CColor ground_msic_color = CColor(235, 225, 255, 12);
+
+   for(int i = 0; i < 37; i++) {
+      for (int j = 0; j < 8; j++) {
+         CVector3 loc = CVector3(top_left.first - i*scale, top_left.second - j*scale, 0);
+         CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
+         CVector3 c_size = CVector3(ground_cell_size, ground_cell_size, 0.01);
+         DrawBox(loc, c_orient, c_size, ground_msic_color);
+         CVector3 loc_tmp = loc;
+         loc_tmp.SetX(loc_tmp.GetX());
+         // DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, ground_msic_color);
+      }
+   }
+
+   top_left = {-3.0, -16.0};
+   for(int i = 0; i < 37; i++) {
+      for (int j = 0; j < 16; j++) {
+         CVector3 loc = CVector3(top_left.first - i*scale, top_left.second - j*scale, 0);
+         CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
+         CVector3 c_size = CVector3(ground_cell_size, ground_cell_size, 0.01);
+         DrawBox(loc, c_orient, c_size, ground_msic_color);
+         CVector3 loc_tmp = loc;
+         loc_tmp.SetX(loc_tmp.GetX());
+         // DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, ground_msic_color);
+      }
+   }
+
+   // Ground for soap
+   top_left = {-3.0, -32.0};
+   for(int i = 0; i < 37; i++) {
+      for (int j = 0; j < 8; j++) {
+         CVector3 loc = CVector3(top_left.first - i*scale, top_left.second - j*scale, 0);
+         CQuaternion c_orient = CQuaternion(0, 0, 0, 0);
+         CVector3 c_size = CVector3(ground_cell_size, ground_cell_size, 0.05);
+         CColor c_color = CColor(235, 255, 225, 12);
+         DrawBox(loc, c_orient, c_size, c_color);
+         CVector3 loc_tmp = loc;
+         loc_tmp.SetX(loc_tmp.GetX());
+         DrawCylinder(loc_tmp, c_orient, 0.2, 0.01, c_color);
+      }
+   }
+
    for(auto loc: m_cTrajLF.task_stations) {
       // DrawWaypoints(it->second);
       //  const CVector3& c_position,

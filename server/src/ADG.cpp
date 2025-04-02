@@ -242,7 +242,7 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
 #ifdef DEBUG
     std::cout << "Find commit Cut " << std::endl;
 #endif
-    printProgress();
+    // printProgress();
     return curr_commit;
 }
 
