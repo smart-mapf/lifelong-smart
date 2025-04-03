@@ -134,7 +134,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
 #endif
 
     for (int i = 0; i < static_cast<int>(plans.size()); i++) {
-        if (plans[i].empty() or server_ptr->curr_mobile_tasks[i].empty() or
+        if (server_ptr->curr_mobile_tasks[i].empty() or
             server_ptr->curr_mobile_tasks[i].front()->status == false) {
             std::cout << "No plan" << std::endl;
             continue;
@@ -142,7 +142,15 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         Action tmp_act;
         tmp_act.robot_id = i;
         // @jingtian Note: change action start time, to be consistent with the continuous case
-        tmp_act.time = plans[i].back().time + 1;
+        if (plans[i].empty()) {
+            tmp_act.time = 0;
+            tmp_act.orientation = 0;
+            tmp_act.nodeID = 0;
+        } else {
+            tmp_act.time = plans[i].back().time + 1;
+            tmp_act.orientation = plans[i].back().orientation;
+            tmp_act.nodeID = plans[i].back().nodeID + 1;
+        }
         tmp_act.start = server_ptr->curr_mobile_tasks[i].front()->goal_position;
         tmp_act.goal = server_ptr->curr_mobile_tasks[i].front()->goal_position;
         if (server_ptr->flipped_coord) {
@@ -151,8 +159,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
             tmp_act.goal.second = tmp;
             std::swap(tmp_act.start.first, tmp_act.start.second);
         }
-        tmp_act.orientation = plans[i].back().orientation;
-        tmp_act.nodeID = plans[i].back().nodeID + 1;
+
         if (server_ptr->curr_mobile_tasks[i].front()->act == MobileAction::DELIVER) {
             // If station
             tmp_act.type = 'S';

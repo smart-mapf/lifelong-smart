@@ -26,10 +26,20 @@ private:
   std::shared_ptr<MobileRobotTask> pickStation(int agent_id);
   bool setStation(int station_idx, bool status);
   std::pair<int, int> findNearbyFreeCell(int x, int y);
+  int getFirstAgentInQueue() {
+    std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));  // random number generator
+    std::uniform_int_distribution<int> dist_idx(0, num_robots_ - 1);
+    int agent_idx = dist_idx(rng);
+    if (agent_idx >= num_robots_) {
+      agent_idx = 0;
+    }
+    return agent_idx;
+  }
 
 private:
   std::vector<MobileRobotState> agent_task_status;
   std::deque<std::shared_ptr<MobileRobotTask>> picker_tasks;
   std::unordered_map<int, std::shared_ptr<Station>> active_stations;
   std::unordered_map<int, std::shared_ptr<Station>> occupied_stations;
+  int prev_agent_idx = -1;
 };

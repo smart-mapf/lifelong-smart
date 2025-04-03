@@ -11,7 +11,9 @@ MobileTaskManager::MobileTaskManager(int num_agents, std::string& map_fname): Ta
 
 
 void MobileTaskManager::getTask(std::vector<std::deque<std::shared_ptr<MobileRobotTask>>>& new_tasks) {
-  for (int agent_idx = 0; agent_idx < num_robots_; agent_idx++) {
+  int agent_idx_offset = getFirstAgentInQueue();
+  for (int i = 0; i < num_robots_; i++) {
+    int agent_idx = (agent_idx_offset + i)%num_robots_;
     assert(agent_task_status[agent_idx].curr_loads >= 0);
 #ifdef DEBUG
     std::cout << "Total task for Agent " << agent_idx << ", is: " << agent_task_status[agent_idx].assigned_tasks.size() << std::endl;
@@ -20,7 +22,7 @@ void MobileTaskManager::getTask(std::vector<std::deque<std::shared_ptr<MobileRob
       auto tmp_new_task = genTask(agent_idx);
       if (tmp_new_task == nullptr) {
         // Do nothing
-        std::cerr << "Failed to generate new random task" << std::endl;
+        // std::cerr << "Failed to generate new random task" << std::endl;
         break;
       }
       setTask(agent_idx, tmp_new_task, true);
