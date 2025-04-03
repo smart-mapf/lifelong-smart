@@ -12,7 +12,7 @@
 #define MOVE_T 100
 #define UNLOAD_T 60
 #define LOAD_NUM 4
-#define WINDOW_SIE 20
+#define WINDOW_SIE 5
 
 using namespace argos;
 

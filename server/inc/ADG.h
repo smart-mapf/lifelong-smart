@@ -69,7 +69,7 @@ public:
     bool createRobotIDToStartIndexMaps(std::string& robot_id_str);
     bool getAvailableNodes(int robot_id, std::vector<int>& available_nodes);
     bool updateFinishedNode(int robot_id, int node_id);
-    void setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes);
+    // void setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes);
     std::vector<robotState> computeCommitCut(int num_enqueue_node);
     void addMAPFPlan(const std::vector<std::vector<Action>>& plans);
     SIM_PLAN getPlan(int agent_id);

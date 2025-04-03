@@ -9,9 +9,10 @@
 #include <cmath>
 
 #define MAX_LOADS 1
-#define MAX_TASKS 20
+#define MAX_TASKS 50
 #define MAX_NUM_GOALS 1
 #define NUM_GENRE 10
+#define MAX_ENQUE 5
 #define DEBUG
 
 using namespace std;

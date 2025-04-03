@@ -329,7 +329,7 @@ bool ADG::getAvailableNodes(int robot_id, std::vector<int>& available_nodes) {
             updateADGNode(curr_agent_plan[i]);
         }
 
-        if (curr_agent_plan[i].has_valid_in_edge) {
+        if (curr_agent_plan[i].has_valid_in_edge or available_nodes.size() >= MAX_ENQUE) {
             break;
         }
 
@@ -384,20 +384,20 @@ bool ADG::isTaskNode(int robot_id, int node_id) {
     return false;
 }
 
-void ADG::setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes) {
-    auto& curr_enqueue = enqueue_nodes_idx[robot_id];
-    if (curr_enqueue.empty()) {
-        curr_enqueue.insert(curr_enqueue.end(), enqueue_nodes.begin(), enqueue_nodes.end());
-    } else {
-        int i = 0;
-        for (i = 0; i < enqueue_nodes.size(); i++) {
-            if (enqueue_nodes[i] > curr_enqueue.back()) {
-                break;
-            }
-        }
-        curr_enqueue.insert(curr_enqueue.end(), enqueue_nodes.begin()+i, enqueue_nodes.end());
-    }
-}
+// void ADG::setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes) {
+//     auto& curr_enqueue = enqueue_nodes_idx[robot_id];
+//     if (curr_enqueue.empty()) {
+//         curr_enqueue.insert(curr_enqueue.end(), enqueue_nodes.begin(), enqueue_nodes.end());
+//     } else {
+//         int i = 0;
+//         for (i = 0; i < enqueue_nodes.size(); i++) {
+//             if (enqueue_nodes[i] > curr_enqueue.back()) {
+//                 break;
+//             }
+//         }
+//         curr_enqueue.insert(curr_enqueue.end(), enqueue_nodes.begin()+i, enqueue_nodes.end());
+//     }
+// }
 
 void ADG::findConstraining(int robot_id) {
     auto& curr_agent_plan = graph[robot_id];
