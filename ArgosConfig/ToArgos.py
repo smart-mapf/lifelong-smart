@@ -117,24 +117,24 @@ def create_Argos(map_data,
                                 implementation="default")
 
     # Parameters
-    # params = ET.SubElement(footbot_controller,
-    #                        "params",
-    #                        alpha="30.0",
-    #                        omega="12.0",
-    #                       #  alpha="7.5",
-    #                       #  omega="3.0",
-    #                        velocity="400",
-    #                        acceleration="10.0",
-    #                        portNumber=f"{port_num}",
-    #                        outputDir=f"metaData{port_num}/")
     params = ET.SubElement(footbot_controller,
                            "params",
-                           alpha="7.5",
-                           omega="3.0",
-                           velocity="100",
-                           acceleration="2.5",
+                           alpha="30.0",
+                           omega="12.0",
+                          #  alpha="7.5",
+                          #  omega="3.0",
+                           velocity="400",
+                           acceleration="10.0",
                            portNumber=f"{port_num}",
                            outputDir=f"metaData{port_num}/")
+    # params = ET.SubElement(footbot_controller,
+    #                        "params",
+    #                        alpha="7.5",
+    #                        omega="3.0",
+    #                        velocity="100",
+    #                        acceleration="2.5",
+    #                        portNumber=f"{port_num}",
+    #                        outputDir=f"metaData{port_num}/")
 
     # Loop functions
     loop_functions = ET.SubElement(argos_config,
@@ -315,10 +315,10 @@ def create_Argos(map_data,
             placements,
             "placement",
             index="0",
-            position=f"{map_center_x},{map_center_y},{max(width,height)}",
+            position=f"{map_center_x},{map_center_y},{max(width,height)/2.35}",
             look_at=f"{map_center_x},{map_center_y},0",
             up="1,0,0",
-            lens_focal_length="20")
+            lens_focal_length="15")
     xml_str = prettify(argos_config)
     with open(output_file_path, "w") as f:
         f.write(xml_str)

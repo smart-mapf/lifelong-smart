@@ -324,12 +324,13 @@ bool ADG::getAvailableNodes(int robot_id, std::vector<int>& available_nodes) {
     int latest_finished_idx = finished_node_idx[robot_id];
     // Indicating no node is finished yet
     int next_node_idx = latest_finished_idx + 1;
+    int num_additional_nodes = MAX_ENQUE - enqueue_nodes_idx.size();
     for (int i = next_node_idx; i < curr_agent_plan.size(); i++) {
         if (curr_agent_plan[i].has_valid_in_edge) {
             updateADGNode(curr_agent_plan[i]);
         }
 
-        if (curr_agent_plan[i].has_valid_in_edge or available_nodes.size() >= MAX_ENQUE) {
+        if (curr_agent_plan[i].has_valid_in_edge or available_nodes.size() >= num_additional_nodes) {
             break;
         }
 

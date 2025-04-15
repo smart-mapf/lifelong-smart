@@ -2,7 +2,7 @@ import numpy as np
 
 POD_WIDTH = 4
 MIN_Y = 4
-MAX_Y = 38
+MAX_Y = 102
 
 num_group = int(40/POD_WIDTH)
 agent_per_group = 2
@@ -74,7 +74,7 @@ if __name__ == '__main__':
           flag = -1
         s_y = start_y[j]
         tmp_agent_traj.append([s_x, s_y])
-        print("{{ {0}, {1} }}".format(s_x+flag, s_y), end=", ")
+        print("{{ {0}, {1} }}".format(s_y, s_x+flag), end=", ")
         tmp_x, tmp_y = s_x, s_y
         while True:
           tmp_x, tmp_y = move_next(tmp_x, tmp_y)
@@ -82,7 +82,7 @@ if __name__ == '__main__':
           #     exit(-1)
           if tmp_x == s_x and tmp_y == s_y:
               break
-          print("{{ {0}, {1} }}".format(tmp_x+flag, tmp_y), end=", ")
+          print("{{ {0}, {1} }}".format(tmp_y, tmp_x+flag), end=", ")
           tmp_agent_traj.append([tmp_x, tmp_y])
         print("},")
     else:
@@ -97,13 +97,13 @@ if __name__ == '__main__':
           flag = 1
         s_y = start_y[j]
         tmp_agent_traj.append([s_x, s_y])
-        print("{{ {0}, {1} }}".format(s_x+flag, s_y), end=", ")
+        print("{{ {0}, {1} }}".format(s_y, s_x+flag), end=", ")
         tmp_x, tmp_y = s_x, s_y
         while True:
           tmp_x, tmp_y = move_next_rotate(tmp_x, tmp_y)
           if tmp_x == s_x and tmp_y == s_y:
               break
-          print("{{ {0}, {1} }}".format(tmp_x+flag, tmp_y), end=", ")
+          print("{{ {0}, {1} }}".format(tmp_y, tmp_x+flag), end=", ")
           tmp_agent_traj.append([tmp_x, tmp_y])   
         print("},")
         # group_path.append(tmp_agent_traj)

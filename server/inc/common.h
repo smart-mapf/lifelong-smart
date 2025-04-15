@@ -95,6 +95,9 @@ struct MobileRobotTask
     int operate_obj_idx = -1;
     int estimate_time = 0;
     bool status=true; // false if finished, true otherwise
+
+    // TODO:Find Station id given the goal location
+    int station_id;
     // MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
     // }
     MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position, int obj_idx, MobileAction flag):
