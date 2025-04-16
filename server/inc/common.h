@@ -12,7 +12,7 @@
 #define MAX_TASKS 50
 #define MAX_NUM_GOALS 1
 #define NUM_GENRE 10
-#define MAX_ENQUE 5
+#define MAX_ENQUE 12
 #define DEBUG
 
 using namespace std;
@@ -96,12 +96,14 @@ struct MobileRobotTask
     int estimate_time = 0;
     bool status=true; // false if finished, true otherwise
 
-    // TODO:Find Station id given the goal location
     int station_id;
     // MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
     // }
     MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position, int obj_idx, MobileAction flag):
-        id(id), agent_id(agent_id), goal_position(std::move(goal_position)), operate_obj_idx(obj_idx), act(flag) {}
+        id(id), agent_id(agent_id), goal_position(std::move(goal_position)), operate_obj_idx(obj_idx), act(flag) {
+        // TODO:Find Station id given the goal location
+        station_id = 0;
+    }
 };
 
 inline bool positionCompare(std::pair<double, double> a, std::pair<int, int> b) {
