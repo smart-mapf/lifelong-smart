@@ -9,7 +9,7 @@
 #include <cmath>
 
 #define MAX_LOADS 1
-#define MAX_TASKS 50
+#define MAX_TASKS 500
 #define MAX_NUM_GOALS 1
 #define NUM_GENRE 10
 #define MAX_ENQUE 12
