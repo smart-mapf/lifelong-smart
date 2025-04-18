@@ -18,6 +18,7 @@
 using namespace std;
 
 const double EPS = 1e-8;
+const int INF = numeric_limits<int>::max();
 
 
 // Define a structure to hold coordinate points and time.

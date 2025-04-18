@@ -219,13 +219,15 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
         for (int node_idx = commited_actions[agent_id].second; node_idx < graph[agent_id].size(); node_idx++) {
             // we can ignore outgoing edges
             for (auto& tmp_in_edge: graph[agent_id][node_idx].incomeEdges) {
-                auto& vec = graph[tmp_in_edge->from_agent_id][tmp_in_edge->from_node_id].outEdges;
-                vec.erase(std::remove(vec.begin(), vec.end(), tmp_in_edge), vec.end());
+                // auto& vec = graph[tmp_in_edge->from_agent_id][tmp_in_edge->from_node_id].outEdges;
+                // vec.erase(std::remove(vec.begin(), vec.end(), tmp_in_edge), vec.end());
+                tmp_in_edge->valid = false;
             }
         }
         std::cout << "Clean commited actions for agent " << agent_id << ". total graph size: "
             << graph[agent_id].size() << ",remove start from: " << commited_actions[agent_id].second << std::endl;
         graph[agent_id].erase(graph[agent_id].begin()+commited_actions[agent_id].second, graph[agent_id].end());
+        std::cout << "Remove rest of actions for agent " << agent_id << std::endl;
 
         ADGNode last_node = graph[agent_id].back();
         auto action = last_node.action;
@@ -329,8 +331,7 @@ bool ADG::getAvailableNodes(int robot_id, std::vector<int>& available_nodes) {
         if (curr_agent_plan[i].has_valid_in_edge) {
             updateADGNode(curr_agent_plan[i]);
         }
-        // or available_nodes.size() >= num_additional_nodes
-        if (curr_agent_plan[i].has_valid_in_edge) {
+        if (curr_agent_plan[i].has_valid_in_edge or available_nodes.size() >= num_additional_nodes) {
             break;
         }
 

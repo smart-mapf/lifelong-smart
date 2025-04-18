@@ -74,6 +74,7 @@ void ADG_Server::saveStats() {
 
 
 std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
+    std::lock_guard<std::mutex> guard(globalMutex);
     std::cout << "Get robot location query received! lookahead dist: " << look_ahead_dist << std::endl;
     // if (server_ptr->adg->initialized and not server_ptr->debug_set_flag) {
     //     server_ptr->debug_set_flag = true;
@@ -268,6 +269,10 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
             }
 
             int x, y;
+            // std::pair<int, int> random_loc = server_ptr->mobile_manager->user_map.findRandomPos(all_targets);
+            // x = random_loc.first;
+            // y = random_loc.second;
+
             if (all_targets.contains(curr_robot_loc.position) or
                 server_ptr->mobile_manager->user_map.isStation(curr_robot_loc.position)) {
                 std::pair<int, int> random_loc = server_ptr->mobile_manager->user_map.findRandomPos(all_targets);
@@ -315,6 +320,7 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
 typedef std::tuple<int, int, int> PickData;
 
 std::vector< PickData > getPickerTask() {
+    std::lock_guard<std::mutex> guard(globalMutex);
     std::cout << "Request new picker task!" << std::endl;
     std::vector<std::shared_ptr<PickerTask>> all_tasks;
     server_ptr->picker_manager->getTask(all_tasks);
@@ -328,13 +334,16 @@ std::vector< PickData > getPickerTask() {
 
 void confirmPickerTask(int agent_id, int task_id) {
     assert(task_id != -1);
+    std::lock_guard<std::mutex> guard(globalMutex);
     // std::cout << "send confirmation to agent " << agent_id << " with task id " << task_id << std::endl;
     server_ptr->picker_manager->confirmTask(agent_id, task_id);
 }
 
-int requestMobileTask(std::pair<int, int> target_pos) {
+int requestMobileTask(int picker_id, std::pair<int, int> target_pos) {
+    std::lock_guard<std::mutex> guard(globalMutex);
     std::cout << "Request mobile task! " << "with x: " << target_pos.first << ", y: " << target_pos.second << std::endl;
-    int new_task_id = server_ptr->mobile_manager->insertPickerTask(target_pos.first, target_pos.second);
+    int new_task_id = server_ptr->mobile_manager->insertPickerTask(picker_id,
+        target_pos.first, target_pos.second);
     std::cout << "New mobile task id: " << new_task_id << std::endl;
     return new_task_id;
 }
