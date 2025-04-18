@@ -235,9 +235,12 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     if (not server_ptr->adg->initialized) {
         return new_goals;
     }
+    std::cout << "Query goals" << std::endl;
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> new_tasks;
     assert(new_tasks.size() == server_ptr->numRobots);
     server_ptr->mobile_manager->getTask(server_ptr->robots_location, new_tasks);
+    std::cout << "Get all goals" << std::endl;
+
     server_ptr->curr_mobile_tasks = new_tasks;
     new_goals.resize(server_ptr->numRobots);
     assert(new_tasks.size() == server_ptr->numRobots);

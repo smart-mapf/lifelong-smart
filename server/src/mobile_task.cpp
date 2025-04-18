@@ -95,7 +95,7 @@ void MobileTaskManager::getTask(const std::vector<std::pair<double, double>>& ro
       free_agents.push_back(agent_idx);
     }
   }
-
+  std::cout << "Find free agents" << std::endl;
   vector<vector<double>> cost;
   for (int robot_id: free_agents) {
     std::vector<double> cost_tmp;
@@ -105,12 +105,16 @@ void MobileTaskManager::getTask(const std::vector<std::pair<double, double>>& ro
     }
     cost.push_back(cost_tmp);
   }
-
+  std::cout << "Get cost matrix" << std::endl;
   int n;
   padMatrix(cost, n);
+  std::cout << "Finish pad cost matrix" << std::endl;
+
   vector<int> assignment = hungarian(cost);
   new_tasks.clear();
   new_tasks.resize(num_robots_);
+  std::cout << "Finish solve hungarian" << std::endl;
+
   for (int i = 0; i < assignment.size(); ++i) {
     if (cost[i][assignment[i]] < INF) {
       cout << "Agent " << free_agents[i] << " assigned to Task " << assignment[i] << endl;
