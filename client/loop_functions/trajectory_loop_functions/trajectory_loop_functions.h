@@ -110,7 +110,7 @@ private:
       next_loc = picker_path[next_loc_id];
       return next_loc_id;
    }
-   int requestMobileRobot(std::pair<int, int>& loc);
+   int requestMobileRobot(int agent_id, std::pair<int, int>& loc);
    bool executeMove(int agent_id, PickerAction& act);
    bool executePick(int agent_id, PickerAction& act);
    bool executeUnload(int agent_id, PickerAction& act);

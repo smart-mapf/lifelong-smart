@@ -1,55 +1,14 @@
 #include "mobile_task.h"
 
-MobileTaskManager::MobileTaskManager(int num_agents, std::string& map_fname): TaskManager(num_agents, map_fname) {
+MobileTaskManager::MobileTaskManager(int num_agents, int num_picker, std::string& map_fname): TaskManager(num_agents, map_fname),
+  num_picker_(num_picker){
   for (auto& tmp_station: user_map.all_stations) {
     active_stations.insert({tmp_station->idx, tmp_station});
   }
   for (int i = 0; i < num_agents; ++i) {
     agent_task_status.emplace_back(i);
   }
-  all_picker_tasks.resize(num_agents);
-}
-
-
-void MobileTaskManager::getTask(std::vector<std::deque<std::shared_ptr<MobileRobotTask>>>& new_tasks) {
-  int agent_idx_offset = getFirstAgentInQueue();
-  for (int i = 0; i < num_robots_; i++) {
-    int agent_idx = (agent_idx_offset + i)%num_robots_;
-    assert(agent_task_status[agent_idx].curr_loads >= 0);
-#ifdef DEBUG
-    std::cout << "Total task for Agent " << agent_idx << ", is: " << agent_task_status[agent_idx].assigned_tasks.size() << std::endl;
-#endif
-    while (agent_task_status[agent_idx].assigned_tasks.size() < MAX_NUM_GOALS) {
-      auto tmp_new_task = genTask(agent_idx);
-      if (tmp_new_task == nullptr) {
-        // Do nothing
-        // std::cerr << "Failed to generate new random task" << std::endl;
-        break;
-      }
-      setTask(agent_idx, tmp_new_task, true);
-      std::cout << "Create new task for agent " << agent_idx << ", with goal at: "
-      << tmp_new_task->goal_position.first << ", " << tmp_new_task->goal_position.second << std::endl;
-    }
-  }
-
-  // TODO@jingtian: consider more efficient implementation
-  new_tasks.clear();
-  new_tasks.resize(num_robots_);
-  for (int agent_idx = 0; agent_idx < num_robots_; ++agent_idx) {
-    new_tasks[agent_idx] = agent_task_status[agent_idx].assigned_tasks;
-  }
-}
-
-std::shared_ptr<MobileRobotTask> MobileTaskManager::genTask(int agent_id) {
-  if (agent_task_status[agent_id].curr_loads < MAX_LOADS) {
-    std::cout << "Pick a new random picker" << std::endl;
-    auto new_task = pickPicker(agent_id);
-    return new_task;
-  } else {
-    std::cout << "Pick a new random Station" << std::endl;
-    auto new_task = pickStation(agent_id);
-    return new_task;
-  }
+  all_picker_tasks.resize(num_picker_);
 }
 
 
@@ -112,22 +71,36 @@ vector<int> hungarian(const vector<vector<double>>& cost) {
   return result;
 }
 
-double computeDistance(int agent_id, std::shared_ptr<MobileRobotTask>& task) {
-  return 0.0;
+double computeDistance(const Location& agent_loc, const Location& task_loc) {
+  double dx = agent_loc.first - task_loc.first;
+  double dy = agent_loc.second - task_loc.second;
+  return std::sqrt(dx * dx + dy * dy);
 }
 
-vector<int> MobileTaskManager::pickPicker(int agent_id) {
+void MobileTaskManager::getTask(const std::vector<std::pair<double, double>>& robots_location,
+  std::vector<std::deque<std::shared_ptr<MobileRobotTask>>>& new_tasks) {
   std::deque<std::shared_ptr<MobileRobotTask>> front_tasks;
-  for (int i = 0; i < num_robots_; ++i) {
+  for (int i = 0; i < num_picker_; ++i) {
     if (not all_picker_tasks[i].empty()) {
-      front_tasks.push_back(all_picker_tasks[i].front());
+      // The task is not allocated yet
+      if (all_picker_tasks[i].front()->agent_id == -1) {
+        front_tasks.push_back(all_picker_tasks[i].front());
+      }
     }
   }
+
+  std::vector<int> free_agents;
+  for (int agent_idx = 0; agent_idx < num_robots_; agent_idx++) {
+    if (agent_task_status[agent_idx].assigned_tasks.empty()) {
+      free_agents.push_back(agent_idx);
+    }
+  }
+
   vector<vector<double>> cost;
-  for (int i = 0; i < num_robots_; ++i) {
+  for (int robot_id: free_agents) {
     std::vector<double> cost_tmp;
     for (int j = 0; j < front_tasks.size(); ++j) {
-      double tmp_dis = computeDistance(i, front_tasks[j]);
+      double tmp_dis = computeDistance(robots_location[robot_id], front_tasks[j]->goal_position);
       cost_tmp.push_back(tmp_dis);
     }
     cost.push_back(cost_tmp);
@@ -136,39 +109,74 @@ vector<int> MobileTaskManager::pickPicker(int agent_id) {
   int n;
   padMatrix(cost, n);
   vector<int> assignment = hungarian(cost);
+  new_tasks.clear();
+  new_tasks.resize(num_robots_);
   for (int i = 0; i < assignment.size(); ++i) {
     if (cost[i][assignment[i]] < INF) {
-      cout << "Agent " << i << " assigned to Task " << assignment[i] << endl;
+      cout << "Agent " << free_agents[i] << " assigned to Task " << assignment[i] << endl;
+      setTask(free_agents[i], front_tasks[assignment[i]], PICK);
     }
   }
+  new_tasks.clear();
+  new_tasks.resize(num_robots_);
+  for (int i = 0; i < num_robots_; ++i) {
+    new_tasks[i] = agent_task_status[i].assigned_tasks;
+  }
+}
 
-  // if (picker_tasks.empty()) {
-  //   return nullptr;
-  // }
-  // // std::srand(std::time(0));  // Seed the random number generator
-  // // std::srand(0);  // Seed the random number generator
-  // //
-  // // int picker_idx = std::rand() % picker_tasks.size();
-  // // auto it = picker_tasks.begin();
-  // // std::advance(it, picker_idx);
-  // // auto tmp_pick_task = *it;
-  // // picker_tasks.erase(it);
-  // // tmp_pick_task->agent_id = agent_id;
-  // auto tmp_pick_task = picker_tasks.front();
-  // picker_tasks.pop_front();
-  // tmp_pick_task->agent_id = agent_id;
-  return assignment;
+void MobileTaskManager::finishTask(int agent_id, std::shared_ptr<MobileRobotTask>& task) {
+  if (task->status == PICK) {
+    setTask(agent_id, task, DELIVER);
+  } else if (task->status == DELIVER) {
+    setTask(agent_id, task, DONE);
+  } else {
+    std::cerr << "MobileTaskManager::finishTask: unknown action" << std::endl;
+    exit(-1);
+  }
 }
 
 
-std::shared_ptr<MobileRobotTask> MobileTaskManager::pickStation(int agent_id) {
-//  Task tmp_task;
-  if (active_stations.empty()) {
-    return nullptr;
+void MobileTaskManager::setTask(int agent_id, std::shared_ptr<MobileRobotTask>& task, MobileAction status) {
+  if (task->status == NONE) {
+    if (status == PICK) {
+#ifdef DEBUG
+      std::cout << "adding new task with id: " << task->id << std::endl;
+#endif
+      agent_task_status[agent_id].assigned_tasks.emplace_back(task);
+    } else {
+      std::cerr << "impossible case, exiting..." << std::endl;
+      exit(-1);
+    }
+  } else if (task->status == PICK) {
+    if (status == DELIVER) {
+    } else {
+      std::cerr << "impossible case, exiting..." << std::endl;
+      exit(-1);
+      return;
+    }
+  } else if (task->status == DELIVER) {
+    if (status == DONE) {
+      agent_task_status[agent_id].assigned_tasks.pop_front();
+    } else {
+      std::cerr << "impossible case, exiting..." << std::endl;
+      exit(-1);
+      return;
+    }
+  } else if (task->status == DONE) {
+    std::cerr << "Task already finished!" << std::endl;
   }
-  // std::srand(std::time(0));  // Seed the random number generator
-  std::srand(0);  // Seed the random number generator
+  task->status = status;
+}
 
+std::pair<int, int> MobileTaskManager::findNearbyFreeCell(int x, int y) {
+  if ((y / 4) % 2 == 0 ) {
+    return std::make_pair(x, y+1);
+  } else {
+    return std::make_pair(x, y-1);
+  }
+}
+
+std::pair<int, int> MobileTaskManager::findPalletizer(int picker_id) {
   int station_idx = std::rand() % active_stations.size();
   std::cout << "active stations size: " << active_stations.size() << ", picked station idx: " << station_idx << std::endl;
   auto it = active_stations.begin();
@@ -176,95 +184,14 @@ std::shared_ptr<MobileRobotTask> MobileTaskManager::pickStation(int agent_id) {
   auto tmp_station = it->second;
   int x = tmp_station->x;
   int y = tmp_station->y;
-  return std::make_shared<MobileRobotTask>(curr_task_idx++, agent_id, std::make_pair(x, y),
-    tmp_station->idx, MobileAction::DELIVER);
-}
-
-void MobileTaskManager::setTask(int agent_id, std::shared_ptr<MobileRobotTask>& task, bool status) {
-  if (task->status == status and status == false) {
-    return;
-  }
-  if (task->act == MobileAction::DELIVER) {
-    setStation(task->operate_obj_idx, status);
-  }
-  if (status) {
-    // Add new task to the agent
-#ifdef DEBUG
-    std::cout << "adding new task with id: " << task->id << std::endl;
-#endif
-    agent_task_status[agent_id].assigned_tasks.emplace_back(task);
-  } else {
-    // Remove finished task
-#ifdef DEBUG
-    std::cout << "remove finished task with id: " << task->id << std::endl;
-    for (auto& tmp_new_task: agent_task_status[agent_id].assigned_tasks) {
-      std::cout << "task for agent " << agent_id << ", with goal at: "
-      << tmp_new_task->goal_position.first << ", " << tmp_new_task->goal_position.second << ", status: "
-      << tmp_new_task->status << std::endl;
-    }
-#endif
-    if (agent_task_status[agent_id].assigned_tasks.empty()) {
-      std::cout << "No task for agent " << agent_id << std::endl;
-      exit(-1);
-    }
-    assert(task == agent_task_status[agent_id].assigned_tasks.front());
-    agent_task_status[agent_id].assigned_tasks.pop_front();
-    if (task->act == MobileAction::DELIVER) {
-      agent_task_status[agent_id].curr_loads = 0;
-    } else {
-      agent_task_status[agent_id].curr_loads += 1;
-    }
-  }
-  task->status = status;
-}
-
-bool MobileTaskManager::setStation(int station_idx, bool status) {
-  if (status) {
-    auto tmp_station = active_stations.find(station_idx);
-    if (tmp_station == active_stations.end()) {
-      std::cerr << "station_idx " << station_idx << " is not free!" << std::endl;
-      return false;
-    }
-    tmp_station->second->status = status;
-    assert(tmp_station != nullptr);
-    active_stations.erase(tmp_station);
-    occupied_stations.insert({station_idx, tmp_station->second});
-  } else {
-    auto tmp_station = occupied_stations.find(station_idx);
-    if (tmp_station == occupied_stations.end()) {
-      std::cerr << "station_idx " << station_idx << " is not in use!" << std::endl;
-      return false;
-    }
-    tmp_station->second->status = status;
-    assert(tmp_station != nullptr);
-    occupied_stations.erase(tmp_station);
-    active_stations.insert({station_idx, tmp_station->second});
-  }
-  return true;
-}
-
-std::pair<int, int> MobileTaskManager::findNearbyFreeCell(int x, int y) {
-  if ((y / 4) % 2 == 0 ) {
-    return std::make_pair(x, y+1);
-
-  } else {
-    return std::make_pair(x, y-1);
-  }
-
-  if (user_map.isValid(x, y+1)) {
-    return std::make_pair(x, y+1);
-  }
-  if (user_map.isValid(x, y-1)) {
-    return std::make_pair(x, y-1);
-  }
-  std::cerr << "Error in finding available position to pod! Error in location! Exiting" << std::endl;
-  exit(-1);
+  return std::make_pair(x, y);
 }
 
 int MobileTaskManager::insertPickerTask(int picker_id, int goal_x, int goal_y) {
   std::pair<int, int> free_loc = findNearbyFreeCell(goal_x, goal_y);
+  std::pair<int, int> picker_loc = findPalletizer(picker_id);
   std::shared_ptr<MobileRobotTask> new_pickup_task = std::make_shared<MobileRobotTask>(curr_task_idx++, -1,
-    free_loc, -1, MobileAction::PICK);
+    free_loc, -1, MobileAction::NONE, picker_id, picker_loc);
   // picker_tasks.push_back(new_pickup_task);
   all_picker_tasks[picker_id].push_back(new_pickup_task);
   return new_pickup_task->id;

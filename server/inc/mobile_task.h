@@ -7,34 +7,26 @@
 
 struct MobileRobotState {
   // num of packs agent is carrying
-  int curr_loads = 0;
+  // int curr_loads = 0;
   int agent_idx;
+  Location loc;
   std::deque<std::shared_ptr<MobileRobotTask>> assigned_tasks;
   explicit MobileRobotState(int agent_idx): agent_idx(agent_idx) {}
 };
 
 class MobileTaskManager : public TaskManager {
 public:
-  MobileTaskManager(int num_agents, std::string& map_fname);
-  void getTask(std::vector<std::deque<std::shared_ptr<MobileRobotTask>>>& new_tasks);
-  void setTask(int agent_id, std::shared_ptr<MobileRobotTask>& task, bool status);
+  MobileTaskManager(int num_agents, int num_picker, std::string& map_fname);
+  void getTask(const std::vector<std::pair<double, double>>& robots_location,
+    std::vector<std::deque<std::shared_ptr<MobileRobotTask>>>& new_tasks);
+
+  void setTask(int agent_id, std::shared_ptr<MobileRobotTask>& task, MobileAction status);
+  void finishTask(int agent_id, std::shared_ptr<MobileRobotTask>& task);
   int insertPickerTask(int picker_id, int goal_x, int goal_y);
 
 private:
-  std::shared_ptr<MobileRobotTask> genTask(int agent_id);
-  vector<int> pickPicker(int agent_id);
-  std::shared_ptr<MobileRobotTask> pickStation(int agent_id);
-  bool setStation(int station_idx, bool status);
   std::pair<int, int> findNearbyFreeCell(int x, int y);
-  int getFirstAgentInQueue() {
-    std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));  // random number generator
-    std::uniform_int_distribution<int> dist_idx(0, num_robots_ - 1);
-    int agent_idx = dist_idx(rng);
-    if (agent_idx >= num_robots_) {
-      agent_idx = 0;
-    }
-    return agent_idx;
-  }
+  std::pair<int, int> findPalletizer(int picker_id);
 
 private:
   std::vector<MobileRobotState> agent_task_status;
@@ -43,4 +35,5 @@ private:
   std::unordered_map<int, std::shared_ptr<Station>> active_stations;
   std::unordered_map<int, std::shared_ptr<Station>> occupied_stations;
   int prev_agent_idx = -1;
+  int num_picker_ = 0;
 };

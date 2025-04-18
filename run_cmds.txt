@@ -5,3 +5,7 @@ argos3 -c ../output.argos
 ./build/pbs -m ../../supermarket.map -k 24 --portNum=8182
 argos3 -c ../output.argos
 ./ADG_server --num_robots=24 -m ../../supermarket.map -n 8182 --num_pickers=16
+
+./build/pbs -m ../../supermarket.map -k 48 --portNum=8182
+argos3 -c ../output.argos
+./ADG_server --num_robots=48 -m ../../supermarket.map -n 8182 --num_pickers=16

@@ -58,6 +58,8 @@ public:
     int numRobots = 0;
     int step_cnt = 0;
     double latest_arr_sim_step = 0;
+    std::vector<std::pair<double, double>> robots_location;
+
 
     bool debug_set_flag = false;
 

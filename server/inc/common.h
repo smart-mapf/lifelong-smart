@@ -20,6 +20,7 @@ using namespace std;
 const double EPS = 1e-8;
 const int INF = numeric_limits<int>::max();
 
+typedef pair<double, double> Location;
 
 // Define a structure to hold coordinate points and time.
 struct Point {
@@ -76,7 +77,8 @@ struct PickerTask
 };
 
 enum MobileAction {
-    DELIVER = 0, PICK = 1, NONE = 2
+    // DELIVER = 0, PICK = 1, NONE = 2
+    NONE = 0, PICK = 1, DELIVER = 2, DONE = 3
 };
 
 struct pair_hash {
@@ -92,18 +94,30 @@ struct MobileRobotTask
     std::pair<int, int> goal_position;
     int goal_orient=0;
 
-    MobileAction act = NONE;
+    MobileAction status = NONE;
     int operate_obj_idx = -1;
     int estimate_time = 0;
-    bool status=true; // false if finished, true otherwise
+    // bool status=true; // false if finished, true otherwise
 
-    int station_id;
+    int picker_robot_id = -1;
+    std::pair<int, int> station_position;
     // MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
     // }
-    MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position, int obj_idx, MobileAction flag):
-        id(id), agent_id(agent_id), goal_position(std::move(goal_position)), operate_obj_idx(obj_idx), act(flag) {
-        // TODO:Find Station id given the goal location
-        station_id = 0;
+    MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position, int obj_idx, MobileAction flag,
+        int picker_id, std::pair<int, int> station_position):
+        id(id), agent_id(agent_id), goal_position(std::move(goal_position)), operate_obj_idx(obj_idx), status(flag),
+        picker_robot_id(picker_id), station_position(station_position) {
+    }
+
+    std::pair<int, int> get_goal_position() const {
+        if (status == PICK) {
+            return goal_position;
+        } else if (status == DELIVER) {
+            return station_position;
+        } else {
+            std::cerr << "Invalid action" << std::endl;
+            exit(1);
+        }
     }
 };
 

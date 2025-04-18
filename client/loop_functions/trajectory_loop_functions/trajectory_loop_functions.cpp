@@ -146,8 +146,8 @@ void CTrajectoryLoopFunctions::Reset() {
  *
  * @return Task id for the request
  */
-int CTrajectoryLoopFunctions::requestMobileRobot(std::pair<int, int>& loc) {
-  int new_mobile_task_id = client->call("request_mobile_robot", std::make_pair(loc.second, loc.first)).as<int>();
+int CTrajectoryLoopFunctions::requestMobileRobot(int agent_id, std::pair<int, int>& loc) {
+  int new_mobile_task_id = client->call("request_mobile_robot", agent_id, std::make_pair(loc.second, loc.first)).as<int>();
   return new_mobile_task_id;
 }
 
@@ -169,7 +169,7 @@ void CTrajectoryLoopFunctions::getNextAction(int agent_id) {
       printf("Find pickup task with id %d, current load is %d\n", tmp_task_id, curr_agent.curr_load);
       if (curr_agent.curr_load >= LOAD_NUM) {
         // OK@jingtian: need to change this to communicate
-        int new_mobile_task_id = requestMobileRobot(last_act.end);
+        int new_mobile_task_id = requestMobileRobot(agent_id, last_act.end);
         printf("Add new mobile request task for agent %d with id %d\n", agent_id, new_mobile_task_id);
         curr_agent.acts.emplace_back(UNLOAD_T, UNLOAD, last_act.end, last_act.end, pick_task_it->first, pick_task_it->first, -1, new_mobile_task_id);
         curr_agent.curr_load = 0;

@@ -1,6 +1,1 @@
   Robot ID  Current Position X  Current Position Y       Current Angle        Queue Length       Left Velocity      Right Velocity               Count            Sim Time
-     51_25             51.9948             21.7013             359.782                   5             59.1671             59.1772                 200                  20
-     51_25             51.9995             15.4273             359.972                   6              30.807             30.8019                 400                  40
-     51_25             52.8378             13.0082             271.069                   3             19.3162             19.4756                 600                  60
-     51_25             53.4782             13.0066             270.637                   0                   0                   0                 800                  80
-     51_25             53.4782             13.0066             270.637                   0                   0                   0                1000                 100
