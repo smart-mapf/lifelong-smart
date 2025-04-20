@@ -115,7 +115,11 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
             }
         }
     }
-    // printf("Finish building graph!\n");
+    printf("Finish building graph!\n");
+    if (hasCycle()) {
+        std::cerr << "Cycle detected!" << std::endl;
+        exit(-1);
+    }
 }
 
 bool isAddStop(double x)
@@ -238,7 +242,7 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
         std::cout << "        {" << action.robot_id << ", " << action.time << ", "
           << std::fixed << std::setprecision(1) << action.orientation << ", '"
           << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
-          << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << ", " << action.task_id << "}," << std::endl;
+          << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID  << "}," << std::endl;
 
     }
 #ifdef DEBUG
@@ -331,6 +335,8 @@ bool ADG::getAvailableNodes(int robot_id, std::vector<int>& available_nodes) {
         if (curr_agent_plan[i].has_valid_in_edge) {
             updateADGNode(curr_agent_plan[i]);
         }
+
+        // or available_nodes.size() >= num_additional_nodes
         if (curr_agent_plan[i].has_valid_in_edge or available_nodes.size() >= num_additional_nodes) {
             break;
         }
@@ -454,7 +460,13 @@ SIM_PLAN ADG::getPlan(int agent_id) {
         // std::pair<int, int> intEnd = action.goal;
         // std::pair<double, double> doubleStart = {static_cast<double>(intStart.first), static_cast<double>(intStart.second)};
         // std::pair<double, double> doubleEnd = {static_cast<double>(intEnd.first), static_cast<double>(intEnd.second)};
-        sim_plan.emplace_back(robotIDToStartIndex[action.robot_id], enque_id, action.orientation, std::string(1, action.type), action.start, action.goal, action.task_id);
+        int task_id;
+        if (action.task_ptr == nullptr) {
+            task_id = -1;
+        } else {
+            task_id = action.task_ptr->id;
+        }
+        sim_plan.emplace_back(robotIDToStartIndex[action.robot_id], enque_id, action.orientation, std::string(1, action.type), action.start, action.goal, task_id);
         enqueue_nodes_idx[agent_id].push_back(enque_id);
     }
     std::cout << "For agent " << agent_id << ", enqueue size is: " << enqueue_nodes_idx[agent_id].size() << std::endl;

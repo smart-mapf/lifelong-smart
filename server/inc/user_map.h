@@ -15,6 +15,11 @@ class userMap {
 public:
     userMap(std::string& map_fname);
     bool inline isValid(int x, int y) {
+        if (x >= num_of_rows or x <0) {
+            return false;
+        } else if (y >= num_of_cols or y < 0) {
+
+        }
         return my_map[x][y];
     }
     bool readMap(std::string& map_fname);
@@ -30,6 +35,42 @@ public:
             pos = free_cells[idx].position;
         } while (occupied_locs_set.contains(pos));  // keep trying until a valid position is found
 
+        return pos;
+    }
+
+    std::pair<int, int> findNeighborPos(unordered_set<std::pair<int, int>, pair_hash>& occupied_locs_set, std::pair<int, int> pos) {
+        // Directions: up, down, left, right
+        const int dx[] = {-1, 1, 0, 0};
+        const int dy[] = {0, 0, -1, 1};
+
+        // Set to track visited positions
+        unordered_set<pair<int, int>, pair_hash> visited;
+        std::deque<pair<int, int>> q;
+
+        q.push_back(pos);
+        visited.insert(pos);
+
+        while (!q.empty()) {
+            auto current = q.front();
+            q.pop_front();
+
+            for (int i = 0; i < 4; ++i) {
+                pair<int, int> neighbor = {current.first + dx[i], current.second + dy[i]};
+
+                if (visited.find(neighbor) != visited.end()) continue;
+                visited.insert(neighbor);
+
+                if (occupied_locs_set.find(neighbor) == occupied_locs_set.end() and
+                    isValid(neighbor.first, neighbor.second) and
+                    not isStation(neighbor)) {
+                    return neighbor;
+                }
+
+                q.push_back(neighbor);
+            }
+        }
+
+        // Should never reach here unless all positions are somehow occupied
         return pos;
     }
 

@@ -59,6 +59,7 @@ public:
     int step_cnt = 0;
     double latest_arr_sim_step = 0;
     std::vector<std::pair<double, double>> robots_location;
+    std::vector<MobileAction> current_robots_goal_type;
 
 
     bool debug_set_flag = false;

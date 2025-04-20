@@ -4,6 +4,7 @@
 
 #include "common.h"
 #include "task_assigner.h"
+#include "hungarian.h"
 
 struct MobileRobotState {
   // num of packs agent is carrying
@@ -27,6 +28,7 @@ public:
 private:
   std::pair<int, int> findNearbyFreeCell(int x, int y);
   std::pair<int, int> findPalletizer(int picker_id);
+  void cleanTasks();
 
 private:
   std::vector<MobileRobotState> agent_task_status;

@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <unordered_set>
 
+#include "mobile_task.h"
 #include "parser.h"
 
 typedef std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>, int>> SIM_PLAN;
@@ -111,7 +112,23 @@ public:
         std::cout << std::endl;
     }
 
-    bool getFinishedTasks(std::vector<std::unordered_set<int>>& finish_tasks) {
+    // bool getFinishedTasks(std::vector<std::unordered_set<int>>& finish_tasks) {
+    //     if (curr_commit.empty() or graph.empty()) {
+    //         return false;
+    //     }
+    //     finish_tasks.clear();
+    //     finish_tasks.resize(num_robots);
+    //     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+    //         for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
+    //             if (graph[agent_id][node_id].action.type == 'P' or graph[agent_id][node_id].action.type == 'S') {
+    //                 finish_tasks[agent_id].insert(graph[agent_id][node_id].action.task_id);
+    //             }
+    //         }
+    //     }
+    //     return true;
+    // }
+
+    bool updateFinishedTasks(std::vector<std::unordered_set<int>>& finish_tasks, std::shared_ptr<MobileTaskManager>& task_ptr) {
         if (curr_commit.empty() or graph.empty()) {
             return false;
         }
@@ -119,9 +136,15 @@ public:
         finish_tasks.resize(num_robots);
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
             for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
-                if (graph[agent_id][node_id].action.type == 'P' or graph[agent_id][node_id].action.type == 'S') {
-                    finish_tasks[agent_id].insert(graph[agent_id][node_id].action.task_id);
+                if (graph[agent_id][node_id].action.type == 'P') {
+                    task_ptr->setTask(agent_id, graph[agent_id][node_id].action.task_ptr, DELIVER);
+                } else if (graph[agent_id][node_id].action.type == 'S') {
+                    task_ptr->setTask(agent_id, graph[agent_id][node_id].action.task_ptr, DONE);
                 }
+                // if (graph[agent_id][node_id].action.type == 'P' or graph[agent_id][node_id].action.type == 'S') {
+                //     finish_tasks[agent_id].insert(graph[agent_id][node_id].action.task_id);
+                //
+                // }
             }
         }
         return true;
@@ -182,7 +205,7 @@ private:
         return false;
     }
 
-    bool hasCycle(const std::vector<std::vector<ADGNode>>& graph) {
+    bool hasCycle() {
         std::unordered_map<int, std::unordered_set<int>> visited;
         std::unordered_map<int, std::unordered_set<int>> recStack;
 

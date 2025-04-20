@@ -12,7 +12,7 @@
 #define MAX_TASKS 500
 #define MAX_NUM_GOALS 1
 #define NUM_GENRE 10
-#define MAX_ENQUE 12
+#define MAX_ENQUE 30
 #define DEBUG
 
 using namespace std;
@@ -50,17 +50,7 @@ struct Station {
     Station(int x, int y, int orientation, int idx): x(x), y(y), orientation(orientation), idx(idx) {}
 };
 
-// Definition of the Action struct
-struct Action {
-    int robot_id;
-    double time; // time that start an action
-    double orientation;
-    char type;  // 'M' for move, 'T' for turn, 'S' for station, 'P' for pod
-    std::pair<double, double> start;
-    std::pair<double, double> goal;
-    int nodeID;
-    int task_id = -1;
-};
+
 
 struct PickerTask
 {
@@ -119,6 +109,18 @@ struct MobileRobotTask
             exit(1);
         }
     }
+};
+
+// Definition of the Action struct
+struct Action {
+    int robot_id;
+    double time; // time that start an action
+    double orientation;
+    char type;  // 'M' for move, 'T' for turn, 'S' for station, 'P' for pod
+    std::pair<double, double> start;
+    std::pair<double, double> goal;
+    int nodeID;
+    std::shared_ptr<MobileRobotTask> task_ptr = nullptr;
 };
 
 inline bool positionCompare(std::pair<double, double> a, std::pair<int, int> b) {

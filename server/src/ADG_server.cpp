@@ -1,7 +1,5 @@
 #include "ADG_server.h"
 
-#include <random_task.h>
-
 std::vector<std::chrono::steady_clock::time_point> startTimers; // Start times for each robot
 std::shared_ptr<ADG_Server> server_ptr = nullptr;
     // =======================
@@ -82,10 +80,15 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     //     return {};
     // }
     server_ptr->curr_robot_states = server_ptr->adg->computeCommitCut(look_ahead_dist);
-    assert(static_cast<int>(server_ptr->curr_robot_states.size()) == server_ptr->numRobots);
     std::cout << "Commit cut number: " << server_ptr->curr_robot_states.size() << ", total number of robots: "
         << server_ptr->numRobots << std::endl;
+
     std::vector<std::pair<double, double>> robots_location;
+    if (server_ptr->curr_robot_states.empty()) {
+        return robots_location;
+    }
+    assert(static_cast<int>(server_ptr->curr_robot_states.size()) == server_ptr->numRobots);
+
     for (auto& robot : server_ptr->curr_robot_states)
     {
         if (server_ptr->flipped_coord) {
@@ -98,15 +101,16 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     // TODO@jingtian: set a task as finished when it is enqueued
     std::vector< std::unordered_set<int> > task_status;
     std::cout << "retrieving last actions" << std::endl;
-    auto success_status = server_ptr->adg->getFinishedTasks(task_status);
+    auto success_status = server_ptr->adg->updateFinishedTasks(task_status, server_ptr->mobile_manager);
     std::cout << "retrieved last actions" << std::endl;
-    if (success_status) {
-        for (int i = 0; i < server_ptr->numRobots; i++) {
-            if (not server_ptr->curr_mobile_tasks[i].empty() and task_status[i].contains(server_ptr->curr_mobile_tasks[i].front()->id)) {
-                server_ptr->mobile_manager->finishTask(i, server_ptr->curr_mobile_tasks[i].front());
-            }
-        }
-    }
+    // if (success_status) {
+    //     for (int i = 0; i < server_ptr->numRobots; i++) {
+    //         if (not server_ptr->curr_mobile_tasks[i].empty() and task_status[i].contains(server_ptr->curr_mobile_tasks[i].front()->id)) {
+    //             server_ptr->mobile_manager->finishTask(i, server_ptr->curr_mobile_tasks[i].front());
+    //         }
+    //     }
+    // }
+
     server_ptr->robots_location = robots_location;
     return robots_location;
 }
@@ -136,9 +140,8 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
 #endif
 
     for (int i = 0; i < static_cast<int>(plans.size()); i++) {
-        if (server_ptr->curr_mobile_tasks[i].empty() or
-            server_ptr->curr_mobile_tasks[i].front()->status == DONE) {
-            std::cout << "No plan" << std::endl;
+        if (server_ptr->current_robots_goal_type[i] == NONE) {
+            std::cout << "No additional action with goal status: " << server_ptr->current_robots_goal_type[i] << std::endl;
             continue;
         }
         Action tmp_act;
@@ -164,16 +167,18 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
             std::swap(tmp_act.start.first, tmp_act.start.second);
         }
 
-        if (server_ptr->curr_mobile_tasks[i].front()->status == MobileAction::DELIVER) {
+        if (server_ptr->current_robots_goal_type[i] == DELIVER) {
             // If station
             tmp_act.type = 'S';
-        } else {
+        } else if (server_ptr->current_robots_goal_type[i] == PICK) {
             tmp_act.type = 'P';
+        } else {
+            continue;
         }
-        tmp_act.task_id = server_ptr->curr_mobile_tasks[i].front()->id;
+        tmp_act.task_ptr = server_ptr->curr_mobile_tasks[i].front();
         plans[i].push_back(tmp_act);
     }
-    // showActionsPlan(plans);
+    showActionsPlan(plans);
     server_ptr->adg->addMAPFPlan(plans);
     // server_ptr->adg->showGraph();
     // for (int id = 0; id < server_ptr->numRobots; id++)
@@ -187,24 +192,21 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
 
 }
 
-std::string actionFinished(std::string& RobotID, int node_ID) {
+std::string actionFinished(std::string& robot_id_str, int node_ID) {
     std::lock_guard<std::mutex> guard(globalMutex);
     if (not server_ptr->adg->initialized) {
         std::cerr << "ADG_Server::ADG_Server: server_ptr is not initialized" << std::endl;
         exit(-1);
         return "None";
     }
-    int Robot_ID = server_ptr->adg->startIndexToRobotID[RobotID];
-    bool status_update = server_ptr->adg->updateFinishedNode(Robot_ID, node_ID);
-    std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(Robot_ID);
-    // if (server_ptr->adg->isTaskNode(Robot_ID, node_ID)) {
-    //     std::cout << "receive confirmation for robot id: " << Robot_ID << ", at node id: "<< node_ID << "with current position at: " <<
+    int agent_id = server_ptr->adg->startIndexToRobotID[robot_id_str];
+    bool status_update = server_ptr->adg->updateFinishedNode(agent_id, node_ID);
+
+    // std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(agent_id);
+    // if (server_ptr->adg->isTaskNode(agent_id, node_ID)) {
+    //     std::cout << "receive confirmation for robot id: " << agent_id << ", at node id: "<< node_ID << "with current position at: " <<
     //     curr_pos.first << ", " << curr_pos.second << std::endl;
-    //     if (not server_ptr->curr_tasks[Robot_ID].empty()) {
-    //         if (server_ptr->curr_tasks[Robot_ID].front()->status == true) {
-    //             server_ptr->task_manager_ptr->setTask(Robot_ID, server_ptr->curr_tasks[Robot_ID].front(), false);
-    //         }
-    //     }
+    //     server_ptr->mobile_manager->finishTask(agent_id, server_ptr->curr_mobile_tasks[agent_id].front());
     // }
 
     // printf("goal::(%f, %f), curr_pos::(%f, %f)\n", server_ptr->adg->getActionGoal(Robot_ID, node_ID).first,
@@ -237,20 +239,31 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     }
     std::cout << "Query goals" << std::endl;
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> new_tasks;
-    assert(new_tasks.size() == server_ptr->numRobots);
     server_ptr->mobile_manager->getTask(server_ptr->robots_location, new_tasks);
+    assert(new_tasks.size() == server_ptr->numRobots);
     std::cout << "Get all goals" << std::endl;
 
     server_ptr->curr_mobile_tasks = new_tasks;
     new_goals.resize(server_ptr->numRobots);
     assert(new_tasks.size() == server_ptr->numRobots);
     std::unordered_set<std::pair<int, int>, pair_hash> all_targets;
+    server_ptr->current_robots_goal_type.resize(server_ptr->numRobots);
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
         std::cout << "agent_id: " << agent_id << std::endl;
         if (not new_tasks[agent_id].empty()) {
             for (auto& task : new_tasks[agent_id]) {
-
                 std::pair<int, int> tmp_loc = task->get_goal_position();
+                server_ptr->current_robots_goal_type[agent_id] = server_ptr->curr_mobile_tasks[agent_id].front()->status;
+                if (all_targets.find(tmp_loc) != all_targets.end()) {
+                    // std::cerr << "Duplicate goal location: " << tmp_loc.first << ", " << tmp_loc.second << std::endl;
+                    // string skip_info;
+                    // std::cout << "Continue?" << std::endl;
+                    // std::cin >> skip_info;
+                    tmp_loc = server_ptr->mobile_manager->user_map.findNeighborPos(all_targets, tmp_loc);
+                    server_ptr->current_robots_goal_type[agent_id] = NONE;
+                }
+                all_targets.insert(tmp_loc);
+
                 int tmp_x = tmp_loc.first;
                 int tmp_y = tmp_loc.second;
                 if (not server_ptr->flipped_coord)
@@ -258,7 +271,8 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
                     tmp_x = tmp_loc.second;
                     tmp_y = tmp_loc.first;
                 }
-                all_targets.insert(std::make_pair(tmp_x, tmp_y));
+                new_goals[agent_id].emplace_back(tmp_x, tmp_y, task->goal_orient);
+
                 std::cout << "task goal location: " << tmp_x << ", " << tmp_y << ", status: " << task->status << std::endl;
             }
         }
@@ -296,37 +310,33 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
             // y = static_cast<int>(curr_robot_loc.position.first);
             new_goals[agent_id].emplace_back(x, y, curr_robot_loc.orient);
             all_targets.insert(std::make_pair(x, y));
+            server_ptr->current_robots_goal_type[agent_id] = NONE;
             printf("Random goal locs::(%d, %d)\n", std::get<0>(new_goals[agent_id].front()), std::get<1>(new_goals[agent_id].front()));
-
-        } else {
-            std::cout << "Size of the new tasks for agent " << agent_id << ", is: " << new_tasks[agent_id].size() << std::endl;
-            for (auto& task : new_tasks[agent_id]) {
-                std::pair<int, int> tmp_loc = task->get_goal_position();
-
-                int tmp_x = tmp_loc.first;
-                int tmp_y = tmp_loc.second;
-                if (not server_ptr->flipped_coord)
-                {
-                    tmp_x = tmp_loc.second;
-                    tmp_y = tmp_loc.first;
-                }
-                new_goals[agent_id].emplace_back(tmp_x, tmp_y, task->goal_orient);
-                // all_targets.insert(std::make_pair(tmp_x, tmp_y));
-            }
-            printf("Assigned goal locs::(%d, %d)\n", std::get<0>(new_goals[agent_id].front()), std::get<1>(new_goals[agent_id].front()));
-
         }
+    }
+
+    std::unordered_set<std::pair<int, int>, pair_hash> duplicate_targets;
+    for (auto & tmp_agent: new_goals) {
+        for (auto & tmp_element: tmp_agent) {
+            std::pair<int, int> tmp_loc{std::get<0>(tmp_element), std::get<1>(tmp_element)};
+            if (duplicate_targets.find(tmp_loc) != duplicate_targets.end()) {
+                std::cerr << "Duplicate goal location: " << tmp_loc.first << ", " << tmp_loc.second << std::endl;
+                string skip_info;
+                std::cout << "Continue?" << std::endl;
+                std::cin >> skip_info;
+            } else {
+                duplicate_targets.insert(tmp_loc);
+            }
+        }
+    }
+
+    for (int agent_id = 0; agent_id < new_goals.size(); agent_id++) {
+        std::cout << "agent_id " << agent_id << "with action status: " << server_ptr->current_robots_goal_type[agent_id] << std::endl;
     }
 
     return new_goals;
 }
 
-// std::vector<bool> checkGoalsStatus(std::vector<std::vector<std::tuple<int, int, double>>>& new_goals)
-// {
-//     ;
-// }
-
-// pos_x, pos_y, task_id
 typedef std::tuple<int, int, int> PickData;
 
 std::vector< PickData > getPickerTask() {

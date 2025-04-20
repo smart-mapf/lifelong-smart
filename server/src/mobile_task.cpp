@@ -12,73 +12,26 @@ MobileTaskManager::MobileTaskManager(int num_agents, int num_picker, std::string
 }
 
 
-void padMatrix(vector<vector<double>>& cost, int& n) {
-  int rows = cost.size();
-  int cols = cost[0].size();
-  n = max(rows, cols);
-  for (auto& row : cost) {
-    row.resize(n, INF);
-  }
-  while (cost.size() < n) {
-    cost.push_back(vector<double>(n, INF));
-  }
-}
-
-vector<int> hungarian(const vector<vector<double>>& cost) {
-  int n = cost.size();
-  vector<int> u(n + 1), v(n + 1), p(n + 1), way(n + 1);
-  for (int i = 1; i <= n; ++i) {
-    p[0] = i;
-    vector<int> minv(n + 1, INF);
-    vector<bool> used(n + 1, false);
-    int j0 = 0;
-    do {
-      used[j0] = true;
-      int i0 = p[j0], delta = INF, j1 = 0;
-      for (int j = 1; j <= n; ++j) {
-        if (!used[j]) {
-          int cur = cost[i0 - 1][j - 1] - u[i0] - v[j];
-          if (cur < minv[j]) {
-            minv[j] = cur;
-            way[j] = j0;
-          }
-          if (minv[j] < delta) {
-            delta = minv[j];
-            j1 = j;
-          }
-        }
-      }
-      for (int j = 0; j <= n; ++j) {
-        if (used[j]) {
-          u[p[j]] += delta;
-          v[j] -= delta;
-        } else {
-          minv[j] -= delta;
-        }
-      }
-      j0 = j1;
-    } while (p[j0] != 0);
-    do {
-      int j1 = way[j0];
-      p[j0] = p[j1];
-      j0 = j1;
-    } while (j0);
-  }
-  vector<int> result(n);
-  for (int j = 1; j <= n; ++j) {
-    result[p[j] - 1] = j - 1;
-  }
-  return result;
-}
-
 double computeDistance(const Location& agent_loc, const Location& task_loc) {
   double dx = agent_loc.first - task_loc.first;
   double dy = agent_loc.second - task_loc.second;
   return std::sqrt(dx * dx + dy * dy);
 }
 
+void MobileTaskManager::cleanTasks() {
+  for (int i = 0; i < num_picker_; ++i) {
+    // The task is not allocated yet
+    while (not all_picker_tasks[i].empty() and
+      (all_picker_tasks[i].front()->status == DELIVER or all_picker_tasks[i].front()->status == DONE)) {
+      all_picker_tasks[i].pop_front();
+    }
+  }
+}
+
 void MobileTaskManager::getTask(const std::vector<std::pair<double, double>>& robots_location,
   std::vector<std::deque<std::shared_ptr<MobileRobotTask>>>& new_tasks) {
+
+  cleanTasks();
   std::deque<std::shared_ptr<MobileRobotTask>> front_tasks;
   for (int i = 0; i < num_picker_; ++i) {
     if (not all_picker_tasks[i].empty()) {
@@ -95,30 +48,31 @@ void MobileTaskManager::getTask(const std::vector<std::pair<double, double>>& ro
       free_agents.push_back(agent_idx);
     }
   }
-  std::cout << "Find free agents" << std::endl;
-  vector<vector<double>> cost;
-  for (int robot_id: free_agents) {
-    std::vector<double> cost_tmp;
-    for (int j = 0; j < front_tasks.size(); ++j) {
-      double tmp_dis = computeDistance(robots_location[robot_id], front_tasks[j]->goal_position);
-      cost_tmp.push_back(tmp_dis);
+  if (not free_agents.empty() and not front_tasks.empty()) {
+    std::cout << "Find free agents" << std::endl;
+    vector<vector<double> > costMatrix;
+    for (int robot_id: free_agents) {
+      std::vector<double> cost_tmp;
+      for (int j = 0; j < front_tasks.size(); ++j) {
+        double tmp_dis = computeDistance(robots_location[robot_id], front_tasks[j]->goal_position);
+        cost_tmp.push_back(tmp_dis);
+      }
+      costMatrix.push_back(cost_tmp);
     }
-    cost.push_back(cost_tmp);
-  }
-  std::cout << "Get cost matrix" << std::endl;
-  int n;
-  padMatrix(cost, n);
-  std::cout << "Finish pad cost matrix" << std::endl;
+    std::cout << "Get cost matrix" << std::endl;
 
-  vector<int> assignment = hungarian(cost);
-  new_tasks.clear();
-  new_tasks.resize(num_robots_);
-  std::cout << "Finish solve hungarian" << std::endl;
+    vector<int> assignment;
+    HungarianAlgorithm HungAlgo;
 
-  for (int i = 0; i < assignment.size(); ++i) {
-    if (cost[i][assignment[i]] < INF) {
-      cout << "Agent " << free_agents[i] << " assigned to Task " << assignment[i] << endl;
-      setTask(free_agents[i], front_tasks[assignment[i]], PICK);
+    double cost = HungAlgo.Solve(costMatrix, assignment);
+
+
+    std::cout << "Finish solve hungarian, the cost is: " << cost << std::endl;
+    for (int i = 0; i < assignment.size(); ++i) {
+      if (assignment[i] >= 0) {
+        cout << "Agent " << free_agents[i] << " assigned to Task " << assignment[i] << endl;
+        setTask(free_agents[i], front_tasks[assignment[i]], PICK);
+      }
     }
   }
   new_tasks.clear();
@@ -126,6 +80,7 @@ void MobileTaskManager::getTask(const std::vector<std::pair<double, double>>& ro
   for (int i = 0; i < num_robots_; ++i) {
     new_tasks[i] = agent_task_status[i].assigned_tasks;
   }
+
 }
 
 void MobileTaskManager::finishTask(int agent_id, std::shared_ptr<MobileRobotTask>& task) {
@@ -146,24 +101,27 @@ void MobileTaskManager::setTask(int agent_id, std::shared_ptr<MobileRobotTask>& 
 #ifdef DEBUG
       std::cout << "adding new task with id: " << task->id << std::endl;
 #endif
+      assert(agent_task_status[agent_id].assigned_tasks.empty());
       agent_task_status[agent_id].assigned_tasks.emplace_back(task);
+      task->agent_id = agent_id;
     } else {
-      std::cerr << "impossible case, exiting..." << std::endl;
-      exit(-1);
+      std::cerr << "Its a NONE task, but got " << status << std::endl;
     }
   } else if (task->status == PICK) {
     if (status == DELIVER) {
+      ;
     } else {
-      std::cerr << "impossible case, exiting..." << std::endl;
-      exit(-1);
+      std::cerr << "Its a PICK task, but got " << status << std::endl;
       return;
     }
   } else if (task->status == DELIVER) {
     if (status == DONE) {
-      agent_task_status[agent_id].assigned_tasks.pop_front();
+      if (not agent_task_status[agent_id].assigned_tasks.empty()) {
+        agent_task_status[agent_id].assigned_tasks.pop_front();
+      }
     } else {
-      std::cerr << "impossible case, exiting..." << std::endl;
-      exit(-1);
+      std::cerr << "Its a DELIVER task, but got " << status << std::endl;
+      // exit(-1);
       return;
     }
   } else if (task->status == DONE) {
@@ -173,10 +131,10 @@ void MobileTaskManager::setTask(int agent_id, std::shared_ptr<MobileRobotTask>& 
 }
 
 std::pair<int, int> MobileTaskManager::findNearbyFreeCell(int x, int y) {
-  if ((y / 4) % 2 == 0 ) {
-    return std::make_pair(x, y+1);
-  } else {
+  if ((x / 4) % 2 == 0 ) {
     return std::make_pair(x, y-1);
+  } else {
+    return std::make_pair(x, y+1);
   }
 }
 
