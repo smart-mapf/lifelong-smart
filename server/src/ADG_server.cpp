@@ -246,8 +246,19 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     server_ptr->curr_mobile_tasks = new_tasks;
     new_goals.resize(server_ptr->numRobots);
     assert(new_tasks.size() == server_ptr->numRobots);
-    std::unordered_set<std::pair<int, int>, pair_hash> all_targets;
+    std::unordered_map<std::pair<int, int>, std::vector<int>, pair_hash> all_targets;
     server_ptr->current_robots_goal_type.resize(server_ptr->numRobots);
+    for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
+        std::cout << "agent_id: " << agent_id << std::endl;
+        if (not new_tasks[agent_id].empty()) {
+            for (auto& task : new_tasks[agent_id]) {
+                std::pair<int, int> tmp_loc = task->get_goal_position();
+                all_targets[tmp_loc].push_back(agent_id);
+            }
+        }
+    }
+
+
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
         std::cout << "agent_id: " << agent_id << std::endl;
         if (not new_tasks[agent_id].empty()) {
@@ -262,8 +273,6 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
                     tmp_loc = server_ptr->mobile_manager->user_map.findNeighborPos(all_targets, tmp_loc);
                     server_ptr->current_robots_goal_type[agent_id] = NONE;
                 }
-                all_targets.insert(tmp_loc);
-
                 int tmp_x = tmp_loc.first;
                 int tmp_y = tmp_loc.second;
                 if (not server_ptr->flipped_coord)
