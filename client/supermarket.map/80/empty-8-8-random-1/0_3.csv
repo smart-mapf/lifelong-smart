@@ -1,0 +1,9 @@
+  Robot ID  Current Position X  Current Position Y       Current Angle        Queue Length       Left Velocity      Right Velocity               Count            Sim Time
+       0_3                   0                   3                   0                   0                   0                   0                 200                  20
+       0_3                   0                   3                   0                   0                   0                   0                 400                  40
+       0_3                   0                   3                   0                   0                   0                   0                 600                  60
+       0_3                   0                   3                   0                   0                   0                   0                 800                  80
+       0_3                   0                   3                   0                   0                   0                   0                1000                 100
+       0_3                   0                   3                   0                   0                   0                   0                1200                 120
+       0_3                   0                   3                   0                   0                   0                   0                1400                 140
+       0_3                   0                   3                   0                   0                   0                   0                1600                 160

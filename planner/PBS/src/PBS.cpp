@@ -565,10 +565,10 @@ std::vector<std::vector<std::tuple<int, int, double>>> PBS::getPaths()
 		int tmp_step = 0;
 		for (const auto & t : *paths[i])
 		{
-			new_mapf_plan[i].emplace_back(search_engines[0]->instance.getColCoordinate(t.location),
-				search_engines[0]->instance.getRowCoordinate(t.location), static_cast<double> (tmp_step));
-			std::cout << "(" << search_engines[0]->instance.getColCoordinate(t.location)
-				   << "," << search_engines[0]->instance.getRowCoordinate(t.location) << ")->";
+			new_mapf_plan[i].emplace_back(search_engines[0]->instance.getRowCoordinate(t.location),
+				search_engines[0]->instance.getColCoordinate(t.location), static_cast<double> (tmp_step));
+			std::cout << "(" << search_engines[0]->instance.getRowCoordinate(t.location)
+				   << "," << search_engines[0]->instance.getColCoordinate(t.location) << ")->";
 			tmp_step++;
 		}
 		std::cout << std::endl;

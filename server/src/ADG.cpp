@@ -20,28 +20,16 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
     for (int i = 0; i < num_robots; i++) {
         graph_offset[i] = static_cast<int> (graph[i].size());
     }
+
     // Initialize nodes in the graph
     for (int i = 0; i < num_robots; i++) {
-        int j = 0;
-        // std::cout << "Agent " << i << ": " << std::endl;
         for (const auto& action : plans[i]) {
-            ADGNode node {action, graph_offset[i] + j, {}, {}};
-            // std::cout << "        {" << action.robot_id << ", " << action.time << ", "
-            //           << std::fixed << std::setprecision(1) << action.orientation << ", '"
-            //           << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
-            //           << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID << "}," << std::endl;
+            ADGNode node {action, static_cast<int>(graph[i].size()), {}, {}};
             graph[i].push_back(node);
-            j++;
-            total_nodes_cnt ++;
         }
-        std::cout << "Plan of agent " << i << " become " << graph[i].size() << " after add new plan!" << std::endl;
-    }
-    std::vector<std::vector<bool>> conflict_pair_table;
-    conflict_pair_table.resize(plans.size());
-    for (auto& tmp_entry: conflict_pair_table) {
-        tmp_entry.resize(plans.size(), false);
     }
 
+    // Find the type-2 edges of the current episode
     for (int i = 0; i < num_robots; i++) {
         for (int j = 0; j < plans[i].size(); j++) {
             for (int robot_id = 0; robot_id < num_robots; robot_id++) {
@@ -103,14 +91,6 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
                     // if (plans[i][j].start == plans[k][l].goal or plans[k][l].start == plans[i][j].goal) {
                     //     assert(plans[i][j].time != plans[k][l].time);
                     // }
-                    if (found_conflict) {
-                        adg_stats.type2EdgeCount++;
-                        if (not conflict_pair_table[i][k]) {
-                            conflict_pair_table[i][k] = true;
-                            conflict_pair_table[k][i] = true;
-                            adg_stats.conflict_pairs.emplace(i, k);
-                        }
-                    }
                 }
             }
         }
@@ -172,13 +152,10 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
         std::cout << "computeCommitCut::Not initialized!" << std::endl;
         return {};
     }
-    // std::vector<robotState> curr_commit;
-    // If it is never initialized
     curr_commit.clear();
+    // If it is never initialized
     if (graph.size() == 0) {
-        // commitCut.resize(num_robots);
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-            // commitCut[agent_id] = init_locs[agent_id].position;
             curr_commit.emplace_back(init_locs[agent_id].position, 0);
         }
         return curr_commit;
@@ -197,8 +174,6 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
         if (num_commit_actions < num_enqueue_node) {
             commited_actions[agent_id].second = std::min((int) graph[agent_id].size(), commited_actions[agent_id].first+num_enqueue_node);
         }
-        // std::cout << "Agent " << agent_id << "commited actions: " << commited_actions[agent_id].first << " -> " << commited_actions[agent_id].second << std::endl;
-
     }
     fixInconsistentIncomingEdge(commited_actions);
 #ifdef DEBUG
@@ -249,6 +224,23 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
     std::cout << "Find commit Cut " << std::endl;
 #endif
     // printProgress();
+    std::unordered_map<std::pair<double, double>, std::vector<int>, pair_hash> duplicate_starts;
+    for (int agent_id = 0; agent_id < curr_commit.size(); agent_id++) {
+        std::pair<double, double> tmp_loc = curr_commit[agent_id].position;
+        if (duplicate_starts.find(tmp_loc) != duplicate_starts.end()) {
+            std::cerr << "Duplicate start location found! Agent " << agent_id << ". Duplicate start location: " << tmp_loc.first << ", " << tmp_loc.second << std::endl;
+            graph[agent_id].back().showNode();
+            string skip_info;
+            std::cout << "Duplicate agent: " << std::endl;
+            for (int dup_agent_id: duplicate_starts[tmp_loc]) {
+                std::cout << dup_agent_id << ": ";
+                graph[dup_agent_id].back().showNode();
+            }
+            std::cerr << "Continue? y/n" << std::endl;
+            std::cin >> skip_info;
+        }
+        duplicate_starts[tmp_loc].push_back(agent_id);
+    }
     return curr_commit;
 }
 

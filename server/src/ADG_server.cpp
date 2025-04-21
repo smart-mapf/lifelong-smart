@@ -112,24 +112,36 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     // }
 
     server_ptr->robots_location = robots_location;
+
+    // std::unordered_map<std::pair<double, double>, std::vector<int>, pair_hash> duplicate_starts;
+    // for (int agent_id = 0; agent_id < robots_location.size(); agent_id++) {
+    //     std::pair<double, double> tmp_loc = robots_location[agent_id];
+    //     if (duplicate_starts.find(tmp_loc) != duplicate_starts.end()) {
+    //         std::cerr << "Duplicate start location found! Agent " << agent_id << ". Duplicate start location: " << tmp_loc.first << ", " << tmp_loc.second << std::endl;
+    //         string skip_info;
+    //         std::cerr << "Continue? y/n" << std::endl;
+    //         std::cin >> skip_info;
+    //     } else {
+    //         duplicate_starts[tmp_loc].push_back(agent_id);
+    //     }
+    // }
     return robots_location;
 }
 
 void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan) {
     // x, y and time
     std::lock_guard<std::mutex> guard(globalMutex);
-    int agent_id = 0;
     std::vector<std::vector<Step>> raw_plan;
-    for (auto& plan : new_plan)
+    assert(new_plan.size() == server_ptr->numRobots);
+    for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++)
     {
         std::vector<Point> points;
         std::vector<Step> tmp_plan;
-        for (auto& step : plan)
+        for (auto& step : new_plan[agent_id])
         {
-            points.emplace_back(std::get<1>(step), std::get<0>(step), std::get<2>(step));
+            points.emplace_back(std::get<0>(step), std::get<1>(step), std::get<2>(step));
         }
         processAgentActions(points, tmp_plan, -1, agent_id);
-        agent_id++;
         raw_plan.push_back(tmp_plan);
     }
 

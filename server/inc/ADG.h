@@ -45,6 +45,12 @@ struct ADGNode {
     std::vector<std::shared_ptr<Edge>> incomeEdges;
     std::vector<std::shared_ptr<Edge>> outEdges;
     bool has_valid_in_edge = true;
+    void showNode() const {
+        std::cout << "        {" << action.robot_id << ", " << action.time << ", "
+        << std::fixed << std::setprecision(1) << action.orientation << ", '"
+        << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
+        << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID  << "}," << std::endl;
+    }
 };
 
 struct robotState {
@@ -197,8 +203,9 @@ private:
             int next_node = edge->to_node_id;
 
             if (visited[next_agent].count(next_node) == 0) {
-                if (dfs(next_agent, next_node, visited, recStack, graph))
+                if (dfs(next_agent, next_node, visited, recStack, graph)) {
                     return true;
+                }
             } else if (recStack[next_agent].count(next_node)) {
                 return true; // cycle detected
             }
