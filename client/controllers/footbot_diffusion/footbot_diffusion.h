@@ -51,7 +51,7 @@
 #include <boost/asio.hpp>
 
 #define EPS 0.03f
-#define DELIVER_T 60
+#define DELIVER_T 20
 #define PICKER_T 60
 /*
  * All the ARGoS stuff in the 'argos' namespace.
@@ -229,7 +229,7 @@ private:
     Real kd_move_ = 0.0;
 //    std::string debug_id = "7_6";
 //    std::string debug_id = "1_4";
-    std::string debug_id = "26_5";
+    std::string debug_id = "103_1";
     // std::string debug_id = "-1";
 
     int lineExistFlag = 0;

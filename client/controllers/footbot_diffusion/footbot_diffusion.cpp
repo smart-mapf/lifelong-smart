@@ -180,6 +180,12 @@ void CFootBotDiffusion::updateQueue() {
         }
         q.push_front(first_act);
     }
+    if (robot_id == debug_id) {
+        for (auto& tmp_act: q) {
+            std::cout << tmp_act.type << std::endl;
+        }
+        std::cout << "#######################" << std::endl;
+    }
 }
 
 void CFootBotDiffusion::ControlStep() {
@@ -250,21 +256,9 @@ void CFootBotDiffusion::ControlStep() {
     Real left_v, right_v;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
     if (count % 10 == 0) {
-        ////std::cout << "Robot ID: " << robot_id << std::endl;
-//        if (count % 200 == 0) {
-//            if (q.empty()) {
-//                //std::cout << "Empty::Enqueue actions for Robot ID: " << robot_id << " is empty!" << std::endl;
-//            } else {
-//                //std::cout << "Not Empty::Enqueue actions for Robot ID: " << robot_id << ", ";
-//                //std::cout << "action left: " << q.size() << ", first one with type: " << q.front().type << std::endl;
-//            }
-//        }
         auto updateActions = client->call("update", robot_id).as<std::vector<outputTuple>>();
         if (not updateActions.empty()) {
             insertActions(updateActions);
-            // if (debug_id == robot_id) {
-            //     std::cout << "Received actions update" << std::endl;
-            // }
         }
     }
     count++;
@@ -274,6 +268,12 @@ void CFootBotDiffusion::ControlStep() {
         a = q.front();
         CVector3 targetPos = CVector3(a.x, a.y, 0.0f);
         if (a.type == Action::MOVE && ((currPos - targetPos).Length() < EPS) and (abs(prevVelocity_)) <= dt*m_fWheelVelocity) {
+            if (robot_id == debug_id) {
+                std::cout << "Confirm move when reach the goal! Remaining actions num: " << a.nodeIDS.size() << std::endl;
+                std::cout << "Action: " << a.type << ", Target Position: (" << a.x << ", " << a.y << ")" <<
+                ", Current Position: (" << currPos.GetX() << ", " << currPos.GetY() << "). Previous speed is: "
+                << prevVelocity_ << std::endl;
+            }
             a.type = Action::STOP;
             q.pop_front();
             for (auto tmp_nodeId: a.nodeIDS) {
@@ -281,7 +281,7 @@ void CFootBotDiffusion::ControlStep() {
             }
             continue;
         }
-        else if (a.type == Action::MOVE && (abs((currPos - targetPos).Length() + 0.5*(-static_cast<double>(a.nodeIDS.size()) + 1))) < EPS) {
+        else if (a.type == Action::MOVE && ((currPos - targetPos).Length() + 0.5*(-static_cast<double>(a.nodeIDS.size()) + 1)) < EPS) {
             // if (robot_id == debug_id) {
             //     std::cout << "Action: " << a.type << ", Target Position: (" << a.x << ", " << a.y << ")" <<
             //     ", Current Position: (" << currPos.GetX() << ", " << currPos.GetY() << "). Previous speed is: "
@@ -291,14 +291,17 @@ void CFootBotDiffusion::ControlStep() {
             //             std::cout << "Node ID: " << nodeId << std::endl;
             //         }
             // }
+            if (robot_id == debug_id) {
+                std::cout << "Confirm move on the fly! Remaining actions num: " << a.nodeIDS.size() << std::endl;
+                std::cout << "Action: " << a.type << ", Target Position: (" << a.x << ", " << a.y << ")" <<
+                ", Current Position: (" << currPos.GetX() << ", " << currPos.GetY() << "). Previous speed is: "
+                << prevVelocity_ << std::endl;
+            }
             if (a.nodeIDS.size() > 1) {
                 receive_msg = client->call("receive_update", robot_id, a.nodeIDS.front()).as<std::string>();
                 q.front().nodeIDS.pop_front();
             }
             if ((currPos - targetPos).Length() < EPS) {
-//                if (count % 100 == 0) {
-//                    printf("prev left velocity: %f, right velocity: %f\n", prevLeftVelocity_, prevRightVelocity_);
-//                }
                 if ((abs(prevVelocity_)) <= dt*m_fWheelVelocity) {
                     a.type = Action::STOP;
                     q.pop_front();
@@ -468,7 +471,7 @@ double CFootBotDiffusion::getReferenceSpeed(double dist) const {
     } else if (dist > 0) {
         dist_flag = 1;
     }
-    return dist_flag * sqrt(2*m_linearAcceleration*std::abs(dist))/dt;
+    return dist_flag * std::min(sqrt(2*m_linearAcceleration*std::abs(dist))/dt, m_fWheelVelocity);
 }
 
 std::pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos, const CVector3& currPos, Real currAngle, Real tolerance = 1.0f)

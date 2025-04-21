@@ -38,4 +38,5 @@ private:
   std::unordered_map<int, std::shared_ptr<Station>> occupied_stations;
   int prev_agent_idx = -1;
   int num_picker_ = 0;
+  int total_finished_tasks_ = 0;
 };

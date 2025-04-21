@@ -113,6 +113,7 @@ void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
   readPickerPath();
   num_picker = static_cast<int>(all_picker_paths.size());
   all_pickers.resize(num_picker);
+  agents_wait_time.resize(num_picker, 0);
 //   task_goals.emplace_back(-3.0, -0.0, 0.0);
 //   task_goals.emplace_back(-0.0, -3.0, 0.0);
 }
@@ -348,7 +349,11 @@ bool CTrajectoryLoopFunctions::executeUnload(int agent_id, PickerAction& act) {
       if (act.timer == 0) {
         return true;
       }
+    } else {
+      agents_wait_time[agent_id] += 1;
     }
+  } else {
+    agents_wait_time[agent_id] += 1;
   }
   return false;
 }
@@ -471,6 +476,8 @@ void CTrajectoryLoopFunctions::PostStep() {
   }
 
   addMobileVisualization();
+  int total_wait_sum = std::accumulate(agents_wait_time.begin(), agents_wait_time.end(), 0);
+  printf("Total pickers waiting time: %d\n", total_wait_sum);
 }
 
 /****************************************/

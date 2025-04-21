@@ -74,11 +74,16 @@ public:
         return pos;
     }
 
+    /**
+     *
+     * @param pos x: index of rows, y: index of columns
+     * @return
+     */
     bool isStation(std::pair<int, int> pos) {
         for (auto& station: all_stations) {
             // std::cout << "pos x is: " << pos.first << " y is: " << pos.second << ", while the station x is: "
             // << station->x << " the station y is: " << station->y << std::endl;
-            if (station->x == pos.second and station->y == pos.first) {
+            if (station->x == pos.first and station->y == pos.second) {
                 return true;
             }
         }

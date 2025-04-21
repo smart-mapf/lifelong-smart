@@ -117,7 +117,11 @@ void MobileTaskManager::setTask(int agent_id, std::shared_ptr<MobileRobotTask>& 
   } else if (task->status == DELIVER) {
     if (status == DONE) {
       if (not agent_task_status[agent_id].assigned_tasks.empty()) {
-        agent_task_status[agent_id].assigned_tasks.pop_front();
+        if (agent_task_status[agent_id].assigned_tasks.front()->id == task->id) {
+          agent_task_status[agent_id].assigned_tasks.pop_front();
+          total_finished_tasks_++;
+          std::cout << "Total number of tasks finished: " << total_finished_tasks_ << " finished" << std::endl;
+        }
       }
     } else {
       std::cerr << "Its a DELIVER task, but got " << status << std::endl;
@@ -139,7 +143,7 @@ std::pair<int, int> MobileTaskManager::findNearbyFreeCell(int x, int y) {
 }
 
 std::pair<int, int> MobileTaskManager::findPalletizer(int picker_id) {
-  int station_idx = std::rand() % active_stations.size();
+  int station_idx = active_stations.size() - (picker_id / 2) - 1;
   std::cout << "active stations size: " << active_stations.size() << ", picked station idx: " << station_idx << std::endl;
   auto it = active_stations.begin();
   std::advance(it, station_idx);

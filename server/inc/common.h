@@ -9,11 +9,11 @@
 #include <cmath>
 
 #define MAX_LOADS 1
-#define MAX_TASKS 500
+#define MAX_TASKS 150
 #define MAX_NUM_GOALS 1
 #define NUM_GENRE 10
-#define MAX_ENQUE 30
-#define DEBUG
+#define MAX_ENQUE 8
+// #define DEBUG
 
 using namespace std;
 
@@ -128,4 +128,9 @@ inline bool positionCompare(std::pair<double, double> a, std::pair<int, int> b) 
         return true;
     }
     return false;
+}
+
+template <typename T>
+T twoPointDistance(std::pair<T, T> a, std::pair<T, T> b) {
+    return std::abs(a.first - b.first) + std::abs(a.second - b.second);
 }

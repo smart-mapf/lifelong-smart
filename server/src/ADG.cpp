@@ -197,7 +197,7 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
         if (num_commit_actions < num_enqueue_node) {
             commited_actions[agent_id].second = std::min((int) graph[agent_id].size(), commited_actions[agent_id].first+num_enqueue_node);
         }
-        std::cout << "Agent " << agent_id << "commited actions: " << commited_actions[agent_id].first << " -> " << commited_actions[agent_id].second << std::endl;
+        // std::cout << "Agent " << agent_id << "commited actions: " << commited_actions[agent_id].first << " -> " << commited_actions[agent_id].second << std::endl;
 
     }
     fixInconsistentIncomingEdge(commited_actions);
@@ -228,21 +228,21 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
                 tmp_in_edge->valid = false;
             }
         }
-        std::cout << "Clean commited actions for agent " << agent_id << ". total graph size: "
-            << graph[agent_id].size() << ",remove start from: " << commited_actions[agent_id].second << std::endl;
+        // std::cout << "Clean commited actions for agent " << agent_id << ". total graph size: "
+        //     << graph[agent_id].size() << ",remove start from: " << commited_actions[agent_id].second << std::endl;
         graph[agent_id].erase(graph[agent_id].begin()+commited_actions[agent_id].second, graph[agent_id].end());
-        std::cout << "Remove rest of actions for agent " << agent_id << std::endl;
+        // std::cout << "Remove rest of actions for agent " << agent_id << std::endl;
 
         ADGNode last_node = graph[agent_id].back();
         auto action = last_node.action;
         // commitCut[agent_id] = last_node.action.goal;
         curr_commit.emplace_back(last_node.action.goal, static_cast<int> (last_node.action.orientation));
-        std::cout << "Loop end for agent " << agent_id << ": " << std::endl;
-        std::cout << "curr size of commited is: " << curr_commit.size() << ": graph size: " << graph.size() << std::endl;
-        std::cout << "        {" << action.robot_id << ", " << action.time << ", "
-          << std::fixed << std::setprecision(1) << action.orientation << ", '"
-          << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
-          << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID  << "}," << std::endl;
+        // std::cout << "Loop end for agent " << agent_id << ": " << std::endl;
+        // std::cout << "curr size of commited is: " << curr_commit.size() << ": graph size: " << graph.size() << std::endl;
+        // std::cout << "        {" << action.robot_id << ", " << action.time << ", "
+        //   << std::fixed << std::setprecision(1) << action.orientation << ", '"
+        //   << action.type << "', {" << action.start.first << ", " << action.start.second << "}, {"
+        //   << action.goal.first << ", " << action.goal.second << "}, " << action.nodeID  << "}," << std::endl;
 
     }
 #ifdef DEBUG

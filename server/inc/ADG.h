@@ -136,6 +136,9 @@ public:
         finish_tasks.resize(num_robots);
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
             for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
+                // if (node_id > finished_node_idx[agent_id]) {
+                //     break;
+                // }
                 if (graph[agent_id][node_id].action.type == 'P') {
                     task_ptr->setTask(agent_id, graph[agent_id][node_id].action.task_ptr, DELIVER);
                 } else if (graph[agent_id][node_id].action.type == 'S') {

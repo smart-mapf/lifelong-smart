@@ -3,16 +3,15 @@
 
 #include <argos3/core/simulator/loop_functions.h>
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
-
 #include <utility>
-
+#include <numeric> 
 #include "controllers/footbot_diffusion/footbot_diffusion.h"
 
-#define PICK_T 240
-#define MOVE_T 100
+#define PICK_T 100
+#define MOVE_T 50
 #define UNLOAD_T 60
-#define LOAD_NUM 2
-#define WINDOW_SIE 20
+#define LOAD_NUM 4
+#define WINDOW_SIE 40
 
 using namespace argos;
 
@@ -138,6 +137,7 @@ private:
    std::vector<std::vector<std::pair<int, int>>> all_picker_paths;
    std::vector<std::vector<std::pair<int, int>>> picker_objs;
    std::vector<PickerRobot> all_pickers;
+   std::vector<int> agents_wait_time;
    int port_number = 0;
    int num_picker = 0;
 };
