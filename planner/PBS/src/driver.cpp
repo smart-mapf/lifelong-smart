@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 		("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
 		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
     ("portNum", po::value<int>()->default_value(8080), "port number for the server")
-		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
+		("sipp", po::value<bool>()->default_value(0), "using SIPP as the low-level solver")
 		;
 	po::variables_map vm;
 	po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -47,8 +47,6 @@ int main(int argc, char** argv)
 
 	///////////////////////////////////////////////////////////////////////////
 	// load the instance
-	srand(0);
-
 	rpc::client client("127.0.0.1", vm["portNum"].as<int>());
 	while (true) {
 		auto commit_cut = client.call("get_location", 5).as<std::vector<std::pair<double, double>>>();
@@ -83,7 +81,10 @@ int main(int argc, char** argv)
 		/*size_t pos = vm["output"].as<string>().rfind('.');      // position of the file extension
 		string output_name = vm["output"].as<string>().substr(0, pos);     // get the name without extension
 		cbs.saveCT(output_name); // for debug*/
+    std::cout << "######################################" << std::endl;
 		auto new_mapf_plan = pbs.getPaths();
+    std::cout << "######################################" << std::endl;
+
 		pbs.clearSearchEngines();
 		client.call("add_plan", new_mapf_plan);
     // instance.printMap();

@@ -29,7 +29,7 @@ def parse_arguments():
     parser.add_argument("--num_agents",
                         type=int,
                         required=False,
-                        default=80,
+                        default=8,
                         help="Number of agents in the scenario")
     parser.add_argument("--headless",
                         type=bool,
@@ -214,7 +214,7 @@ def main():
         # server_executable_path = "server/build/ADG_server"
         server_command = [
             server_executable_path, "-k", str(curr_num_agent), "-n",
-            str(port_num), f"--method_name=PBS", "-m", f"./{map_file_path}", "--num_pickers=48"
+            str(port_num), f"--method_name=PBS", "-m", f"./{map_file_path}", "--num_pickers=4"
         ]
         client_command = ["argos3", "-c", f"../{config_filename}"]
         print(client_command)

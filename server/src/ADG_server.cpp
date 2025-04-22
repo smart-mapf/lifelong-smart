@@ -377,6 +377,9 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
         std::cout << "Goal locations: " << std::get<0>(new_goals[agent_id].front()) << "," << std::get<1>(new_goals[agent_id].front()) <<std::endl;
     }
 
+    // DEBUG only, replace the first location
+
+
     return new_goals;
 }
 

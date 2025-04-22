@@ -29,7 +29,7 @@ def find_free_cells(grid):
     free_cells = []
     for i, row in enumerate(grid):
         for j, cell in enumerate(row):
-            if cell == '.':
+            if cell == '.' and i < 8:
                 free_cells.append((i, j))
     return free_cells
 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     scen_file = "supermarket.scen"     # Output scenario file name
     map_filename_for_scen = "supermarket.map"  # This is the map name to be printed in the scen file.
     
-    num_robots = 80  # Change this to the desired number of robots/scenarios
+    num_robots = 100  # Change this to the desired number of robots/scenarios
 
     # Read the map and extract grid info.
     grid, height, width = read_map(octile_map_file)
