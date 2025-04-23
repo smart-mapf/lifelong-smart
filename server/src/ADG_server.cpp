@@ -141,7 +141,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         {
             points.emplace_back(std::get<0>(step), std::get<1>(step), std::get<2>(step));
         }
-        processAgentActions(points, tmp_plan, -1, agent_id);
+        processAgentActions(points, tmp_plan, server_ptr->curr_robot_states[agent_id].orient, agent_id);
         raw_plan.push_back(tmp_plan);
     }
 
@@ -161,7 +161,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
         // @jingtian Note: change action start time, to be consistent with the continuous case
         if (plans[i].empty()) {
             tmp_act.time = 0;
-            tmp_act.orientation = 0;
+            tmp_act.orientation = server_ptr->adg->getRobotCurrOrient(i);
             tmp_act.nodeID = 0;
         } else {
             tmp_act.time = plans[i].back().time + 1;
@@ -333,7 +333,8 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
 
             int x, y;
             if (assigned_locations.contains(std::make_pair(curr_robot_loc.position.second, curr_robot_loc.position.first)) or
-                server_ptr->mobile_manager->user_map.isStation(std::make_pair(curr_robot_loc.position.second, curr_robot_loc.position.first))) {
+                server_ptr->mobile_manager->user_map.isStation(std::make_pair(curr_robot_loc.position.second, curr_robot_loc.position.first)) or
+                curr_robot_loc.position.first >= 100) {
                 std::pair<int, int> random_loc = server_ptr->mobile_manager->user_map.findRandomPos(assigned_locations);
                 x = random_loc.first;
                 y = random_loc.second;
@@ -378,8 +379,9 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     }
 
     // DEBUG only, replace the first location
-
-
+    // std::tuple<int, int, double> tmp_goal{2, 108, 0};
+    // new_goals[0].clear();
+    // new_goals[0].push_back(tmp_goal);
     return new_goals;
 }
 

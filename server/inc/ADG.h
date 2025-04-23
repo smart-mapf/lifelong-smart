@@ -184,6 +184,14 @@ public:
         }
     }
 
+    int getRobotCurrOrient(int agent_id) {
+        if (graph[agent_id].empty()) {
+            return init_locs[agent_id].orient;
+        } else {
+            return graph[agent_id].back().action.orientation;
+        }
+    }
+
 private:
     void printActions(const std::vector<std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>>>& actions);
     void findConstraining(int robot_id);

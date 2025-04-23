@@ -329,7 +329,7 @@ bool ADG::getAvailableNodes(int robot_id, std::vector<int>& available_nodes) {
         }
 
         // or available_nodes.size() >= num_additional_nodes
-        if (curr_agent_plan[i].has_valid_in_edge) {
+        if (curr_agent_plan[i].has_valid_in_edge or available_nodes.size() >= num_additional_nodes) {
             break;
         }
 

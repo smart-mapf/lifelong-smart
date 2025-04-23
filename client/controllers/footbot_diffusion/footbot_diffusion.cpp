@@ -182,7 +182,7 @@ void CFootBotDiffusion::updateQueue() {
     }
     if (robot_id == debug_id) {
         for (auto& tmp_act: q) {
-            std::cout << tmp_act.type << std::endl;
+            std::cout << tmp_act.type << ", Goal position: (" << tmp_act.x << ", " << tmp_act.y << ")" << std::endl;
         }
         std::cout << "#######################" << std::endl;
     }
@@ -465,6 +465,8 @@ inline Real toAngle(Real deltaX, Real deltaY) {
 }
 
 double CFootBotDiffusion::getReferenceSpeed(double dist) const {
+    if (debug_id == robot_id)
+        std::cout << "reference dist is: " << dist << std::endl;
     int dist_flag = 0;
     if (dist < 0) {
         dist_flag = -1;
