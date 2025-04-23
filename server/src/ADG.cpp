@@ -182,6 +182,29 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
         std::cout << "Agent " << agent_id << ": " << commited_actions[agent_id].first << " -> " << commited_actions[agent_id].second << std::endl;
     }
 #endif
+    std::unordered_map<std::pair<double, double>, std::vector<int>, pair_hash> duplicate_starts;
+    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+        std::cout << "Agent " << agent_id << ": " << commited_actions[agent_id].first << " -> " << commited_actions[agent_id].second << std::endl;
+        std::pair<double, double> tmp_loc;
+        if (graph[agent_id].empty()) {
+            tmp_loc = init_locs[agent_id].position;
+        } else {
+            tmp_loc = graph[agent_id][commited_actions[agent_id].second-1].action.goal;
+        }
+        if (duplicate_starts.find(tmp_loc) != duplicate_starts.end()) {
+            std::cerr << "Duplicate start location found! Agent " << agent_id << ". Duplicate start location: " << tmp_loc.first << ", " << tmp_loc.second << std::endl;
+            graph[agent_id].back().showNode();
+            string skip_info;
+            std::cout << "Duplicate agent: " << std::endl;
+            for (int dup_agent_id: duplicate_starts[tmp_loc]) {
+                std::cout << dup_agent_id << ": ";
+                graph[dup_agent_id].back().showNode();
+            }
+            std::cerr << "Continue? y/n" << std::endl;
+            std::cin >> skip_info;
+        }
+        duplicate_starts[tmp_loc].push_back(agent_id);
+    }
 
     // pop out unused actions
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
@@ -224,23 +247,6 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
     std::cout << "Find commit Cut " << std::endl;
 #endif
     // printProgress();
-    std::unordered_map<std::pair<double, double>, std::vector<int>, pair_hash> duplicate_starts;
-    for (int agent_id = 0; agent_id < curr_commit.size(); agent_id++) {
-        std::pair<double, double> tmp_loc = curr_commit[agent_id].position;
-        if (duplicate_starts.find(tmp_loc) != duplicate_starts.end()) {
-            std::cerr << "Duplicate start location found! Agent " << agent_id << ". Duplicate start location: " << tmp_loc.first << ", " << tmp_loc.second << std::endl;
-            graph[agent_id].back().showNode();
-            string skip_info;
-            std::cout << "Duplicate agent: " << std::endl;
-            for (int dup_agent_id: duplicate_starts[tmp_loc]) {
-                std::cout << dup_agent_id << ": ";
-                graph[dup_agent_id].back().showNode();
-            }
-            std::cerr << "Continue? y/n" << std::endl;
-            std::cin >> skip_info;
-        }
-        duplicate_starts[tmp_loc].push_back(agent_id);
-    }
     return curr_commit;
 }
 
