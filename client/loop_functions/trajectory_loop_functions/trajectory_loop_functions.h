@@ -3,8 +3,9 @@
 
 #include <argos3/core/simulator/loop_functions.h>
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
+#include <argos3/plugins/simulator/visualizations/qt-opengl/qtopengl_render.h>
 #include <utility>
-#include <numeric> 
+#include <numeric>
 #include "controllers/footbot_diffusion/footbot_diffusion.h"
 
 #define PICK_T 100
