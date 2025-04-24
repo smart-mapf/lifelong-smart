@@ -705,7 +705,7 @@ void PBS::clearSearchEngines()
 }
 
 
-bool PBS::validateSolution() const
+bool PBS:: validateSolution() const
 {
 	// check whether the paths are feasible
 	size_t soc = 0;
