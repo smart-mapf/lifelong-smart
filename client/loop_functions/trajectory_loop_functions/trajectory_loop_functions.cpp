@@ -476,31 +476,31 @@ void CTrajectoryLoopFunctions::PostStep() {
   }
 
   addMobileVisualization();
-  int total_wait_sum = std::accumulate(agents_wait_time.begin(), agents_wait_time.end(), 0);
-  printf("Total pickers waiting time: %d\n", total_wait_sum);
-  static int frame_id = 0;
-  std::stringstream filename_s;
-  filename_s << "frames/frame_" << std::setw(5) << std::setfill('0') << frame_id++ << ".png";
-  std::string filename = filename_s.str();
-  argos::CVisualization& cVisualization = GetSimulator().GetVisualization();
-  // Ensure the visualization is of the expected Qt OpenGL type
-  auto* pcQtRender = dynamic_cast<argos::CQTOpenGLRender*>(&cVisualization);
-  if(pcQtRender) {
-    // Access the main window
-    CQTOpenGLMainWindow& pcMainWindow = pcQtRender->GetMainWindow();
+  // int total_wait_sum = std::accumulate(agents_wait_time.begin(), agents_wait_time.end(), 0);
+  // printf("Total pickers waiting time: %d\n", total_wait_sum);
+  // static int frame_id = 0;
+  // std::stringstream filename_s;
+  // filename_s << "frames/frame_" << std::setw(5) << std::setfill('0') << frame_id++ << ".png";
+  // std::string filename = filename_s.str();
+  // argos::CVisualization& cVisualization = GetSimulator().GetVisualization();
+  // // Ensure the visualization is of the expected Qt OpenGL type
+  // auto* pcQtRender = dynamic_cast<argos::CQTOpenGLRender*>(&cVisualization);
+  // if(pcQtRender) {
+  //   // Access the main window
+  //   CQTOpenGLMainWindow& pcMainWindow = pcQtRender->GetMainWindow();
 
-    // Capture the current window as a pixmap
-    QPixmap pixmap = pcMainWindow.grab();
+  //   // Capture the current window as a pixmap
+  //   QPixmap pixmap = pcMainWindow.grab();
 
-    // Save the pixmap to the specified file
-    if(!pixmap.save(QString::fromStdString(filename))) {
-      std::cerr << "Failed to save the visualization snapshot to " << filename << std::endl;
-    } else {
-      std::cout << "Visualization snapshot saved to " << filename << std::endl;
-    }
-  } else {
-    std::cerr << "Qt OpenGL Visualization is not available." << std::endl;
-  }
+  //   // Save the pixmap to the specified file
+  //   if(!pixmap.save(QString::fromStdString(filename))) {
+  //     std::cerr << "Failed to save the visualization snapshot to " << filename << std::endl;
+  //   } else {
+  //     std::cout << "Visualization snapshot saved to " << filename << std::endl;
+  //   }
+  // } else {
+  //   std::cerr << "Qt OpenGL Visualization is not available." << std::endl;
+  // }
 }
 
 /****************************************/

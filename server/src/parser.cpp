@@ -94,7 +94,7 @@ vector<Point> parseLineContinuous(const string& line) {
     return points;
 }
 
-std::vector<std::vector<Action>> processActions(const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
+std::vector<std::vector<Action>> processOneRobustActions(const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
     std::vector<std::vector<Action>> plans;
     int node_id=0;
     for (size_t i = 0; i < raw_steps.size(); ++i) {
@@ -162,6 +162,61 @@ std::vector<std::vector<Action>> processActions(const std::vector<std::vector<St
         }
         plans.push_back(processedActions);
     }
+    return plans;
+}
+
+std::vector<std::vector<Action>> processActions(const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
+    std::vector<std::vector<Action>> plans;
+    int node_id=0;
+    for (size_t i = 0; i < raw_steps.size(); ++i) {
+        std::vector<Action> processedActions;
+        for (size_t j = 1; j < raw_steps[i].size(); j++) {
+            double prev_step_x, prev_step_y, curr_step_x, curr_step_y;
+            if (flipped_coord) {
+                prev_step_x = raw_steps[i][j-1].y;
+                prev_step_y = raw_steps[i][j-1].x;
+                curr_step_x = raw_steps[i][j].y;
+                curr_step_y = raw_steps[i][j].x;
+            } else {
+                prev_step_x = raw_steps[i][j-1].x;
+                prev_step_y = raw_steps[i][j-1].y;
+                curr_step_x = raw_steps[i][j].x;
+                curr_step_y = raw_steps[i][j].y;
+            }
+            Action processedAction;
+            processedAction.robot_id = (int) i;
+            // @jingtian Note: change action start time, to be consistent with the continuous case
+            processedAction.time = raw_steps[i][j-1].time;
+            processedAction.start.first = prev_step_x;
+            processedAction.start.second = prev_step_y;
+            processedAction.goal.first = curr_step_x;
+            processedAction.goal.second = curr_step_y;
+            processedAction.orientation = raw_steps[i][j].orientation;
+            processedAction.nodeID = node_id;
+
+            if (processedAction.start == processedAction.goal &&
+                raw_steps[i][j-1].orientation != raw_steps[i][j].orientation) {
+                processedAction.type = 'T';  // Turn
+            } else if (processedAction.start != processedAction.goal &&
+                        raw_steps[i][j-1].orientation == raw_steps[i][j].orientation) {
+                processedAction.type = 'M';  // Move
+            } else if (processedAction.start == processedAction.goal &&
+                       raw_steps[i][j-1].orientation == raw_steps[i][j].orientation) {
+                continue;
+            } else {
+                std::cerr << "Invalid case exiting ..." << std::endl;
+                exit(-1);
+            }
+
+            if (processedAction.type == 'T' and j == (raw_steps[i].size()-1)) {
+                continue;
+            }
+            processedActions.push_back(processedAction);
+            node_id++;
+        }
+        plans.push_back(processedActions);
+    }
+    // showActionsPlan(plans);
     return plans;
 }
 

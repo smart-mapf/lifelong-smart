@@ -53,6 +53,7 @@
 #define EPS 0.03f
 #define DELIVER_T 20
 #define PICKER_T 60
+#define MOVE_DIS 1.0
 /*
  * All the ARGoS stuff in the 'argos' namespace.
  * With this statement, you save typing argos:: every time.
@@ -234,6 +235,7 @@ private:
 
     int lineExistFlag = 0;
     bool terminateFlag = false;
+    long long int step_count_ = 0;
 
     std::ofstream outputFile;
     std::string outputDir;

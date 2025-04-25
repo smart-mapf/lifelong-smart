@@ -198,6 +198,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
     //     std::pair<double, double> curr_pos = server_ptr->adg->getRobotPosition(id);
     //     server_ptr->task_manager_ptr->isAgentFinished(id, curr_pos);
     // }
+    std::cout << "Total finished tasks: " << server_ptr->mobile_manager->total_finished_tasks_ << std::endl;
 #ifdef DEBUG
     std::cout << "Finish add plan" << std::endl;
 #endif

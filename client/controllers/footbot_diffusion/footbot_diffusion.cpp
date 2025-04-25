@@ -281,7 +281,7 @@ void CFootBotDiffusion::ControlStep() {
             }
             continue;
         }
-        else if (a.type == Action::MOVE && ((currPos - targetPos).Length() + 0.5*(-static_cast<double>(a.nodeIDS.size()) + 1)) < EPS) {
+        else if (a.type == Action::MOVE && ((currPos - targetPos).Length() + MOVE_DIS*(-static_cast<double>(a.nodeIDS.size()) + 1)) < EPS) {
             // if (robot_id == debug_id) {
             //     std::cout << "Action: " << a.type << ", Target Position: (" << a.x << ", " << a.y << ")" <<
             //     ", Current Position: (" << currPos.GetX() << ", " << currPos.GetY() << "). Previous speed is: "
@@ -409,10 +409,15 @@ void CFootBotDiffusion::ControlStep() {
             std::cout << "Unable to open output file" << std::endl;
         }
     }
-    if (receive_msg == "exit") {
-        client->async_call("closeServer");
-        exit(0);
-    }
+    // if (receive_msg == "exit") {
+    //     client->async_call("closeServer");
+    //     exit(0);
+    // }
+    if (step_count_ >= 12000) {
+      client->async_call("closeServer");
+      exit(0);
+  }
+    step_count_++;
 }
 
 
@@ -473,7 +478,7 @@ double CFootBotDiffusion::getReferenceSpeed(double dist) const {
     } else if (dist > 0) {
         dist_flag = 1;
     }
-    return dist_flag * std::min(sqrt(2*m_linearAcceleration*std::abs(dist))/dt, m_fWheelVelocity);
+    return dist_flag * std::min(sqrt(2*m_linearAcceleration*std::abs(dist)/dt), m_fWheelVelocity);
 }
 
 std::pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos, const CVector3& currPos, Real currAngle, Real tolerance = 1.0f)
@@ -501,6 +506,7 @@ std::pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos, const C
 
     // PID calculations
     Real refer_velocity = flag*getReferenceSpeed(distance);
+    std::cout << "Reference velocity: " << refer_velocity << std::endl;
     Real control_acc = pidLinear(refer_velocity - prevVelocity_);
     auto angularVelocity = pidAngular(angleError);
 
