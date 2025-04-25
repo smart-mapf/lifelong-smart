@@ -93,7 +93,7 @@ public:
 
     void printProgress()
     {
-//        exit(0);
+        //        exit(0);
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
             std::cout << "Agent " << agent_id << ", ID: " << robotIDToStartIndex[agent_id] << " with plan size " << graph[agent_id].size() << ": ";
             findConstraining(agent_id);
@@ -197,10 +197,18 @@ private:
     void findConstraining(int robot_id);
     bool fixInconsistentIncomingEdge(std::vector<std::pair<int, int>>& commited_actions);
     // Helper DFS function
+    using loopNode = std::pair<int, int>;
+    struct NodeHash {
+        std::size_t operator()(const loopNode& n) const noexcept {
+            return std::hash<int>()(n.first) ^ (std::hash<int>()(n.second) << 1);
+        }
+    };
     bool dfs(int agent_id, int node_id,
              std::unordered_map<int, std::unordered_set<int>>& visited,
              std::unordered_map<int, std::unordered_set<int>>& recStack,
-             const std::vector<std::vector<ADGNode>>& graph) {
+             const std::vector<std::vector<ADGNode>>& graph,
+             std::unordered_map<loopNode, loopNode, NodeHash>& parent,
+             std::vector<loopNode>& cycle_path) {
         visited[agent_id].insert(node_id);
         recStack[agent_id].insert(node_id);
 
@@ -211,11 +219,22 @@ private:
             int next_node = edge->to_node_id;
 
             if (visited[next_agent].count(next_node) == 0) {
-                if (dfs(next_agent, next_node, visited, recStack, graph)) {
+                parent[{next_agent, next_node}] = {agent_id, node_id};
+                if (dfs(next_agent, next_node, visited, recStack, graph, parent, cycle_path)) {
                     return true;
                 }
             } else if (recStack[next_agent].count(next_node)) {
-                return true; // cycle detected
+                // Cycle detected!
+                // Reconstruct cycle path
+                loopNode current = {agent_id, node_id};
+                cycle_path.push_back({next_agent, next_node});
+                while (current != loopNode{next_agent, next_node}) {
+                    cycle_path.push_back(current);
+                    current = parent[current];
+                }
+                cycle_path.push_back({next_agent, next_node}); // close the loop
+                std::reverse(cycle_path.begin(), cycle_path.end());
+                return true;
             }
         }
 
@@ -223,21 +242,75 @@ private:
         return false;
     }
 
+
+
     bool hasCycle() {
         std::unordered_map<int, std::unordered_set<int>> visited;
         std::unordered_map<int, std::unordered_set<int>> recStack;
+        std::unordered_map<loopNode, loopNode, NodeHash> parent;
+        std::vector<loopNode> cycle_path;
 
         for (int agent_id = 0; agent_id < graph.size(); ++agent_id) {
             for (const auto& node : graph[agent_id]) {
                 if (visited[agent_id].count(node.node_id) == 0) {
-                    if (dfs(agent_id, node.node_id, visited, recStack, graph))
+                    if (dfs(agent_id, node.node_id, visited, recStack, graph, parent, cycle_path)) {
+                        // Print the cycle path
+                        std::cout << "Cycle detected:\n";
+                        for (const auto& [aid, nid] : cycle_path) {
+                            std::cout << "(Agent " << aid << ", Node " << nid << ") -> ";
+                        }
+                        std::cout << "(back to start)\n";
                         return true;
+                    }
                 }
             }
         }
 
+        std::cout << "No cycle detected.\n";
         return false;
     }
+
+    // bool dfs(int agent_id, int node_id,
+    //          std::unordered_map<int, std::unordered_set<int>>& visited,
+    //          std::unordered_map<int, std::unordered_set<int>>& recStack,
+    //          const std::vector<std::vector<ADGNode>>& graph) {
+    //     visited[agent_id].insert(node_id);
+    //     recStack[agent_id].insert(node_id);
+    //
+    //     const ADGNode& node = graph[agent_id][node_id];
+    //     for (const auto& edge : node.outEdges) {
+    //         if (!edge->valid) continue;
+    //         int next_agent = edge->to_agent_id;
+    //         int next_node = edge->to_node_id;
+    //
+    //         if (visited[next_agent].count(next_node) == 0) {
+    //             if (dfs(next_agent, next_node, visited, recStack, graph)) {
+    //                 return true;
+    //             }
+    //         } else if (recStack[next_agent].count(next_node)) {
+    //             return true; // cycle detected
+    //         }
+    //     }
+    //
+    //     recStack[agent_id].erase(node_id);
+    //     return false;
+    // }
+    //
+    // bool hasCycle() {
+    //     std::unordered_map<int, std::unordered_set<int>> visited;
+    //     std::unordered_map<int, std::unordered_set<int>> recStack;
+    //
+    //     for (int agent_id = 0; agent_id < graph.size(); ++agent_id) {
+    //         for (const auto& node : graph[agent_id]) {
+    //             if (visited[agent_id].count(node.node_id) == 0) {
+    //                 if (dfs(agent_id, node.node_id, visited, recStack, graph))
+    //                     return true;
+    //             }
+    //         }
+    //     }
+    //
+    //     return false;
+    // }
 
 public:
     std::vector< int > finished_node_idx;
