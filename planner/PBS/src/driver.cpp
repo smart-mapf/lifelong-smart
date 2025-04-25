@@ -73,20 +73,30 @@ int main(int argc, char** argv)
 		PBS pbs(instance, vm["sipp"].as<bool>(), vm["screen"].as<int>());
 		// run
 		double runtime = 0;
-		pbs.solve(vm["cutoffTime"].as<double>());
-		// if (vm.count("output"))
-		// 	pbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
-		// if (pbs.solution_found && vm.count("outputPaths"))
-		// 	pbs.savePaths(vm["outputPaths"].as<string>());
-		/*size_t pos = vm["output"].as<string>().rfind('.');      // position of the file extension
-		string output_name = vm["output"].as<string>().substr(0, pos);     // get the name without extension
-		cbs.saveCT(output_name); // for debug*/
-    std::cout << "######################################" << std::endl;
-		auto new_mapf_plan = pbs.getPaths();
-    std::cout << "######################################" << std::endl;
-
-		pbs.clearSearchEngines();
-		client.call("add_plan", new_mapf_plan);
+		bool success = false;
+    while (not success) {
+	    success = pbs.solve(vm["cutoffTime"].as<double>());
+      if (success)
+      {
+        // if (vm.count("output"))
+        // 	pbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
+        // if (pbs.solution_found && vm.count("outputPaths"))
+        // 	pbs.savePaths(vm["outputPaths"].as<string>());
+        /*size_t pos = vm["output"].as<string>().rfind('.');      // position of the file extension
+        string output_name = vm["output"].as<string>().substr(0, pos);     // get the name without extension
+        cbs.saveCT(output_name); // for debug*/
+        std::cout << "######################################" << std::endl;
+        auto new_mapf_plan = pbs.getPaths();
+        std::cout << "######################################" << std::endl;
+  
+        pbs.clearSearchEngines();
+        client.call("add_plan", new_mapf_plan);
+        break;
+      }
+      else {
+        std::cerr << "No solution found!" << std::endl;
+      }
+    }
     // instance.printMap();
 		sleep(1);
 	}
