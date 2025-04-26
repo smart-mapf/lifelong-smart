@@ -99,9 +99,9 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     }
 
     // TODO@jingtian: set a task as finished when it is enqueued
-    std::vector< std::unordered_set<int> > task_status;
+    // std::vector< std::unordered_set<int> > task_status;
     std::cout << "retrieving last actions" << std::endl;
-    auto success_status = server_ptr->adg->updateFinishedTasks(task_status, server_ptr->mobile_manager);
+    // auto success_status = server_ptr->adg->updateFinishedTasks(server_ptr->mobile_manager);
     std::cout << "retrieved last actions" << std::endl;
     // if (success_status) {
     //     for (int i = 0; i < server_ptr->numRobots; i++) {

@@ -134,12 +134,12 @@ public:
     //     return true;
     // }
 
-    bool updateFinishedTasks(std::vector<std::unordered_set<int>>& finish_tasks, std::shared_ptr<MobileTaskManager>& task_ptr) {
+    bool updateFinishedTasks(std::shared_ptr<MobileTaskManager>& task_ptr) {
         if (curr_commit.empty() or graph.empty()) {
             return false;
         }
-        finish_tasks.clear();
-        finish_tasks.resize(num_robots);
+        // finish_tasks.clear();
+        // finish_tasks.resize(num_robots);
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
             for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
                 // if (node_id > finished_node_idx[agent_id]) {
@@ -147,6 +147,7 @@ public:
                 // }
                 if (graph[agent_id][node_id].action.type == 'P') {
                     task_ptr->setTask(agent_id, graph[agent_id][node_id].action.task_ptr, DELIVER);
+                    ;
                 } else if (graph[agent_id][node_id].action.type == 'S') {
                     task_ptr->setTask(agent_id, graph[agent_id][node_id].action.task_ptr, DONE);
                 }

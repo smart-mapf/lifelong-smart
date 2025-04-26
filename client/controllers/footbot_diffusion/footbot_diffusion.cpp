@@ -65,6 +65,7 @@ void CFootBotDiffusion::insertActions(const std::vector<outputTuple>& actions)
             q.emplace_back(start_x, start_y, angle, std::deque<int>{nodeID}, Action::PICKER, PICKER_T, task_id);
             if (picker_task.find(task_id) != picker_task.end()) {
                 std::cerr << "Accept same task for two times! Exiting..." << std::endl;
+                printf("Accept same task for two times! Exiting...");
                 exit(-1);
             }
             picker_task[task_id] = std::make_pair(false, false);

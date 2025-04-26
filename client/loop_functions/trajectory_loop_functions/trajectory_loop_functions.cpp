@@ -446,12 +446,12 @@ void CTrajectoryLoopFunctions::PostStep() {
   curr_picking_objs.clear();
   picker_unload_locs.clear();
 
-  // printf("start execution!\n");
+  printf("start execution!\n");
   for (int agent_id = 0; agent_id < num_picker; agent_id++) {
     auto& curr_picker = all_pickers[agent_id];
     auto& front_act = curr_picker.acts.front();
     // std::cout << "For agent " << agent_id << ", the action type is: " << front_act.act << ", curr time: " << front_act.timer;
-    // printf("For agent %d, the action type is: %d, curr time: %d\n", agent_id, front_act.act, front_act.timer);
+    printf("For agent %d, the action type is: %d, curr time: %d\n", agent_id, front_act.act, front_act.timer);
     bool act_status = false;
     assert(front_act.timer > 0);
     if (front_act.act == MOVE) {
@@ -461,7 +461,8 @@ void CTrajectoryLoopFunctions::PostStep() {
     } else if (front_act.act == UNLOAD) {
       act_status = executeUnload(agent_id, front_act);
     } else {
-      std::cerr << "Unrecognized action type! Exiting" << std::endl;
+      // std::cerr << "Unrecognized action type! Exiting" << std::endl;
+      printf("Unrecognized action type! Exiting");
       exit(-1);
     }
 
@@ -476,6 +477,7 @@ void CTrajectoryLoopFunctions::PostStep() {
   }
 
   addMobileVisualization();
+  printf("finish execution!\n");
   // int total_wait_sum = std::accumulate(agents_wait_time.begin(), agents_wait_time.end(), 0);
   // printf("Total pickers waiting time: %d\n", total_wait_sum);
   // static int frame_id = 0;
