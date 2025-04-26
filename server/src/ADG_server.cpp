@@ -101,7 +101,7 @@ std::vector<std::pair<double, double>> getRobotsLocation(int look_ahead_dist) {
     // TODO@jingtian: set a task as finished when it is enqueued
     // std::vector< std::unordered_set<int> > task_status;
     std::cout << "retrieving last actions" << std::endl;
-    // auto success_status = server_ptr->adg->updateFinishedTasks(server_ptr->mobile_manager);
+    auto success_status = server_ptr->adg->updateFinishedTasks(server_ptr->mobile_manager);
     std::cout << "retrieved last actions" << std::endl;
     // if (success_status) {
     //     for (int i = 0; i < server_ptr->numRobots; i++) {
@@ -269,7 +269,10 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     server_ptr->current_robots_goal_type.resize(server_ptr->numRobots);
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
         std::cout << "agent_id: " << agent_id << std::endl;
-        if (not new_tasks[agent_id].empty()) {
+        if (server_ptr->adg->getLastActType(agent_id) == 'P') {
+            auto tmp_loc = server_ptr->adg->getLastLoc(agent_id);
+            all_targets[tmp_loc].push_back(agent_id);
+        } else if (not new_tasks[agent_id].empty()) {
             for (auto& task : new_tasks[agent_id]) {
                 std::pair<int, int> tmp_loc = task->get_goal_position();
                 all_targets[tmp_loc].push_back(agent_id);
@@ -284,7 +287,11 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     for (auto& [target, agent_ids] : all_targets) {
         if (agent_ids.size() == 1) {
             int agent = agent_ids[0];
-            server_ptr->current_robots_goal_type[agent] = server_ptr->curr_mobile_tasks[agent].front()->status;
+            if (server_ptr->adg->getLastActType(agent) == 'P') {
+                server_ptr->current_robots_goal_type[agent] = NONE;
+            } else {
+                server_ptr->current_robots_goal_type[agent] = server_ptr->curr_mobile_tasks[agent].front()->status;
+            }
             insertNewGoal(agent, target, new_goals);
             assigned_locations.insert(target);
             printf("AGENT %d: Only goal locs::(%d, %d)\n", agent, target.first, target.second);
@@ -295,16 +302,21 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
             int min_dist = numeric_limits<int>::max();
 
             for (int id : agent_ids) {
+                if (server_ptr->adg->getLastActType(id) == 'P') {
+                    server_ptr->current_robots_goal_type[id] = NONE;
+                    closest_agent = id;
+                    break;
+                }
                 auto curr_pos = server_ptr->curr_robot_states[id].position;
                 int dist = twoPointDistance(std::make_pair(static_cast<int>(curr_pos.second), static_cast<int>(curr_pos.first)), target);
                 if (dist < min_dist) {
                     min_dist = dist;
                     closest_agent = id;
+                    server_ptr->current_robots_goal_type[closest_agent] = server_ptr->curr_mobile_tasks[closest_agent].front()->status;
                 }
             }
 
             // Assign real target to the closest agent
-            server_ptr->current_robots_goal_type[closest_agent] = server_ptr->curr_mobile_tasks[closest_agent].front()->status;
             insertNewGoal(closest_agent, target, new_goals);
             assigned_locations.insert(target);
             printf("AGENT %d: Closest goal locs::(%d, %d)\n", closest_agent, target.first, target.second);

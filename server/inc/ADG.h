@@ -91,6 +91,23 @@ public:
         return std::make_pair(graph[agent_id][node_id].action.goal.first, graph[agent_id][node_id].action.goal.second);
     }
 
+    char getLastActType(int agent_id) {
+        if (graph.empty() or graph[agent_id].empty()) {
+            return 'N';
+        } else {
+            return graph[agent_id].back().action.type;
+        }
+    }
+
+    Location getLastLoc(int agent_id) {
+        if (graph[agent_id].empty()) {
+            std::cerr << "[ERROR]: Empty graph." << std::endl;
+            return init_locs[agent_id].position;
+        } else {
+            return graph[agent_id].back().action.goal;
+        }
+    }
+
     void printProgress()
     {
         //        exit(0);
