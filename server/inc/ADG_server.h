@@ -63,6 +63,7 @@ public:
 
 
     bool debug_set_flag = false;
+    int total_confirmed_picks = 0;
 
 private:
 //    int type1EdgeCount = 0;

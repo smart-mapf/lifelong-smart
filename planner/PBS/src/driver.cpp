@@ -74,8 +74,10 @@ int main(int argc, char** argv)
 		// run
 		double runtime = 0;
 		bool success = false;
+    double runtime_limit = vm["cutoffTime"].as<double>();
     while (not success) {
-	    success = pbs.solve(vm["cutoffTime"].as<double>());
+	    success = pbs.solve(runtime_limit);
+      runtime_limit = runtime_limit*2;
       if (success)
       {
         // if (vm.count("output"))
@@ -98,7 +100,7 @@ int main(int argc, char** argv)
       }
     }
     // instance.printMap();
-		sleep(1);
+		// sleep(1);
 	}
 
 

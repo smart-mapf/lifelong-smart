@@ -105,13 +105,13 @@ void MobileTaskManager::setTask(int agent_id, std::shared_ptr<MobileRobotTask>& 
       agent_task_status[agent_id].assigned_tasks.emplace_back(task);
       task->agent_id = agent_id;
     } else {
-      std::cerr << "Its a NONE task, but got " << status << std::endl;
+      // std::cerr << "Its a NONE task, but got " << status << std::endl;
     }
   } else if (task->status == PICK) {
     if (status == DELIVER) {
       ;
     } else {
-      std::cerr << "Its a PICK task, but got " << status << std::endl;
+      // std::cerr << "Its a PICK task, but got " << status << std::endl;
       return;
     }
   } else if (task->status == DELIVER) {
@@ -124,12 +124,12 @@ void MobileTaskManager::setTask(int agent_id, std::shared_ptr<MobileRobotTask>& 
         }
       }
     } else {
-      std::cerr << "Its a DELIVER task, but got " << status << std::endl;
+      // std::cerr << "Its a DELIVER task, but got " << status << std::endl;
       // exit(-1);
       return;
     }
   } else if (task->status == DONE) {
-    std::cerr << "Task already finished!" << std::endl;
+    // std::cerr << "Task already finished!" << std::endl;
   }
   task->status = status;
 }
@@ -144,8 +144,12 @@ std::pair<int, int> MobileTaskManager::findNearbyFreeCell(int x, int y) {
 
 std::pair<int, int> MobileTaskManager::findPalletizer(int picker_id) {
   int station_idx = active_stations.size() - (picker_id / 2) - 1;
-  std::srand(std::time(0)); // Seed the random number generator with current time
-  station_idx = std::rand() % active_stations.size();
+
+  static std::mt19937 rng(std::random_device{}());
+  std::uniform_int_distribution<int> dist(0, active_stations.size() - 1);
+  station_idx = dist(rng);
+  // std::srand(std::time(0)); // Seed the random number generator with current time
+  // station_idx = std::rand() % active_stations.size();
   std::cout << "active stations size: " << active_stations.size() << ", picked station idx: " << station_idx << std::endl;
   auto it = active_stations.begin();
   std::advance(it, station_idx);

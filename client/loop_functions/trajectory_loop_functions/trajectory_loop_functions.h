@@ -11,7 +11,7 @@
 #define PICK_T 100
 #define MOVE_T 50
 #define UNLOAD_T 60
-#define LOAD_NUM 4
+#define LOAD_NUM 8
 #define WINDOW_SIE 40
 
 using namespace argos;
@@ -121,6 +121,7 @@ private:
    static CVector3 coordPlanner2Sim(std::pair<int, int>& loc);
    static std::pair<int, int> coordSim2Planner(CVector3& loc);
 
+
 public:
    std::vector<CVector3> task_pods;
    std::vector<CVector3> task_stations;
@@ -141,6 +142,7 @@ private:
    std::vector<int> agents_wait_time;
    int port_number = 0;
    int num_picker = 0;
+   long long int time_step = 0;
 };
 
 #endif

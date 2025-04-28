@@ -429,6 +429,10 @@ void CTrajectoryLoopFunctions::addMobileVisualization() {
 /****************************************/
 
 void CTrajectoryLoopFunctions::PostStep() {
+  time_step++;
+  if (time_step % 3000 == 0) {
+    requestNewPickTasks();
+  }
   // std::cout << "Try to connect to server with port num: " << port_number << std::endl;
   if (not is_initialized) {
     if (is_port_open("127.0.0.1", port_number)) {
@@ -478,8 +482,9 @@ void CTrajectoryLoopFunctions::PostStep() {
 
   addMobileVisualization();
   printf("finish execution!\n");
-  // int total_wait_sum = std::accumulate(agents_wait_time.begin(), agents_wait_time.end(), 0);
-  // printf("Total pickers waiting time: %d\n", total_wait_sum);
+  int total_wait_sum = std::accumulate(agents_wait_time.begin(), agents_wait_time.end(), 0);
+  printf("Total pickers waiting time: %d\n", total_wait_sum);
+  
   // static int frame_id = 0;
   // std::stringstream filename_s;
   // filename_s << "frames/frame_" << std::setw(5) << std::setfill('0') << frame_id++ << ".png";

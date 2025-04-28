@@ -98,7 +98,9 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
     printf("Finish building graph!\n");
     if (hasCycle()) {
         std::cerr << "Cycle detected!" << std::endl;
-        exit(-1);
+        std::string input;
+        std::getline(std::cin, input);
+        // exit(-1);
     }
 }
 
@@ -467,6 +469,6 @@ SIM_PLAN ADG::getPlan(int agent_id) {
         sim_plan.emplace_back(robotIDToStartIndex[action.robot_id], enque_id, action.orientation, std::string(1, action.type), action.start, action.goal, task_id);
         enqueue_nodes_idx[agent_id].push_back(enque_id);
     }
-    std::cout << "For agent " << agent_id << ", enqueue size is: " << enqueue_nodes_idx[agent_id].size() << std::endl;
+    // std::cout << "For agent " << agent_id << ", enqueue size is: " << enqueue_nodes_idx[agent_id].size() << std::endl;
     return sim_plan;
 }

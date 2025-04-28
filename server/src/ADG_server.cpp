@@ -199,6 +199,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
     //     server_ptr->task_manager_ptr->isAgentFinished(id, curr_pos);
     // }
     std::cout << "Total finished tasks: " << server_ptr->mobile_manager->total_finished_tasks_ << std::endl;
+    std::cout << "Total confirmed picks: " << server_ptr->total_confirmed_picks<< std::endl;
 #ifdef DEBUG
     std::cout << "Finish add plan" << std::endl;
 #endif
@@ -267,10 +268,13 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     assert(new_tasks.size() == server_ptr->numRobots);
     std::unordered_map<std::pair<int, int>, std::vector<int>, pair_hash> all_targets;
     server_ptr->current_robots_goal_type.resize(server_ptr->numRobots);
+    std::vector<bool> transfer_agents(server_ptr->numRobots, false);
     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
         std::cout << "agent_id: " << agent_id << std::endl;
-        if (server_ptr->adg->getLastActType(agent_id) == 'P') {
+        if (server_ptr->adg->isLastActUnfinishedTransfer(agent_id)) {
+            transfer_agents[agent_id] = true;
             auto tmp_loc = server_ptr->adg->getLastLoc(agent_id);
+            std::swap(tmp_loc.first, tmp_loc.second);
             all_targets[tmp_loc].push_back(agent_id);
         } else if (not new_tasks[agent_id].empty()) {
             for (auto& task : new_tasks[agent_id]) {
@@ -287,7 +291,7 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
     for (auto& [target, agent_ids] : all_targets) {
         if (agent_ids.size() == 1) {
             int agent = agent_ids[0];
-            if (server_ptr->adg->getLastActType(agent) == 'P') {
+            if (transfer_agents[agent]) {
                 server_ptr->current_robots_goal_type[agent] = NONE;
             } else {
                 server_ptr->current_robots_goal_type[agent] = server_ptr->curr_mobile_tasks[agent].front()->status;
@@ -302,7 +306,7 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
             int min_dist = numeric_limits<int>::max();
 
             for (int id : agent_ids) {
-                if (server_ptr->adg->getLastActType(id) == 'P') {
+                if (transfer_agents[id]) {
                     server_ptr->current_robots_goal_type[id] = NONE;
                     closest_agent = id;
                     break;
@@ -418,6 +422,8 @@ void confirmPickerTask(int agent_id, int task_id) {
     std::lock_guard<std::mutex> guard(globalMutex);
     // std::cout << "send confirmation to agent " << agent_id << " with task id " << task_id << std::endl;
     server_ptr->picker_manager->confirmTask(agent_id, task_id);
+    server_ptr->total_confirmed_picks++;
+
 }
 
 int requestMobileTask(int picker_id, std::pair<int, int> target_pos) {

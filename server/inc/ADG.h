@@ -91,11 +91,15 @@ public:
         return std::make_pair(graph[agent_id][node_id].action.goal.first, graph[agent_id][node_id].action.goal.second);
     }
 
-    char getLastActType(int agent_id) {
+    bool isLastActUnfinishedTransfer(int agent_id) {
         if (graph.empty() or graph[agent_id].empty()) {
-            return 'N';
+            return false;
         } else {
-            return graph[agent_id].back().action.type;
+            if (graph[agent_id].back().action.type == 'P' and
+                (graph[agent_id].size() - 1) != finished_node_idx[agent_id]) {
+                return true;
+            }
+            return false;
         }
     }
 
@@ -164,7 +168,6 @@ public:
                 // }
                 if (graph[agent_id][node_id].action.type == 'P') {
                     task_ptr->setTask(agent_id, graph[agent_id][node_id].action.task_ptr, DELIVER);
-                    ;
                 } else if (graph[agent_id][node_id].action.type == 'S') {
                     task_ptr->setTask(agent_id, graph[agent_id][node_id].action.task_ptr, DONE);
                 }
