@@ -53,7 +53,7 @@
 #define EPS 0.03f
 #define DELIVER_T 20
 #define PICKER_T 60
-#define MOVE_DIS 1.0
+#define MOVE_DIS 0.5
 /*
  * All the ARGoS stuff in the 'argos' namespace.
  * With this statement, you save typing argos:: every time.

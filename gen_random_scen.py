@@ -29,7 +29,7 @@ def find_free_cells(grid):
     free_cells = []
     for i, row in enumerate(grid):
         for j, cell in enumerate(row):
-            if cell == '.' and i < 8:
+            if cell == '.':
                 free_cells.append((i, j))
     return free_cells
 

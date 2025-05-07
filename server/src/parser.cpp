@@ -94,7 +94,7 @@ vector<Point> parseLineContinuous(const string& line) {
     return points;
 }
 
-std::vector<std::vector<Action>> processOneRobustActions(const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
+std::vector<std::vector<Action>> processActions(const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
     std::vector<std::vector<Action>> plans;
     int node_id=0;
     for (size_t i = 0; i < raw_steps.size(); ++i) {
@@ -165,7 +165,7 @@ std::vector<std::vector<Action>> processOneRobustActions(const std::vector<std::
     return plans;
 }
 
-std::vector<std::vector<Action>> processActions(const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
+std::vector<std::vector<Action>> processOneRobustActions(const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
     std::vector<std::vector<Action>> plans;
     int node_id=0;
     for (size_t i = 0; i < raw_steps.size(); ++i) {
