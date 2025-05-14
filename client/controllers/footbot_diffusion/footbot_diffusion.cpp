@@ -414,10 +414,10 @@ void CFootBotDiffusion::ControlStep() {
     //     client->async_call("closeServer");
     //     exit(0);
     // }
-    if (step_count_ >= 12000) {
-      client->async_call("closeServer");
-      exit(0);
-  }
+    // if (step_count_ >= 12000) {
+    //   client->async_call("closeServer");
+    //   exit(0);
+    // }
     step_count_++;
 }
 
@@ -507,7 +507,7 @@ std::pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos, const C
 
     // PID calculations
     Real refer_velocity = flag*getReferenceSpeed(distance);
-    std::cout << "Reference velocity: " << refer_velocity << std::endl;
+    // std::cout << "Reference velocity: " << refer_velocity << std::endl;
     Real control_acc = pidLinear(refer_velocity - prevVelocity_);
     auto angularVelocity = pidAngular(angleError);
 

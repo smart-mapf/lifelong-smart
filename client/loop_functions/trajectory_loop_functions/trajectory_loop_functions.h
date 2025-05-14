@@ -9,7 +9,7 @@
 #include "controllers/footbot_diffusion/footbot_diffusion.h"
 
 #define PICK_T 100
-#define MOVE_T 50
+#define MOVE_T 40
 #define UNLOAD_T 60
 #define LOAD_NUM 8
 #define WINDOW_SIE 40

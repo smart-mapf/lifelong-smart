@@ -57,7 +57,7 @@ bool userMap::readMap(std::string& map_fname) {
                 all_pods.push_back(new_pod);
                 pods_by_genre[i/4].push_back(new_pod);
                 pod_id++;
-            } else if (line[j] == '.' and j <= 50 and i <= 10) {
+            } else if (line[j] == '.' and j <= 30) {
                 // If empty
                 free_cells.emplace_back(i, j);
 

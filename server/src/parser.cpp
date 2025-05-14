@@ -273,7 +273,7 @@ bool parseEntirePlan(const std::string& input_file,
         }
         inFile.close();
         plans = processActions(raw_plan, flipped_coord);
-        showActionsPlan(plans);
+        // showActionsPlan(plans);
         return true;
     } else if (file_type == CONTINUOUS) {
         std::vector<std::vector<Step>> raw_plan;
@@ -292,7 +292,7 @@ bool parseEntirePlan(const std::string& input_file,
         inFile.close();
         showStepPoints(raw_plan);
         plans = processActions(raw_plan, flipped_coord);
-        showActionsPlan(plans);
+        // showActionsPlan(plans);
         return true;
     } else {
         std::cerr << "Unsupported path format!" << std::endl;

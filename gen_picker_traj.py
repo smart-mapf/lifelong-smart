@@ -59,7 +59,7 @@ if __name__ == '__main__':
   print("std::vector<std::vector<std::pair<int, int>>> read_picker_path = {")
   np.random.seed(0)  # For reproducibility, you can remove this in production
   for i in range(num_group):
-    start_y = np.random.randint(MIN_Y, MAX_Y, agent_per_group)
+    start_y = np.random.randint(54, 55, agent_per_group)
     start_y = np.sort(start_y)
     group_path = []
     if (i % 2 == 1):

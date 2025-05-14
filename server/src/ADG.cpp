@@ -96,12 +96,12 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
         }
     }
     printf("Finish building graph!\n");
-    if (hasCycle()) {
-        std::cerr << "Cycle detected!" << std::endl;
-        std::string input;
-        std::getline(std::cin, input);
-        // exit(-1);
-    }
+    // if (hasCycle()) {
+    //     std::cerr << "Cycle detected!" << std::endl;
+    //     std::string input;
+    //     std::getline(std::cin, input);
+    //     // exit(-1);
+    // }
 }
 
 bool isAddStop(double x)

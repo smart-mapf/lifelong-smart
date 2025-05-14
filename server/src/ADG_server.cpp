@@ -200,6 +200,7 @@ void addNewPlan(std::vector<std::vector<std::tuple<int, int, double>>>& new_plan
     // }
     std::cout << "Total finished tasks: " << server_ptr->mobile_manager->total_finished_tasks_ << std::endl;
     std::cout << "Total confirmed picks: " << server_ptr->total_confirmed_picks<< std::endl;
+
 #ifdef DEBUG
     std::cout << "Finish add plan" << std::endl;
 #endif
@@ -423,7 +424,11 @@ void confirmPickerTask(int agent_id, int task_id) {
     // std::cout << "send confirmation to agent " << agent_id << " with task id " << task_id << std::endl;
     server_ptr->picker_manager->confirmTask(agent_id, task_id);
     server_ptr->total_confirmed_picks++;
-
+    if (server_ptr->total_confirmed_picks >= 800) {
+        std::cout << "Total finished tasks: " << server_ptr->mobile_manager->total_finished_tasks_ << std::endl;
+        std::cout << "Total confirmed picks: " << server_ptr->total_confirmed_picks<< std::endl;
+        exit(0);
+    }
 }
 
 int requestMobileTask(int picker_id, std::pair<int, int> target_pos) {

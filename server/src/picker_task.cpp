@@ -23,7 +23,7 @@ void PickTaskManager::getTask(std::vector<std::shared_ptr<PickerTask>>& new_task
 
 void PickTaskManager::genRandomTask() {
   for (int genre = 0; genre < num_task_genre; genre++) {
-    while (tasks_by_genre[genre].size() < MAX_TASKS) {
+    while (tasks_by_genre[genre].size() <= MAX_TASKS) {
       auto new_task = pickRandomPod(genre);
       tasks_by_genre[genre].insert(std::make_pair(new_task->id, new_task));
     }
