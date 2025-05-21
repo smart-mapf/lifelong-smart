@@ -64,6 +64,8 @@ public:
 
     bool debug_set_flag = false;
     int total_confirmed_picks = 0;
+    std::vector<int> confirmed_picks_by_genre;
+    std::vector<int> genre_finish_steps;
 
 private:
 //    int type1EdgeCount = 0;

@@ -430,9 +430,9 @@ void CTrajectoryLoopFunctions::addMobileVisualization() {
 
 void CTrajectoryLoopFunctions::PostStep() {
   time_step++;
-  if (time_step % 3000 == 0) {
-    requestNewPickTasks();
-  }
+  // if (time_step % 3000 == 0) {
+  //   requestNewPickTasks();
+  // }
   // std::cout << "Try to connect to server with port num: " << port_number << std::endl;
   if (not is_initialized) {
     if (is_port_open("127.0.0.1", port_number)) {
@@ -474,7 +474,7 @@ void CTrajectoryLoopFunctions::PostStep() {
       if (front_act.act == MOVE) {
         getNextAction(agent_id);
       } else if (front_act.act == PICK) {
-        client->call("confirm_picker_task", agent_id, front_act.task_id);
+        client->call("confirm_picker_task", agent_id, front_act.task_id, time_step);
       }
       curr_picker.acts.pop_front();
     }

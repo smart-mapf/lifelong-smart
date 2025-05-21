@@ -100,7 +100,7 @@ int main(int argc, char** argv)
       }
     }
     // instance.printMap();
-		// sleep(1);
+		sleep(1);
 	}
 
 

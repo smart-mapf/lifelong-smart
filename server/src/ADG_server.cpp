@@ -12,6 +12,8 @@ ADG_Server::ADG_Server(int num_robots,
     std::string method_name): curr_map_name(map_name), curr_scen_name(scen_name), curr_method_name(method_name)
  {
     adg = std::make_shared<ADG> (num_robots);
+    confirmed_picks_by_genre.resize(NUM_GENRE, 0);
+    genre_finish_steps.resize(NUM_GENRE, 0);
     mobile_manager = std::make_shared<MobileTaskManager>(num_robots, num_pickers, map_name);
     picker_manager = std::make_shared<PickTaskManager>(num_pickers, NUM_GENRE, map_name);
 
@@ -352,7 +354,7 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
             int x, y;
             if (assigned_locations.contains(std::make_pair(curr_robot_loc.position.second, curr_robot_loc.position.first)) or
                 server_ptr->mobile_manager->user_map.isStation(std::make_pair(curr_robot_loc.position.second, curr_robot_loc.position.first)) or
-                curr_robot_loc.position.first >= 100) {
+                curr_robot_loc.position.first >= 60) {
                 std::pair<int, int> random_loc = server_ptr->mobile_manager->user_map.findRandomPos(assigned_locations);
                 x = random_loc.first;
                 y = random_loc.second;
@@ -418,15 +420,22 @@ std::vector< PickData > getPickerTask() {
     return all_pick_tasks;
 }
 
-void confirmPickerTask(int agent_id, int task_id) {
+void confirmPickerTask(int agent_id, int task_id, int sim_step) {
     assert(task_id != -1);
     std::lock_guard<std::mutex> guard(globalMutex);
     // std::cout << "send confirmation to agent " << agent_id << " with task id " << task_id << std::endl;
     server_ptr->picker_manager->confirmTask(agent_id, task_id);
     server_ptr->total_confirmed_picks++;
+    server_ptr->confirmed_picks_by_genre[agent_id/2] += 1;
+    if (server_ptr->confirmed_picks_by_genre[agent_id/2] >= 100) {
+        server_ptr->genre_finish_steps[agent_id/2] = sim_step;
+    }
     if (server_ptr->total_confirmed_picks >= 800) {
         std::cout << "Total finished tasks: " << server_ptr->mobile_manager->total_finished_tasks_ << std::endl;
         std::cout << "Total confirmed picks: " << server_ptr->total_confirmed_picks<< std::endl;
+        for (auto tmp_step: server_ptr->genre_finish_steps) {
+            std::cout << "Finish step for genre is: " << tmp_step/10 << std::endl;
+        }
         exit(0);
     }
 }
