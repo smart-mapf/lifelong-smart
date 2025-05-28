@@ -420,23 +420,36 @@ std::vector< PickData > getPickerTask() {
     return all_pick_tasks;
 }
 
+int getGenreID(int agent_id) {
+    int genre_id = 0;
+    genre_id = (agent_id / 4) * 2;
+    if (agent_id % 4 == 1 or agent_id % 4 == 2) {
+        genre_id += 1;
+    }
+    return genre_id;
+}
+
 void confirmPickerTask(int agent_id, int task_id, int sim_step) {
     assert(task_id != -1);
     std::lock_guard<std::mutex> guard(globalMutex);
     // std::cout << "send confirmation to agent " << agent_id << " with task id " << task_id << std::endl;
-    server_ptr->picker_manager->confirmTask(agent_id, task_id);
-    server_ptr->total_confirmed_picks++;
-    server_ptr->confirmed_picks_by_genre[agent_id/2] += 1;
-    if (server_ptr->confirmed_picks_by_genre[agent_id/2] >= 100) {
-        server_ptr->genre_finish_steps[agent_id/2] = sim_step;
-    }
-    if (server_ptr->total_confirmed_picks >= 800) {
-        std::cout << "Total finished tasks: " << server_ptr->mobile_manager->total_finished_tasks_ << std::endl;
-        std::cout << "Total confirmed picks: " << server_ptr->total_confirmed_picks<< std::endl;
-        for (auto tmp_step: server_ptr->genre_finish_steps) {
-            std::cout << "Finish step for genre is: " << tmp_step/10 << std::endl;
+    bool status = server_ptr->picker_manager->confirmTask(agent_id, task_id);
+    if (status) {
+        server_ptr->total_confirmed_picks++;
+        int genre_id = getGenreID(agent_id);
+        server_ptr->confirmed_picks_by_genre[genre_id] += 1;
+        if (server_ptr->confirmed_picks_by_genre[genre_id] >= MAX_TASKS) {
+            server_ptr->genre_finish_steps[genre_id] = sim_step;
         }
-        exit(0);
+        if (server_ptr->total_confirmed_picks >= 800) {
+            std::cout << "Total finished tasks: " << server_ptr->mobile_manager->total_finished_tasks_ << std::endl;
+            std::cout << "Total confirmed picks: " << server_ptr->total_confirmed_picks<< std::endl;
+            for (int i = 0; i < NUM_GENRE; i++) {
+                std::cout << "Finish step for genre is: " << server_ptr->genre_finish_steps[i]/10.0 << ", total tasks finished is: " <<
+                    server_ptr->confirmed_picks_by_genre[i] << std::endl;
+            }
+            exit(0);
+        }
     }
 }
 

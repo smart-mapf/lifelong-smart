@@ -429,10 +429,8 @@ void CTrajectoryLoopFunctions::addMobileVisualization() {
 /****************************************/
 
 void CTrajectoryLoopFunctions::PostStep() {
+  auto start = std::chrono::high_resolution_clock::now();
   time_step++;
-  // if (time_step % 3000 == 0) {
-  //   requestNewPickTasks();
-  // }
   // std::cout << "Try to connect to server with port num: " << port_number << std::endl;
   if (not is_initialized) {
     if (is_port_open("127.0.0.1", port_number)) {
@@ -484,30 +482,11 @@ void CTrajectoryLoopFunctions::PostStep() {
   // printf("finish execution!\n");
   int total_wait_sum = std::accumulate(agents_wait_time.begin(), agents_wait_time.end(), 0);
   printf("Total pickers waiting time: %d\n", total_wait_sum);
-  
-  // static int frame_id = 0;
-  // std::stringstream filename_s;
-  // filename_s << "frames/frame_" << std::setw(5) << std::setfill('0') << frame_id++ << ".png";
-  // std::string filename = filename_s.str();
-  // argos::CVisualization& cVisualization = GetSimulator().GetVisualization();
-  // // Ensure the visualization is of the expected Qt OpenGL type
-  // auto* pcQtRender = dynamic_cast<argos::CQTOpenGLRender*>(&cVisualization);
-  // if(pcQtRender) {
-  //   // Access the main window
-  //   CQTOpenGLMainWindow& pcMainWindow = pcQtRender->GetMainWindow();
-
-  //   // Capture the current window as a pixmap
-  //   QPixmap pixmap = pcMainWindow.grab();
-
-  //   // Save the pixmap to the specified file
-  //   if(!pixmap.save(QString::fromStdString(filename))) {
-  //     std::cerr << "Failed to save the visualization snapshot to " << filename << std::endl;
-  //   } else {
-  //     std::cout << "Visualization snapshot saved to " << filename << std::endl;
-  //   }
-  // } else {
-  //   std::cerr << "Qt OpenGL Visualization is not available." << std::endl;
-  // }
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> duration_ms = end - start;
+  if (duration_ms.count() > 1) {
+    std::cout << "Post step execution time: " << duration_ms.count() << " ms, with control step count: " << time_step << "\n";
+  }
 }
 
 /****************************************/

@@ -1,11 +1,11 @@
 ./build/pbs -m ../../warehouse-small.map -k 1 --portNum=8182
 argos3 -c ../output.argos
-./ADG_server --num_robots=1 -m ../../warehouse-small.map -n 8182 --num_pickers=12
+./ADG_server --num_robots=1 -m ../../warehouse-small.map -n 8182 --num_pickers=32
 
 ./build/pbs -m ../../supermarket.map -k 24 --portNum=8182
 argos3 -c ../output.argos
 ./ADG_server --num_robots=24 -m ../../supermarket.map -n 8182 --num_pickers=16
 
-./build/pbs -m ../../supermarket.map -k 12 --portNum=8182
+./build/pbs -m ../../supermarket.map -k 32 --portNum=8182
 argos3 -c ../output.argos
-./ADG_server --num_robots=12 -m ../../supermarket.map -n 8182 --num_pickers=16
+./ADG_server --num_robots=32 -m ../../supermarket.map -n 8182 --num_pickers=16

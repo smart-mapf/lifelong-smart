@@ -48,6 +48,7 @@
 #include <rpc/client.h>
 #include <fstream>
 #include <filesystem>
+#include <chrono>
 #include <boost/asio.hpp>
 
 #define EPS 0.03f
@@ -236,9 +237,6 @@ private:
     int lineExistFlag = 0;
     bool terminateFlag = false;
     long long int step_count_ = 0;
-
-    std::ofstream outputFile;
-    std::string outputDir;
 
     bool is_initialized = false;
     CVector3 curr_pod{-1,-1,-100};
