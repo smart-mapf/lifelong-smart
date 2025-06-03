@@ -55,7 +55,11 @@ bool userMap::readMap(std::string& map_fname) {
                 // If Pods
                 std::shared_ptr<Pod> new_pod = std::make_shared<Pod>(i, j, 0, pod_id);
                 all_pods.push_back(new_pod);
-                pods_by_genre[i/4].push_back(new_pod);
+                int genre_id = (i/8) * 2;
+                if (i % 8 == 3 or i % 8 == 4) {
+                    genre_id += 1;
+                }
+                pods_by_genre[genre_id].push_back(new_pod);
                 pod_id++;
             } else if (line[j] == '.' and j <= 80) {
                 // If empty

@@ -29,47 +29,24 @@ ADG_Server::ADG_Server(int num_robots,
     startTimers.resize(numRobots);
 }
 
-void ADG_Server::saveStats() {
+
+
+void ADG_Server::saveStats(int selector_wait_t, int capacity) {
     std::ifstream infile(output_filename);
     bool exist = infile.good();
     infile.close();
     if (!exist) {
         ofstream addHeads(output_filename);
-        addHeads << "steps finish sim,sum of steps finish sim,time finish sim,sum finish time,original plan cost," <<
-                 "#type-2 edges,#type-1 edges,#Nodes,"
-                 "#Move,#Rotate,#Consecutive Move,#Agent pair," <<
-                 "instance name,number of agent" << endl;
+        addHeads << "Average Assignment Duration,Min Assignment Duration,Max Assignment Duration,Selector Wait Time,Transport Capacity,number of agent" << endl;
         addHeads.close();
     }
     ofstream stats(output_filename, std::ios::app);
-    stats << latest_arr_sim_step << "," << std::accumulate(agent_finish_sim_step.begin(), agent_finish_sim_step.end(), 0) << "," <<
-        *(std::max_element(agent_finish_time.begin(), agent_finish_time.end())) << "," <<
-        std::accumulate(agent_finish_time.begin(), agent_finish_time.end(), 0.0) << "," <<
-        raw_plan_cost << "," << adg->adg_stats.type2EdgeCount << "," <<
-        adg->adg_stats.type1EdgeCount << "," << adg->adg_stats.totalNodes << "," <<
-        adg->adg_stats.moveActionCount << "," << adg->adg_stats.rotateActionCount << "," <<
-        adg->adg_stats.consecutiveMoveSequences << "," << static_cast<int>(adg->adg_stats.conflict_pairs.size())
-        << "," << numRobots << endl;
+    stats << std::accumulate(genre_finish_steps.begin(), genre_finish_steps.end(), 0.0)/(8*10.0) << "," <<
+        min_nonzero()/10.0 << "," <<
+        *(std::max_element(genre_finish_steps.begin(), genre_finish_steps.end()))/10.0 << "," <<
+        selector_wait_t << "," << capacity << "," << numRobots << endl;
     stats.close();
-    // std::cout << "ADG statistics written to " << output_filename << std::endl;
-    json result = {
-        {"steps finish sim", latest_arr_sim_step},
-        {"sum of steps finish sim", std::accumulate(agent_finish_sim_step.begin(), agent_finish_sim_step.end(), 0)},
-        {"time finish sim", *(std::max_element(agent_finish_time.begin(), agent_finish_time.end()))},
-        {"sum finish time", std::accumulate(agent_finish_time.begin(), agent_finish_time.end(), 0.0)},
-        {"original plan cost", raw_plan_cost},
-        {"#type-2 edges", adg->adg_stats.type2EdgeCount},
-        {"#type-1 edges", adg->adg_stats.type1EdgeCount},
-        {"#Nodes", adg->adg_stats.totalNodes},
-        {"#Move", adg->adg_stats.moveActionCount},
-        {"#Rotate", adg->adg_stats.rotateActionCount},
-        {"#Consecutive Move", adg->adg_stats.consecutiveMoveSequences},
-        {"#Agent pair", static_cast<int>(adg->adg_stats.conflict_pairs.size())},
-        {"number of agent", numRobots}
-    };
-
-    // Output the JSON
-    std::cout << result.dump() << std::endl; 
+    std::cout << "Statistics written to " << output_filename << std::endl;
 }
 
 
@@ -332,7 +309,9 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(int goal_num=1)
             for (int id : agent_ids) {
                 if (id == closest_agent) continue;
                 server_ptr->current_robots_goal_type[id] = NONE;
+                // pair<int, int> new_target = server_ptr->mobile_manager->user_map.findNeighborPos(assigned_locations, target);
                 pair<int, int> new_target = server_ptr->mobile_manager->user_map.findNeighborPos(assigned_locations, target);
+
                 insertNewGoal(id, new_target, new_goals);
                 assigned_locations.insert(new_target);
                 printf("AGENT %d: nearby goal locs::(%d, %d)\n", id, new_target.first, new_target.second);
@@ -429,28 +408,43 @@ int getGenreID(int agent_id) {
     return genre_id;
 }
 
-void confirmPickerTask(int agent_id, int task_id, int sim_step) {
+void updateStats(double total_wait_time, int capacity) {
+    std::cout << "update the stats with: " << total_wait_time << ", and capacity: " <<
+    capacity << std::endl;
+    server_ptr->total_wait_time = total_wait_time;
+    server_ptr->transport_capacity = capacity;
+}
+
+void closeServer(rpc::server& srv)
+{
+    std::cout << "close server called" << std::endl;
+    server_ptr->saveStats(server_ptr->total_wait_time, server_ptr->transport_capacity);
+    srv.stop();
+}
+
+bool confirmPickerTask(int agent_id, int task_id, int sim_step) {
     assert(task_id != -1);
     std::lock_guard<std::mutex> guard(globalMutex);
     // std::cout << "send confirmation to agent " << agent_id << " with task id " << task_id << std::endl;
-    bool status = server_ptr->picker_manager->confirmTask(agent_id, task_id);
+    int genre_id;
+    bool status = server_ptr->picker_manager->confirmTask(agent_id, task_id, genre_id);
     if (status) {
         server_ptr->total_confirmed_picks++;
-        int genre_id = getGenreID(agent_id);
         server_ptr->confirmed_picks_by_genre[genre_id] += 1;
         if (server_ptr->confirmed_picks_by_genre[genre_id] >= MAX_TASKS) {
             server_ptr->genre_finish_steps[genre_id] = sim_step;
         }
-        if (server_ptr->total_confirmed_picks >= 800) {
+        if (server_ptr->total_confirmed_picks >= 8*MAX_TASKS) {
             std::cout << "Total finished tasks: " << server_ptr->mobile_manager->total_finished_tasks_ << std::endl;
             std::cout << "Total confirmed picks: " << server_ptr->total_confirmed_picks<< std::endl;
             for (int i = 0; i < NUM_GENRE; i++) {
                 std::cout << "Finish step for genre is: " << server_ptr->genre_finish_steps[i]/10.0 << ", total tasks finished is: " <<
                     server_ptr->confirmed_picks_by_genre[i] << std::endl;
             }
-            exit(0);
+            return true;
         }
     }
+    return false;
 }
 
 int requestMobileTask(int picker_id, std::pair<int, int> target_pos) {
@@ -496,11 +490,7 @@ void updateSimFinishTime(std::string& robot_id_str, int sim_step)
     }
 }
 
-void closeServer(rpc::server& srv)
-{
-    server_ptr->saveStats();
-    srv.stop();
-}
+
 
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
@@ -552,6 +542,11 @@ int main(int argc, char **argv) {
     srv.bind("get_picker_task", &getPickerTask);
     srv.bind("confirm_picker_task", &confirmPickerTask);
     srv.bind("request_mobile_robot", &requestMobileTask);
+
+    // srv.bind("closeServer", [&srv](int wait_t, int capacity) {
+    //     closeServer(srv, wait_t, capacity);
+    // });
+    srv.bind("update_stats", &updateStats);
     srv.bind("closeServer", [&srv]() {
         closeServer(srv);
     });

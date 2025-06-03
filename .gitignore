@@ -16,4 +16,4 @@ build/
 ArgosConfig/__pycache__
 output.argos
 outputPath.txt
-stats.csv
+debug.txt

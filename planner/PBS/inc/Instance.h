@@ -63,6 +63,7 @@ public:
 
 	bool loadAgents(std::vector<std::pair<double, double>>& start_locs, std::vector<std::vector<std::tuple<int, int, double>>>& goal_locs);
   void printMap() const;
+  void saveInstance();
 
 private:
 	  // int moves_offset[MOVE_COUNT];

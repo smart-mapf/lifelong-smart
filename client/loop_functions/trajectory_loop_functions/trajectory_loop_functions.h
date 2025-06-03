@@ -143,6 +143,7 @@ private:
    int port_number = 0;
    int num_picker = 0;
    long long int time_step = 0;
+   bool task_finished = false;
 };
 
 #endif

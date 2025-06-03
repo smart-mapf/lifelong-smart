@@ -143,11 +143,11 @@ std::pair<int, int> MobileTaskManager::findNearbyFreeCell(int x, int y) {
 }
 
 std::pair<int, int> MobileTaskManager::findPalletizer(int picker_id) {
-  int station_idx = active_stations.size() - (picker_id / 2) - 1;
+  int station_idx = picker_id/2;
 
   static std::mt19937 rng(std::random_device{}());
-  std::uniform_int_distribution<int> dist(0, active_stations.size() - 1);
-  station_idx = dist(rng);
+  std::uniform_int_distribution<int> dist(0, 1);
+  station_idx = station_idx*2 + dist(rng);
   // std::srand(std::time(0)); // Seed the random number generator with current time
   // station_idx = std::rand() % active_stations.size();
   std::cout << "active stations size: " << active_stations.size() << ", picked station idx: " << station_idx << std::endl;

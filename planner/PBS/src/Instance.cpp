@@ -95,6 +95,11 @@ void Instance::generateConnectedRandomGrid(int rows, int cols, int obstacles)
 	}
 }
 
+void Instance::saveInstance() {
+  std::ofstream myfile;
+  myfile.open("failed_instance.txt");
+}
+
 bool Instance::addObstacle(int obstacle)
 {
 	if (my_map[obstacle])

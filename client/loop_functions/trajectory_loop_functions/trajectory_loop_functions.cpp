@@ -472,7 +472,7 @@ void CTrajectoryLoopFunctions::PostStep() {
       if (front_act.act == MOVE) {
         getNextAction(agent_id);
       } else if (front_act.act == PICK) {
-        client->call("confirm_picker_task", agent_id, front_act.task_id, time_step);
+        task_finished = client->call("confirm_picker_task", agent_id, front_act.task_id, time_step).as<bool>();
       }
       curr_picker.acts.pop_front();
     }
@@ -481,11 +481,18 @@ void CTrajectoryLoopFunctions::PostStep() {
   addMobileVisualization();
   // printf("finish execution!\n");
   int total_wait_sum = std::accumulate(agents_wait_time.begin(), agents_wait_time.end(), 0);
-  printf("Total pickers waiting time: %d\n", total_wait_sum);
+  printf("Total selectors waiting time: %d\n", total_wait_sum);
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> duration_ms = end - start;
   if (duration_ms.count() > 1) {
     std::cout << "Post step execution time: " << duration_ms.count() << " ms, with control step count: " << time_step << "\n";
+  }
+  if (task_finished) {
+    printf("Call close server\n");
+    client->async_call("update_stats", total_wait_sum/(10.0*16.0), LOAD_NUM);
+    sleep(1);
+    client->async_call("closeServer");
+    exit(0);
   }
 }
 
