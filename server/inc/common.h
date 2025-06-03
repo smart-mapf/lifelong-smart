@@ -26,6 +26,9 @@ typedef pair<double, double> Location;
 struct Point {
     int x, y;
     double time;
+
+    Point() = default;    // keep the default ctor if you still need it
+    Point(int x_, int y_, double w_) : x(x_), y(y_), time(w_) {}
 };
 
 // Define a structure to represent each step an agent takes.
