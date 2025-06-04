@@ -11,7 +11,7 @@
 #define PICK_T 120
 #define MOVE_T 15
 #define UNLOAD_T 60
-#define LOAD_NUM 8
+#define LOAD_NUM 6
 #define WINDOW_SIE 40
 
 using namespace argos;
@@ -143,6 +143,7 @@ private:
    int port_number = 0;
    int num_picker = 0;
    long long int time_step = 0;
+   bool task_finished = false;
 };
 
 #endif

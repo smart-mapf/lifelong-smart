@@ -77,6 +77,7 @@ int main(int argc, char** argv) {
         double runtime = 0;
         bool success = false;
         double runtime_limit = vm["cutoffTime"].as<double>();
+        int fail_count = 0;
         while (not success) {
             srand((int)time(0));
             success = pbs.solve(runtime_limit);
@@ -102,6 +103,14 @@ int main(int argc, char** argv) {
                 break;
             } else {
                 std::cerr << "No solution found!" << std::endl;
+                fail_count++;
+                if (fail_count > 3) {
+                    std::cerr
+                        << "Fail to find a solution after 3 attempts! Exiting."
+                        << std::endl;
+                    instance.saveInstance();
+                    exit(-1);
+                }
             }
         }
         // instance.printMap();

@@ -38,7 +38,7 @@ public:
 
   void getTask(std::vector<std::shared_ptr<PickerTask>>& new_tasks);
 
-  bool confirmTask(int agent_id, int task_id);
+  bool confirmTask(int agent_id, int task_id, int& genre_id);
 
   // void mobileRobotRequest();
 
@@ -50,4 +50,5 @@ private:
   std::map< int, int > robot2genre;
   std::vector<PickerRobotState> pickers;
   std::vector< std::map< int, std::shared_ptr<PickerTask> > > tasks_by_genre;
+  std::map< int, int > task2genre;
 };
