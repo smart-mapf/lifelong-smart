@@ -19,24 +19,21 @@ int main(int argc, char** argv) {
     namespace po = boost::program_options;
     // Declare the supported options.
     po::options_description desc("Allowed options");
-    desc.add_options()("help", "produce help message")
+    // clang-format off
+	desc.add_options()
+		("help", "produce help message")
 
-        // params for the input instance and experiment settings
-        ("map,m", po::value<string>()->required(), "input file for map")(
-            "output,o", po::value<string>(), "output file for statistics")(
-            "outputPaths", po::value<string>(), "output file for paths")(
-            "agentNum,k", po::value<int>()->default_value(0),
-            "number of agents")("cutoffTime,t",
-                                po::value<double>()->default_value(3),
-                                "cutoff time (seconds)")(
-            "screen,s", po::value<int>()->default_value(1),
-            "screen option (0: none; 1: results; 2:all)")(
-            "stats", po::value<bool>()->default_value(false),
-            "write to files some detailed statistics")(
-            "portNum", po::value<int>()->default_value(8080),
-            "port number for the server")("sipp",
-                                          po::value<bool>()->default_value(1),
-                                          "using SIPP as the low-level solver");
+		// params for the input instance and experiment settings
+		("map,m", po::value<string>()->required(), "input file for map")
+		("output,o", po::value<string>(), "output file for statistics")
+		("outputPaths", po::value<string>(), "output file for paths")
+		("agentNum,k", po::value<int>()->default_value(0), "number of agents")
+		("cutoffTime,t", po::value<double>()->default_value(3), "cutoff time (seconds)")
+		("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
+		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
+        ("portNum", po::value<int>()->default_value(8080), "port number for the server")
+		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver");
+    // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
