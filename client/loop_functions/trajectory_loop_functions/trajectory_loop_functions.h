@@ -11,7 +11,7 @@
 #define PICK_T 120
 #define MOVE_T 15
 #define UNLOAD_T 60
-#define LOAD_NUM 8
+#define LOAD_NUM 6
 #define WINDOW_SIE 40
 
 using namespace argos;

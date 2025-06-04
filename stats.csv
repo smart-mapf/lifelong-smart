@@ -1,5 +1,13 @@
-Average Assignment Duration,Min Assignment Duration,Max Assignment Duration,Selector Wait Time,Transport Capacity,number of agent
-1681.49,1333.8,2155.3,556,8,32
-1113.21,1033.7,1201.7,98,8,32
-1167.47,1064,1333.9,168,8,32
-1106.61,945,1250.3,123,8,32
+Average Assignment Duration, Min Assignment Duration, Max Assignment Duration, Selector Wait Time, Transport Capacity, number of agent
+                    1681.49,                  1333.8,                  2155.3,                556,                  8,              32
+                    1113.21,                  1033.7,                  1201.7,                 98,                  8,              32
+                    1167.47,                  1064  ,                  1333.9,                168,                  8,              32
+                    1106.61,                   945  ,                  1250.3,                123,                  8,              32
+                    1238.62,                   969  ,                  1350.4,                195,                  8,              32
+                    1107.88,                   985.5,                  1333.9,                113,                  8,              32
+                    1292.58,                  1149.1,                  1522.2,                274,                  8,              24
+1230.9,1108.7,1548.5,190,8,24
+1367.11,1149.7,1623.5,338,6,32
+1336.1,1138.9,1644.8,293,6,32
+1616.5,1340.5,1863.3,567,6,24
+1444.88,1201.8,1775.9,374,6,24
