@@ -1,79 +1,62 @@
-# MAPF-Benchmark (Based on Argos)
+# Lifelong MAPF Simulator Based on SMART
 
-### TODO
-1. Figure out the start orientation for each commit cut. 
+This is a lifelong MAPF simulator that considers differentiable drive robots with second order dynamics. It is built based on the [SMART simulator](https://jingtianyan.github.io/publication/2025-smart/).
 
-### Requirements
+## Installation
 
-#### RPC
-This repo requires [RPC](https://github.com/rpclib/rpclib) for communication
-between server and clients.
-Please install rpc using:
-```angular2html
-cd client
-cd externalDependencies
-git clone --recurse-submodules https://github.com/rpclib/rpclib
-cd rpclib
-mkdir build
-cd build
-cmake ..
-make
-sudo make install
+1.  Install RPC
+    This repo requires [RPC](https://github.com/rpclib/rpclib) for communication
+    between server and clients.
+    Please install rpc using:
+    ```bash
+    bash compile.sh rpc
+    ```
+
+1.  Install Argos 3. Please refer to this [Link](https://www.argos-sim.info/core.php) for instruction.
+
+1.  Compile client.
+    ```bash
+    bash compile.sh client
+    ```
+
+    To produce debuggable code (slow), type:
+
+    ```bash
+    cd client
+    cmake -DCMAKE_BUILD_TYPE=Debug ..
+    make
+    cd ..
+    ```
+
+    You can verify the correctness of the compilation by running: 
+    ```bash
+    argos3 -c experiments/diffusion_1.argos
+    ```
+
+1.  Compile server.
+    ```bash
+    bash compile.sh server
+    ```
+
+1.  Compile MAPF planner. For now we support PBS.
+    ```bash
+    bash compile.sh pbs
+    ```
+
+Alternatively, you may compile rpc, server, client, and MAPF planner using:
+
+```bash
+bash compile.sh all
 ```
 
-#### Argos
-Install Argos 3, please refer to this [Link](https://www.argos-sim.info/core.php) for instruction.
-
-
-### Compile instructions
-### Client Folder (Simulator)
-- To build the project, first navigate to the client folder Then: 
-```
-cd ./client
-mkdir build
-cd build
-```
-
-- To produce debuggable code (slow), type:
-
-```angular2html
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-make
-cd ..
-```
-
-If a linking error occurs, please remove the conda from your path (e.g. in your ~/.bashrc).
-
-To produce fast but not debuggable code, type:
-```angular2html
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
-cd ..
-```
-
-- You can verify the correctness of the compilation by running: 
-```angular2html
-argos3 -c experiments/diffusion_1.argos
-```
-
-### Server Folder (ADG)
-- Compile the code:
-```angular2html
-cd ./server
-mkdir build
-cd build
-cmake ..
-make
-```
-
-### Running guide for entire pipeline
+## Running
 
 #### Running with visualization
 ```
-python run_sim.py --map_name=random-32-32-20.map --scen_name=random-32-32-20-random-1.scen --num_agents=20
+python run_lifelong.py
 ```
 
 #### Running in headless mode
 ```
-python run_sim.py --map_name=random-32-32-20.map --scen_name=random-32-32-20-random-1.scen --num_agents=20 --headless=True
+python run_lifelong.py --headless=True
 ```
