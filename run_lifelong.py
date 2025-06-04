@@ -29,7 +29,7 @@ def parse_arguments():
     parser.add_argument("--num_agents",
                         type=int,
                         required=False,
-                        default=24,
+                        default=32,
                         help="Number of agents in the scenario")
     parser.add_argument("--headless",
                         type=bool,
@@ -219,6 +219,7 @@ def main():
         client_command = ["argos3", "-c", f"../{config_filename}"]
         print(client_command)
 
+        # executable_path = "./planner/MAPF-LNS2/build/lns"
         executable_path = "./planner/PBS/build/pbs"
         run_args = []
         run_args += [executable_path]
