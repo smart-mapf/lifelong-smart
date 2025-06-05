@@ -80,7 +80,7 @@ def create_Argos(map_data,
         experiment = ET.SubElement(framework,
                                    "experiment",
                                    length="0",
-                                   ticks_per_second="10",
+                                   ticks_per_second="10", # 10 update per simulation second
                                    random_seed="124")
     else:
         experiment = ET.SubElement(framework,
