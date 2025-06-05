@@ -61,15 +61,9 @@ void CFootBotDiffusion::insertActions(const std::vector<outputTuple>& actions)
             q.emplace_back(x, y, angle, std::deque<int>{nodeID}, Action::TURN);
         } else if (action1 == "S") {
             q.emplace_back(x, y, angle, std::deque<int>{nodeID}, Action::STATION, DELIVER_T, task_id);
-        } else if (action1 == "P") {
-            q.emplace_back(start_x, start_y, angle, std::deque<int>{nodeID}, Action::PICKER, PICKER_T, task_id);
-            if (picker_task.find(task_id) != picker_task.end()) {
-                std::cerr << "Accept same task for two times! Exiting..." << std::endl;
-                printf("Accept same task for two times! Exiting...");
-                exit(-1);
-            }
-            picker_task[task_id] = std::make_pair(false, false);
         } else {
+            printf("Unknown action %s\n", action1.c_str());
+            exit(-2);
             q.emplace_back(x, y, angle, std::deque<int>{nodeID}, Action::STOP);
         }
     }
@@ -118,6 +112,7 @@ void CFootBotDiffusion::Init(TConfigurationNode &t_node) {
     GetNodeAttributeOrDefault(t_node, "velocity", m_fWheelVelocity, m_fWheelVelocity);
     GetNodeAttributeOrDefault(t_node, "acceleration", m_linearAcceleration, m_linearAcceleration);
     GetNodeAttributeOrDefault(t_node, "portNumber", port_number, 8080);
+    GetNodeAttributeOrDefault(t_node, "simDuration", total_sim_duration, 1200);
     GetNodeAttributeOrDefault(t_node, "outputDir", m_outputDir,std::string("metaData/"));
     m_linearVelocity = 1.22 * m_angularVelocity;
     m_currVelocity = 0.0;
@@ -271,12 +266,6 @@ void CFootBotDiffusion::ControlStep() {
             receive_msg = client->call("receive_update", robot_id, a.nodeIDS.front()).as<std::string>();
             q.pop_front();
             continue;
-        } else if (a.type == Action::PICKER and a.timer <= 0) {
-            a.type = Action::STOP;
-            receive_msg = client->call("receive_update", robot_id, a.nodeIDS.front()).as<std::string>();
-            q.pop_front();
-            curr_pod = CVector3{-1,-1,-100};
-            continue;
         } else if (a.type == Action::STATION and a.timer <= 0) {
             a.type = Action::STOP;
             receive_msg = client->call("receive_update", robot_id, a.nodeIDS.front()).as<std::string>();
@@ -300,19 +289,6 @@ void CFootBotDiffusion::ControlStep() {
         std::pair<Real, Real> turn_velocities = Turn(a.angle, currAngle, 1.0f);
         left_v = turn_velocities.first;
         right_v = turn_velocities.second;
-    } else if (a.type == Action::PICKER) {
-        // std::cout << "Executing picker task, with start time of " << a.timer << " seconds" << std::endl;
-
-        m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
-        curr_pod = CVector3{a.x, a.y, 0.0f};
-        if (not picker_task[a.task_id].first) {
-            picker_task[a.task_id].first = true;
-        }
-        if (picker_task[a.task_id].second) {
-            q.front().timer--;
-            // std::cout << "Picker is there, minus one step!" << std::endl;
-        }
-        // std::cout << "Executing picker task, with remaining time of " << a.timer << " seconds" << std::endl;
     } else if (a.type == Action::STATION) {
         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
         curr_station = CVector3{a.x, a.y, 0.0f};
@@ -324,15 +300,12 @@ void CFootBotDiffusion::ControlStep() {
         right_v = 0.0f;
     }
 
-    // if (receive_msg == "exit") {
-    //     client->async_call("closeServer");
-    //     exit(0);
-    // }
-    // if (step_count_ >= 12000) {
-    //   client->async_call("closeServer");
-    //   exit(0);
-    // }
     step_count_++;
+    if (step_count_ >= TOTAL_SIM_STEP) {
+        printf("Call close server\n");
+        client->async_call("closeServer");
+        exit(0);
+    }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> exec_duration_ms = end - end_find_act;
     std::chrono::duration<double, std::milli> total_duration_ms = end - start;
