@@ -1,6 +1,7 @@
 # Compile everything in the project
 target="$1"
 current_path=$(pwd)
+cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
 
 compile_rpclib() {
     echo "Compiling rpclib..."
@@ -62,6 +63,12 @@ fi
 
 if [ "$target" == "all" ]; then
     compile_rpclib
+    compile_client
+    compile_server
+    compile_pbs
+fi
+
+if [ "$target" == "user" ]; then
     compile_client
     compile_server
     compile_pbs

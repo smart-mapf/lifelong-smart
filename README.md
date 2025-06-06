@@ -49,6 +49,12 @@ Alternatively, you may compile rpc, server, client, and MAPF planner using:
 bash compile.sh all
 ```
 
+While developing, you may compile server, client, and MAPF planner using:
+
+```bash
+bash compile.sh user
+```
+
 ## Running
 
 #### Running with visualization
