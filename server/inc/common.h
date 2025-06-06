@@ -1,12 +1,12 @@
 #pragma once
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <string>
-#include <regex>
-#include <iomanip>  // For setting precision in double formatting
 #include <cmath>
+#include <fstream>
+#include <iomanip>  // For setting precision in double formatting
+#include <iostream>
+#include <regex>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #define MAX_LOADS 1
 #define MAX_TASKS 100
@@ -26,15 +26,23 @@ typedef pair<double, double> Location;
 struct Point {
     int x, y;
     double time;
+    int task_id = -1;  // Task ID associated with this point, if any
 
-    Point() = default;    // keep the default ctor if you still need it
-    Point(int x_, int y_, double w_) : x(x_), y(y_), time(w_) {}
+    Point() = default;
+    Point(int x_, int y_, double w_, int task_id_ = -1)
+        : x(x_), y(y_), time(w_), task_id(task_id_) {
+    }
 };
 
 // Define a structure to represent each step an agent takes.
 struct Step {
     int x, y, orientation;
     double time;
+    int task_id = -1;  // Task ID associated with this step, if any
+    Step() = default;
+    Step(int x_, int y_, int orientation_, double t_, int task_id_ = -1)
+        : x(x_), y(y_), orientation(orientation_), time(t_), task_id(task_id_) {
+    }
 };
 
 struct Pod {
@@ -43,35 +51,40 @@ struct Pod {
     // true if assigned, false if free
     bool status = false;
 
-    Pod(int x, int y, int orientation, int idx): x(x), y(y), orientation(orientation), idx(idx) {}
+    Pod(int x, int y, int orientation, int idx)
+        : x(x), y(y), orientation(orientation), idx(idx) {
+    }
 };
 
 struct Station {
     int x, y, orientation;
     int idx = -1;
     bool status = false;
-    Station(int x, int y, int orientation, int idx): x(x), y(y), orientation(orientation), idx(idx) {}
+    Station(int x, int y, int orientation, int idx)
+        : x(x), y(y), orientation(orientation), idx(idx) {
+    }
 };
 
-
-
-struct PickerTask
-{
+struct PickerTask {
     int id;
     int genre;
     std::pair<int, int> goal_position;
     std::pair<int, int> obj_position;
     int operate_obj_idx = -1;
 
-    bool status=true; // false if finished, true otherwise
-    PickerTask(int id, int genre, std::pair<int, int> goal_position): id(id), genre(genre), goal_position(std::move(goal_position)) {
-        obj_position=goal_position;
+    bool status = true;  // false if finished, true otherwise
+    PickerTask(int id, int genre, std::pair<int, int> goal_position)
+        : id(id), genre(genre), goal_position(std::move(goal_position)) {
+        obj_position = goal_position;
     }
 };
 
 enum MobileAction {
     // DELIVER = 0, PICK = 1, NONE = 2
-    NONE = 0, PICK = 1, DELIVER = 2, DONE = 3
+    NONE = 0,
+    PICK = 1,
+    DELIVER = 2,
+    DONE = 3
 };
 
 struct pair_hash {
@@ -80,12 +93,11 @@ struct pair_hash {
     }
 };
 
-struct MobileRobotTask
-{
+struct MobileRobotTask {
     int id;
     int agent_id;
     std::pair<int, int> goal_position;
-    int goal_orient=0;
+    int goal_orient = 0;
 
     MobileAction status = NONE;
     int operate_obj_idx = -1;
@@ -94,12 +106,19 @@ struct MobileRobotTask
 
     int picker_robot_id = -1;
     std::pair<int, int> station_position;
-    // MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position): id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
+    // MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position):
+    // id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
     // }
-    MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position, int obj_idx, MobileAction flag,
-        int picker_id, std::pair<int, int> station_position):
-        id(id), agent_id(agent_id), goal_position(std::move(goal_position)), operate_obj_idx(obj_idx), status(flag),
-        picker_robot_id(picker_id), station_position(station_position) {
+    MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position,
+                    int obj_idx, MobileAction flag, int picker_id,
+                    std::pair<int, int> station_position)
+        : id(id),
+          agent_id(agent_id),
+          goal_position(std::move(goal_position)),
+          operate_obj_idx(obj_idx),
+          status(flag),
+          picker_robot_id(picker_id),
+          station_position(station_position) {
     }
 
     std::pair<int, int> get_goal_position() const {
@@ -117,17 +136,20 @@ struct MobileRobotTask
 // Definition of the Action struct
 struct Action {
     int robot_id;
-    double time; // time that start an action
+    double time;  // time that start an action
     double orientation;
     char type;  // 'M' for move, 'T' for turn, 'S' for station, 'P' for pod
     std::pair<double, double> start;
     std::pair<double, double> goal;
     int nodeID;
     std::shared_ptr<MobileRobotTask> task_ptr = nullptr;
+    int task_id = -1;  // Task ID associated with the completion of this action
 };
 
-inline bool positionCompare(std::pair<double, double> a, std::pair<int, int> b) {
-    if (std::fabs(a.first - b.first) < EPS and std::fabs(a.second - b.second) < EPS) {
+inline bool positionCompare(std::pair<double, double> a,
+                            std::pair<int, int> b) {
+    if (std::fabs(a.first - b.first) < EPS and
+        std::fabs(a.second - b.second) < EPS) {
         return true;
     }
     return false;

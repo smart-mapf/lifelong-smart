@@ -547,31 +547,45 @@ SIM_PLAN ADG::getPlan(int agent_id) {
     return sim_plan;
 }
 
-bool ADG::updateFinishedTasks(std::shared_ptr<MobileTaskManager>& task_ptr) {
+set<int> ADG::updateFinishedTasks() {
     if (curr_commit.empty() or graph.empty()) {
-        return false;
+        return {};
     }
     // finish_tasks.clear();
     // finish_tasks.resize(num_robots);
+    set<int> new_finished_tasks;
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
-            // // Current ADGNode has a non-zero task_id, then we finish a task.
-            // int curr_task = graph[agent_id][node_id].task_id;
-            // if (curr_task > 0) {
-            //     this->finished_tasks_[agent_id].insert(curr_task);
-            // }
-            if (graph[agent_id][node_id].action.type == 'P') {
-                task_ptr->setTask(agent_id,
-                                  graph[agent_id][node_id].action.task_ptr,
-                                  DELIVER);
-            } else if (graph[agent_id][node_id].action.type == 'S') {
-                task_ptr->setTask(
-                    agent_id, graph[agent_id][node_id].action.task_ptr,
-                    DONE);
+        // for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
+        //     // Current ADGNode has a non-negative task_id, then we finish a
+        //     // task.
+        //     int curr_task = graph[agent_id][node_id].action.task_id;
+        //     cout << "Agent " << agent_id << ", Node " << node_id
+        //          << ", Task ID: " << curr_task << std::endl;
+        //     if (curr_task >= 0 && this->finished_tasks_.find(curr_task) ==
+        //                               this->finished_tasks_.end()) {
+        //         this->finished_tasks_.insert(curr_task);
+        //         new_finished_tasks.insert(curr_task);
+        //     }
+        // }
+        for (int node_id = graph[agent_id].size() - 1; node_id >= 0;
+             node_id--) {
+            // Current ADGNode has a non-negative task_id, then we finish a
+            // task.
+            int curr_task = graph[agent_id][node_id].action.task_id;
+            // cout << "Agent " << agent_id << ", Node " << node_id
+            //      << ", Task ID: " << curr_task << std::endl;
+            if (this->finished_tasks_.find(curr_task) !=
+                this->finished_tasks_.end()) {
+                break;
+            } else if (curr_task >= 0 &&
+                       this->finished_tasks_.find(curr_task) ==
+                           this->finished_tasks_.end()) {
+                this->finished_tasks_.insert(curr_task);
+                new_finished_tasks.insert(curr_task);
             }
         }
     }
-    return true;
+    return new_finished_tasks;
 }
 
 void ADG::showGraph() {

@@ -107,14 +107,14 @@ public:
 	// int getGoalLocation() const {return instance.goal_locations[agent]; }
 
 	SingleAgentSolver(const Instance& instance, int agent) :
-		instance(instance), //agent(agent), 
+		instance(instance), //agent(agent),
 		start_location(instance.start_locations[agent]),
-		goal_location(instance.goal_locations[agent])
+		goal_location(instance.goal_locations[agent].loc)
 	{
 		compute_heuristics();
 	}
 
-  virtual ~SingleAgentSolver(){} 
+  virtual ~SingleAgentSolver(){}
 
 protected:
 	int min_f_val; // minimal f value in OPEN

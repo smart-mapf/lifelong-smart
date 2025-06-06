@@ -70,6 +70,8 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents, const vector<Path*>& p
             curr->timestep >= holding_time) // the agent can hold the goal location afterward
         {
             updatePath(curr, path);
+            // The last node in the path is associated with the current task
+            path.back().task_id = instance.getGoalTasks()[agent].id;
             break;
         }
 

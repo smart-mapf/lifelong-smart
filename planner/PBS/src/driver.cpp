@@ -46,29 +46,48 @@ int main(int argc, char** argv) {
 
     ///////////////////////////////////////////////////////////////////////////
     // load the instance
+    int task_id = 0;
+    vector<Task> prev_goal_locs;
+    set<int> finished_tasks_id;
     rpc::client client("127.0.0.1", vm["portNum"].as<int>());
     while (true) {
-        auto commit_cut = client.call("get_location", 5)
-                              .as<std::vector<std::pair<double, double>>>();
-        printf("Agent locations:\n");
-        for (auto loc : commit_cut) {
-            printf("%f %f\n", loc.first, loc.second);
-        }
-        auto goals =
-            client.call("get_goals", 1)
-                .as<std::vector<std::vector<std::tuple<int, int, double>>>>();
-        printf("Goals:\n");
-        for (auto goal : goals) {
-            printf("%d %d\n", std::get<0>(goal[0]), std::get<1>(goal[0]));
-        }
-        if (commit_cut.empty() or goals.empty()) {
+        string result_message = client.call("get_location", 5).as<string>();
+        // printf("Result message: %s\n", result_message.c_str());
+        auto result_json = json::parse(result_message);
+        if (!result_json["initialized"].get<bool>()) {
             printf("Planner not initialized! Retrying\n");
             sleep(1);
             continue;
         }
+        auto commit_cut = result_json["robots_location"]
+                              .get<std::vector<std::pair<double, double>>>();
+        auto new_finished_tasks_id =
+            result_json["new_finished_tasks"].get<std::set<int>>();
+
+        printf("Agent locations:\n");
+        for (auto loc : commit_cut) {
+            printf("%f %f\n", loc.first, loc.second);
+        }
+
+        printf("New finished tasks:\n");
+        for (auto task_id : new_finished_tasks_id) {
+            printf("%d,", task_id);
+        }
+        printf("\n");
+        // auto goals =
+        //     client.call("get_goals", 1)
+        //         .as<std::vector<std::vector<std::tuple<int, int,
+        //         double>>>>();
+        // printf("Goals:\n");
+        // for (auto goal : goals) {
+        //     printf("%d %d\n", std::get<0>(goal[0]), std::get<1>(goal[0]));
+        // }
+
         // TODO@jingtian: update this to get new instance
         Instance instance(vm["map"].as<string>());
-        instance.loadAgents(commit_cut, goals);
+        instance.task_id = task_id;
+        instance.setGoalLocations(prev_goal_locs);
+        instance.loadAgents(commit_cut, new_finished_tasks_id);
         PBS pbs(instance, vm["sipp"].as<bool>(), vm["screen"].as<int>());
         // run
         double runtime = 0;
@@ -101,18 +120,21 @@ int main(int argc, char** argv) {
             } else {
                 std::cerr << "No solution found!" << std::endl;
                 fail_count++;
-                if (fail_count > 3) {
-                    std::cerr
-                        << "Fail to find a solution after 3 attempts! Exiting."
-                        << std::endl;
+                if (fail_count > 100) {
+                    std::cerr << "Fail to find a solution after " << fail_count
+                              << " attempts! Exiting." << std::endl;
                     instance.saveInstance();
                     exit(-1);
                 }
             }
         }
         // instance.printMap();
+        // Update task id for the next iteration
+        task_id = instance.task_id;
+        prev_goal_locs = instance.getGoalTasks();
         sleep(1);
     }
 
+    cout << "Planner finished!" << endl;
     return 0;
 }

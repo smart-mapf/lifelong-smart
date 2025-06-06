@@ -43,15 +43,15 @@ def run_simulator(args):
 
 
 def main(
-    map_filepath: str = "supermarket.map",
-    scen_filepath: str = "supermarket.scen",
+    map_filepath: str = "maps/random-32-32-20.map",
+    scen_filepath: str = "scens/random-32-32-20-random-1.scen",
     num_agents: int = 32,
     headless: bool = False,
     argos_config_filepath: str = "output.argos",
     stats_name: str = "stats.csv",
     port_num: int = 8182,
     n_threads: int = 0,
-    sim_duration: int = 3600,
+    sim_duration: int = 36000 * 10,
 ):
     print(f"Map Name: {map_filepath}")
     print(f"Scenario Name: {scen_filepath}")

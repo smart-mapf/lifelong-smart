@@ -49,8 +49,6 @@ struct ADGNode {
     //    (outgoing edges) std::vector<int> incomingType2Edges; // Indices of
     //    incoming edges
 
-    int task_id = -1;  // Task ID associated with this action, -1 if no task
-
     int node_id;
     std::vector<std::shared_ptr<Edge>> incomeEdges;
     std::vector<std::shared_ptr<Edge>> outEdges;
@@ -147,7 +145,8 @@ public:
     //     return true;
     // }
 
-    bool updateFinishedTasks(std::shared_ptr<MobileTaskManager>& task_ptr);
+    // Return the set of finished tasks
+    set<int> updateFinishedTasks();
 
     void showGraph();
 
@@ -196,7 +195,7 @@ public:
 
 private:
     std::vector<std::vector<ADGNode>> graph;
-    std::vector<std::unordered_set<int>> finished_tasks_;
+    std::unordered_set<int> finished_tasks_;
     // std::vector<std::pair<double, double>> commitCut;
 
     int num_robots = 0;

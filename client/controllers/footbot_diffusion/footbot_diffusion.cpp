@@ -189,10 +189,11 @@ void CFootBotDiffusion::ControlStep() {
         if (is_port_open("127.0.0.1", port_number)) {
             client = std::make_shared<rpc::client>("127.0.0.1", port_number);
         } else {
-            // std::cout << "Failed to connect to server. Retrying..." << std::endl;
+            std::cout << "Failed to connect to server. Retrying..." << std::endl;
             return;
         }
         is_initialized = true;
+        std::cout << "Connected to server at port: " << port_number << std::endl;
         client->call("init", robot_id);
         return;
     }

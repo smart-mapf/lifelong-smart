@@ -40,8 +40,8 @@ public:
     
     // TODO@jingtian: move some of them into private
     std::shared_ptr<ADG> adg;
-    std::shared_ptr<MobileTaskManager> mobile_manager;
-    std::shared_ptr<PickTaskManager> picker_manager;
+    // std::shared_ptr<MobileTaskManager> mobile_manager;
+    // std::shared_ptr<PickTaskManager> picker_manager;
     bool flipped_coord = true;
 
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> curr_mobile_tasks;
