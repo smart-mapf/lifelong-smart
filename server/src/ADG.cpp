@@ -546,3 +546,160 @@ SIM_PLAN ADG::getPlan(int agent_id) {
     // enqueue_nodes_idx[agent_id].size() << std::endl;
     return sim_plan;
 }
+
+bool ADG::updateFinishedTasks(std::shared_ptr<MobileTaskManager>& task_ptr) {
+    if (curr_commit.empty() or graph.empty()) {
+        return false;
+    }
+    // finish_tasks.clear();
+    // finish_tasks.resize(num_robots);
+    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+        for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
+            // // Current ADGNode has a non-zero task_id, then we finish a task.
+            // int curr_task = graph[agent_id][node_id].task_id;
+            // if (curr_task > 0) {
+            //     this->finished_tasks_[agent_id].insert(curr_task);
+            // }
+            if (graph[agent_id][node_id].action.type == 'P') {
+                task_ptr->setTask(agent_id,
+                                  graph[agent_id][node_id].action.task_ptr,
+                                  DELIVER);
+            } else if (graph[agent_id][node_id].action.type == 'S') {
+                task_ptr->setTask(
+                    agent_id, graph[agent_id][node_id].action.task_ptr,
+                    DONE);
+            }
+        }
+    }
+    return true;
+}
+
+void ADG::showGraph() {
+    for (size_t i = 0; i < numRobots(); i++) {
+        printf("Path of agent: %lu\n", i);
+        int j = 0;
+        for (auto& action_node : graph[i]) {
+            auto action = action_node.action;
+            std::cout << "        {" << action.robot_id << ", " << action.time
+                      << ", " << std::fixed << std::setprecision(1)
+                      << action.orientation << ", '" << action.type << "', {"
+                      << action.start.first << ", " << action.start.second
+                      << "}, {" << action.goal.first << ", "
+                      << action.goal.second << "}, " << action.nodeID
+                      << "}. Node idx: " << action_node.node_id
+                      << ", idx in graph is:" << j << ", Out edges: ";
+            for (auto& tmp_out_edge : action_node.outEdges) {
+                std::cout << "agent " << tmp_out_edge->to_agent_id << ", node "
+                          << tmp_out_edge->to_node_id << ", status "
+                          << tmp_out_edge->valid << ";";
+            }
+            std::cout << "\tIn edges: ";
+            for (auto& tmp_in_edge : action_node.incomeEdges) {
+                std::cout << "agent " << tmp_in_edge->from_agent_id << ", node "
+                          << tmp_in_edge->from_node_id << ", status "
+                          << tmp_in_edge->valid << ";";
+            }
+            std::cout << std::endl;
+            j++;
+        }
+        printf("\n");
+    }
+}
+
+bool ADG::dfs(int agent_id, int node_id,
+              std::unordered_map<int, std::unordered_set<int>>& visited,
+              std::unordered_map<int, std::unordered_set<int>>& recStack,
+              const std::vector<std::vector<ADGNode>>& graph,
+              std::unordered_map<loopNode, loopNode, NodeHash>& parent,
+              std::vector<loopNode>& cycle_path) {
+    visited[agent_id].insert(node_id);
+    recStack[agent_id].insert(node_id);
+
+    const ADGNode& node = graph[agent_id][node_id];
+    for (const auto& edge : node.outEdges) {
+        if (!edge->valid)
+            continue;
+        int next_agent = edge->to_agent_id;
+        int next_node = edge->to_node_id;
+
+        if (visited[next_agent].count(next_node) == 0) {
+            parent[{next_agent, next_node}] = {agent_id, node_id};
+            if (dfs(next_agent, next_node, visited, recStack, graph, parent,
+                    cycle_path)) {
+                return true;
+            }
+        } else if (recStack[next_agent].count(next_node)) {
+            // Cycle detected!
+            // Reconstruct cycle path
+            loopNode current = {agent_id, node_id};
+            cycle_path.push_back({next_agent, next_node});
+            while (current != loopNode{next_agent, next_node}) {
+                cycle_path.push_back(current);
+                current = parent[current];
+            }
+            cycle_path.push_back({next_agent, next_node});  // close the loop
+            std::reverse(cycle_path.begin(), cycle_path.end());
+            return true;
+        }
+    }
+
+    recStack[agent_id].erase(node_id);
+    return false;
+}
+
+bool ADG::hasCycle() {
+    std::unordered_map<int, std::unordered_set<int>> visited;
+    std::unordered_map<int, std::unordered_set<int>> recStack;
+    std::unordered_map<loopNode, loopNode, NodeHash> parent;
+    std::vector<loopNode> cycle_path;
+
+    for (int agent_id = 0; agent_id < graph.size(); ++agent_id) {
+        for (const auto& node : graph[agent_id]) {
+            if (visited[agent_id].count(node.node_id) == 0) {
+                if (dfs(agent_id, node.node_id, visited, recStack, graph,
+                        parent, cycle_path)) {
+                    // Print the cycle path
+                    std::cout << "Cycle detected:\n";
+                    for (const auto& [aid, nid] : cycle_path) {
+                        std::cout << "(Agent " << aid << ", Node " << nid
+                                  << ") -> ";
+                    }
+                    std::cout << "(back to start)\n";
+                    return true;
+                }
+            }
+        }
+    }
+
+    std::cout << "No cycle detected.\n";
+    return false;
+}
+
+void ADG::printProgress() {
+    //        exit(0);
+    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+        std::cout << "Agent " << agent_id
+                  << ", ID: " << robotIDToStartIndex[agent_id]
+                  << " with plan size " << graph[agent_id].size() << ": ";
+        findConstraining(agent_id);
+        for (int i = 0; i <= finished_node_idx[agent_id]; i++) {
+            std::cout << "#";
+        }
+        for (auto elem : enqueue_nodes_idx[agent_id]) {
+            std::cout << '0';
+        }
+        int unstart;
+        if (enqueue_nodes_idx[agent_id].empty()) {
+            unstart = finished_node_idx[agent_id];
+        } else {
+            unstart = enqueue_nodes_idx[agent_id].back();
+        }
+        for (int i = unstart + 1; i < graph[agent_id].size(); i++) {
+            std::cout << "*";
+        }
+        std::cout << std::endl;
+    }
+    // std::cerr << "Robot ID of 13 is: " << robotIDToStartIndex[13] <<
+    // std::endl;
+    std::cout << std::endl;
+}

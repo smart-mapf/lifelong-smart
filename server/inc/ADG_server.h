@@ -65,19 +65,19 @@ public:
     int transport_capacity = 0;
 
     bool debug_set_flag = false;
-    int total_confirmed_picks = 0;
-    std::vector<int> confirmed_picks_by_genre;
-    std::vector<int> genre_finish_steps;
+    // int total_confirmed_picks = 0;
+    // std::vector<int> confirmed_picks_by_genre;
+    // std::vector<int> genre_finish_steps;
 
-    double min_nonzero() {
-        int min_val = std::numeric_limits<int>::max();
-        for (int v : genre_finish_steps) {
-            if (v != 0.0 && v < min_val) {
-                min_val = v;
-            }
-        }
-        return min_val == std::numeric_limits<int>::max() ? 0.0 : min_val; // or throw if all are 0
-    }
+    // double min_nonzero() {
+    //     int min_val = std::numeric_limits<int>::max();
+    //     for (int v : genre_finish_steps) {
+    //         if (v != 0.0 && v < min_val) {
+    //             min_val = v;
+    //         }
+    //     }
+    //     return min_val == std::numeric_limits<int>::max() ? 0.0 : min_val; // or throw if all are 0
+    // }
 
 private:
 //    int type1EdgeCount = 0;

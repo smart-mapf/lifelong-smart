@@ -301,7 +301,8 @@ void CFootBotDiffusion::ControlStep() {
     }
 
     step_count_++;
-    if (step_count_ >= TOTAL_SIM_STEP) {
+    // std::cout << step_count_ << std::endl;
+    if (step_count_ >= total_sim_duration) {
         printf("Call close server\n");
         client->async_call("closeServer");
         exit(0);

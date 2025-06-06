@@ -1,7 +1,8 @@
-import xml.etree.ElementTree as ET
-from xml.dom import minidom
-import argparse
 import os
+import xml.etree.ElementTree as ET
+
+from xml.dom import minidom
+from typing import List, Tuple
 
 # def prettify(elem, level=0):
 #     """Return a pretty-printed XML string for the Element."""
@@ -21,6 +22,7 @@ import os
 #             elem.tail = newline + indent * level
 obstacles = ['@', 'P']
 stations = ['S', 'T']
+
 
 def prettify(elem):
     """Return a pretty-printed XML string for the Element."""
@@ -56,16 +58,35 @@ def read_scen(file_path):
     return column_data, num_agent
 
 
-def create_Argos(map_data,
-                 output_file_path,
-                 width,
-                 height,
-                 robot_init_pos,
-                 curr_num_agent,
-                 port_num,
-                 n_threads,
-                 visualization=False,
-                 num_pickers = -1):
+def create_Argos(map_data: List[str],
+                 output_file_path: str,
+                 width: int,
+                 height: int,
+                 robot_init_pos: List[Tuple[str, str]],
+                 curr_num_agent: int,
+                 port_num: int,
+                 n_threads: int,
+                 visualization: bool = False,
+                 sim_duration: int = 1200):
+    """Create an Argos configuration file based on the provided map data and robot initial positions.
+
+    Args:
+        map_data (list): grid map in list of str format, where each string
+            represents a row of the map.
+        output_file_path (str): filepath to store the argos config file.
+        width (float): width of the map.
+        height (float): height of the map.
+        robot_init_pos (list): initial position of the robots in the map.
+        curr_num_agent (int): number of robots.
+        port_num (int): port number for the server/client communication.
+        n_threads (int): number of threads for the simulation. 0 for all
+            threads.
+        visualization (bool, optional): whether run with visualization.
+            Defaults to False.
+        sim_duration (int, optional): duration of the simulation in number of
+            ticks. Defaults to 1200. With a tick rate of 10 (ticks per second),
+            this is 120 seconds.
+    """
     # Create the root element
     argos_config = ET.Element("argos-configuration")
 
@@ -77,11 +98,12 @@ def create_Argos(map_data,
 
     # Experiment configuration
     if visualization:
-        experiment = ET.SubElement(framework,
-                                   "experiment",
-                                   length="0",
-                                   ticks_per_second="10", # 10 update per simulation second
-                                   random_seed="124")
+        experiment = ET.SubElement(
+            framework,
+            "experiment",
+            length="0",
+            ticks_per_second="10",  # 10 update per simulation second
+            random_seed="124")
     else:
         experiment = ET.SubElement(framework,
                                    "experiment",
@@ -117,16 +139,18 @@ def create_Argos(map_data,
                                 implementation="default")
 
     # Parameters
-    params = ET.SubElement(footbot_controller,
-                           "params",
-                           alpha="45.0",
-                           omega="45.0",
-                          #  alpha="7.5",
-                          #  omega="3.0",
-                           velocity="200",
-                           acceleration="200.0",
-                           portNumber=f"{port_num}",
-                           outputDir=f"metaData{port_num}/")
+    params = ET.SubElement(
+        footbot_controller,
+        "params",
+        alpha="45.0",
+        omega="45.0",
+        #  alpha="7.5",
+        #  omega="3.0",
+        velocity="200",
+        acceleration="200.0",
+        portNumber=f"{port_num}",
+        outputDir=f"metaData{port_num}/",
+        simDuration=f"{sim_duration}")
     # params = ET.SubElement(footbot_controller,
     #                        "params",
     #                        alpha="7.5",
@@ -137,41 +161,32 @@ def create_Argos(map_data,
     #                        outputDir=f"metaData{port_num}/")
 
     # Loop functions
-    loop_functions = ET.SubElement(argos_config,
-                          "loop_functions",
-                          library="build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions",
-                          label="trajectory_loop_functions")
-    
+    loop_functions = ET.SubElement(
+        argos_config,
+        "loop_functions",
+        library=
+        "build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions",
+        label="trajectory_loop_functions")
+
     station_count = 0
     for y, row in enumerate(map_data):
         for x, cell in enumerate(row):
             if cell in stations:
                 # Creating four walls for each box
                 station = ET.SubElement(loop_functions,
-                                    f"station{station_count}",
-                                    x = f"{-y}",
-                                    y = f"{-x}",
-                                    z = "0")
+                                        f"station{station_count}",
+                                        x=f"{-y}",
+                                        y=f"{-x}",
+                                        z="0")
                 station_count += 1
-    
-    ET.SubElement(loop_functions,
-                  f"num_stations",
-                  value = f"{station_count}")
-    
-    ET.SubElement(loop_functions,
-                  f"port_number",
-                  value = f"{port_num}")
-    
-    if num_pickers == -1:
-        # num_pickers = curr_num_agent//2
-        # num_pickers = max(12, num_pickers - num_pickers%12)
-        # TODO@jingitan: Change this according to number of mobile robots
-        num_pickers = 12
 
-    ET.SubElement(loop_functions,
-                  f"num_pickers",
-                  value = f"{num_pickers}")
-    
+    ET.SubElement(loop_functions, f"num_stations", value=f"{station_count}")
+
+    ET.SubElement(loop_functions, f"port_number", value=f"{port_num}")
+
+    # TODO: remove the usage of num_pickers elsewhere
+    ET.SubElement(loop_functions, f"num_pickers", value=f"{12}")
+
     map_center_x = -height / 2 + 0.5
     map_center_y = -width / 2 + 0.5
     arena = ET.SubElement(argos_config,
@@ -179,20 +194,6 @@ def create_Argos(map_data,
                           size=f"{height},{width},1",
                           center=f"{map_center_x},{map_center_y},0")
 
-    # arena.text = "\n  "
-    # Adding new line
-    #     <box id="wall_north" size="8,0.1,0.5" movable="false">
-    #   <body position="-3.5,0.5,0" orientation="0,0,0" />
-    # </box>
-    # <box id="wall_east" size="8,0.1,0.5" movable="false">
-    #   <body position="-3.5,-7.5,0" orientation="0,0,0" />
-    # </box>
-    # <box id="wall_west" size="0.1,8,0.5" movable="false">
-    #   <body position="0.5,-3.5,0" orientation="0,0,0" />
-    # </box>
-    # <box id="wall_sourth" size="0.1,8,0.5" movable="false">
-    #   <body position="-7.5,-3.5,0" orientation="0,0,0" />
-    # </box>
     wall_thick = 0.05
     wall_height = 0.5
     y_offset = 0.0
@@ -203,40 +204,39 @@ def create_Argos(map_data,
                         size=f"{wall_thick},{width},{wall_height}",
                         movable="false")
     body = ET.SubElement(box,
-                          "body",
-                          position=f"0.5,{map_center_y},{y_offset}",
-                          orientation="0,0,0")
-    
+                         "body",
+                         position=f"0.5,{map_center_y},{y_offset}",
+                         orientation="0,0,0")
+
     box = ET.SubElement(arena,
                         "box",
                         id=f"wall_west",
                         size=f"{height},{wall_thick},{wall_height}",
                         movable="false")
     body = ET.SubElement(box,
-                          "body",
-                          position=f"{map_center_x},{-width+0.5},{y_offset}",
-                          orientation="0,0,0")
-    
+                         "body",
+                         position=f"{map_center_x},{-width+0.5},{y_offset}",
+                         orientation="0,0,0")
+
     box = ET.SubElement(arena,
                         "box",
                         id=f"wall_south",
                         size=f"{wall_thick},{width},{wall_height}",
                         movable="false")
     body = ET.SubElement(box,
-                          "body",
-                          position=f"{-height+0.5},{map_center_y},{y_offset}",
-                          orientation="0,0,0")
-    
+                         "body",
+                         position=f"{-height+0.5},{map_center_y},{y_offset}",
+                         orientation="0,0,0")
+
     box = ET.SubElement(arena,
                         "box",
                         id=f"wall_east",
                         size=f"{height},{wall_thick},{wall_height}",
                         movable="false")
     body = ET.SubElement(box,
-                          "body",
-                          position=f"{map_center_x},0.5,{y_offset}",
-                          orientation="0,0,0")
-    
+                         "body",
+                         position=f"{map_center_x},0.5,{y_offset}",
+                         orientation="0,0,0")
 
     for y, row in enumerate(map_data):
         for x, cell in enumerate(row):
@@ -267,30 +267,6 @@ def create_Argos(map_data,
         if agent_count >= curr_num_agent:
             break
 
-    #############################################################################################
-    # # Arena configuration
-    # arena = ET.SubElement(argos_config, "arena", size="8,8,1", center="-3.5,-3.5,0")
-    #
-    # # Foot-bots within the arena
-    # footbot_positions = [
-    #     {"id": "fb_1_4", "position": "-4,-1,0"},
-    #     {"id": "fb_1_0", "position": "0,-1,0"},
-    #     {"id": "fb_1_6", "position": "-6,-1,0"},
-    #     {"id": "fb_4_6", "position": "-6,-4,0"},
-    #     {"id": "fb_7_2", "position": "-2,-7,0"},
-    #     {"id": "fb_0_1", "position": "-1,0,0"},
-    #     {"id": "fb_7_6", "position": "-6,-7,0"},
-    #     {"id": "fb_7_7", "position": "-7,-7,0"},
-    #     {"id": "fb_0_4", "position": "-4,0,0"},
-    #     {"id": "fb_6_0", "position": "0,-6,0"}
-    # ]
-    #
-    # for fb in footbot_positions:
-    #     footbot = ET.SubElement(arena, "foot-bot", id=fb["id"])
-    #     body = ET.SubElement(footbot, "body", position=fb["position"], orientation="0,0,0")
-    #     controller = ET.SubElement(footbot, "controller", config="fdc")
-    #############################################################################################
-
     # Physics engines
     physics_engines = ET.SubElement(argos_config, "physics_engines")
     dynamics2d = ET.SubElement(physics_engines, "dynamics2d", id="dyn2d")
@@ -303,7 +279,12 @@ def create_Argos(map_data,
         # qt_opengl = ET.SubElement(visualization, "qt-opengl", autoplay="true")
         qt_opengl = ET.SubElement(visualization, "qt-opengl")
 
-        goal_loc = ET.SubElement(qt_opengl, "user_functions", library="build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions", label="trajectory_qtuser_functions")
+        goal_loc = ET.SubElement(
+            qt_opengl,
+            "user_functions",
+            library=
+            "build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions",
+            label="trajectory_qtuser_functions")
 
         # autoplay = ET.SubElement(qt_opengl, "autoplay",
         #                           autoplay="true")

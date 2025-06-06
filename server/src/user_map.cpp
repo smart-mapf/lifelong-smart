@@ -46,33 +46,39 @@ bool userMap::readMap(std::string& map_fname) {
         for (int j = 0; j < num_of_cols; j++) {
             // true for a free cell, false otherwise
             my_map[i][j] = (line[j] == '.');
-            if (line[j] == 'T') {
-                // If station
-                my_map[i][j] = true;
-                all_stations.emplace_back(std::make_shared<Station>(i, j, 0, station_id));
-                station_id++;
-            } else if (line[j] == 'P') {
-                // If Pods
-                std::shared_ptr<Pod> new_pod = std::make_shared<Pod>(i, j, 0, pod_id);
-                all_pods.push_back(new_pod);
-                int genre_id = (i/8) * 2;
-                if (i % 8 == 3 or i % 8 == 4) {
-                    genre_id += 1;
-                }
-                pods_by_genre[genre_id].push_back(new_pod);
-                pod_id++;
-            } else if (line[j] == '.' and j <= 80) {
-                // If empty
+            if (my_map[i][j]) {
+                // If free cell
                 free_cells.emplace_back(i, j);
-
             }
+
+
+            // if (line[j] == 'T') {
+            //     // If station
+            //     my_map[i][j] = true;
+            //     all_stations.emplace_back(std::make_shared<Station>(i, j, 0, station_id));
+            //     station_id++;
+            // } else if (line[j] == 'P') {
+            //     // If Pods
+            //     std::shared_ptr<Pod> new_pod = std::make_shared<Pod>(i, j, 0, pod_id);
+            //     all_pods.push_back(new_pod);
+            //     int genre_id = (i/8) * 2;
+            //     if (i % 8 == 3 or i % 8 == 4) {
+            //         genre_id += 1;
+            //     }
+            //     pods_by_genre[genre_id].push_back(new_pod);
+            //     pod_id++;
+            // } else if (line[j] == '.' and j <= 80) {
+            //     // If empty
+            //     free_cells.emplace_back(i, j);
+
+            // }
 
         }
     }
     myfile.close();
-    for (auto& station: all_stations) {
-        std::cout << "The station x is: "
-        << station->x << " the station y is: " << station->y << std::endl;
-    }
+    // for (auto& station: all_stations) {
+    //     std::cout << "The station x is: "
+    //     << station->x << " the station y is: " << station->y << std::endl;
+    // }
     return true;
 }

@@ -13,12 +13,12 @@ ADG_Server::ADG_Server(int num_robots, int num_pickers,
       curr_scen_name(scen_name),
       curr_method_name(method_name) {
     adg = std::make_shared<ADG>(num_robots);
-    confirmed_picks_by_genre.resize(NUM_GENRE, 0);
-    genre_finish_steps.resize(NUM_GENRE, 0);
+    // confirmed_picks_by_genre.resize(NUM_GENRE, 0);
+    // genre_finish_steps.resize(NUM_GENRE, 0);
     mobile_manager =
         std::make_shared<MobileTaskManager>(num_robots, num_pickers, map_name);
-    picker_manager =
-        std::make_shared<PickTaskManager>(num_pickers, NUM_GENRE, map_name);
+    // picker_manager =
+    //     std::make_shared<PickTaskManager>(num_pickers, NUM_GENRE, map_name);
 
     output_filename = target_output_filename;
     numRobots = adg->numRobots();
@@ -38,22 +38,20 @@ void ADG_Server::saveStats(int selector_wait_t, int capacity) {
     infile.close();
     if (!exist) {
         ofstream addHeads(output_filename);
-        addHeads << "Average Assignment Duration,Min Assignment Duration,Max "
-                    "Assignment Duration,Selector Wait Time,Transport "
-                    "Capacity,number of agent"
-                 << endl;
+        addHeads << "Transport Capacity,number of agent" << endl;
         addHeads.close();
     }
     ofstream stats(output_filename, std::ios::app);
-    stats << std::accumulate(genre_finish_steps.begin(),
-                             genre_finish_steps.end(), 0.0) /
-                 (8 * 10.0)
-          << "," << min_nonzero() / 10.0 << ","
-          << *(std::max_element(genre_finish_steps.begin(),
-                                genre_finish_steps.end())) /
-                 10.0
-          << "," << selector_wait_t << "," << capacity << "," << numRobots
-          << endl;
+    stats
+        //   << std::accumulate(genre_finish_steps.begin(),
+        //                      genre_finish_steps.end(), 0.0) /
+        //          (8 * 10.0)
+        //   << "," << min_nonzero() / 10.0 << ","
+        //   << *(std::max_element(genre_finish_steps.begin(),
+        //                         genre_finish_steps.end())) /
+        //          10.0
+        //   << "," << selector_wait_t << ","
+        << capacity << "," << numRobots << endl;
     stats.close();
     std::cout << "Statistics written to " << output_filename << std::endl;
 }
@@ -155,49 +153,51 @@ void addNewPlan(
     // Infering post-path action from task assignment. Can be deleted if the
     // same actions can be inferred from paths
 
-    for (int i = 0; i < static_cast<int>(plans.size()); i++) {
-        if (server_ptr->current_robots_goal_type[i] == NONE) {
-            std::cout << "No additional action with goal status: "
-                      << server_ptr->current_robots_goal_type[i] << std::endl;
-            continue;
-        }
-        Action tmp_act;
-        tmp_act.robot_id = i;
-        // @jingtian Note: change action start time, to be consistent with the
-        // continuous case
-        if (plans[i].empty()) {
-            tmp_act.time = 0;
-            tmp_act.orientation = server_ptr->adg->getRobotCurrOrient(i);
-            tmp_act.nodeID = 0;
-        } else {
-            tmp_act.time = plans[i].back().time + 1;
-            tmp_act.orientation = plans[i].back().orientation;
-            tmp_act.nodeID = plans[i].back().nodeID + 1;
-        }
-        std::pair<int, int> tmp_loc =
-            server_ptr->curr_mobile_tasks[i].front()->get_goal_position();
+    // for (int i = 0; i < static_cast<int>(plans.size()); i++) {
+    //     if (server_ptr->current_robots_goal_type[i] == NONE) {
+    //         std::cout << "No additional action with goal status: "
+    //                   << server_ptr->current_robots_goal_type[i] <<
+    //                   std::endl;
+    //         continue;
+    //     }
+    //     Action tmp_act;
+    //     tmp_act.robot_id = i;
+    //     // @jingtian Note: change action start time, to be consistent with
+    //     the
+    //     // continuous case
+    //     if (plans[i].empty()) {
+    //         tmp_act.time = 0;
+    //         tmp_act.orientation = server_ptr->adg->getRobotCurrOrient(i);
+    //         tmp_act.nodeID = 0;
+    //     } else {
+    //         tmp_act.time = plans[i].back().time + 1;
+    //         tmp_act.orientation = plans[i].back().orientation;
+    //         tmp_act.nodeID = plans[i].back().nodeID + 1;
+    //     }
+    //     std::pair<int, int> tmp_loc =
+    //         server_ptr->curr_mobile_tasks[i].front()->get_goal_position();
 
-        tmp_act.start = tmp_loc;
-        tmp_act.goal = tmp_loc;
-        if (server_ptr->flipped_coord) {
-            double tmp = tmp_act.goal.first;
-            tmp_act.goal.first = tmp_act.goal.second;
-            tmp_act.goal.second = tmp;
-            std::swap(tmp_act.start.first, tmp_act.start.second);
-        }
+    //     tmp_act.start = tmp_loc;
+    //     tmp_act.goal = tmp_loc;
+    //     if (server_ptr->flipped_coord) {
+    //         double tmp = tmp_act.goal.first;
+    //         tmp_act.goal.first = tmp_act.goal.second;
+    //         tmp_act.goal.second = tmp;
+    //         std::swap(tmp_act.start.first, tmp_act.start.second);
+    //     }
 
-        if (server_ptr->current_robots_goal_type[i] == DELIVER) {
-            // If station
-            tmp_act.type = 'S';
-        } else if (server_ptr->current_robots_goal_type[i] == PICK) {
-            tmp_act.type = 'P';
-        } else {
-            continue;
-        }
-        tmp_act.task_ptr = server_ptr->curr_mobile_tasks[i].front();
-        plans[i].push_back(tmp_act);
-    }
-    showActionsPlan(plans);
+    //     if (server_ptr->current_robots_goal_type[i] == DELIVER) {
+    //         // If station
+    //         tmp_act.type = 'S';
+    //     } else if (server_ptr->current_robots_goal_type[i] == PICK) {
+    //         tmp_act.type = 'P';
+    //     } else {
+    //         continue;
+    //     }
+    //     tmp_act.task_ptr = server_ptr->curr_mobile_tasks[i].front();
+    //     plans[i].push_back(tmp_act);
+    // }
+    // showActionsPlan(plans);
     // #####################################################################
     server_ptr->adg->addMAPFPlan(plans);
     // server_ptr->adg->showGraph();
@@ -209,8 +209,9 @@ void addNewPlan(
     // }
     std::cout << "Total finished tasks: "
               << server_ptr->mobile_manager->total_finished_tasks_ << std::endl;
-    std::cout << "Total confirmed picks: " << server_ptr->total_confirmed_picks
-              << std::endl;
+    // std::cout << "Total confirmed picks: " <<
+    // server_ptr->total_confirmed_picks
+    //           << std::endl;
 
 #ifdef DEBUG
     std::cout << "Finish add plan" << std::endl;
@@ -463,19 +464,19 @@ std::vector<std::vector<std::tuple<int, int, double>>> getGoals(
 
 typedef std::tuple<int, int, int> PickData;
 
-std::vector<PickData> getPickerTask() {
-    std::lock_guard<std::mutex> guard(globalMutex);
-    std::cout << "Request new picker task!" << std::endl;
-    std::vector<std::shared_ptr<PickerTask>> all_tasks;
-    server_ptr->picker_manager->getTask(all_tasks);
-    assert(not all_tasks.empty());
-    std::vector<PickData> all_pick_tasks;
-    for (auto& task : all_tasks) {
-        all_pick_tasks.emplace_back(task->obj_position.first,
-                                    task->obj_position.second, task->id);
-    }
-    return all_pick_tasks;
-}
+// std::vector<PickData> getPickerTask() {
+//     std::lock_guard<std::mutex> guard(globalMutex);
+//     std::cout << "Request new picker task!" << std::endl;
+//     std::vector<std::shared_ptr<PickerTask>> all_tasks;
+//     server_ptr->picker_manager->getTask(all_tasks);
+//     assert(not all_tasks.empty());
+//     std::vector<PickData> all_pick_tasks;
+//     for (auto& task : all_tasks) {
+//         all_pick_tasks.emplace_back(task->obj_position.first,
+//                                     task->obj_position.second, task->id);
+//     }
+//     return all_pick_tasks;
+// }
 
 int getGenreID(int agent_id) {
     int genre_id = 0;
@@ -500,48 +501,49 @@ void closeServer(rpc::server& srv) {
     srv.stop();
 }
 
-bool confirmPickerTask(int agent_id, int task_id, int sim_step) {
-    assert(task_id != -1);
-    std::lock_guard<std::mutex> guard(globalMutex);
-    // std::cout << "send confirmation to agent " << agent_id << " with task id
-    // " << task_id << std::endl;
-    int genre_id;
-    bool status =
-        server_ptr->picker_manager->confirmTask(agent_id, task_id, genre_id);
-    if (status) {
-        server_ptr->total_confirmed_picks++;
-        server_ptr->confirmed_picks_by_genre[genre_id] += 1;
-        if (server_ptr->confirmed_picks_by_genre[genre_id] >= MAX_TASKS) {
-            server_ptr->genre_finish_steps[genre_id] = sim_step;
-        }
-        if (server_ptr->total_confirmed_picks >= 8 * MAX_TASKS) {
-            std::cout << "Total finished tasks: "
-                      << server_ptr->mobile_manager->total_finished_tasks_
-                      << std::endl;
-            std::cout << "Total confirmed picks: "
-                      << server_ptr->total_confirmed_picks << std::endl;
-            for (int i = 0; i < NUM_GENRE; i++) {
-                std::cout << "Finish step for genre is: "
-                          << server_ptr->genre_finish_steps[i] / 10.0
-                          << ", total tasks finished is: "
-                          << server_ptr->confirmed_picks_by_genre[i]
-                          << std::endl;
-            }
-            return true;
-        }
-    }
-    return false;
-}
+// bool confirmPickerTask(int agent_id, int task_id, int sim_step) {
+//     assert(task_id != -1);
+//     std::lock_guard<std::mutex> guard(globalMutex);
+//     // std::cout << "send confirmation to agent " << agent_id << " with task
+//     id
+//     // " << task_id << std::endl;
+//     int genre_id;
+//     bool status =
+//         server_ptr->picker_manager->confirmTask(agent_id, task_id, genre_id);
+//     if (status) {
+//         server_ptr->total_confirmed_picks++;
+//         server_ptr->confirmed_picks_by_genre[genre_id] += 1;
+//         if (server_ptr->confirmed_picks_by_genre[genre_id] >= MAX_TASKS) {
+//             server_ptr->genre_finish_steps[genre_id] = sim_step;
+//         }
+//         if (server_ptr->total_confirmed_picks >= 8 * MAX_TASKS) {
+//             std::cout << "Total finished tasks: "
+//                       << server_ptr->mobile_manager->total_finished_tasks_
+//                       << std::endl;
+//             std::cout << "Total confirmed picks: "
+//                       << server_ptr->total_confirmed_picks << std::endl;
+//             for (int i = 0; i < NUM_GENRE; i++) {
+//                 std::cout << "Finish step for genre is: "
+//                           << server_ptr->genre_finish_steps[i] / 10.0
+//                           << ", total tasks finished is: "
+//                           << server_ptr->confirmed_picks_by_genre[i]
+//                           << std::endl;
+//             }
+//             return true;
+//         }
+//     }
+//     return false;
+// }
 
-int requestMobileTask(int picker_id, std::pair<int, int> target_pos) {
-    std::lock_guard<std::mutex> guard(globalMutex);
-    std::cout << "Request mobile task! " << "with x: " << target_pos.first
-              << ", y: " << target_pos.second << std::endl;
-    int new_task_id = server_ptr->mobile_manager->insertPickerTask(
-        picker_id, target_pos.first, target_pos.second);
-    std::cout << "New mobile task id: " << new_task_id << std::endl;
-    return new_task_id;
-}
+// int requestMobileTask(int picker_id, std::pair<int, int> target_pos) {
+//     std::lock_guard<std::mutex> guard(globalMutex);
+//     std::cout << "Request mobile task! " << "with x: " << target_pos.first
+//               << ", y: " << target_pos.second << std::endl;
+//     int new_task_id = server_ptr->mobile_manager->insertPickerTask(
+//         picker_id, target_pos.first, target_pos.second);
+//     std::cout << "New mobile task id: " << new_task_id << std::endl;
+//     return new_task_id;
+// }
 
 // void confirmMobileTask();
 
@@ -585,25 +587,20 @@ int main(int argc, char** argv) {
     namespace po = boost::program_options;
     // Declare the supported options.
     po::options_description desc("Allowed options");
-    desc.add_options()("help", "produce help message")
-        // params for the input instance and experiment settings
-        ("path_file,p", po::value<string>(), "input file for path")(
-            "num_robots,k", po::value<int>()->required(),
-            "number of robots in server")("num_pickers",
-                                          po::value<int>()->required(),
-                                          "number of picker robots in server")(
-            "port_number,n", po::value<int>()->default_value(8080),
-            "rpc port number")("output_file,o",
-                               po::value<string>()->default_value("stats.csv"),
-                               "output statistic filename")(
-            "map_file,m", po::value<string>()->default_value("empty-8-8.map"),
-            "map filename")(
-            "scen_file,s",
-            po::value<string>()->default_value("empty-8-8-random-1"),
-            "scen filename")("method_name",
-                             po::value<string>()->default_value("PBS"),
-                             "method we used");
-
+    // clang-format off
+    desc.add_options()
+            ("help", "produce help message")
+            // params for the input instance and experiment settings
+            ("path_file,p", po::value<string>(), "input file for path")
+            ("num_robots,k", po::value<int>()->required(), "number of robots in server")
+            ("num_pickers", po::value<int>()->required(), "number of picker robots in server")
+            ("port_number,n", po::value<int>()->default_value(8080), "rpc port number")
+            ("output_file,o", po::value<string>()->default_value("stats.csv"), "output statistic filename")
+            ("map_file,m", po::value<string>()->default_value("empty-8-8.map"), "map filename")
+            ("scen_file,s", po::value<string>()->default_value("empty-8-8-random-1"), "scen filename")
+            ("method_name", po::value<string>()->default_value("PBS"), "method we used")
+            ;
+    // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
@@ -638,9 +635,9 @@ int main(int argc, char** argv) {
     srv.bind("update_finish_agent", &updateSimFinishTime);
 
     // functions with picker
-    srv.bind("get_picker_task", &getPickerTask);
-    srv.bind("confirm_picker_task", &confirmPickerTask);
-    srv.bind("request_mobile_robot", &requestMobileTask);
+    // srv.bind("get_picker_task", &getPickerTask);
+    // srv.bind("confirm_picker_task", &confirmPickerTask);
+    // srv.bind("request_mobile_robot", &requestMobileTask);
 
     // srv.bind("closeServer", [&srv](int wait_t, int capacity) {
     //     closeServer(srv, wait_t, capacity);

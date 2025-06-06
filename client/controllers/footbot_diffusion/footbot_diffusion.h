@@ -51,7 +51,7 @@
 #include <chrono>
 #include <boost/asio.hpp>
 
-#define TOTAL_SIM_STEP 1000
+// #define TOTAL_SIM_STEP 1000
 #define EPS 0.03f
 #define DELIVER_T 20
 #define PICKER_T 60
