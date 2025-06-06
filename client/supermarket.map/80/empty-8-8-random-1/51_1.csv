@@ -1,7 +1,0 @@
-  Robot ID  Current Position X  Current Position Y       Current Angle        Queue Length       Left Velocity      Right Velocity               Count            Sim Time
-      51_1                  51                   1                   0                   0                   0                   0                 200                  20
-      51_1                  51                   1                   0                   0                   0                   0                 400                  40
-      51_1                  51                   1                   0                   0                   0                   0                 600                  60
-      51_1              50.998              1.4824             180.298                   0                   0                   0                 800                  80
-      51_1              50.998              1.4824             180.298                   0                   0                   0                1000                 100
-      51_1              50.998              1.4824             180.298                   0                   0                   0                1200                 120

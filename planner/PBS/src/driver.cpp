@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
             } else {
                 std::cerr << "No solution found!" << std::endl;
                 fail_count++;
-                if (fail_count > 100) {
+                if (fail_count > 1000) {
                     std::cerr << "Fail to find a solution after " << fail_count
                               << " attempts! Exiting." << std::endl;
                     instance.saveInstance();
@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
         // Update task id for the next iteration
         task_id = instance.task_id;
         prev_goal_locs = instance.getGoalTasks();
-        sleep(1);
+        sleep(0.1);
     }
 
     cout << "Planner finished!" << endl;
