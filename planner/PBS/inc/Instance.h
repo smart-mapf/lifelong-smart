@@ -114,6 +114,8 @@ private:
     vector<int> free_locations; // locations that are not obstacles
 
     bool loadMap();
+    bool loadMapFromBench();
+    bool loadMapFromJson();
     void saveMap() const;
     //
     // bool loadAgents();

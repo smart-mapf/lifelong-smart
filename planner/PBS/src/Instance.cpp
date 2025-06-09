@@ -1,9 +1,8 @@
 #include "Instance.h"
 
 #include <algorithm>  // std::shuffle
-#include <boost/tokenizer.hpp>
-#include <chrono>  // std::chrono::system_clock
-#include <random>  // std::default_random_engine
+#include <chrono>     // std::chrono::system_clock
+#include <random>     // std::default_random_engine
 
 int RANDOM_WALK_STEPS = 100000;
 
@@ -152,9 +151,7 @@ bool Instance::isConnected(int start, int goal) {
     return false;
 }
 
-bool Instance::loadMap() {
-    using namespace boost;
-    using namespace std;
+bool Instance::loadMapFromBench() {
     ifstream myfile(map_fname.c_str());
     if (!myfile.is_open())
         return false;
@@ -209,6 +206,50 @@ bool Instance::loadMap() {
     return true;
 }
 
+bool Instance::loadMapFromJson() {
+    ifstream myfile(map_fname.c_str());
+    if (!myfile.is_open()) {
+        cerr << "Failed to open map file: " << map_fname << endl;
+        return false;
+    }
+
+    json j;
+    myfile >> j;
+
+    this->num_of_rows = j["n_row"];
+    this->num_of_cols = j["n_col"];
+    this->map_size = num_of_rows * num_of_cols;
+    this->my_map.resize(map_size, false);
+    this->free_locations.clear();
+
+    for (int i = 0; i < this->num_of_rows; i++) {
+        string line = j["layout"][i];
+        for (int j = 0; j < this->num_of_cols; j++) {
+            this->my_map[linearizeCoordinate(i, j)] =
+                (line[j] != '.' and line[j] != 'T');
+            if (not this->my_map[linearizeCoordinate(i, j)]) {
+                // if it is not an obstacle, add it to free locations
+                free_locations.push_back(linearizeCoordinate(i, j));
+            }
+        }
+    }
+
+    myfile.close();
+    return true;
+}
+
+bool Instance::loadMap() {
+    boost::filesystem::path map_path(map_fname);
+    if (map_path.extension().string() == ".map") {
+        return loadMapFromBench();
+    } else if (map_path.extension().string() == ".json") {
+        return loadMapFromJson();
+    } else {
+        cerr << "Unknown map file format: " << map_fname << endl;
+        exit(-1);
+    }
+}
+
 void Instance::printMap() const {
     // std::cout << "num of rows: " << num_of_rows << " num of cols: " <<
     // num_of_cols << std::endl;
@@ -251,9 +292,6 @@ void Instance::saveMap() const {
 
 bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
                           set<int> finished_tasks_id) {
-    using namespace std;
-    using namespace boost;
-
     num_of_agents = static_cast<int>(start_locs.size());
     if (num_of_agents == 0) {
         cerr << "The number of agents should be larger than 0" << endl;

@@ -174,11 +174,16 @@ void updateStats(double total_wait_time, int capacity) {
 }
 
 void closeServer(rpc::server& srv) {
+    std::lock_guard<std::mutex> guard(globalMutex);
+    std::cout << "############################################################"
+              << std::endl;
     std::cout << "close server called" << std::endl;
     std::cout << "Num of finished tasks: "
               << server_ptr->adg->getNumFinishedTasks() << std::endl;
     server_ptr->saveStats(server_ptr->total_wait_time,
                           server_ptr->transport_capacity);
+    std::cout << "############################################################"
+              << std::endl;
     srv.stop();
 }
 

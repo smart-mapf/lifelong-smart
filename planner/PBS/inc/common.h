@@ -12,12 +12,16 @@
 #include <boost/heap/pairing_heap.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/tokenizer.hpp>
 #include <json.hpp>
 
 using boost::heap::pairing_heap;
 using boost::heap::compare;
 using boost::unordered_map;
 using boost::unordered_set;
+using boost::tokenizer;
+using boost::char_separator;
 using std::vector;
 using std::list;
 using std::set;
@@ -39,6 +43,8 @@ using std::ofstream;
 using std::cerr;
 using std::string;
 using std::stack;
+using std::ifstream;
+using std::getline;
 
 using json = nlohmann::json;
 

@@ -6,22 +6,6 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from typing import List, Tuple
 
-# def prettify(elem, level=0):
-#     """Return a pretty-printed XML string for the Element."""
-#     indent = "  "
-#     newline = "\n"
-#     if len(elem):
-#         if not elem.text or not elem.text.strip():
-#             elem.text = newline + indent * (level + 1)
-#         if not elem.tail or not elem.tail.strip():
-#             elem.tail = newline + indent * level
-#         for child in elem:
-#             prettify(child, level + 1)
-#         if not elem.tail or not elem.tail.strip():
-#             elem.tail = newline + indent * level
-#     else:
-#         if level and (not elem.tail or not elem.tail.strip()):
-#             elem.tail = newline + indent * level
 obstacles = ['@', 'P']
 stations = ['S', 'T']
 
@@ -52,20 +36,6 @@ def parse_map_file(map_file_path: str):
             height = data["n_row"]
     print(f"Width: {width}, Height: {height}")
     return map_data, width, height
-
-
-def read_scen(file_path):
-    column_data = []
-    num_agent = 0
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-        num_agent = len(lines) - 1
-        for line in lines[1:]:
-            columns = line.split('\t')
-            column_5 = columns[4]
-            column_6 = columns[5]
-            column_data.append((column_5, column_6))
-    return column_data, num_agent
 
 
 def create_Argos(map_data: List[str],

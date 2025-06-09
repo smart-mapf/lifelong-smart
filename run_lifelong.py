@@ -4,6 +4,30 @@ import ArgosConfig
 import subprocess
 import time
 import fire
+import numpy as np
+
+from typing import List, Tuple
+
+
+def init_start_locations(
+    map_str: List[str],
+    num_agents: int,
+) -> List[Tuple[str, str]]:
+    # Get free locations
+    h, w = len(map_str), len(map_str[0])
+    free_locations = []
+    for i in range(h):
+        for j in range(w):
+            if map_str[i][j] not in ArgosConfig.obstacles:
+                free_locations.append(i * w + j)
+    if len(free_locations) < num_agents:
+        print(
+            f"Number of agents ({num_agents}) exceeds number of free locations ({len(free_locations)})."
+        )
+        exit(-1)
+    # Randomly select start locations
+    starts = np.random.choice(free_locations, size=num_agents, replace=False)
+    return [(str(start // w), str(start % w)) for start in starts]
 
 
 def check_file(file_path: str):
@@ -35,8 +59,7 @@ def run_simulator(args):
 
 
 def main(
-    map_filepath: str = "maps/random-32-32-20.map",
-    scen_filepath: str = "scens/random-32-32-20-random-1.scen",
+    map_filepath: str = "../maps/mapf_bench/no_guidance/random-32-32-20.json",
     num_agents: int = 32,
     headless: bool = False,
     argos_config_filepath: str = "output.argos",
@@ -46,15 +69,12 @@ def main(
     sim_duration: int = 3600 * 10,
 ):
     print(f"Map Name: {map_filepath}")
-    print(f"Scenario Name: {scen_filepath}")
+    map_data, width, height = ArgosConfig.parse_map_file(map_filepath)
 
     # Transform the map and scen to Argos config file, obstacles: '@', 'T'
     print("Creating Argos config file ...")
-    robot_init_pos, scen_num_agent = ArgosConfig.read_scen(scen_filepath)
-    map_data, width, height = ArgosConfig.parse_map_file(map_filepath)
-    if scen_num_agent < num_agents:
-        print("Number of agents exceed maximum number. exiting ...")
-        exit(-1)
+    robot_init_pos = init_start_locations(map_data, num_agents)
+
     ArgosConfig.create_Argos(
         map_data=map_data,
         output_file_path=argos_config_filepath,
