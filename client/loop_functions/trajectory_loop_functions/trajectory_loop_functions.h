@@ -47,7 +47,6 @@ private:
 
 public:
    std::vector<CVector3> task_stations;
-   std::vector<CVector3> all_stations;
 
    /* Indicates the states of the picker robots, mainly for visualization */
    // std::vector<CVector3> picker_curr_locs;

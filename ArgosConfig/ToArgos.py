@@ -6,8 +6,7 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from typing import List, Tuple
 
-obstacles = ['@', 'P']
-stations = ['S', 'T']
+obstacles = ['@', 'T']
 
 
 def prettify(elem):
@@ -141,20 +140,6 @@ def create_Argos(map_data: List[str],
         library=
         "build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions",
         label="trajectory_loop_functions")
-
-    station_count = 0
-    for y, row in enumerate(map_data):
-        for x, cell in enumerate(row):
-            if cell in stations:
-                # Creating four walls for each box
-                station = ET.SubElement(loop_functions,
-                                        f"station{station_count}",
-                                        x=f"{-y}",
-                                        y=f"{-x}",
-                                        z="0")
-                station_count += 1
-
-    ET.SubElement(loop_functions, f"num_stations", value=f"{station_count}")
 
     ET.SubElement(loop_functions, f"port_number", value=f"{port_num}")
 

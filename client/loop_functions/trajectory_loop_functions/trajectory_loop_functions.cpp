@@ -35,18 +35,6 @@ void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
     /* Add the initial position of the foot-bot */
     m_tWaypoints[pcFB].push_back(pcFB->GetEmbodiedEntity().GetOriginAnchor().Position);
   }
-  int num_station = 0;
-  TConfigurationNode& tParams = GetNode(t_tree, "num_stations");
-  GetNodeAttribute(tParams, "value", num_station);
-  for (int i = 0; i < num_station; i++) {
-    Real x, y, z;
-    TConfigurationNode& tStation = GetNode(t_tree, "station" + std::to_string(i));
-    GetNodeAttribute(tStation, "x", x);
-    GetNodeAttribute(tStation, "y", y);
-    GetNodeAttribute(tStation, "z", z);
-    all_stations.emplace_back(x, y, z);
-    // std::cout << "Station: " << x << ", " << y << ", " << z << std::endl;
-  }
 }
 
 /****************************************/
