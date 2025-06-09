@@ -5,30 +5,14 @@ std::vector<std::chrono::steady_clock::time_point>
 std::shared_ptr<ADG_Server> server_ptr = nullptr;
 // =======================
 
-ADG_Server::ADG_Server(int num_robots, int num_pickers,
-                       std::string& target_output_filename,
-                       std::string map_name, std::string scen_name,
-                       std::string method_name)
-    : curr_map_name(map_name),
-      curr_scen_name(scen_name),
-      curr_method_name(method_name) {
+ADG_Server::ADG_Server(int num_robots, std::string& target_output_filename) {
     adg = std::make_shared<ADG>(num_robots);
-    // confirmed_picks_by_genre.resize(NUM_GENRE, 0);
-    // genre_finish_steps.resize(NUM_GENRE, 0);
-    // mobile_manager =
-    //     std::make_shared<MobileTaskManager>(num_robots, num_pickers,
-    //     map_name);
-    // picker_manager =
-    //     std::make_shared<PickTaskManager>(num_pickers, NUM_GENRE, map_name);
 
     output_filename = target_output_filename;
     numRobots = adg->numRobots();
     agent_finish_time.resize(numRobots, -1);
     agents_finish.resize(numRobots, false);
     agent_finish_sim_step.resize(numRobots, -1);
-    // auto name_mapping = adg->createRobotIDToStartIndexMaps();
-    // robotIDTOStartIndex = name_mapping.first;
-    // startIndexToRobotID = name_mapping.second;
 
     startTimers.resize(numRobots);
 }
@@ -43,7 +27,7 @@ void ADG_Server::saveStats(int selector_wait_t, int capacity) {
         addHeads.close();
     }
     ofstream stats(output_filename, std::ios::app);
-    stats << "," << numRobots << endl;
+    stats << numRobots << "," << this->adg->getNumFinishedTasks() << endl;
     stats.close();
     std::cout << "Statistics written to " << output_filename << std::endl;
 }
@@ -182,225 +166,6 @@ inline void insertNewGoal(
     new_goals[agent_id].emplace_back(tmp_x, tmp_y, goal_orient);
 }
 
-// std::vector<std::vector<std::tuple<int, int, double>>> getGoals(
-//     int goal_num = 1) {
-//     std::lock_guard<std::mutex> guard(globalMutex);
-//     std::vector<std::vector<std::tuple<int, int, double>>> new_goals;
-//     if (not server_ptr->adg->initialized) {
-//         return new_goals;
-//     }
-//     std::cout << "Query goals" << std::endl;
-//     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> new_tasks;
-//     server_ptr->mobile_manager->getTask(server_ptr->robots_location,
-//     new_tasks); assert(new_tasks.size() == server_ptr->numRobots); std::cout
-//     << "Get all goals" << std::endl;
-
-//     server_ptr->curr_mobile_tasks = new_tasks;
-//     new_goals.resize(server_ptr->numRobots);
-//     assert(new_tasks.size() == server_ptr->numRobots);
-//     std::unordered_map<std::pair<int, int>, std::vector<int>, pair_hash>
-//         all_targets;
-//     server_ptr->current_robots_goal_type.resize(server_ptr->numRobots);
-//     std::vector<bool> transfer_agents(server_ptr->numRobots, false);
-//     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
-//         std::cout << "agent_id: " << agent_id << std::endl;
-//         if (server_ptr->adg->isLastActUnfinishedTransfer(agent_id)) {
-//             transfer_agents[agent_id] = true;
-//             auto tmp_loc = server_ptr->adg->getLastLoc(agent_id);
-//             std::swap(tmp_loc.first, tmp_loc.second);
-//             all_targets[tmp_loc].push_back(agent_id);
-//         } else if (not new_tasks[agent_id].empty()) {
-//             for (auto& task : new_tasks[agent_id]) {
-//                 std::pair<int, int> tmp_loc = task->get_goal_position();
-//                 all_targets[tmp_loc].push_back(agent_id);
-//             }
-//         }
-//     }
-
-//     // Step 2: Resolve conflicts
-//     unordered_set<pair<int, int>, pair_hash> assigned_locations;
-//     for (auto& [target, agent_ids] : all_targets) {
-//         if (agent_ids.size() == 1) {
-//             int agent = agent_ids[0];
-//             if (transfer_agents[agent]) {
-//                 server_ptr->current_robots_goal_type[agent] = NONE;
-//             } else {
-//                 server_ptr->current_robots_goal_type[agent] =
-//                     server_ptr->curr_mobile_tasks[agent].front()->status;
-//             }
-//             insertNewGoal(agent, target, new_goals);
-//             assigned_locations.insert(target);
-//             printf("AGENT %d: Only goal locs::(%d, %d)\n", agent,
-//             target.first,
-//                    target.second);
-
-//         } else {
-//             // Find the closest agent
-//             int closest_agent = -1;
-//             int min_dist = numeric_limits<int>::max();
-
-//             for (int id : agent_ids) {
-//                 if (transfer_agents[id]) {
-//                     server_ptr->current_robots_goal_type[id] = NONE;
-//                     closest_agent = id;
-//                     break;
-//                 }
-//                 auto curr_pos = server_ptr->curr_robot_states[id].position;
-//                 int dist = twoPointDistance(
-//                     std::make_pair(static_cast<int>(curr_pos.second),
-//                                    static_cast<int>(curr_pos.first)),
-//                     target);
-//                 if (dist < min_dist) {
-//                     min_dist = dist;
-//                     closest_agent = id;
-//                     server_ptr->current_robots_goal_type[closest_agent] =
-//                         server_ptr->curr_mobile_tasks[closest_agent]
-//                             .front()
-//                             ->status;
-//                 }
-//             }
-
-//             // Assign real target to the closest agent
-//             insertNewGoal(closest_agent, target, new_goals);
-//             assigned_locations.insert(target);
-//             printf("AGENT %d: Closest goal locs::(%d, %d)\n", closest_agent,
-//                    target.first, target.second);
-
-//             // Assign neighbor locations to others
-//             for (int id : agent_ids) {
-//                 if (id == closest_agent)
-//                     continue;
-//                 server_ptr->current_robots_goal_type[id] = NONE;
-//                 // pair<int, int> new_target =
-//                 //
-//                 server_ptr->mobile_manager->user_map.findNeighborPos(assigned_locations,
-//                 // target);
-//                 pair<int, int> new_target =
-//                     server_ptr->mobile_manager->user_map.findNeighborPos(
-//                         assigned_locations, target);
-
-//                 insertNewGoal(id, new_target, new_goals);
-//                 assigned_locations.insert(new_target);
-//                 printf("AGENT %d: nearby goal locs::(%d, %d)\n", id,
-//                        new_target.first, new_target.second);
-//             }
-//         }
-//     }
-
-//     for (int agent_id = 0; agent_id < new_tasks.size(); agent_id++) {
-//         printf("agent_id: %d\n", agent_id);
-//         if (new_tasks[agent_id].empty()) {
-//             // If no task can be found, use the current locations
-//             robotState curr_robot_loc =
-//             server_ptr->curr_robot_states[agent_id]; if
-//             (server_ptr->mobile_manager->user_map.isStation(
-//                     curr_robot_loc.position)) {
-//                 std::cout << "Robot is at station now: "
-//                           << curr_robot_loc.position.second << ", "
-//                           << curr_robot_loc.position.first << ", "
-//                           << curr_robot_loc.orient;
-//             }
-
-//             int x, y;
-//             if (assigned_locations.contains(
-//                     std::make_pair(curr_robot_loc.position.second,
-//                                    curr_robot_loc.position.first)) or
-//                 server_ptr->mobile_manager->user_map.isStation(
-//                     std::make_pair(curr_robot_loc.position.second,
-//                                    curr_robot_loc.position.first)) or
-//                 curr_robot_loc.position.first >= 60) {
-//                 std::pair<int, int> random_loc =
-//                     server_ptr->mobile_manager->user_map.findRandomPos(
-//                         assigned_locations);
-//                 x = random_loc.first;
-//                 y = random_loc.second;
-//             } else {
-//                 x = static_cast<int>(curr_robot_loc.position.second);
-//                 y = static_cast<int>(curr_robot_loc.position.first);
-//             }
-
-//             // x = static_cast<int>(curr_robot_loc.position.second);
-//             // y = static_cast<int>(curr_robot_loc.position.first);
-//             new_goals[agent_id].emplace_back(x, y, curr_robot_loc.orient);
-//             assigned_locations.insert(std::make_pair(x, y));
-//             server_ptr->current_robots_goal_type[agent_id] = NONE;
-//             printf("Random goal locs::(%d, %d)\n",
-//                    std::get<0>(new_goals[agent_id].front()),
-//                    std::get<1>(new_goals[agent_id].front()));
-//         }
-//     }
-
-//     std::unordered_map<std::pair<int, int>, std::vector<int>, pair_hash>
-//         duplicate_targets;
-//     for (int agent_id = 0; agent_id < new_goals.size(); agent_id++) {
-//         std::vector<std::tuple<int, int, double>> tmp_agent =
-//             new_goals[agent_id];
-//         for (auto& tmp_element : tmp_agent) {
-//             std::pair<int, int> tmp_loc{std::get<0>(tmp_element),
-//                                         std::get<1>(tmp_element)};
-//             if (duplicate_targets.find(tmp_loc) != duplicate_targets.end()) {
-//                 std::cerr << "Duplicate agent found! Agent " << agent_id
-//                           << ". Duplicate goal location: " << tmp_loc.first
-//                           << ", " << tmp_loc.second << std::endl;
-//                 string skip_info;
-//                 std::cout << "Previous seen as: " << std::endl;
-//                 for (auto prev_agent : duplicate_targets[tmp_loc]) {
-//                     std::cerr
-//                         << "Agent " << prev_agent << ", Act type: "
-//                         << server_ptr->current_robots_goal_type[prev_agent]
-//                         << std::endl;
-//                 }
-//                 std::cerr << "Act type: "
-//                           << server_ptr->current_robots_goal_type[agent_id]
-//                           << ", Continue? y/n" << std::endl;
-//                 std::cin >> skip_info;
-//             } else {
-//                 duplicate_targets[tmp_loc].push_back(agent_id);
-//             }
-//         }
-//     }
-
-//     for (int agent_id = 0; agent_id < new_goals.size(); agent_id++) {
-//         std::cout << "agent_id " << agent_id << "with action status: "
-//                   << server_ptr->current_robots_goal_type[agent_id]
-//                   << std::endl;
-//         std::cout << "Goal locations: "
-//                   << std::get<0>(new_goals[agent_id].front()) << ","
-//                   << std::get<1>(new_goals[agent_id].front()) << std::endl;
-//     }
-
-//     // DEBUG only, replace the first location
-//     // std::tuple<int, int, double> tmp_goal{2, 108, 0};
-//     // new_goals[0].clear();
-//     // new_goals[0].push_back(tmp_goal);
-//     return new_goals;
-// }
-
-// typedef std::tuple<int, int, int> PickData;
-
-// std::vector<PickData> getPickerTask() {
-//     std::lock_guard<std::mutex> guard(globalMutex);
-//     std::cout << "Request new picker task!" << std::endl;
-//     std::vector<std::shared_ptr<PickerTask>> all_tasks;
-//     server_ptr->picker_manager->getTask(all_tasks);
-//     assert(not all_tasks.empty());
-//     std::vector<PickData> all_pick_tasks;
-//     for (auto& task : all_tasks) {
-//         all_pick_tasks.emplace_back(task->obj_position.first,
-//                                     task->obj_position.second, task->id);
-//     }
-//     return all_pick_tasks;
-// }
-
-// int getGenreID(int agent_id) {
-//     int genre_id = 0;
-//     genre_id = (agent_id / 4) * 2;
-//     if (agent_id % 4 == 1 or agent_id % 4 == 2) {
-//         genre_id += 1;
-//     }
-//     return genre_id;
-// }
-
 void updateStats(double total_wait_time, int capacity) {
     std::cout << "update the stats with: " << total_wait_time
               << ", and capacity: " << capacity << std::endl;
@@ -410,64 +175,12 @@ void updateStats(double total_wait_time, int capacity) {
 
 void closeServer(rpc::server& srv) {
     std::cout << "close server called" << std::endl;
+    std::cout << "Num of finished tasks: "
+              << server_ptr->adg->getNumFinishedTasks() << std::endl;
     server_ptr->saveStats(server_ptr->total_wait_time,
                           server_ptr->transport_capacity);
     srv.stop();
 }
-
-// bool confirmPickerTask(int agent_id, int task_id, int sim_step) {
-//     assert(task_id != -1);
-//     std::lock_guard<std::mutex> guard(globalMutex);
-//     // std::cout << "send confirmation to agent " << agent_id << " with task
-//     id
-//     // " << task_id << std::endl;
-//     int genre_id;
-//     bool status =
-//         server_ptr->picker_manager->confirmTask(agent_id, task_id, genre_id);
-//     if (status) {
-//         server_ptr->total_confirmed_picks++;
-//         server_ptr->confirmed_picks_by_genre[genre_id] += 1;
-//         if (server_ptr->confirmed_picks_by_genre[genre_id] >= MAX_TASKS) {
-//             server_ptr->genre_finish_steps[genre_id] = sim_step;
-//         }
-//         if (server_ptr->total_confirmed_picks >= 8 * MAX_TASKS) {
-//             std::cout << "Total finished tasks: "
-//                       << server_ptr->mobile_manager->total_finished_tasks_
-//                       << std::endl;
-//             std::cout << "Total confirmed picks: "
-//                       << server_ptr->total_confirmed_picks << std::endl;
-//             for (int i = 0; i < NUM_GENRE; i++) {
-//                 std::cout << "Finish step for genre is: "
-//                           << server_ptr->genre_finish_steps[i] / 10.0
-//                           << ", total tasks finished is: "
-//                           << server_ptr->confirmed_picks_by_genre[i]
-//                           << std::endl;
-//             }
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-
-// int requestMobileTask(int picker_id, std::pair<int, int> target_pos) {
-//     std::lock_guard<std::mutex> guard(globalMutex);
-//     std::cout << "Request mobile task! " << "with x: " << target_pos.first
-//               << ", y: " << target_pos.second << std::endl;
-//     int new_task_id = server_ptr->mobile_manager->insertPickerTask(
-//         picker_id, target_pos.first, target_pos.second);
-//     std::cout << "New mobile task id: " << new_task_id << std::endl;
-//     return new_task_id;
-// }
-
-// void confirmMobileTask();
-
-// std::string getScenConfigName() {
-//     std::string target_path = server_ptr->curr_method_name + "/" +
-//                               server_ptr->curr_map_name + "/" +
-//                               std::to_string(server_ptr->numRobots) + "/" +
-//                               server_ptr->curr_scen_name;
-//     return target_path;
-// }
 
 std::vector<
     std::tuple<std::string, int, double, std::string, std::pair<double, double>,
@@ -507,12 +220,8 @@ int main(int argc, char** argv) {
             // params for the input instance and experiment settings
             ("path_file,p", po::value<string>(), "input file for path")
             ("num_robots,k", po::value<int>()->required(), "number of robots in server")
-            ("num_pickers", po::value<int>()->required(), "number of picker robots in server")
             ("port_number,n", po::value<int>()->default_value(8080), "rpc port number")
             ("output_file,o", po::value<string>()->default_value("stats.csv"), "output statistic filename")
-            ("map_file,m", po::value<string>()->default_value("empty-8-8.map"), "map filename")
-            ("scen_file,s", po::value<string>()->default_value("empty-8-8-random-1"), "scen filename")
-            ("method_name", po::value<string>()->default_value("PBS"), "method we used")
             ;
     // clang-format on
     po::variables_map vm;
@@ -530,54 +239,25 @@ int main(int argc, char** argv) {
     }
     // std::cout << "Solving for path name: " << filename << std::endl;
     std::string out_filename = vm["output_file"].as<string>();
-    server_ptr = std::make_shared<ADG_Server>(
-        vm["num_robots"].as<int>(), vm["num_pickers"].as<int>(), out_filename,
-        vm["map_file"].as<string>(), vm["scen_file"].as<string>(),
-        vm["method_name"].as<string>());
+    server_ptr =
+        std::make_shared<ADG_Server>(vm["num_robots"].as<int>(), out_filename);
 
     int port_number = vm["port_number"].as<int>();
     rpc::server srv(port_number);  // Setup the server to listen on the
-                                   // specified port number
-    srv.bind("receive_update",
-             &actionFinished);  // Bind the function to the server
+    // specified port number
+
+    // Bind the function to the server
+    // TODO: Remove unused functions
+    srv.bind("receive_update", &actionFinished);
     srv.bind("init", &init);
     srv.bind("get_location", &getRobotsLocation);
-    // srv.bind("get_goals", &getGoals);
     srv.bind("add_plan", &addNewPlan);
     srv.bind("update", &update);
-    // srv.bind("get_config", &getScenConfigName);
     srv.bind("update_finish_agent", &updateSimFinishTime);
 
-    // functions with picker
-    // srv.bind("get_picker_task", &getPickerTask);
-    // srv.bind("confirm_picker_task", &confirmPickerTask);
-    // srv.bind("request_mobile_robot", &requestMobileTask);
-
-    // srv.bind("closeServer", [&srv](int wait_t, int capacity) {
-    //     closeServer(srv, wait_t, capacity);
-    // });
     srv.bind("update_stats", &updateStats);
     srv.bind("closeServer", [&srv]() { closeServer(srv); });
     srv.run();  // Start the server, blocking call
-    // try {
-    //     rpc::server srv(port_number);  // Setup the server to listen on the
-    //     specified port number srv.bind("receive_update", &receive_update); //
-    //     Bind the function to the server srv.bind("init", &init);
-    //     srv.bind("get_location", &getRobotsLocation);
-    //     srv.bind("get_goals", &getGoals);
-    //     srv.bind("add_plan", &addNewPlan);
-    //     srv.bind("update", &update);
-    //     srv.bind("get_config", &getScenConfigName);
-    //     srv.bind("update_finish_agent", &updateSimFinishTime);
-    //     srv.bind("closeServer", [&srv]() {
-    //         closeServer(srv);
-    //     });
-    //     srv.run();  // Start the server, blocking call
-    // } catch (...) {
-    //     // Catch any other exceptions
-    //     std::cerr << "Fail to starting the server for scen "<<
-    //     vm["scen_file"].as<string>() << " at port number: " << port_number <<
-    //     std::endl;
-    // }
+
     return 0;
 }

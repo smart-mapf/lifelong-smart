@@ -11,7 +11,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "mobile_task.h"
 #include "parser.h"
 
 typedef std::vector<
@@ -124,26 +123,11 @@ public:
         }
     }
 
-    void printProgress();
+    int getNumFinishedTasks() const {
+        return static_cast<int>(finished_tasks_.size());
+    }
 
-    // bool getFinishedTasks(std::vector<std::unordered_set<int>>& finish_tasks)
-    // {
-    //     if (curr_commit.empty() or graph.empty()) {
-    //         return false;
-    //     }
-    //     finish_tasks.clear();
-    //     finish_tasks.resize(num_robots);
-    //     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-    //         for (int node_id = 0; node_id < graph[agent_id].size();
-    //         node_id++) {
-    //             if (graph[agent_id][node_id].action.type == 'P' or
-    //             graph[agent_id][node_id].action.type == 'S') {
-    //                 finish_tasks[agent_id].insert(graph[agent_id][node_id].action.task_id);
-    //             }
-    //         }
-    //     }
-    //     return true;
-    // }
+    void printProgress();
 
     // Return the set of finished tasks
     set<int> updateFinishedTasks();

@@ -1,16 +1,8 @@
 import os
 import pathlib
-import argparse
 import ArgosConfig
 import subprocess
 import time
-import psutil
-import csv
-import json
-from datetime import datetime
-import gc
-# from logdir import LogDir
-from multiprocessing import Process
 import fire
 
 
@@ -50,8 +42,8 @@ def main(
     argos_config_filepath: str = "output.argos",
     stats_name: str = "stats.csv",
     port_num: int = 8182,
-    n_threads: int = 0,
-    sim_duration: int = 36000 * 10,
+    n_threads: int = 1,
+    sim_duration: int = 3600 * 10,
 ):
     print(f"Map Name: {map_filepath}")
     print(f"Scenario Name: {scen_filepath}")
@@ -80,15 +72,11 @@ def main(
     try:
         print("Running simulator ...")
         server_executable_path = "./server/build/ADG_server"
-        # server_executable_path = "server/build/ADG_server"
         server_command = [
             server_executable_path,
             f"--num_robots={num_agents}",
             f"--port_number={port_num}",
-            f"--method_name=PBS",
-            f"--map_file=./{map_filepath}",
             f"--output_file={stats_name}",
-            "--num_pickers=16",
         ]
         client_command = ["argos3", "-c", f"../{argos_config_filepath}"]
         print(client_command)

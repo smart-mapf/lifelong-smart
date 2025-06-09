@@ -1,4 +1,6 @@
 import os
+import json
+import pathlib
 import xml.etree.ElementTree as ET
 
 from xml.dom import minidom
@@ -31,16 +33,24 @@ def prettify(elem):
     return reparsed.toprettyxml(indent="  ")
 
 
-def parse_map_file(map_file_path):
-    map_data = []
-    with open(map_file_path, 'r') as file:
-        lines = file.readlines()
-        height = int(lines[1].split()[1])
-        width = int(lines[2].split()[1])
-        print(f"Width: {width}, Height: {height}")
-        for line in lines[
-                4:]:  # Skip the first 4 lines (type, height, width, map)
-            map_data.append(line.strip())
+def parse_map_file(map_file_path: str):
+    map_file_path: pathlib.Path = pathlib.Path(map_file_path)
+    if map_file_path.suffix == ".map":
+        map_data = []
+        with open(map_file_path, 'r') as file:
+            lines = file.readlines()
+            height = int(lines[1].split()[1])
+            width = int(lines[2].split()[1])
+            # Skip the first 4 lines (type, height, width, map)
+            for line in lines[4:]:
+                map_data.append(line.strip())
+    elif map_file_path.suffix == ".json":
+        with open(map_file_path, 'r') as f:
+            data = json.load(f)
+            map_data = data["layout"]
+            width = data["n_col"]
+            height = data["n_row"]
+    print(f"Width: {width}, Height: {height}")
     return map_data, width, height
 
 
@@ -183,9 +193,6 @@ def create_Argos(map_data: List[str],
     ET.SubElement(loop_functions, f"num_stations", value=f"{station_count}")
 
     ET.SubElement(loop_functions, f"port_number", value=f"{port_num}")
-
-    # TODO: remove the usage of num_pickers elsewhere
-    ET.SubElement(loop_functions, f"num_pickers", value=f"{12}")
 
     map_center_x = -height / 2 + 0.5
     map_center_y = -width / 2 + 0.5

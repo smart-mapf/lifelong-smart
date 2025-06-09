@@ -1,28 +1,25 @@
 #pragma once
 
-
 #include <rpc/server.h>
-#include <string>
-#include <iostream>
-#include <vector>
-#include <tuple>
-#include <stdexcept>
-#include <mutex>
-#include <sstream>
-#include <functional>   // For std::bind
+
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
-#include <fstream>    // For file operations
-#include <map>        // For mapping robot actions
-#include <numeric> // For std::accumulate
+#include <fstream>     // For file operations
+#include <functional>  // For std::bind
+#include <iostream>
+#include <map>  // For mapping robot actions
+#include <mutex>
+#include <numeric>  // For std::accumulate
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include "ADG.h"
 #include "json.hpp"
-#include "mobile_task.h"
-#include "picker_task.h"
 
 using json = nlohmann::json;
-
 
 #ifdef DEBUG
 #define DEBUG_AGENT 13
@@ -32,12 +29,11 @@ using json = nlohmann::json;
 
 std::mutex globalMutex;
 
-
-class ADG_Server{
+class ADG_Server {
 public:
-    ADG_Server(int num_robots, int num_pickers, std::string& target_output_filename, std::string map_name, std::string scen_name, std::string method_name);
+    ADG_Server(int num_robots, std::string& target_output_filename);
     void saveStats(int selector_wait_t, int capacity);
-    
+
     // TODO@jingtian: move some of them into private
     std::shared_ptr<ADG> adg;
     // std::shared_ptr<MobileTaskManager> mobile_manager;
@@ -52,9 +48,6 @@ public:
     std::vector<int> agent_finish_sim_step;
     std::vector<bool> agents_finish;
     std::string output_filename;
-    std::string curr_map_name;
-    std::string curr_scen_name;
-    std::string curr_method_name;
     int numRobots = 0;
     int step_cnt = 0;
     double latest_arr_sim_step = 0;
@@ -76,17 +69,18 @@ public:
     //             min_val = v;
     //         }
     //     }
-    //     return min_val == std::numeric_limits<int>::max() ? 0.0 : min_val; // or throw if all are 0
+    //     return min_val == std::numeric_limits<int>::max() ? 0.0 : min_val; //
+    //     or throw if all are 0
     // }
 
 private:
-//    int type1EdgeCount = 0;
-//    int type2EdgeCount = 0;
-//    int moveActionCount = 0;
-//    int rotateActionCount = 0;
-//    int consecutiveMoveSequences = 0;
-//    int totalNodes = 0;
-//    std::set<std::pair<int, int>> conflict_pairs;
+    //    int type1EdgeCount = 0;
+    //    int type2EdgeCount = 0;
+    //    int moveActionCount = 0;
+    //    int rotateActionCount = 0;
+    //    int consecutiveMoveSequences = 0;
+    //    int totalNodes = 0;
+    //    std::set<std::pair<int, int>> conflict_pairs;
     // std::string path_filename_;
     double raw_plan_cost = -1.0;
 };
