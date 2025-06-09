@@ -6,9 +6,9 @@
 
 int RANDOM_WALK_STEPS = 100000;
 
-Instance::Instance(const string& map_fname, int num_of_rows, int num_of_cols,
-                   int num_of_obstacles, int warehouse_width)
-    : map_fname(map_fname) {
+Instance::Instance(const string& map_fname, int screen, int num_of_rows,
+                   int num_of_cols, int num_of_obstacles, int warehouse_width)
+    : map_fname(map_fname), screen(screen) {
     bool succ = loadMap();
     // printMap();
     if (!succ) {
@@ -331,19 +331,21 @@ bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
     }
 
     // Print the start and goal locations
-    cout << "Start locations: ";
-    for (int i = 0; i < num_of_agents; i++) {
-        cout << "(" << getRowCoordinate(start_locations[i]) << ","
-             << getColCoordinate(start_locations[i]) << ") ";
-    }
-    cout << endl;
-    cout << "Goal locations: ";
-    for (int i = 0; i < num_of_agents; i++) {
-        cout << "(" << getRowCoordinate(goal_locations[i].loc) << ","
+    if (this->screen > 0) {
+        cout << "Start locations: ";
+        for (int i = 0; i < num_of_agents; i++) {
+            cout << "(" << getRowCoordinate(start_locations[i]) << ","
+                 << getColCoordinate(start_locations[i]) << ") ";
+        }
+        cout << endl;
+        cout << "Goal locations: ";
+        for (int i = 0; i < num_of_agents; i++) {
+            cout << "(" << getRowCoordinate(goal_locations[i].loc) << ","
 
-             << getColCoordinate(goal_locations[i].loc) << ") ";
+                 << getColCoordinate(goal_locations[i].loc) << ") ";
+        }
+        cout << endl;
     }
-    cout << endl;
 
     return true;
 }

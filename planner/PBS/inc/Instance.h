@@ -16,14 +16,16 @@ public:
     int num_of_rows;
     int map_size;
     int task_id = 0;
+    int screen = 0;
 
     // enum valid_moves_t { NORTH, EAST, SOUTH, WEST, WAIT_MOVE, MOVE_COUNT };
     // // MOVE_COUNT is the enum's size
 
     Instance() {
     }
-    Instance(const string& map_fname, int num_of_rows = 0, int num_of_cols = 0,
-             int num_of_obstacles = 0, int warehouse_width = 0);
+    Instance(const string& map_fname, int screen, int num_of_rows = 0,
+             int num_of_cols = 0, int num_of_obstacles = 0,
+             int warehouse_width = 0);
 
     void setGoalLocations(const vector<Task>& goal_locations) {
         this->goal_locations = goal_locations;
@@ -96,9 +98,8 @@ public:
         return num_of_agents;
     }
 
-    bool loadAgents(
-        std::vector<std::pair<double, double>>& start_locs,
-        set<int> finished_tasks_id);
+    bool loadAgents(std::vector<std::pair<double, double>>& start_locs,
+                    set<int> finished_tasks_id);
     void printMap() const;
     void saveInstance();
 
@@ -111,7 +112,7 @@ private:
     int num_of_agents;
     vector<int> start_locations;
     vector<Task> goal_locations;
-    vector<int> free_locations; // locations that are not obstacles
+    vector<int> free_locations;  // locations that are not obstacles
 
     bool loadMap();
     bool loadMapFromBench();

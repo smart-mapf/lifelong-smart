@@ -524,7 +524,11 @@ void PBS::savePaths(const string& fileName) const {
 std::vector<std::vector<std::tuple<int, int, double, int>>> PBS::getPaths() {
     std::vector<std::vector<std::tuple<int, int, double, int>>> new_mapf_plan;
     new_mapf_plan.resize(num_of_agents);
-    printf("Num of agents: %d\n", num_of_agents);
+    if (screen > 0) {
+        std::cout << "######################################" << std::endl;
+        printf("Num of agents: %d\n", num_of_agents);
+    }
+
     for (int i = 0; i < num_of_agents; i++) {
         int tmp_step = 0;
         for (const auto& t : *paths[i]) {
@@ -532,21 +536,26 @@ std::vector<std::vector<std::tuple<int, int, double, int>>> PBS::getPaths() {
                 search_engines[0]->instance.getRowCoordinate(t.location),
                 search_engines[0]->instance.getColCoordinate(t.location),
                 static_cast<double>(tmp_step), t.task_id);
-            std::cout
-                << "("
-                << search_engines[0]->instance.getRowCoordinate(t.location)
-                << ","
-                << search_engines[0]->instance.getColCoordinate(t.location)
-                << ","
-                << t.task_id
-                << ")->";
-            if (t.task_id >= 0) {
-                std::cout << "End of task " << t.task_id << " at step "
-                          << tmp_step << " ";
+            if (screen > 0) {
+                std::cout
+                    << "("
+                    << search_engines[0]->instance.getRowCoordinate(t.location)
+                    << ","
+                    << search_engines[0]->instance.getColCoordinate(t.location)
+                    << "," << t.task_id << ")->";
+                if (t.task_id >= 0) {
+                    std::cout << "End of task " << t.task_id << " at step "
+                              << tmp_step << " ";
+                }
             }
             tmp_step++;
         }
-        std::cout << std::endl;
+        if (screen > 0) {
+            std::cout << std::endl;
+        }
+    }
+    if (screen > 0) {
+        std::cout << "######################################" << std::endl;
     }
     return new_mapf_plan;
 }

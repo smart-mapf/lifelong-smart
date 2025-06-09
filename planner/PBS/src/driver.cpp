@@ -8,11 +8,33 @@
  * Solve a MAPF instance on 2D grids.
  */
 #include <rpc/client.h>
+#include <rpc/rpc_error.h>
 
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 
 #include "PBS.h"
+
+// Return true if the timeout has exceeded the maximum number of attempts
+bool rpc_timeout_handle(const rpc::timeout& e, int& timeouts,
+                        int timeout_attempts, int screen) {
+    timeouts++;
+    if (screen > 0) {
+        printf("%s. ", e.what());
+    }
+
+    if (timeouts > timeout_attempts) {
+        if (screen > 0) {
+            printf("Timeout exceeded %d attempts. Exiting...\n",
+                   timeout_attempts);
+        }
+        return true;  // Exceeded maximum attempts
+    }
+    if (screen > 0) {
+        printf("Retrying...\n");
+    }
+    return false;  // Still within the allowed attempts
+}
 
 /* Main function */
 int main(int argc, char** argv) {
@@ -32,7 +54,10 @@ int main(int argc, char** argv) {
 		("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
 		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
         ("portNum", po::value<int>()->default_value(8080), "port number for the server")
-		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver");
+		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
+        ("timeout_attempts", po::value<int>()->default_value(10),
+         "number of attempts to get location from server before exiting")
+        ("seed", po::value<int>()->default_value(0), "random seed");
     // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -44,14 +69,30 @@ int main(int argc, char** argv) {
 
     po::notify(vm);
 
+    int seed = vm["seed"].as<int>();
+    srand(seed);  // Set the random seed for reproducibility
+
     ///////////////////////////////////////////////////////////////////////////
     // load the instance
     int task_id = 0;
     vector<Task> prev_goal_locs;
     set<int> finished_tasks_id;
+    int timeouts = 0;
+    int timeout_attempts = vm["timeout_attempts"].as<int>();
+    int screen = vm["screen"].as<int>();
+    // We assume the server is already running at this point.
     rpc::client client("127.0.0.1", vm["portNum"].as<int>());
+    client.set_timeout(100);  // set timeout to 1000 ms
     while (true) {
-        string result_message = client.call("get_location", 5).as<string>();
+        string result_message;
+        try {
+            result_message = client.call("get_location", 5).as<string>();
+        } catch (const rpc::timeout& e) {
+            if (rpc_timeout_handle(e, timeouts, timeout_attempts, screen)) {
+                break;  // Exit if maximum attempts exceeded
+            }
+            continue;
+        }
         // printf("Result message: %s\n", result_message.c_str());
         auto result_json = json::parse(result_message);
         if (!result_json["initialized"].get<bool>()) {
@@ -64,66 +105,53 @@ int main(int argc, char** argv) {
         auto new_finished_tasks_id =
             result_json["new_finished_tasks"].get<std::set<int>>();
 
-        printf("Agent locations:\n");
-        for (auto loc : commit_cut) {
-            printf("%f %f\n", loc.first, loc.second);
-        }
+        if (screen > 0) {
+            printf("Agent locations:\n");
+            for (auto loc : commit_cut) {
+                printf("%f %f\n", loc.first, loc.second);
+            }
 
-        printf("New finished tasks:\n");
-        for (auto task_id : new_finished_tasks_id) {
-            printf("%d,", task_id);
+            printf("New finished tasks:\n");
+            for (auto task_id : new_finished_tasks_id) {
+                printf("%d,", task_id);
+            }
+            printf("\n");
         }
-        printf("\n");
-        // auto goals =
-        //     client.call("get_goals", 1)
-        //         .as<std::vector<std::vector<std::tuple<int, int,
-        //         double>>>>();
-        // printf("Goals:\n");
-        // for (auto goal : goals) {
-        //     printf("%d %d\n", std::get<0>(goal[0]), std::get<1>(goal[0]));
-        // }
 
         // TODO@jingtian: update this to get new instance
-        Instance instance(vm["map"].as<string>());
+        Instance instance(vm["map"].as<string>(), screen);
         instance.task_id = task_id;
         instance.setGoalLocations(prev_goal_locs);
         instance.loadAgents(commit_cut, new_finished_tasks_id);
-        PBS pbs(instance, vm["sipp"].as<bool>(), vm["screen"].as<int>());
+        PBS pbs(instance, vm["sipp"].as<bool>(), screen);
         // run
         double runtime = 0;
         bool success = false;
         double runtime_limit = vm["cutoffTime"].as<double>();
         int fail_count = 0;
         while (not success) {
-            srand((int)time(0));
             success = pbs.solve(runtime_limit);
             runtime_limit = runtime_limit * 2;
             if (success) {
-                // if (vm.count("output"))
-                // 	pbs.saveResults(vm["output"].as<string>(),
-                // vm["agents"].as<string>()); if (pbs.solution_found &&
-                // vm.count("outputPaths"))
-                // 	pbs.savePaths(vm["outputPaths"].as<string>());
-                /*size_t pos = vm["output"].as<string>().rfind('.');      //
-                position of the file extension string output_name =
-                vm["output"].as<string>().substr(0, pos);     // get the name
-                without extension cbs.saveCT(output_name); // for debug*/
-                std::cout << "######################################"
-                          << std::endl;
                 auto new_mapf_plan = pbs.getPaths();
-                std::cout << "######################################"
-                          << std::endl;
 
                 pbs.clearSearchEngines();
-                client.call("add_plan", new_mapf_plan);
-                break;
+                try {
+                    client.call("add_plan", new_mapf_plan);
+                } catch (const rpc::timeout& e) {
+                    if (rpc_timeout_handle(e, timeouts, timeout_attempts,
+                                           screen)) {
+                        break;  // Exit if maximum attempts exceeded
+                    }
+                    continue;
+                }
             } else {
                 std::cerr << "No solution found!" << std::endl;
                 fail_count++;
                 if (fail_count > 1000) {
                     std::cerr << "Fail to find a solution after " << fail_count
                               << " attempts! Exiting." << std::endl;
-                    instance.saveInstance();
+                    // instance.saveInstance();
                     exit(-1);
                 }
             }

@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-ADG::ADG(int num_robots) : num_robots(num_robots) {
+ADG::ADG(int num_robots, int screen) : num_robots(num_robots), screen(screen) {
     //    std::vector<ADGNode> graph;
     look_ahead_dist = 5;
     std::map<int, int> lastActionIndexByRobot;
@@ -108,7 +108,8 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
             }
         }
     }
-    printf("Finish building graph!\n");
+    if (this->screen > 0)
+        printf("Finish building ADG graph!\n");
     // if (hasCycle()) {
     //     std::cerr << "Cycle detected!" << std::endl;
     //     std::string input;
@@ -219,9 +220,12 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
     std::unordered_map<std::pair<double, double>, std::vector<int>, pair_hash>
         duplicate_starts;
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        std::cout << "Agent " << agent_id << ": "
-                  << commited_actions[agent_id].first << " -> "
-                  << commited_actions[agent_id].second << std::endl;
+        if (this->screen > 0) {
+            std::cout << "Agent " << agent_id << ": "
+                      << commited_actions[agent_id].first << " -> "
+                      << commited_actions[agent_id].second << std::endl;
+        }
+
         std::pair<double, double> tmp_loc;
         if (graph[agent_id].empty()) {
             tmp_loc = init_locs[agent_id].position;
@@ -235,9 +239,9 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
                       << tmp_loc.second << std::endl;
             graph[agent_id].back().showNode();
             string skip_info;
-            std::cout << "Duplicate agent: " << std::endl;
+            std::cerr << "Duplicate agent: " << std::endl;
             for (int dup_agent_id : duplicate_starts[tmp_loc]) {
-                std::cout << dup_agent_id << ": ";
+                std::cerr << dup_agent_id << ": ";
                 graph[dup_agent_id].back().showNode();
             }
             std::cerr << "Continue? y/n" << std::endl;
@@ -302,6 +306,11 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
     std::cout << "Find commit Cut " << std::endl;
 #endif
     // printProgress();
+    if (this->screen > 0) {
+        std::cout << "Commit cut number: " << curr_commit.size()
+                  << ", total number of robots: " << num_robots << std::endl;
+    }
+
     return curr_commit;
 }
 
@@ -555,18 +564,6 @@ set<int> ADG::updateFinishedTasks() {
     // finish_tasks.resize(num_robots);
     set<int> new_finished_tasks;
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        // for (int node_id = 0; node_id < graph[agent_id].size(); node_id++) {
-        //     // Current ADGNode has a non-negative task_id, then we finish a
-        //     // task.
-        //     int curr_task = graph[agent_id][node_id].action.task_id;
-        //     cout << "Agent " << agent_id << ", Node " << node_id
-        //          << ", Task ID: " << curr_task << std::endl;
-        //     if (curr_task >= 0 && this->finished_tasks_.find(curr_task) ==
-        //                               this->finished_tasks_.end()) {
-        //         this->finished_tasks_.insert(curr_task);
-        //         new_finished_tasks.insert(curr_task);
-        //     }
-        // }
         for (int node_id = graph[agent_id].size() - 1; node_id >= 0;
              node_id--) {
             // Current ADGNode has a non-negative task_id, then we finish a

@@ -54,8 +54,11 @@ def run_simulator(args):
     os.chdir("..")
     planner_process = subprocess.Popen(planner_command)
 
+    # The client process will call the server to end, then the client end. The
+    # planner will detect the end of the server and end itself.
     client_process.wait()
     server_process.wait()
+    planner_process.wait()
 
 
 def main(
@@ -64,15 +67,19 @@ def main(
     headless: bool = False,
     argos_config_filepath: str = "output.argos",
     stats_name: str = "stats.csv",
+    save_stats: bool = False,
     port_num: int = 8182,
     n_threads: int = 1,
     sim_duration: int = 3600 * 10,
+    seed: int = 42,
+    screen: int = 0,
 ):
-    print(f"Map Name: {map_filepath}")
+    # print(f"Map Name: {map_filepath}")
     map_data, width, height = ArgosConfig.parse_map_file(map_filepath)
 
     # Transform the map and scen to Argos config file, obstacles: '@', 'T'
-    print("Creating Argos config file ...")
+    if screen > 0:
+        print("Creating Argos config file ...")
     robot_init_pos = init_start_locations(map_data, num_agents)
 
     ArgosConfig.create_Argos(
@@ -86,8 +93,10 @@ def main(
         n_threads=n_threads,
         visualization=not headless,
         sim_duration=sim_duration,
+        screen=screen,
     )
-    print("Argos config file created.")
+    if screen > 0:
+        print("Argos config file created.")
 
     try:
         print("Running simulator ...")
@@ -97,18 +106,21 @@ def main(
             f"--num_robots={num_agents}",
             f"--port_number={port_num}",
             f"--output_file={stats_name}",
+            f"--save_stats={str(save_stats).lower()}",
+            f"--screen={screen}",
         ]
         client_command = ["argos3", "-c", f"../{argos_config_filepath}"]
-        print(client_command)
 
-        # executable_path = "./planner/MAPF-LNS2/build/lns"
-        executable_path = "./planner/PBS/build/pbs"
-        run_args = []
-        run_args += [executable_path]
-        run_args += ["-m", f"./{map_filepath}"]
-        run_args += ["-k", str(num_agents)]
-        run_args += ["--portNum", str(port_num)]
-        run_simulator((server_command, client_command, run_args))
+        planner_executable_path = "./planner/PBS/build/pbs"
+        planner_command = [
+            planner_executable_path,
+            f"--map={map_filepath}",
+            f"--agentNum={num_agents}",
+            f"--portNum={port_num}",
+            f"--seed={seed}",
+            f"--screen={screen}",
+        ]
+        run_simulator((server_command, client_command, planner_command))
     except KeyboardInterrupt:
         print("KeyboardInterrupt: Stopping the experiment ...")
 

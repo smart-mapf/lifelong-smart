@@ -236,6 +236,7 @@ private:
     bool is_initialized = false;
     CVector3 curr_station{-1,-1,-100};
     int total_sim_duration = 0;
+    int screen = 0;
 };
 
 #endif

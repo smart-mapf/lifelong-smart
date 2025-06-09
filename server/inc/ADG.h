@@ -74,7 +74,7 @@ struct robotState {
 
 class ADG {
 public:
-    ADG(int num_robots);
+    ADG(int num_robots, int screen);
     [[nodiscard]] int numRobots() const {
         return num_robots;
     }
@@ -176,6 +176,7 @@ public:
     std::map<int, std::string> robotIDToStartIndex;
     std::map<std::string, int> startIndexToRobotID;
     std::vector<robotState> curr_commit;
+    int screen;
 
 private:
     std::vector<std::vector<ADGNode>> graph;

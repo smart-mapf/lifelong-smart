@@ -5,10 +5,14 @@ std::vector<std::chrono::steady_clock::time_point>
 std::shared_ptr<ADG_Server> server_ptr = nullptr;
 // =======================
 
-ADG_Server::ADG_Server(int num_robots, std::string& target_output_filename) {
-    adg = std::make_shared<ADG>(num_robots);
+ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
+                       bool save_stats, int screen, int port)
+    : output_filename(target_output_filename),
+      save_stats(save_stats),
+      screen(screen),
+      port(port) {
+    adg = std::make_shared<ADG>(num_robots, screen);
 
-    output_filename = target_output_filename;
     numRobots = adg->numRobots();
     agent_finish_time.resize(numRobots, -1);
     agents_finish.resize(numRobots, false);
@@ -18,6 +22,10 @@ ADG_Server::ADG_Server(int num_robots, std::string& target_output_filename) {
 }
 
 void ADG_Server::saveStats(int selector_wait_t, int capacity) {
+    if (!save_stats) {
+        return;
+    }
+
     std::ifstream infile(output_filename);
     bool exist = infile.good();
     infile.close();
@@ -37,14 +45,13 @@ string getRobotsLocation(int look_ahead_dist) {
     json result_message = {};
 
     std::lock_guard<std::mutex> guard(globalMutex);
-    std::cout << "Get robot location query received! lookahead dist: "
-              << look_ahead_dist << std::endl;
+    if (server_ptr->screen > 0) {
+        std::cout << "Get robot location query received! lookahead dist: "
+                  << look_ahead_dist << std::endl;
+    }
 
     server_ptr->curr_robot_states =
         server_ptr->adg->computeCommitCut(look_ahead_dist);
-    std::cout << "Commit cut number: " << server_ptr->curr_robot_states.size()
-              << ", total number of robots: " << server_ptr->numRobots
-              << std::endl;
 
     std::vector<std::pair<double, double>> robots_location;
     if (server_ptr->curr_robot_states.empty()) {
@@ -68,9 +75,7 @@ string getRobotsLocation(int look_ahead_dist) {
 
     // TODO@jingtian: set a task as finished when it is enqueued
     // std::vector< std::unordered_set<int> > task_status;
-    std::cout << "retrieving last actions" << std::endl;
     set<int> new_finished_tasks = server_ptr->adg->updateFinishedTasks();
-    std::cout << "retrieved last actions" << std::endl;
 
     server_ptr->robots_location = robots_location;
 
@@ -167,8 +172,11 @@ inline void insertNewGoal(
 }
 
 void updateStats(double total_wait_time, int capacity) {
-    std::cout << "update the stats with: " << total_wait_time
-              << ", and capacity: " << capacity << std::endl;
+    if (server_ptr->screen > 0) {
+        std::cout << "update the stats with: " << total_wait_time
+                  << ", and capacity: " << capacity << std::endl;
+    }
+
     server_ptr->total_wait_time = total_wait_time;
     server_ptr->transport_capacity = capacity;
 }
@@ -177,7 +185,7 @@ void closeServer(rpc::server& srv) {
     std::lock_guard<std::mutex> guard(globalMutex);
     std::cout << "############################################################"
               << std::endl;
-    std::cout << "close server called" << std::endl;
+    std::cout << "Closing server at port " << server_ptr->port << std::endl;
     std::cout << "Num of finished tasks: "
               << server_ptr->adg->getNumFinishedTasks() << std::endl;
     server_ptr->saveStats(server_ptr->total_wait_time,
@@ -227,6 +235,8 @@ int main(int argc, char** argv) {
             ("num_robots,k", po::value<int>()->required(), "number of robots in server")
             ("port_number,n", po::value<int>()->default_value(8080), "rpc port number")
             ("output_file,o", po::value<string>()->default_value("stats.csv"), "output statistic filename")
+            ("save_stats,s", po::value<bool>()->default_value(false), "write to files some detailed statistics")
+            ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
             ;
     // clang-format on
     po::variables_map vm;
@@ -238,16 +248,12 @@ int main(int argc, char** argv) {
     }
     po::notify(vm);
     std::string filename = "none";
-
-    if (vm.count("path_file")) {
-        filename = vm["path_file"].as<string>();
-    }
-    // std::cout << "Solving for path name: " << filename << std::endl;
-    std::string out_filename = vm["output_file"].as<string>();
-    server_ptr =
-        std::make_shared<ADG_Server>(vm["num_robots"].as<int>(), out_filename);
-
     int port_number = vm["port_number"].as<int>();
+
+    server_ptr = std::make_shared<ADG_Server>(
+        vm["num_robots"].as<int>(), vm["output_file"].as<std::string>(),
+        vm["save_stats"].as<bool>(), vm["screen"].as<int>(), port_number);
+
     rpc::server srv(port_number);  // Setup the server to listen on the
     // specified port number
 

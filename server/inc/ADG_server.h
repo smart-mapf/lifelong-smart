@@ -31,7 +31,8 @@ std::mutex globalMutex;
 
 class ADG_Server {
 public:
-    ADG_Server(int num_robots, std::string& target_output_filename);
+    ADG_Server(int num_robots, std::string target_output_filename,
+               bool save_stats, int screen, int port);
     void saveStats(int selector_wait_t, int capacity);
 
     // TODO@jingtian: move some of them into private
@@ -39,6 +40,9 @@ public:
     // std::shared_ptr<MobileTaskManager> mobile_manager;
     // std::shared_ptr<PickTaskManager> picker_manager;
     bool flipped_coord = true;
+
+    int screen = 0;
+    int port;
 
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> curr_mobile_tasks;
     std::vector<robotState> curr_robot_states;
@@ -82,5 +86,6 @@ private:
     //    int totalNodes = 0;
     //    std::set<std::pair<int, int>> conflict_pairs;
     // std::string path_filename_;
+    bool save_stats = false;
     double raw_plan_cost = -1.0;
 };

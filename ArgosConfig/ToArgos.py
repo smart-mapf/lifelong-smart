@@ -34,7 +34,6 @@ def parse_map_file(map_file_path: str):
             map_data = data["layout"]
             width = data["n_col"]
             height = data["n_row"]
-    print(f"Width: {width}, Height: {height}")
     return map_data, width, height
 
 
@@ -47,7 +46,8 @@ def create_Argos(map_data: List[str],
                  port_num: int,
                  n_threads: int,
                  visualization: bool = False,
-                 sim_duration: int = 1200):
+                 sim_duration: int = 1200,
+                 screen: int = 0):
     """Create an Argos configuration file based on the provided map data and robot initial positions.
 
     Args:
@@ -66,6 +66,7 @@ def create_Argos(map_data: List[str],
         sim_duration (int, optional): duration of the simulation in number of
             ticks. Defaults to 1200. With a tick rate of 10 (ticks per second),
             this is 120 seconds.
+        screen (int, optional): screen number for logging. Defaults to 0.
     """
     # Create the root element
     argos_config = ET.Element("argos-configuration")
@@ -130,16 +131,9 @@ def create_Argos(map_data: List[str],
         acceleration="200.0",
         portNumber=f"{port_num}",
         outputDir=f"metaData{port_num}/",
-        simDuration=f"{sim_duration}")
-    # params = ET.SubElement(footbot_controller,
-    #                        "params",
-    #                        alpha="7.5",
-    #                        omega="3.0",
-    #                        velocity="100",
-    #                        acceleration="2.5",
-    #                        portNumber=f"{port_num}",
-    #                        outputDir=f"metaData{port_num}/")
-
+        simDuration=f"{sim_duration}",
+        screen=f"{screen}",
+    )
     # Loop functions
     loop_functions = ET.SubElement(
         argos_config,
