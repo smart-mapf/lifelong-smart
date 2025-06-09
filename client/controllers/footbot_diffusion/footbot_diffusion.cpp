@@ -122,7 +122,7 @@ void CFootBotDiffusion::Init(TConfigurationNode& t_node) {
     GetNodeAttributeOrDefault(t_node, "simDuration", total_sim_duration, 1200);
     GetNodeAttributeOrDefault(t_node, "outputDir", m_outputDir,
                               std::string("metaData/"));
-    GetNodeAttributeOrDefault(t_node, "outputDir", screen, 0);
+    GetNodeAttributeOrDefault(t_node, "screen", screen, 0);
     m_linearVelocity = 1.22 * m_angularVelocity;
     m_currVelocity = 0.0;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
