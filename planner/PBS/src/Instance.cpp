@@ -269,8 +269,7 @@ bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
     for (int i = 0; i < num_of_agents; i++) {
         if (finished_tasks_id.find(goal_locations[i].id) !=
             finished_tasks_id.end()) {
-            goal_locations[i].id = -1;   // reset goal id
-            goal_locations[i].loc = -1;  // reset goal location
+            goal_locations[i].id = -1;  // reset goal id
         } else {
             unfinished_goal_locs.insert(goal_locations[i].loc);
         }
@@ -286,7 +285,8 @@ bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
         // generate a goal for the agent if it does not have one
         if (goal_locations[i].id == -1) {
             goal_locations[i] =
-                Task(this->task_id, genGoal(unfinished_goal_locs));
+                Task(this->task_id,
+                     genGoal(unfinished_goal_locs, goal_locations[i].loc));
             unfinished_goal_locs.insert(goal_locations[i].loc);
             this->task_id++;
         }
@@ -310,9 +310,9 @@ bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
     return true;
 }
 
-int Instance::genGoal(set<int> to_avoid) {
+int Instance::genGoal(set<int> to_avoid, int curr_goal) {
     int goal = this->free_locations[rand() % this->free_locations.size()];
-    while (to_avoid.find(goal) != to_avoid.end()) {
+    while (to_avoid.find(goal) != to_avoid.end() || goal == curr_goal) {
         goal = this->free_locations[rand() % this->free_locations.size()];
     }
     return goal;

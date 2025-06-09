@@ -119,7 +119,7 @@ private:
     // bool loadAgents();
     // void saveAgents() const;
 
-    int genGoal(set<int> to_avoid);
+    int genGoal(set<int> to_avoid, int curr_goal = -1);
 
     void generateConnectedRandomGrid(
         int rows, int cols, int obstacles);  // initialize new [rows x cols] map
