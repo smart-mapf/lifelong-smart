@@ -27,7 +27,9 @@ def init_start_locations(
         exit(-1)
     # Randomly select start locations
     starts = np.random.choice(free_locations, size=num_agents, replace=False)
-    return [(str(start // w), str(start % w)) for start in starts]
+    # We need to convert the coordinate from (row, col) to (col, row) because
+    # this is how Argos expects it.
+    return [(str(start % w), str(start // w)) for start in starts]
 
 
 def check_file(file_path: str):
@@ -59,6 +61,7 @@ def run_simulator(args):
     client_process.wait()
     server_process.wait()
     planner_process.wait()
+    # planner_process.kill()
 
 
 def main(
