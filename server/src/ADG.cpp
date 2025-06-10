@@ -78,9 +78,8 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
             for (int k = i + 1; k < plans.size(); k++) {
                 for (int l = 0; l < plans[k].size(); l++) {
                     bool found_conflict = false;
-                    //                    printf("The time between: %f and
-                    //                    %f\n", plans[i][j].time,
-                    //                    plans[k][l].time);
+                    // printf("The time between: %f and %f\n", plans[i][j].time,
+                    //        plans[k][l].time);
                     if (plans[i][j].start == plans[k][l].goal &&
                         plans[i][j].time <= plans[k][l].time) {
                         std::shared_ptr<Edge> tmp_edge = std::make_shared<Edge>(
@@ -111,10 +110,10 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
     if (this->screen > 0)
         printf("Finish building ADG graph!\n");
     // if (hasCycle()) {
-    //     std::cerr << "Cycle detected!" << std::endl;
+    //     std::cout << "Cycle detected!" << std::endl;
     //     std::string input;
     //     std::getline(std::cin, input);
-    //     // exit(-1);
+    //     exit(-1);
     // }
 }
 

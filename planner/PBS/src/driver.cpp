@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
 		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
         ("portNum", po::value<int>()->default_value(8080), "port number for the server")
 		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
-        ("timeout_attempts", po::value<int>()->default_value(10),
+        ("timeout_attempts", po::value<int>()->default_value(5),
          "number of attempts to get location from server before exiting")
         ("seed", po::value<int>()->default_value(0), "random seed");
     // clang-format on
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     int screen = vm["screen"].as<int>();
     // We assume the server is already running at this point.
     rpc::client client("127.0.0.1", vm["portNum"].as<int>());
-    client.set_timeout(100);  // set timeout to 1000 ms
+    client.set_timeout(5000);  // in ms
     while (true) {
         string result_message;
         try {
@@ -137,6 +137,8 @@ int main(int argc, char** argv) {
 
                 pbs.clearSearchEngines();
                 try {
+                    cout << "Attempting to add new plan with "
+                         << new_mapf_plan.size() << " agents." << endl;
                     client.call("add_plan", new_mapf_plan);
                 } catch (const rpc::timeout& e) {
                     if (rpc_timeout_handle(e, timeouts, timeout_attempts,
@@ -160,7 +162,7 @@ int main(int argc, char** argv) {
         // Update task id for the next iteration
         task_id = instance.task_id;
         prev_goal_locs = instance.getGoalTasks();
-        sleep(0.1);
+        sleep(0.5);
     }
 
     cout << "Planner finished!" << endl;
