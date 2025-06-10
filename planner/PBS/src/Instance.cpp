@@ -322,9 +322,9 @@ bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
 
         // generate a goal for the agent if it does not have one
         if (goal_locations[i].id == -1) {
+            int curr_goal = goal_locations[i].loc;
             goal_locations[i] =
-                Task(this->task_id,
-                     genGoal(unfinished_goal_locs, goal_locations[i].loc));
+                Task(this->task_id, genGoal(unfinished_goal_locs, curr_goal));
             unfinished_goal_locs.insert(goal_locations[i].loc);
             this->task_id++;
         }
