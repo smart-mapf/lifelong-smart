@@ -32,7 +32,7 @@ std::mutex globalMutex;
 class ADG_Server {
 public:
     ADG_Server(int num_robots, std::string target_output_filename,
-               bool save_stats, int screen, int port);
+               bool save_stats, int screen, int port, int total_sim_step_tick);
     void saveStats(int selector_wait_t, int capacity);
 
     // TODO@jingtian: move some of them into private
@@ -43,6 +43,7 @@ public:
 
     int screen = 0;
     int port;
+    int total_sim_step_tick;
 
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> curr_mobile_tasks;
     std::vector<robotState> curr_robot_states;
@@ -62,6 +63,7 @@ public:
     int transport_capacity = 0;
 
     bool debug_set_flag = false;
+    vector<int> tick_per_robot;
     // int total_confirmed_picks = 0;
     // std::vector<int> confirmed_picks_by_genre;
     // std::vector<int> genre_finish_steps;

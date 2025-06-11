@@ -6,17 +6,20 @@ std::shared_ptr<ADG_Server> server_ptr = nullptr;
 // =======================
 
 ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
-                       bool save_stats, int screen, int port)
+                       bool save_stats, int screen, int port,
+                       int total_sim_step_tick)
     : output_filename(target_output_filename),
       save_stats(save_stats),
       screen(screen),
-      port(port) {
+      port(port),
+      total_sim_step_tick(total_sim_step_tick) {
     adg = std::make_shared<ADG>(num_robots, screen);
 
     numRobots = adg->numRobots();
     agent_finish_time.resize(numRobots, -1);
     agents_finish.resize(numRobots, false);
     agent_finish_sim_step.resize(numRobots, -1);
+    tick_per_robot.resize(numRobots, 0);
 
     startTimers.resize(numRobots);
 }
@@ -186,6 +189,7 @@ void closeServer(rpc::server& srv) {
     std::cout << "############################################################"
               << std::endl;
     std::cout << "Closing server at port " << server_ptr->port << std::endl;
+    std::cout << "Sim count " << server_ptr->step_cnt << std::endl;
     std::cout << "Num of finished tasks: "
               << server_ptr->adg->getNumFinishedTasks() << std::endl;
     server_ptr->saveStats(server_ptr->total_wait_time,
@@ -211,7 +215,7 @@ update(std::string RobotID) {
     // if (server_ptr->step_cnt % 20 == 0 and Robot_ID == 0) {
     //     server_ptr->adg->printProgress();
     // }
-    server_ptr->step_cnt++;
+    // server_ptr->step_cnt++;
     return server_ptr->adg->getPlan(Robot_ID);
 }
 
@@ -221,6 +225,24 @@ void updateSimFinishTime(std::string& robot_id_str, int sim_step) {
         server_ptr->agent_finish_sim_step[robot_id] = sim_step;
         server_ptr->latest_arr_sim_step = sim_step;
     }
+}
+
+// Return end_sim: true if all robots have finished their simulation steps
+bool updateSimStep(std::string RobotID) {
+    std::lock_guard<std::mutex> guard(globalMutex);
+    int Robot_ID = server_ptr->adg->startIndexToRobotID[RobotID];
+    server_ptr->tick_per_robot[Robot_ID]++;
+
+    bool end_sim = true;
+    for (auto tick : server_ptr->tick_per_robot) {
+        if (tick < server_ptr->total_sim_step_tick) {
+            end_sim = false;
+            break;
+        }
+    }
+    bool end_robot =
+        server_ptr->tick_per_robot[Robot_ID] >= server_ptr->total_sim_step_tick;
+    return end_sim;
 }
 
 int main(int argc, char** argv) {
@@ -237,6 +259,7 @@ int main(int argc, char** argv) {
             ("output_file,o", po::value<string>()->default_value("stats.csv"), "output statistic filename")
             ("save_stats,s", po::value<bool>()->default_value(false), "write to files some detailed statistics")
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
+            ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
             ;
     // clang-format on
     po::variables_map vm;
@@ -252,7 +275,8 @@ int main(int argc, char** argv) {
 
     server_ptr = std::make_shared<ADG_Server>(
         vm["num_robots"].as<int>(), vm["output_file"].as<std::string>(),
-        vm["save_stats"].as<bool>(), vm["screen"].as<int>(), port_number);
+        vm["save_stats"].as<bool>(), vm["screen"].as<int>(), port_number,
+        vm["total_sim_step_tick"].as<int>());
 
     rpc::server srv(port_number);  // Setup the server to listen on the
     // specified port number
@@ -267,7 +291,8 @@ int main(int argc, char** argv) {
     srv.bind("update_finish_agent", &updateSimFinishTime);
 
     srv.bind("update_stats", &updateStats);
-    srv.bind("closeServer", [&srv]() { closeServer(srv); });
+    srv.bind("update_sim_step", &updateSimStep);
+    srv.bind("close_server", [&srv]() { closeServer(srv); });
     srv.run();  // Start the server, blocking call
 
     return 0;

@@ -350,10 +350,11 @@ void CFootBotDiffusion::ControlStep() {
         right_v = 0.0f;
     }
 
+    // Update sim step count in client and server.
     step_count_++;
-    // std::cout << step_count_ << std::endl;
-    if (step_count_ >= total_sim_duration) {
-        client->async_call("closeServer");
+    bool end_sim = client->call("update_sim_step", robot_id).as<bool>();
+    if (end_sim) {
+        client->async_call("close_server");
         exit(0);
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -551,7 +552,7 @@ void CFootBotDiffusion::TurnLeft(Real targetAngle, Real currAngle,
         }
     }
     ////  cout cout << "Left_v: " << : " << << " left_v <: " << right_v <<
-    ///std::endl;
+    /// std::endl;
     m_pcWheels->SetLinearVelocity(left_v, right_v);
 }
 
