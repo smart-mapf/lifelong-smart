@@ -189,7 +189,7 @@ void closeServer(rpc::server& srv) {
     std::cout << "############################################################"
               << std::endl;
     std::cout << "Closing server at port " << server_ptr->port << std::endl;
-    std::cout << "Sim count " << server_ptr->step_cnt << std::endl;
+    std::cout << "Sim count " << server_ptr->tick_per_robot[0] << std::endl;
     std::cout << "Num of finished tasks: "
               << server_ptr->adg->getNumFinishedTasks() << std::endl;
     server_ptr->saveStats(server_ptr->total_wait_time,

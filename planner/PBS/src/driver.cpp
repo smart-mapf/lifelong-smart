@@ -15,23 +15,15 @@
 
 #include "PBS.h"
 
-// Return true if the timeout has exceeded the maximum number of attempts
-bool rpc_timeout_handle(const rpc::timeout& e, int& timeouts,
-                        int timeout_attempts, int screen) {
-    timeouts++;
-    if (screen > 0) {
-        printf("%s. ", e.what());
-    }
-
-    if (timeouts > timeout_attempts) {
-        if (screen > 0) {
-            printf("Timeout exceeded %d attempts. Exiting...\n",
-                   timeout_attempts);
-        }
+// Return true if the number of disconnects has exceeded the maximum attempts
+bool rpc_disconnect_handle(int& n_disconnect, int disconnect, int screen) {
+    if (screen > 0)
+        cout << "Disconnected while sending plan. Retrying..." << endl;
+    n_disconnect++;
+    if (n_disconnect > disconnect) {
+        if (screen > 0)
+            cout << "Disconnected too many times. Exiting..." << endl;
         return true;  // Exceeded maximum attempts
-    }
-    if (screen > 0) {
-        printf("Retrying...\n");
     }
     return false;  // Still within the allowed attempts
 }
@@ -55,7 +47,7 @@ int main(int argc, char** argv) {
 		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
         ("portNum", po::value<int>()->default_value(8080), "port number for the server")
 		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
-        ("timeout_attempts", po::value<int>()->default_value(5),
+        ("disconnect_attempt", po::value<int>()->default_value(5),
          "number of attempts to get location from server before exiting")
         ("seed", po::value<int>()->default_value(0), "random seed");
     // clang-format on
@@ -77,23 +69,24 @@ int main(int argc, char** argv) {
     int task_id = 0;
     vector<Task> prev_goal_locs;
     set<int> finished_tasks_id;
-    int timeouts = 0;
-    int timeout_attempts = vm["timeout_attempts"].as<int>();
+    int disconnect_attempt = vm["disconnect_attempt"].as<int>();
     int screen = vm["screen"].as<int>();
+    int n_disconnect = 0;
     // We assume the server is already running at this point.
     rpc::client client("127.0.0.1", vm["portNum"].as<int>());
-    client.set_timeout(5000);  // in ms
+    // client.set_timeout(5000);  // in ms
     while (true) {
-        string result_message;
-        try {
-            result_message = client.call("get_location", 5).as<string>();
-        } catch (const rpc::timeout& e) {
-            if (rpc_timeout_handle(e, timeouts, timeout_attempts, screen)) {
-                break;  // Exit if maximum attempts exceeded
-            }
-            continue;
+        auto location_future = client.async_call("get_location", 5);
+        if (client.get_connection_state() ==
+            rpc::client::connection_state::disconnected) {
+            if (rpc_disconnect_handle(n_disconnect, disconnect_attempt, screen))
+                break;  // Exit if disconnected too many times
+            continue;   // Otherwise, retry
         }
-        // printf("Result message: %s\n", result_message.c_str());
+
+        // Wait for the get_location to complete
+        string result_message = location_future.get().as<string>();
+
         auto result_json = json::parse(result_message);
         if (!result_json["initialized"].get<bool>()) {
             printf("Planner not initialized! Retrying\n");
@@ -136,17 +129,17 @@ int main(int argc, char** argv) {
                 auto new_mapf_plan = pbs.getPaths();
 
                 pbs.clearSearchEngines();
-                try {
-                    cout << "Attempting to add new plan with "
-                         << new_mapf_plan.size() << " agents." << endl;
-                    client.call("add_plan", new_mapf_plan);
-                } catch (const rpc::timeout& e) {
-                    if (rpc_timeout_handle(e, timeouts, timeout_attempts,
-                                           screen)) {
-                        break;  // Exit if maximum attempts exceeded
-                    }
-                    continue;
+                auto add_plan_future =
+                    client.async_call("add_plan", new_mapf_plan);
+
+                if (client.get_connection_state() ==
+                    rpc::client::connection_state::disconnected) {
+                    if (rpc_disconnect_handle(n_disconnect, disconnect_attempt,
+                                              screen))
+                        break;  // Exit if disconnected too many times
+                    continue;   // Otherwise, retry
                 }
+                add_plan_future.get();  // Wait for the future to complete
             } else {
                 std::cerr << "No solution found!" << std::endl;
                 fail_count++;

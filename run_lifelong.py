@@ -73,7 +73,7 @@ def main(
     save_stats: bool = False,
     port_num: int = 8182,
     n_threads: int = 1,
-    sim_duration: int = 3600 * 10,
+    sim_duration: int = 1800 * 10,
     seed: int = 42,
     screen: int = 0,
 ):
@@ -111,6 +111,7 @@ def main(
             f"--output_file={stats_name}",
             f"--save_stats={str(save_stats).lower()}",
             f"--screen={screen}",
+            f"--total_sim_step_tick={sim_duration}",
         ]
         client_command = ["argos3", "-c", f"../{argos_config_filepath}"]
 

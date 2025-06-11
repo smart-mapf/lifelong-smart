@@ -43,6 +43,8 @@ public:
 
     int screen = 0;
     int port;
+
+    // Remember a tick count for each robot as the "simulation clock time".
     int total_sim_step_tick;
 
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> curr_mobile_tasks;
@@ -54,7 +56,6 @@ public:
     std::vector<bool> agents_finish;
     std::string output_filename;
     int numRobots = 0;
-    int step_cnt = 0;
     double latest_arr_sim_step = 0;
     std::vector<std::pair<double, double>> robots_location;
     std::vector<MobileAction> current_robots_goal_type;
