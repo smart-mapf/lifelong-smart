@@ -60,8 +60,8 @@ def run_simulator(args):
     # planner will detect the end of the server and end itself.
     client_process.wait()
     server_process.wait()
-    planner_process.wait()
-    # planner_process.kill()
+    # planner_process.wait()
+    planner_process.kill()
 
 
 def main(
@@ -74,9 +74,35 @@ def main(
     port_num: int = 8182,
     n_threads: int = 1,
     sim_duration: int = 1800 * 10,
+    sim_window: int = 5 * 10,
+    velocity: float = 200.0,
     seed: int = 42,
     screen: int = 0,
 ):
+    """Function to run the lifelong SMART simulator with the given parameters.
+
+    Args:
+        map_filepath (str, optional): file path to map..
+        num_agents (int, optional): number of robots. Defaults to 32.
+        headless (bool, optional): whether run with visualization. Defaults to
+            False.
+        argos_config_filepath (str, optional): file path to write the generated
+            Argos config file. Defaults to "output.argos".
+        stats_name (str, optional): file path to store the stats from the
+            simulator. Defaults to "stats.csv".
+        save_stats (bool , optional): whether to save the stats. Defaults to
+            False.
+        port_num (int, optional): port number of RPC server. Defaults to 8182.
+        n_threads (int, optional): number of threads to run Argos. Defaults to 1.
+        sim_duration (int, optional): number of simulation ticks to run the
+            simulator. Defaults to 1800*10.
+        sim_window (int, optional): time interval to invoke planner in
+            simulation ticks. Defaults to 50.
+        velocity (float, optional): velocity of the robots in cm/s. Defaults to
+            200.0 cm/s.
+        seed (int, optional): random seed. Defaults to 42.
+        screen (int, optional): logging options. Defaults to 0.
+    """
     # print(f"Map Name: {map_filepath}")
     map_data, width, height = ArgosConfig.parse_map_file(map_filepath)
 
@@ -97,9 +123,16 @@ def main(
         visualization=not headless,
         sim_duration=sim_duration,
         screen=screen,
+        velocity=velocity,
     )
     if screen > 0:
         print("Argos config file created.")
+
+    # Infer the simulation window in timestep from velocity
+    # sim window = distance of the robot can travel in sim_window seconds at
+    # the given velocity
+    # Convert sim_window from ticks to seconds, and velocity from cm/s to m/s
+    sim_window_ts = np.ceil((sim_window / 10) * (velocity / 100)).astype(int)
 
     try:
         print("Running simulator ...")
@@ -112,6 +145,7 @@ def main(
             f"--save_stats={str(save_stats).lower()}",
             f"--screen={screen}",
             f"--total_sim_step_tick={sim_duration}",
+            f"--sim_window_tick={sim_window}",
         ]
         client_command = ["argos3", "-c", f"../{argos_config_filepath}"]
 
@@ -123,6 +157,7 @@ def main(
             f"--portNum={port_num}",
             f"--seed={seed}",
             f"--screen={screen}",
+            f"--simulation_window={sim_window_ts}",
         ]
         run_simulator((server_command, client_command, planner_command))
     except KeyboardInterrupt:

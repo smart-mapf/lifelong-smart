@@ -32,8 +32,9 @@ std::mutex globalMutex;
 class ADG_Server {
 public:
     ADG_Server(int num_robots, std::string target_output_filename,
-               bool save_stats, int screen, int port, int total_sim_step_tick);
-    void saveStats(int selector_wait_t, int capacity);
+               bool save_stats, int screen, int port, int total_sim_step_tick,
+               int sim_window_tick);
+    void saveStats();
 
     // TODO@jingtian: move some of them into private
     std::shared_ptr<ADG> adg;
@@ -47,23 +48,26 @@ public:
     // Remember a tick count for each robot as the "simulation clock time".
     int total_sim_step_tick;
 
+    // Simulation window tick, i.e. how many ticks to invoke planner
+    int sim_window_tick = 50;  // default is 50, i.e. 5 seconds
+
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> curr_mobile_tasks;
     std::vector<robotState> curr_robot_states;
 
     // stats data
-    std::vector<double> agent_finish_time;
-    std::vector<int> agent_finish_sim_step;
-    std::vector<bool> agents_finish;
+    // std::vector<double> agent_finish_time;
+    // std::vector<int> agent_finish_sim_step;
+    // std::vector<bool> agents_finish;
     std::string output_filename;
     int numRobots = 0;
-    double latest_arr_sim_step = 0;
+    // double latest_arr_sim_step = 0;
     std::vector<std::pair<double, double>> robots_location;
-    std::vector<MobileAction> current_robots_goal_type;
+    // std::vector<MobileAction> current_robots_goal_type;
 
-    double total_wait_time = 0;
-    int transport_capacity = 0;
+    // double total_wait_time = 0;
+    // int transport_capacity = 0;
 
-    bool debug_set_flag = false;
+    // bool debug_set_flag = false;
     vector<int> tick_per_robot;
     // int total_confirmed_picks = 0;
     // std::vector<int> confirmed_picks_by_genre;

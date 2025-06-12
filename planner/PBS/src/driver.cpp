@@ -15,18 +15,18 @@
 
 #include "PBS.h"
 
-// Return true if the number of disconnects has exceeded the maximum attempts
-bool rpc_disconnect_handle(int& n_disconnect, int disconnect, int screen) {
-    if (screen > 0)
-        cout << "Disconnected while sending plan. Retrying..." << endl;
-    n_disconnect++;
-    if (n_disconnect > disconnect) {
-        if (screen > 0)
-            cout << "Disconnected too many times. Exiting..." << endl;
-        return true;  // Exceeded maximum attempts
-    }
-    return false;  // Still within the allowed attempts
-}
+// // Return true if the number of disconnects has exceeded the maximum attempts
+// bool rpc_disconnect_handle(int& n_disconnect, int disconnect, int screen) {
+//     if (screen > 0)
+//         cout << "Disconnected while sending plan. Retrying..." << endl;
+//     n_disconnect++;
+//     if (n_disconnect > disconnect) {
+//         if (screen > 0)
+//             cout << "Disconnected too many times. Exiting..." << endl;
+//         return true;  // Exceeded maximum attempts
+//     }
+//     return false;  // Still within the allowed attempts
+// }
 
 /* Main function */
 int main(int argc, char** argv) {
@@ -49,6 +49,8 @@ int main(int argc, char** argv) {
 		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
         ("disconnect_attempt", po::value<int>()->default_value(5),
          "number of attempts to get location from server before exiting")
+		("simulation_window", po::value<int>()->default_value(5),
+         "The path planned every time should be >= this length")
         ("seed", po::value<int>()->default_value(0), "random seed");
     // clang-format on
     po::variables_map vm;
@@ -72,20 +74,30 @@ int main(int argc, char** argv) {
     int disconnect_attempt = vm["disconnect_attempt"].as<int>();
     int screen = vm["screen"].as<int>();
     int n_disconnect = 0;
+    int simulation_window = vm["simulation_window"].as<int>();
     // We assume the server is already running at this point.
     rpc::client client("127.0.0.1", vm["portNum"].as<int>());
     // client.set_timeout(5000);  // in ms
+
+    // Wait for the server to initialize
+    while(!client.call("is_initialized").as<bool>())
+    {
+        if (screen > 0) {
+            printf("Waiting for server to initialize...\n");
+        }
+    }
+
     while (true) {
-        auto location_future = client.async_call("get_location", 5);
-        if (client.get_connection_state() ==
-            rpc::client::connection_state::disconnected) {
-            if (rpc_disconnect_handle(n_disconnect, disconnect_attempt, screen))
-                break;  // Exit if disconnected too many times
-            continue;   // Otherwise, retry
+        // Get the current simulation tick
+        bool invoke_planner = client.call("invoke_planner").as<bool>();
+
+        // Skip planning until the simulation step is a multiple of the
+        // simulation window
+        if (!invoke_planner) {
+            continue;
         }
 
-        // Wait for the get_location to complete
-        string result_message = location_future.get().as<string>();
+        string result_message = client.call("get_location", 5).as<string>();
 
         auto result_json = json::parse(result_message);
         if (!result_json["initialized"].get<bool>()) {
@@ -129,17 +141,7 @@ int main(int argc, char** argv) {
                 auto new_mapf_plan = pbs.getPaths();
 
                 pbs.clearSearchEngines();
-                auto add_plan_future =
-                    client.async_call("add_plan", new_mapf_plan);
-
-                if (client.get_connection_state() ==
-                    rpc::client::connection_state::disconnected) {
-                    if (rpc_disconnect_handle(n_disconnect, disconnect_attempt,
-                                              screen))
-                        break;  // Exit if disconnected too many times
-                    continue;   // Otherwise, retry
-                }
-                add_plan_future.get();  // Wait for the future to complete
+                client.call("add_plan", new_mapf_plan);
             } else {
                 std::cerr << "No solution found!" << std::endl;
                 fail_count++;
@@ -155,7 +157,7 @@ int main(int argc, char** argv) {
         // Update task id for the next iteration
         task_id = instance.task_id;
         prev_goal_locs = instance.getGoalTasks();
-        sleep(0.5);
+        // sleep(0.5);
     }
 
     cout << "Planner finished!" << endl;

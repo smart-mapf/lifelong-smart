@@ -46,7 +46,9 @@ def create_Argos(map_data: List[str],
                  n_threads: int,
                  visualization: bool = False,
                  sim_duration: int = 1200,
-                 screen: int = 0):
+                 screen: int = 0,
+                 velocity: float = 200.0,
+                 simulation_window: int = 10):
     """Create an Argos configuration file based on the provided map data and robot initial positions.
 
     Args:
@@ -66,6 +68,8 @@ def create_Argos(map_data: List[str],
             ticks. Defaults to 1200. With a tick rate of 10 (ticks per second),
             this is 120 seconds.
         screen (int, optional): screen number for logging. Defaults to 0.
+        velocity (float, optional): velocity of the robots in cm/s. Defaults to
+            200.0 cm/s.
     """
     # Create the root element
     argos_config = ET.Element("argos-configuration")
@@ -126,7 +130,7 @@ def create_Argos(map_data: List[str],
         omega="45.0",
         #  alpha="7.5",
         #  omega="3.0",
-        velocity="200",
+        velocity=f"{velocity}", # in cm/s
         acceleration="200.0",
         portNumber=f"{port_num}",
         outputDir=f"metaData{port_num}/",
