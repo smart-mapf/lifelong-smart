@@ -15,19 +15,6 @@
 
 #include "PBS.h"
 
-// // Return true if the number of disconnects has exceeded the maximum attempts
-// bool rpc_disconnect_handle(int& n_disconnect, int disconnect, int screen) {
-//     if (screen > 0)
-//         cout << "Disconnected while sending plan. Retrying..." << endl;
-//     n_disconnect++;
-//     if (n_disconnect > disconnect) {
-//         if (screen > 0)
-//             cout << "Disconnected too many times. Exiting..." << endl;
-//         return true;  // Exceeded maximum attempts
-//     }
-//     return false;  // Still within the allowed attempts
-// }
-
 /* Main function */
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
@@ -47,8 +34,6 @@ int main(int argc, char** argv) {
 		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
         ("portNum", po::value<int>()->default_value(8080), "port number for the server")
 		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
-        ("disconnect_attempt", po::value<int>()->default_value(5),
-         "number of attempts to get location from server before exiting")
 		("simulation_window", po::value<int>()->default_value(5),
          "The path planned every time should be >= this length")
         ("seed", po::value<int>()->default_value(0), "random seed");
@@ -67,23 +52,25 @@ int main(int argc, char** argv) {
     srand(seed);  // Set the random seed for reproducibility
 
     ///////////////////////////////////////////////////////////////////////////
-    // load the instance
-    int task_id = 0;
+    int prev_last_task_id = 0;  // last task id from the previous iteration
     vector<Task> prev_goal_locs;
     set<int> finished_tasks_id;
-    int disconnect_attempt = vm["disconnect_attempt"].as<int>();
     int screen = vm["screen"].as<int>();
-    int n_disconnect = 0;
     int simulation_window = vm["simulation_window"].as<int>();
+
+    // Create a graph, heuristic will be computed only once in the graph
+    Graph graph(vm["map"].as<string>(), screen);
+
     // We assume the server is already running at this point.
     rpc::client client("127.0.0.1", vm["portNum"].as<int>());
     // client.set_timeout(5000);  // in ms
 
     // Wait for the server to initialize
-    while(!client.call("is_initialized").as<bool>())
-    {
+    int trial = 0;
+    while (!client.call("is_initialized").as<bool>()) {
         if (screen > 0) {
-            printf("Waiting for server to initialize...\n");
+            printf("%d Waiting for server to initialize...\n", trial);
+            trial++;
         }
     }
 
@@ -117,16 +104,13 @@ int main(int argc, char** argv) {
             }
 
             printf("New finished tasks:\n");
-            for (auto task_id : new_finished_tasks_id) {
-                printf("%d,", task_id);
+            for (auto finish_task_id : new_finished_tasks_id) {
+                printf("%d,", finish_task_id);
             }
             printf("\n");
         }
 
-        // TODO@jingtian: update this to get new instance
-        Instance instance(vm["map"].as<string>(), screen);
-        instance.task_id = task_id;
-        instance.setGoalLocations(prev_goal_locs);
+        Instance instance(graph, prev_goal_locs, screen, prev_last_task_id);
         instance.loadAgents(commit_cut, new_finished_tasks_id);
         PBS pbs(instance, vm["sipp"].as<bool>(), screen);
         // run
@@ -145,7 +129,7 @@ int main(int argc, char** argv) {
             } else {
                 std::cerr << "No solution found!" << std::endl;
                 fail_count++;
-                if (fail_count > 1000) {
+                if (fail_count > 10) {
                     std::cerr << "Fail to find a solution after " << fail_count
                               << " attempts! Exiting." << std::endl;
                     // instance.saveInstance();
@@ -155,7 +139,7 @@ int main(int argc, char** argv) {
         }
         // instance.printMap();
         // Update task id for the next iteration
-        task_id = instance.task_id;
+        prev_last_task_id = instance.getTaskId();
         prev_goal_locs = instance.getGoalTasks();
         // sleep(0.5);
     }

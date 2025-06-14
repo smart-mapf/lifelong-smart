@@ -9,13 +9,16 @@
 #include <fstream>
 #include <iostream>     // std::cout, std::fixed
 #include <iomanip>      // std::setprecision
+#include <cfloat>
 #include <boost/heap/pairing_heap.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
 #include <json.hpp>
 
+using boost::heap::fibonacci_heap;
 using boost::heap::pairing_heap;
 using boost::heap::compare;
 using boost::unordered_map;
@@ -51,6 +54,7 @@ using json = nlohmann::json;
 #define MAX_TIMESTEP INT_MAX / 2
 #define MAX_COST INT_MAX / 2
 #define MAX_NODES INT_MAX / 2
+#define WEIGHT_MAX INT_MAX/2
 
 struct PathEntry
 {

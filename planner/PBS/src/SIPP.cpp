@@ -29,14 +29,14 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents, const vector<Path*>& p
 
     // build constraint table
     auto t = clock();
-    ConstraintTable constraint_table(instance.num_of_cols, instance.map_size);
+    ConstraintTable constraint_table(instance.graph.num_of_cols, instance.graph.map_size);
     for (int a : higher_agents)
     {
         constraint_table.insert2CT(*paths[a]);
     }
     runtime_build_CT = (double)(clock() - t) / CLOCKS_PER_SEC;
 
-    int holding_time = constraint_table.getHoldingTime(goal_location, constraint_table.length_min);
+    double holding_time = static_cast<double>(constraint_table.getHoldingTime(goal_location, constraint_table.length_min));
 
     t = clock();
     constraint_table.insert2CAT(agent, paths);
@@ -53,9 +53,13 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents, const vector<Path*>& p
         return path;
 
     // generate start and add it to the OPEN list
-    auto start = new SIPPNode(start_location, 0, max(my_heuristic[start_location], holding_time), nullptr, 0,
+    // auto start = new SIPPNode(start_location, 0, max(instance.graph.heuristics.at(goal_location)[start_location], holding_time), nullptr, 0,
+    //                           get<1>(interval), get<1>(interval), get<2>(interval), get<2>(interval));
+    auto start = new SIPPNode(start_location, 0,
+        instance.graph.heuristics.at(goal_location)[start_location], nullptr, 0,
                               get<1>(interval), get<1>(interval), get<2>(interval), get<2>(interval));
-    min_f_val = max(holding_time, (int)start->getFVal());
+    // min_f_val = max(holding_time, start->getFVal());
+    min_f_val = start->getFVal();
     pushNodeToOpen(start);
 
     while (!open_list.empty())
@@ -75,19 +79,33 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents, const vector<Path*>& p
             break;
         }
 
-        for (int next_location : instance.getNeighbors(curr->location)) // move to neighboring locations
+        for (int next_location : instance.graph.getNeighbors(curr->location)) // move to neighboring locations
         {
             for (auto & i : reservation_table.get_safe_intervals(
                     curr->location, next_location, curr->timestep + 1, curr->high_expansion + 1))
             {
+                // Check if the edge if blocked.
+                if (!instance.graph.validMove(curr->location, next_location))
+                    continue;
+
                 int next_high_generation, next_timestep, next_high_expansion;
                 bool next_v_collision, next_e_collision;
                 tie(next_high_generation, next_timestep, next_high_expansion, next_v_collision, next_e_collision) = i;
                 // compute cost to next_id via curr node
-                int next_g_val = next_timestep;
-                int next_h_val = max(my_heuristic[next_location], curr->getFVal() - next_g_val);  // path max
-                if (next_g_val + next_h_val > reservation_table.constraint_table.length_max)
-                    continue;
+                // inlcude rotate time
+                int wait_time = next_timestep - curr->timestep - 1;
+                // cost of waiting at the current location
+                double wait_cost = instance.graph.getWeight(
+                    curr->location, curr->location);
+                double move_cost = instance.graph.getWeight(
+                    curr->location, next_location);
+                // new g val considers the wait cost and movement cost
+                double next_g_val = curr->g_val + wait_time * wait_cost + move_cost;
+                // int next_g_val = next_timestep;
+                // double next_h_val = max(instance.graph.heuristics.at(goal_location)[next_location], curr->getFVal() - next_g_val);  // path max
+                double next_h_val = instance.graph.heuristics.at(goal_location)[next_location];
+                // if (next_g_val + next_h_val > reservation_table.constraint_table.length_max)
+                //     continue;
                 int next_conflicts = curr->num_of_conflicts +
                                      (int)curr->collision_v * max(next_timestep - curr->timestep - 1, 0) +
                                      + (int)next_v_collision + (int)next_e_collision;
@@ -101,12 +119,14 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents, const vector<Path*>& p
         }  // end for loop that generates successors
 
         // wait at the current location
+        int exp_duration = get<0>(interval) + instance.graph.d_heuristics.at(curr->location)[goal_location];
         if (curr->high_expansion == curr->high_generation and
             reservation_table.find_safe_interval(interval, curr->location, curr->high_expansion) and
-            get<0>(interval) + curr->h_val <= reservation_table.constraint_table.length_max)
+            get<0>(interval) + exp_duration <= reservation_table.constraint_table.length_max)
         {
             auto next_timestep = get<0>(interval);
-            int next_h_val = max(curr->h_val, curr->getFVal() - next_timestep);  // path max
+            // int next_h_val = max(curr->h_val, curr->getFVal() - next_timestep);  // path max
+            int next_h_val = curr->h_val; // we do not change h_val when waiting
             auto next_collisions = curr->num_of_conflicts +
                                    (int)curr->collision_v * max(next_timestep - curr->timestep - 1, 0) // wait time
                                    + (int)get<2>(interval);

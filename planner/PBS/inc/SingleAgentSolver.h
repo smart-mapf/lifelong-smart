@@ -6,8 +6,8 @@ class LLNode // low-level node
 {
 public:
 	int location;
-	int g_val;
-	int h_val = 0;
+	double g_val;
+	double h_val = 0;
 	LLNode* parent;
 	int timestep = 0;
 	int num_of_conflicts = 0;
@@ -64,7 +64,7 @@ public:
 		location(location), g_val(g_val), h_val(h_val), parent(parent), timestep(timestep),
 		num_of_conflicts(num_of_conflicts), in_openlist(in_openlist), wait_at_goal(false) {}
 
-	inline int getFVal() const { return g_val + h_val; }
+	inline double getFVal() const { return g_val + h_val; }
 	void copy(const LLNode& other)
 	{
 		location = other.location;
@@ -90,10 +90,11 @@ public:
 
 	int start_location;
 	int goal_location;
-	vector<int> my_heuristic;  // this is the precomputed heuristic for this agent
-	int compute_heuristic(int from, int to) const  // compute admissible heuristic between two locations
+    // this is the precomputed heuristic for this agent
+	// vector<double> my_heuristic;
+	double compute_heuristic(int from, int to) const  // compute admissible heuristic between two locations
 	{
-		return max(get_DH_heuristic(from, to), instance.getManhattanDistance(from, to));
+		return max(get_DH_heuristic(from, to), static_cast<double>(instance.graph.getManhattanDistance(from, to)));
 	}
 	const Instance& instance;
 
@@ -101,7 +102,7 @@ public:
 	virtual string getName() const = 0;
 
 	list<int> getNextLocations(int curr) const; // including itself and its neighbors
-	list<int> getNeighbors(int curr) const { return instance.getNeighbors(curr); }
+	list<int> getNeighbors(int curr) const { return instance.graph.getNeighbors(curr); }
 
 	// int getStartLocation() const {return instance.start_locations[agent]; }
 	// int getGoalLocation() const {return instance.goal_locations[agent]; }
@@ -111,16 +112,19 @@ public:
 		start_location(instance.start_locations[agent]),
 		goal_location(instance.goal_locations[agent].loc)
 	{
-		compute_heuristics();
+		// compute_heuristics();
 	}
 
   virtual ~SingleAgentSolver(){}
 
 protected:
-	int min_f_val; // minimal f value in OPEN
+	double min_f_val; // minimal f value in OPEN
 	double w = 1; // suboptimal bound
 
-	void compute_heuristics();
-	int get_DH_heuristic(int from, int to) const { return abs(my_heuristic[from] - my_heuristic[to]); }
+	// void compute_heuristics();
+    double get_DH_heuristic(int from, int to) const {
+        return abs(instance.graph.heuristics.at(goal_location)[from] -
+                   instance.graph.heuristics.at(goal_location)[to]);
+    }
 };
 
