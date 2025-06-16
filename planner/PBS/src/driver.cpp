@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
             continue;
         }
 
-        string result_message = client.call("get_location", 5).as<string>();
+        string result_message = client.call("get_location").as<string>();
 
         auto result_json = json::parse(result_message);
         if (!result_json["initialized"].get<bool>()) {

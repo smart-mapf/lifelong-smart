@@ -74,7 +74,7 @@ struct robotState {
 
 class ADG {
 public:
-    ADG(int num_robots, int screen);
+    ADG(int num_robots, int screen, int look_ahead_dist);
     [[nodiscard]] int numRobots() const {
         return num_robots;
     }
@@ -89,7 +89,7 @@ public:
     bool getAvailableNodes(int robot_id, std::vector<int>& available_nodes);
     bool updateFinishedNode(int robot_id, int node_id);
     // void setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes);
-    std::vector<robotState> computeCommitCut(int num_enqueue_node);
+    std::vector<robotState> computeCommitCut();
     void addMAPFPlan(const std::vector<std::vector<Action>>& plans);
     SIM_PLAN getPlan(int agent_id);
     std::pair<double, double> getRobotPosition(int agent_id) {
@@ -142,6 +142,12 @@ public:
         }
     }
 
+    int getNumUnfinishedActions(int agent_id);
+
+    int getLookAheadDist() const {
+        return look_ahead_dist;
+    }
+
 private:
     void printActions(
         const std::vector<std::tuple<std::string, int, double, std::string,
@@ -185,7 +191,7 @@ private:
 
     int num_robots = 0;
     int total_nodes_cnt = 0;
-    size_t look_ahead_dist = 0;
+    int look_ahead_dist = 0;
 
     std::vector<robotState> init_locs;
     std::vector<robotState> robot_states;

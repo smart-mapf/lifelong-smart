@@ -7,14 +7,13 @@ std::shared_ptr<ADG_Server> server_ptr = nullptr;
 
 ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
                        bool save_stats, int screen, int port,
-                       int total_sim_step_tick, int sim_window_tick)
+                       int total_sim_step_tick, int look_ahead_dist)
     : output_filename(target_output_filename),
       save_stats(save_stats),
       screen(screen),
       port(port),
-      total_sim_step_tick(total_sim_step_tick),
-      sim_window_tick(sim_window_tick) {
-    adg = std::make_shared<ADG>(num_robots, screen);
+      total_sim_step_tick(total_sim_step_tick) {
+    adg = std::make_shared<ADG>(num_robots, screen, look_ahead_dist);
 
     numRobots = adg->numRobots();
     // agent_finish_time.resize(numRobots, -1);
@@ -44,18 +43,16 @@ void ADG_Server::saveStats() {
     std::cout << "Statistics written to " << output_filename << std::endl;
 }
 
-string getRobotsLocation(int look_ahead_dist) {
+string getRobotsLocation() {
     // Return message as a JSON string
     json result_message = {};
 
     std::lock_guard<std::mutex> guard(globalMutex);
     if (server_ptr->screen > 0) {
-        std::cout << "Get robot location query received! lookahead dist: "
-                  << look_ahead_dist << std::endl;
+        std::cout << "Get robot location query received!" << std::endl;
     }
 
-    server_ptr->curr_robot_states =
-        server_ptr->adg->computeCommitCut(look_ahead_dist);
+    server_ptr->curr_robot_states = server_ptr->adg->computeCommitCut();
 
     std::vector<std::pair<double, double>> robots_location;
     if (server_ptr->curr_robot_states.empty()) {
@@ -226,17 +223,35 @@ bool updateSimStep(std::string RobotID) {
     return end_sim;
 }
 
-// Get the current simulation step in number of ticks
+// Invoke planner when the number of actions left for a robot is less than a
+// threshold.
 bool invokePlanner() {
     std::lock_guard<std::mutex> guard(globalMutex);
-    // Should take the min of the ticks of all the robots
-    int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
-                                     server_ptr->tick_per_robot.end());
 
-    // Invoke planner every sim_window_tick
-    bool invoke = sim_step % server_ptr->sim_window_tick == 0 &&
-                  sim_step < server_ptr->total_sim_step_tick;
+    // ########## OLD logic: invoke planner every sim_window_tick ##########
+    // Should take the min of the ticks of all the robots
+    // int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
+    //                                  server_ptr->tick_per_robot.end());
+
+    // // Invoke planner every sim_window_tick
+    // bool invoke = sim_step % server_ptr->sim_window_tick == 0 &&
+    //               sim_step < server_ptr->total_sim_step_tick;
+    // ########## END OLD logic ##########
+
+    // Invoke planner if the number of actions left for a robot is less than
+    // look_ahead_dist
+    bool invoke = false;
+    for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
+        if (server_ptr->adg->getNumUnfinishedActions(agent_id) <=
+            server_ptr->adg->getLookAheadDist()) {
+            invoke = true;
+            break;
+        }
+    }
+
     if (invoke && server_ptr->screen > 0) {
+        int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
+                                         server_ptr->tick_per_robot.end());
         std::cout << "Invoke planner at sim step: " << sim_step << std::endl;
     }
     return invoke;
@@ -257,7 +272,7 @@ int main(int argc, char** argv) {
             ("save_stats,s", po::value<bool>()->default_value(false), "write to files some detailed statistics")
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
-            ("sim_window_tick,w", po::value<int>()->default_value(50), "simulation window tick (default: 50, i.e. 5 sim seconds)")
+            ("look_ahead_dist,l", po::value<int>()->default_value(5), "look ahead # of actions for the robot to query its location")
             ;
     // clang-format on
     po::variables_map vm;
@@ -274,7 +289,7 @@ int main(int argc, char** argv) {
     server_ptr = std::make_shared<ADG_Server>(
         vm["num_robots"].as<int>(), vm["output_file"].as<std::string>(),
         vm["save_stats"].as<bool>(), vm["screen"].as<int>(), port_number,
-        vm["total_sim_step_tick"].as<int>(), vm["sim_window_tick"].as<int>());
+        vm["total_sim_step_tick"].as<int>(), vm["look_ahead_dist"].as<int>());
 
     rpc::server srv(port_number);  // Setup the server to listen on the
     // specified port number

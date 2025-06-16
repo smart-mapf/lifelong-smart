@@ -2,9 +2,10 @@
 
 #include <cmath>
 
-ADG::ADG(int num_robots, int screen) : num_robots(num_robots), screen(screen) {
+ADG::ADG(int num_robots, int screen, int look_ahead_dist)
+    : num_robots(num_robots), screen(screen), look_ahead_dist(look_ahead_dist) {
     //    std::vector<ADGNode> graph;
-    look_ahead_dist = 5;
+    // look_ahead_dist = 5;
     std::map<int, int> lastActionIndexByRobot;
     finished_node_idx.resize(num_robots, -1);
     enqueue_nodes_idx.resize(num_robots);
@@ -173,7 +174,7 @@ bool ADG::fixInconsistentIncomingEdge(
     return true;
 }
 
-std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
+std::vector<robotState> ADG::computeCommitCut() {
     if (not initialized) {
         std::cout << "computeCommitCut::Not initialized!" << std::endl;
         return {};
@@ -201,10 +202,10 @@ std::vector<robotState> ADG::computeCommitCut(int num_enqueue_node) {
         // find actions that are staged
         int num_commit_actions = commited_actions[agent_id].second -
                                  commited_actions[agent_id].first;
-        if (num_commit_actions < num_enqueue_node) {
-            commited_actions[agent_id].second =
-                std::min((int)graph[agent_id].size(),
-                         commited_actions[agent_id].first + num_enqueue_node);
+        if (num_commit_actions < this->look_ahead_dist) {
+            commited_actions[agent_id].second = std::min(
+                (int)graph[agent_id].size(),
+                commited_actions[agent_id].first + this->look_ahead_dist);
         }
     }
     fixInconsistentIncomingEdge(commited_actions);
@@ -712,4 +713,19 @@ void ADG::printProgress() {
     // std::cerr << "Robot ID of 13 is: " << robotIDToStartIndex[13] <<
     // std::endl;
     std::cout << std::endl;
+}
+
+int ADG::getNumUnfinishedActions(int agent_id) {
+    // ADG Graph is uninitialized
+    if (graph.empty() || graph[agent_id].empty()) {
+        return 0;
+    }
+
+    // ADG graph is initialized, but no actions are finished yet
+    if (finished_node_idx[agent_id] < 0) {
+        return graph[agent_id].size();
+    }
+
+    // Some actions are finished, return the number of unfinished actions
+    return graph[agent_id].size() - finished_node_idx[agent_id];
 }

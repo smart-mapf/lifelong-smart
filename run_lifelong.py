@@ -74,8 +74,8 @@ def main(
     port_num: int = 8182,
     n_threads: int = 1,
     sim_duration: int = 1800 * 10,
-    sim_window: int = 5 * 10,
     velocity: float = 200.0,
+    look_ahead_dist: int = 5,
     seed: int = 42,
     screen: int = 0,
 ):
@@ -96,10 +96,10 @@ def main(
         n_threads (int, optional): number of threads to run Argos. Defaults to 1.
         sim_duration (int, optional): number of simulation ticks to run the
             simulator. Defaults to 1800*10.
-        sim_window (int, optional): time interval to invoke planner in
-            simulation ticks. Defaults to 50.
         velocity (float, optional): velocity of the robots in cm/s. Defaults to
             200.0 cm/s.
+        look_ahead_dist (int, optional): look ahead distance for the planner to
+            obtain robot goal location.
         seed (int, optional): random seed. Defaults to 42.
         screen (int, optional): logging options. Defaults to 0.
     """
@@ -132,6 +132,7 @@ def main(
     # sim window = distance of the robot can travel in sim_window seconds at
     # the given velocity
     # Convert sim_window from ticks to seconds, and velocity from cm/s to m/s
+    sim_window = 50 # TODO: find more reasonable value
     sim_window_ts = np.ceil((sim_window / 10) * (velocity / 100)).astype(int)
 
     try:
@@ -145,7 +146,7 @@ def main(
             f"--save_stats={str(save_stats).lower()}",
             f"--screen={screen}",
             f"--total_sim_step_tick={sim_duration}",
-            f"--sim_window_tick={sim_window}",
+            f"--look_ahead_dist={look_ahead_dist}",
         ]
         client_command = ["argos3", "-c", f"../{argos_config_filepath}"]
 

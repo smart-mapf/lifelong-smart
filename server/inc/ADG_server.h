@@ -33,7 +33,7 @@ class ADG_Server {
 public:
     ADG_Server(int num_robots, std::string target_output_filename,
                bool save_stats, int screen, int port, int total_sim_step_tick,
-               int sim_window_tick);
+               int look_ahead_dist);
     void saveStats();
 
     // TODO@jingtian: move some of them into private
@@ -47,9 +47,6 @@ public:
 
     // Remember a tick count for each robot as the "simulation clock time".
     int total_sim_step_tick;
-
-    // Simulation window tick, i.e. how many ticks to invoke planner
-    int sim_window_tick = 50;  // default is 50, i.e. 5 seconds
 
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> curr_mobile_tasks;
     std::vector<robotState> curr_robot_states;
