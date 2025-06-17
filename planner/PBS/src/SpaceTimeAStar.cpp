@@ -25,7 +25,7 @@ Path SpaceTimeAStar::findOptimalPath(const set<int>& higher_agents, const vector
 
     // build constraint table
     auto t = clock();
-    ConstraintTable constraint_table(instance.num_of_cols, instance.map_size);
+    ConstraintTable constraint_table(instance.graph.num_of_cols, instance.graph.map_size);
     for (int a : higher_agents)
     {
         constraint_table.insert2CT(*paths[a]);
@@ -46,7 +46,12 @@ Path SpaceTimeAStar::findOptimalPath(const set<int>& higher_agents, const vector
     auto static_timestep = constraint_table.getMaxTimestep() + 1; // everything is static after this timestep
 
     // generate start and add it to the OPEN & FOCAL list
-    auto start = new AStarNode(start_location, 0, max(holding_time, my_heuristic[start_location]), nullptr, 0, 0);
+    // auto start = new AStarNode(start_location, 0,
+    //     max(static_cast<double>(holding_time), instance.graph.heuristics.at(goal_location)[start_location]),
+    //     nullptr, 0, 0);
+    auto start = new AStarNode(start_location, 0,
+        instance.graph.heuristics.at(goal_location)[start_location],
+        nullptr, 0, 0);
 
     num_generated++;
     start->open_handle = open_list.push(start);
@@ -69,7 +74,7 @@ Path SpaceTimeAStar::findOptimalPath(const set<int>& higher_agents, const vector
         if (curr->timestep >= constraint_table.length_max)
             continue;
 
-        auto next_locations = instance.getNeighbors(curr->location);
+        auto next_locations = instance.graph.getNeighbors(curr->location);
         next_locations.emplace_back(curr->location);
         for (int next_location : next_locations)
         {
@@ -88,10 +93,11 @@ Path SpaceTimeAStar::findOptimalPath(const set<int>& higher_agents, const vector
                 continue;
 
             // compute cost to next_id via curr node
-            int next_g_val = curr->g_val + 1;
-            int next_h_val = max(holding_time - next_g_val, my_heuristic[next_location]);
-            if (next_g_val + next_h_val > constraint_table.length_max)
-                continue;
+            double next_g_val = curr->g_val + instance.graph.getWeight(curr->location, next_location);
+            // double next_h_val = max(holding_time - next_g_val, instance.graph.heuristics.at(goal_location)[next_location]);
+            double next_h_val = instance.graph.heuristics.at(goal_location)[next_location];
+            // if (next_g_val + next_h_val > constraint_table.length_max)
+            //     continue;
             int next_internal_conflicts = curr->num_of_conflicts +
                                           constraint_table.getNumOfConflictsForStep(curr->location, next_location, next_timestep);
 

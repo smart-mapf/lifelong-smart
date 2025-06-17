@@ -8,6 +8,7 @@
  * Solve a MAPF instance on 2D grids.
  */
 #include <rpc/client.h>
+#include <rpc/rpc_error.h>
 
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
@@ -32,7 +33,10 @@ int main(int argc, char** argv) {
 		("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
 		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
         ("portNum", po::value<int>()->default_value(8080), "port number for the server")
-		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver");
+		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
+		("simulation_window", po::value<int>()->default_value(5),
+         "The path planned every time should be >= this length")
+        ("seed", po::value<int>()->default_value(0), "random seed");
     // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -44,75 +48,104 @@ int main(int argc, char** argv) {
 
     po::notify(vm);
 
+    int seed = vm["seed"].as<int>();
+    srand(seed);  // Set the random seed for reproducibility
+
     ///////////////////////////////////////////////////////////////////////////
-    // load the instance
+    int prev_last_task_id = 0;  // last task id from the previous iteration
+    vector<Task> prev_goal_locs;
+    set<int> finished_tasks_id;
+    int screen = vm["screen"].as<int>();
+    int simulation_window = vm["simulation_window"].as<int>();
+
+    // Create a graph, heuristic will be computed only once in the graph
+    Graph graph(vm["map"].as<string>(), screen);
+
+    // We assume the server is already running at this point.
     rpc::client client("127.0.0.1", vm["portNum"].as<int>());
+    // client.set_timeout(5000);  // in ms
+
+    // Wait for the server to initialize
+    int trial = 0;
+    while (!client.call("is_initialized").as<bool>()) {
+        if (screen > 0) {
+            printf("%d Waiting for server to initialize...\n", trial);
+            trial++;
+        }
+    }
+
     while (true) {
-        auto commit_cut = client.call("get_location", 5)
-                              .as<std::vector<std::pair<double, double>>>();
-        printf("Agent locations:\n");
-        for (auto loc : commit_cut) {
-            printf("%f %f\n", loc.first, loc.second);
+        // Get the current simulation tick
+        bool invoke_planner = client.call("invoke_planner").as<bool>();
+
+        // Skip planning until the simulation step is a multiple of the
+        // simulation window
+        if (!invoke_planner) {
+            continue;
         }
-        auto goals =
-            client.call("get_goals", 1)
-                .as<std::vector<std::vector<std::tuple<int, int, double>>>>();
-        printf("Goals:\n");
-        for (auto goal : goals) {
-            printf("%d %d\n", std::get<0>(goal[0]), std::get<1>(goal[0]));
-        }
-        if (commit_cut.empty() or goals.empty()) {
+
+        string result_message = client.call("get_location").as<string>();
+
+        auto result_json = json::parse(result_message);
+        if (!result_json["initialized"].get<bool>()) {
             printf("Planner not initialized! Retrying\n");
             sleep(1);
             continue;
         }
-        // TODO@jingtian: update this to get new instance
-        Instance instance(vm["map"].as<string>());
-        instance.loadAgents(commit_cut, goals);
-        PBS pbs(instance, vm["sipp"].as<bool>(), vm["screen"].as<int>());
+        auto commit_cut = result_json["robots_location"]
+                              .get<std::vector<std::pair<double, double>>>();
+        auto new_finished_tasks_id =
+            result_json["new_finished_tasks"].get<std::set<int>>();
+
+        if (screen > 0) {
+            // printf("Agent locations:\n");
+            // for (auto loc : commit_cut) {
+            //     printf("%f %f\n", loc.first, loc.second);
+            // }
+
+            printf("New finished tasks:\n");
+            for (auto finish_task_id : new_finished_tasks_id) {
+                printf("%d,", finish_task_id);
+            }
+            printf("\n");
+        }
+
+        Instance instance(graph, prev_goal_locs, screen, prev_last_task_id,
+                          simulation_window);
+        instance.loadAgents(commit_cut, new_finished_tasks_id);
+        PBS pbs(instance, vm["sipp"].as<bool>(), screen);
         // run
         double runtime = 0;
         bool success = false;
         double runtime_limit = vm["cutoffTime"].as<double>();
         int fail_count = 0;
         while (not success) {
-            srand((int)time(0));
             success = pbs.solve(runtime_limit);
             runtime_limit = runtime_limit * 2;
             if (success) {
-                // if (vm.count("output"))
-                // 	pbs.saveResults(vm["output"].as<string>(),
-                // vm["agents"].as<string>()); if (pbs.solution_found &&
-                // vm.count("outputPaths"))
-                // 	pbs.savePaths(vm["outputPaths"].as<string>());
-                /*size_t pos = vm["output"].as<string>().rfind('.');      //
-                position of the file extension string output_name =
-                vm["output"].as<string>().substr(0, pos);     // get the name
-                without extension cbs.saveCT(output_name); // for debug*/
-                std::cout << "######################################"
-                          << std::endl;
                 auto new_mapf_plan = pbs.getPaths();
-                std::cout << "######################################"
-                          << std::endl;
 
                 pbs.clearSearchEngines();
                 client.call("add_plan", new_mapf_plan);
-                break;
             } else {
                 std::cerr << "No solution found!" << std::endl;
                 fail_count++;
-                if (fail_count > 3) {
-                    std::cerr
-                        << "Fail to find a solution after 3 attempts! Exiting."
-                        << std::endl;
-                    instance.saveInstance();
+                pbs.clear();
+                if (fail_count > 10) {
+                    std::cerr << "Fail to find a solution after " << fail_count
+                              << " attempts! Exiting." << std::endl;
+                    // instance.saveInstance();
                     exit(-1);
                 }
             }
         }
         // instance.printMap();
-        sleep(1);
+        // Update task id for the next iteration
+        prev_last_task_id = instance.getTaskId();
+        prev_goal_locs = instance.getGoalTasks();
+        // sleep(0.5);
     }
 
+    cout << "Planner finished!" << endl;
     return 0;
 }

@@ -51,6 +51,7 @@
 #include <chrono>
 #include <boost/asio.hpp>
 
+// #define TOTAL_SIM_STEP 1000
 #define EPS 0.03f
 #define DELIVER_T 20
 #define PICKER_T 60
@@ -74,7 +75,6 @@ struct Action {
         MOVE,
         TURN,
         STOP,
-        PICKER,
         STATION
     } type;
     Action() {
@@ -162,8 +162,6 @@ public:
      */
     virtual void Destroy() {}
 
-    CVector3 getCurrPod() {return curr_pod;};
-
     CVector3 getCurrStation() {return curr_station;}
 
 private:
@@ -229,9 +227,6 @@ private:
     Real kp_move_ = 0.6;
     Real ki_move_ = 0.0;
     Real kd_move_ = 0.0;
-//    std::string debug_id = "7_6";
-//    std::string debug_id = "1_4";
-    // std::string debug_id = "85_2";
     std::string debug_id = "-1";
 
     int lineExistFlag = 0;
@@ -239,8 +234,9 @@ private:
     long long int step_count_ = 0;
 
     bool is_initialized = false;
-    CVector3 curr_pod{-1,-1,-100};
     CVector3 curr_station{-1,-1,-100};
+    int total_sim_duration = 0;
+    int screen = 0;
 };
 
 #endif

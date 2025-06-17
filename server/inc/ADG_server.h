@@ -1,28 +1,25 @@
 #pragma once
 
-
 #include <rpc/server.h>
-#include <string>
-#include <iostream>
-#include <vector>
-#include <tuple>
-#include <stdexcept>
-#include <mutex>
-#include <sstream>
-#include <functional>   // For std::bind
+
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
-#include <fstream>    // For file operations
-#include <map>        // For mapping robot actions
-#include <numeric> // For std::accumulate
+#include <fstream>     // For file operations
+#include <functional>  // For std::bind
+#include <iostream>
+#include <map>  // For mapping robot actions
+#include <mutex>
+#include <numeric>  // For std::accumulate
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include "ADG.h"
 #include "json.hpp"
-#include "mobile_task.h"
-#include "picker_task.h"
 
 using json = nlohmann::json;
-
 
 #ifdef DEBUG
 #define DEBUG_AGENT 13
@@ -32,61 +29,69 @@ using json = nlohmann::json;
 
 std::mutex globalMutex;
 
-
-class ADG_Server{
+class ADG_Server {
 public:
-    ADG_Server(int num_robots, int num_pickers, std::string& target_output_filename, std::string map_name, std::string scen_name, std::string method_name);
-    void saveStats(int selector_wait_t, int capacity);
-    
+    ADG_Server(int num_robots, std::string target_output_filename,
+               bool save_stats, int screen, int port, int total_sim_step_tick,
+               int look_ahead_dist, int seed);
+    void saveStats();
+
     // TODO@jingtian: move some of them into private
     std::shared_ptr<ADG> adg;
-    std::shared_ptr<MobileTaskManager> mobile_manager;
-    std::shared_ptr<PickTaskManager> picker_manager;
+    // std::shared_ptr<MobileTaskManager> mobile_manager;
+    // std::shared_ptr<PickTaskManager> picker_manager;
     bool flipped_coord = true;
+
+    int screen = 0;
+    int port;
+    bool freeze_simulation = false;
+    int seed;
+
+    // Remember a tick count for each robot as the "simulation clock time".
+    int total_sim_step_tick;
 
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> curr_mobile_tasks;
     std::vector<robotState> curr_robot_states;
 
     // stats data
-    std::vector<double> agent_finish_time;
-    std::vector<int> agent_finish_sim_step;
-    std::vector<bool> agents_finish;
+    // std::vector<double> agent_finish_time;
+    // std::vector<int> agent_finish_sim_step;
+    // std::vector<bool> agents_finish;
     std::string output_filename;
-    std::string curr_map_name;
-    std::string curr_scen_name;
-    std::string curr_method_name;
     int numRobots = 0;
-    int step_cnt = 0;
-    double latest_arr_sim_step = 0;
+    // double latest_arr_sim_step = 0;
     std::vector<std::pair<double, double>> robots_location;
-    std::vector<MobileAction> current_robots_goal_type;
+    // std::vector<MobileAction> current_robots_goal_type;
 
-    double total_wait_time = 0;
-    int transport_capacity = 0;
+    // double total_wait_time = 0;
+    // int transport_capacity = 0;
 
-    bool debug_set_flag = false;
-    int total_confirmed_picks = 0;
-    std::vector<int> confirmed_picks_by_genre;
-    std::vector<int> genre_finish_steps;
+    // bool debug_set_flag = false;
+    vector<int> tick_per_robot;
+    // int total_confirmed_picks = 0;
+    // std::vector<int> confirmed_picks_by_genre;
+    // std::vector<int> genre_finish_steps;
 
-    double min_nonzero() {
-        int min_val = std::numeric_limits<int>::max();
-        for (int v : genre_finish_steps) {
-            if (v != 0.0 && v < min_val) {
-                min_val = v;
-            }
-        }
-        return min_val == std::numeric_limits<int>::max() ? 0.0 : min_val; // or throw if all are 0
-    }
+    // double min_nonzero() {
+    //     int min_val = std::numeric_limits<int>::max();
+    //     for (int v : genre_finish_steps) {
+    //         if (v != 0.0 && v < min_val) {
+    //             min_val = v;
+    //         }
+    //     }
+    //     return min_val == std::numeric_limits<int>::max() ? 0.0 : min_val; //
+    //     or throw if all are 0
+    // }
 
 private:
-//    int type1EdgeCount = 0;
-//    int type2EdgeCount = 0;
-//    int moveActionCount = 0;
-//    int rotateActionCount = 0;
-//    int consecutiveMoveSequences = 0;
-//    int totalNodes = 0;
-//    std::set<std::pair<int, int>> conflict_pairs;
+    //    int type1EdgeCount = 0;
+    //    int type2EdgeCount = 0;
+    //    int moveActionCount = 0;
+    //    int rotateActionCount = 0;
+    //    int consecutiveMoveSequences = 0;
+    //    int totalNodes = 0;
+    //    std::set<std::pair<int, int>> conflict_pairs;
     // std::string path_filename_;
+    bool save_stats = false;
     double raw_plan_cost = -1.0;
 };

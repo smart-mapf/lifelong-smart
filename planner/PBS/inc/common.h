@@ -9,14 +9,22 @@
 #include <fstream>
 #include <iostream>     // std::cout, std::fixed
 #include <iomanip>      // std::setprecision
+#include <cfloat>
 #include <boost/heap/pairing_heap.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
+#include <json.hpp>
 
+using boost::heap::fibonacci_heap;
 using boost::heap::pairing_heap;
 using boost::heap::compare;
 using boost::unordered_map;
 using boost::unordered_set;
+using boost::tokenizer;
+using boost::char_separator;
 using std::vector;
 using std::list;
 using std::set;
@@ -38,15 +46,20 @@ using std::ofstream;
 using std::cerr;
 using std::string;
 using std::stack;
+using std::ifstream;
+using std::getline;
 
+using json = nlohmann::json;
 
 #define MAX_TIMESTEP INT_MAX / 2
 #define MAX_COST INT_MAX / 2
 #define MAX_NODES INT_MAX / 2
+#define WEIGHT_MAX INT_MAX/2
 
 struct PathEntry
 {
 	int location = -1;
+    int task_id = -1;  // task id of the task that this location belongs to
 	explicit PathEntry(int loc = -1): location(loc) { }
 };
 

@@ -1,145 +1,35 @@
 import os
 import pathlib
-import argparse
 import ArgosConfig
 import subprocess
 import time
-import psutil
-import csv
-import json
-from datetime import datetime
-import gc
-# from logdir import LogDir
-from multiprocessing import Process
+import fire
+import numpy as np
+
+from typing import List, Tuple
 
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(
-        description="Argument parser for map_name and scen_name.")
-    parser.add_argument("--map_name",
-                        type=str,
-                        required=False,
-                        default="supermarket.map",
-                        help="Name of the map file")
-    parser.add_argument("--scen_name",
-                        type=str,
-                        required=False,
-                        default="supermarket.scen",
-                        help="Name of the scenario file")
-    parser.add_argument("--num_agents",
-                        type=int,
-                        required=False,
-                        default=32,
-                        help="Number of agents in the scenario")
-    parser.add_argument("--headless",
-                        type=bool,
-                        required=False,
-                        default=False,
-                        help="Simulator run in headless mode")
-    parser.add_argument("--argos_config_name",
-                        type=str,
-                        required=False,
-                        default="output.argos",
-                        help="Name of the argos config file")
-    parser.add_argument("--path_filename",
-                        type=str,
-                        required=False,
-                        default="outputPath.txt",
-                        help="Name of the output path file")
-    parser.add_argument("--stats_name",
-                        type=str,
-                        required=False,
-                        default="stats.csv",
-                        help="Name of the statistics file for simulator")
-    parser.add_argument("--port_num",
-                        type=int,
-                        required=False,
-                        default=8182,
-                        help="Port number for sim and client")
-    parser.add_argument("--n_threads",
-                        type=int,
-                        required=False,
-                        default=0,
-                        help="Number of threads for argos")
-    parser.add_argument("--monitor_interval",
-                        type=int,
-                        required=False,
-                        default=5,
-                        help="Interval for monitoring system")
-
-    return parser.parse_args()
-
-
-def monitor_system(save_dir: pathlib.Path, interval: int = 5):
-    """
-    A function that logs CPU and RAM usage every `interval` seconds.
-    """
-    # Create a log file
-    sys_log_file = save_dir / "sys_monitor.csv"
-
-    baseline_cpu = psutil.cpu_percent(interval=None)  # system-wide CPU usage %
-    baseline_ram = psutil.virtual_memory().used  # used RAM in bytes
-    print(
-        f"Baseline CPU: {baseline_cpu}% | RAM: {baseline_ram / (1024 ** 3)} GB"
-    )
-
-    with open(sys_log_file, mode="a", newline="") as f:
-        writer = csv.writer(f)
-
-        # Write the header
-        writer.writerow(["timestamp", "cpu_usage_percent", "ram_usage"])
-
-        # time.sleep(interval)  # Sleep over the first interval
-
-        while True:
-            # Current CPU usage % (system-wide) and used RAM in bytes
-            current_cpu = psutil.cpu_percent(interval=None)
-            current_ram = psutil.virtual_memory().used
-
-            # Compute the difference
-            diff_cpu_percent = current_cpu
-            diff_ram_gb = (current_ram - baseline_ram) / (1024**3)
-
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            # Write a single row to the CSV file
-            writer.writerow([timestamp, diff_cpu_percent, diff_ram_gb])
-
-            # Flush the file buffer so data is written immediately
-            f.flush()
-
-            # print(f"[Monitor] CPU: {cpu_usage}% | RAM: {ram_usage}%")
-            time.sleep(interval)
-
-
-def run_planner(command: list):
-    # Combine executable path and arguments into a single list
-    # print(command)
-    try:
-        # Run the command and capture the output
-        result = subprocess.run(command,
-                                capture_output=True,
-                                text=True,
-                                check=True)
-
-        # Print any errors from the executable
-        if result.stderr:
-            print("Errors:")
-            print(result.stderr)
-            return 0
-
-        if "Succeed" in result.stdout:
-            return 1
-        else:
-            if "Fail" in result.stdout or "Timeout" in result.stdout:
-                return 0
-            else:
-                return 1
-
-    except subprocess.CalledProcessError as e:
-        print(f"Execution failed: {e}")
-        print(f"Error output: {e.stderr}")
-        return 0
+def init_start_locations(
+    map_str: List[str],
+    num_agents: int,
+) -> List[Tuple[str, str]]:
+    # Get free locations
+    h, w = len(map_str), len(map_str[0])
+    free_locations = []
+    for i in range(h):
+        for j in range(w):
+            if map_str[i][j] not in ArgosConfig.obstacles:
+                free_locations.append(i * w + j)
+    if len(free_locations) < num_agents:
+        print(
+            f"Number of agents ({num_agents}) exceeds number of free locations ({len(free_locations)})."
+        )
+        exit(-1)
+    # Randomly select start locations
+    starts = np.random.choice(free_locations, size=num_agents, replace=False)
+    # We need to convert the coordinate from (row, col) to (col, row) because
+    # this is how Argos expects it.
+    return [(str(start % w), str(start // w)) for start in starts]
 
 
 def check_file(file_path: str):
@@ -166,76 +56,115 @@ def run_simulator(args):
     os.chdir("..")
     planner_process = subprocess.Popen(planner_command)
 
+    # The client process will call the server to end, then the client end. The
+    # planner will detect the end of the server and end itself.
     client_process.wait()
     server_process.wait()
+    # planner_process.wait()
+    planner_process.kill()
 
 
-def main():
-    args = parse_arguments()
-    print(f"Map Name: {args.map_name}")
-    print(f"Scenario Name: {args.scen_name}")
+def main(
+    map_filepath: str = "../maps/mapf_bench/no_guidance/random-32-32-20.json",
+    num_agents: int = 32,
+    headless: bool = False,
+    argos_config_filepath: str = "output.argos",
+    stats_name: str = "stats.csv",
+    save_stats: bool = False,
+    port_num: int = 8182,
+    n_threads: int = 1,
+    sim_duration: int = 1800 * 10,
+    velocity: float = 200.0,
+    look_ahead_dist: int = 5,
+    seed: int = 42,
+    screen: int = 0,
+):
+    """Function to run the lifelong SMART simulator with the given parameters.
 
-    # Configs
-    scen_file_path = args.scen_name
-    map_file_path = args.map_name
-    curr_num_agent = args.num_agents
-    port_num = args.port_num
-    print(port_num)
-    path_filename = args.path_filename
-    sim_stats_filename = args.stats_name
-    n_threads = args.n_threads
-    config_filename = args.argos_config_name
+    Args:
+        map_filepath (str, optional): file path to map..
+        num_agents (int, optional): number of robots. Defaults to 32.
+        headless (bool, optional): whether run with visualization. Defaults to
+            False.
+        argos_config_filepath (str, optional): file path to write the generated
+            Argos config file. Defaults to "output.argos".
+        stats_name (str, optional): file path to store the stats from the
+            simulator. Defaults to "stats.csv".
+        save_stats (bool , optional): whether to save the stats. Defaults to
+            False.
+        port_num (int, optional): port number of RPC server. Defaults to 8182.
+        n_threads (int, optional): number of threads to run Argos. Defaults to 1.
+        sim_duration (int, optional): number of simulation ticks to run the
+            simulator. Defaults to 1800*10.
+        velocity (float, optional): velocity of the robots in cm/s. Defaults to
+            200.0 cm/s.
+        look_ahead_dist (int, optional): look ahead distance for the planner to
+            obtain robot goal location.
+        seed (int, optional): random seed. Defaults to 42.
+        screen (int, optional): logging options. Defaults to 0.
+    """
+    np.random.seed(seed)
+    # print(f"Map Name: {map_filepath}")
+    map_data, width, height = ArgosConfig.parse_map_file(map_filepath)
 
-    # # Run planner to find solution for the specified problem
-    # print("Running planner ...")
+    # Transform the map and scen to Argos config file, obstacles: '@', 'T'
+    if screen > 0:
+        print("Creating Argos config file ...")
+    robot_init_pos = init_start_locations(map_data, num_agents)
 
-    # gc.collect()
-    # time.sleep(5)  # Wait for gc to release memory
+    ArgosConfig.create_Argos(
+        map_data=map_data,
+        output_file_path=argos_config_filepath,
+        width=width,
+        height=height,
+        robot_init_pos=robot_init_pos,
+        curr_num_agent=num_agents,
+        port_num=port_num,
+        n_threads=n_threads,
+        visualization=not headless,
+        sim_duration=sim_duration,
+        screen=screen,
+        velocity=velocity,
+    )
+    if screen > 0:
+        print("Argos config file created.")
 
-    # # Start the monitor process
-    # monitoring_process = Process(target=monitor_system,
-    #                              args=(logdir.logdir, monitor_interval))
-    # monitoring_process.start()
-        # Transform the map and scen to Argos config file, obstacles: '@', 'T'
-    print("Creating Argos config file ...")
-    robot_init_pos, scen_num_agent = ArgosConfig.read_scen(scen_file_path)
-    map_data, width, height = ArgosConfig.parse_map_file(map_file_path)
-    if scen_num_agent < curr_num_agent:
-        print("Number of agents exceed maximum number. exiting ...")
-        exit(-1)
-    ArgosConfig.create_Argos(map_data, config_filename, width, height,
-                             robot_init_pos, curr_num_agent, port_num,
-                             n_threads, not args.headless)
-    print("Argos config file created.")
+    # Infer the simulation window in timestep from velocity
+    # sim window = distance of the robot can travel in sim_window seconds at
+    # the given velocity
+    # Convert sim_window from ticks to timesteps, and velocity from cm/s to m/s
+    # sim_window_ts = np.ceil((sim_window / 10) * (velocity / 100)).astype(int)
+    sim_window_ts = int(np.ceil(look_ahead_dist * (velocity / 100)))
 
     try:
         print("Running simulator ...")
         server_executable_path = "./server/build/ADG_server"
-        # server_executable_path = "server/build/ADG_server"
         server_command = [
-            server_executable_path, "-k", str(curr_num_agent), "-n",
-            str(port_num), f"--method_name=PBS", "-m", f"./{map_file_path}", "--num_pickers=16"
+            server_executable_path,
+            f"--num_robots={num_agents}",
+            f"--port_number={port_num}",
+            f"--output_file={stats_name}",
+            f"--save_stats={str(save_stats).lower()}",
+            f"--screen={screen}",
+            f"--total_sim_step_tick={sim_duration}",
+            f"--look_ahead_dist={look_ahead_dist}",
         ]
-        client_command = ["argos3", "-c", f"../{config_filename}"]
-        print(client_command)
+        client_command = ["argos3", "-c", f"../{argos_config_filepath}"]
 
-        # executable_path = "./planner/MAPF-LNS2/build/lns"
-        executable_path = "./planner/PBS/build/pbs"
-        run_args = []
-        run_args += [executable_path]
-        run_args += ["-m", f"./{map_file_path}"]
-        run_args += ["-k", str(curr_num_agent)]
-        run_args += ["--portNum", str(port_num)]
-        run_simulator((server_command, client_command, run_args))
+        planner_executable_path = "./planner/PBS/build/pbs"
+        planner_command = [
+            planner_executable_path,
+            f"--map={map_filepath}",
+            f"--agentNum={num_agents}",
+            f"--portNum={port_num}",
+            f"--seed={seed}",
+            f"--screen={screen}",
+            f"--simulation_window={sim_window_ts}",
+        ]
+        run_simulator((server_command, client_command, planner_command))
     except KeyboardInterrupt:
         print("KeyboardInterrupt: Stopping the experiment ...")
-    # finally:
-    #     if monitoring_process.is_alive():
-    #         print("[Main] Stopping the monitoring process...")
-    #         monitoring_process.terminate()
-    #         monitoring_process.join()
-    #         print("[Main] Monitoring process stopped.")
 
 
 if __name__ == "__main__":
-    main()
+    fire.Fire(main)
