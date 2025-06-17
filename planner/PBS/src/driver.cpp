@@ -98,10 +98,10 @@ int main(int argc, char** argv) {
             result_json["new_finished_tasks"].get<std::set<int>>();
 
         if (screen > 0) {
-            printf("Agent locations:\n");
-            for (auto loc : commit_cut) {
-                printf("%f %f\n", loc.first, loc.second);
-            }
+            // printf("Agent locations:\n");
+            // for (auto loc : commit_cut) {
+            //     printf("%f %f\n", loc.first, loc.second);
+            // }
 
             printf("New finished tasks:\n");
             for (auto finish_task_id : new_finished_tasks_id) {
@@ -110,7 +110,8 @@ int main(int argc, char** argv) {
             printf("\n");
         }
 
-        Instance instance(graph, prev_goal_locs, screen, prev_last_task_id);
+        Instance instance(graph, prev_goal_locs, screen, prev_last_task_id,
+                          simulation_window);
         instance.loadAgents(commit_cut, new_finished_tasks_id);
         PBS pbs(instance, vm["sipp"].as<bool>(), screen);
         // run
@@ -129,6 +130,7 @@ int main(int argc, char** argv) {
             } else {
                 std::cerr << "No solution found!" << std::endl;
                 fail_count++;
+                pbs.clear();
                 if (fail_count > 10) {
                     std::cerr << "Fail to find a solution after " << fail_count
                               << " attempts! Exiting." << std::endl;

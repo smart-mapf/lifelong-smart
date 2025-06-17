@@ -534,6 +534,7 @@ std::vector<std::vector<std::tuple<int, int, double, int>>> PBS::getPaths() {
 
     for (int i = 0; i < num_of_agents; i++) {
         int tmp_step = 0;
+        cout << "Agent " << i << ": ";
         for (const auto& t : *paths[i]) {
             new_mapf_plan[i].emplace_back(
                 search_engines[0]->instance.graph.getRowCoordinate(t.location),

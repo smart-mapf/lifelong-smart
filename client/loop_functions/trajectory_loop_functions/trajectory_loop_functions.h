@@ -55,7 +55,7 @@ public:
 
 private:
    bool is_initialized = false;
-   long long int time_step = 0;
+//    long long int time_step = 0;
    bool task_finished = false;
 };
 

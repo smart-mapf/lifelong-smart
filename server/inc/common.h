@@ -144,6 +144,22 @@ struct Action {
     int nodeID;
     std::shared_ptr<MobileRobotTask> task_ptr = nullptr;
     int task_id = -1;  // Task ID associated with the completion of this action
+
+    // Assignment operator
+    Action& operator=(const Action& other) {
+        if (this != &other) {
+            robot_id = other.robot_id;
+            time = other.time;
+            orientation = other.orientation;
+            type = other.type;
+            start = other.start;
+            goal = other.goal;
+            nodeID = other.nodeID;
+            task_ptr = other.task_ptr;  // Shared pointer assignment
+            task_id = other.task_id;
+        }
+        return *this;
+    }
 };
 
 inline bool positionCompare(std::pair<double, double> a,

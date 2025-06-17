@@ -7,11 +7,12 @@
 // int RANDOM_WALK_STEPS = 100000;
 
 Instance::Instance(const Graph& graph, vector<Task> goal_locations, int screen,
-                   int task_id)
+                   int task_id, int simulation_window)
     : graph(graph),
       goal_locations(goal_locations),
       screen(screen),
-      task_id(task_id) {
+      task_id(task_id),
+      simulation_window(simulation_window) {
     // bool succ = loadMap();
     // // printMap();
     // if (!succ) {
@@ -182,8 +183,8 @@ bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
         // generate a goal for the agent if it does not have one
         if (goal_locations[i].id == -1) {
             int curr_goal = goal_locations[i].loc;
-            goal_locations[i] =
-                Task(this->task_id, genGoal(unfinished_goal_locs, curr_goal));
+            goal_locations[i] = Task(
+                this->task_id, genGoal(unfinished_goal_locs, curr_goal, i));
             unfinished_goal_locs.insert(goal_locations[i].loc);
             this->task_id++;
         }
@@ -191,30 +192,42 @@ bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
 
     // Print the start and goal locations
     if (this->screen > 0) {
-        cout << "Start locations: ";
+        cout << "Start to goal locations: ";
         for (int i = 0; i < num_of_agents; i++) {
-            cout << "(" << this->graph.getRowCoordinate(start_locations[i])
-                 << "," << this->graph.getColCoordinate(start_locations[i])
-                 << ") ";
+            cout << "Agent " << i << ":("
+                 << this->graph.getRowCoordinate(start_locations[i]) << ","
+                 << this->graph.getColCoordinate(start_locations[i]) << ") "
+                 << "-> ("
+                 << this->graph.getRowCoordinate(goal_locations[i].loc) << ","
+                 << this->graph.getColCoordinate(goal_locations[i].loc) << ") "
+                 << "d_h="
+                 << this->graph
+                        .d_heuristics[goal_locations[i].loc][start_locations[i]]
+                 << endl;
         }
-        cout << endl;
-        cout << "Goal locations: ";
-        for (int i = 0; i < num_of_agents; i++) {
-            cout << "(" << this->graph.getRowCoordinate(goal_locations[i].loc)
-                 << ","
-
-                 << this->graph.getColCoordinate(goal_locations[i].loc) << ") ";
-        }
-        cout << endl;
+        // cout << "Goal locations: ";
+        // for (int i = 0; i < num_of_agents; i++) {
+        //     cout << "a_" << i << ":("
+        //          << this->graph.getRowCoordinate(goal_locations[i].loc) <<
+        //          ","
+        //          << this->graph.getColCoordinate(goal_locations[i].loc)
+        //          << ", d_h="
+        //          << this->graph
+        //                 .d_heuristics[goal_locations[i].loc][start_locations[i]]
+        //          << ") ";
+        // }
+        // cout << endl;
     }
 
     return true;
 }
 
-int Instance::genGoal(set<int> to_avoid, int curr_goal) {
+int Instance::genGoal(set<int> to_avoid, int curr_goal, int agent_id) {
     int goal =
         this->graph.free_locations[rand() % this->graph.free_locations.size()];
-    while (to_avoid.find(goal) != to_avoid.end() || goal == curr_goal) {
+    while (to_avoid.find(goal) != to_avoid.end() || goal == curr_goal ||
+           this->graph.getManhattanDistance(goal, start_locations[agent_id]) <
+               this->simulation_window) {
         goal = this->graph
                    .free_locations[rand() % this->graph.free_locations.size()];
     }

@@ -7,12 +7,13 @@ std::shared_ptr<ADG_Server> server_ptr = nullptr;
 
 ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
                        bool save_stats, int screen, int port,
-                       int total_sim_step_tick, int look_ahead_dist)
+                       int total_sim_step_tick, int look_ahead_dist, int seed)
     : output_filename(target_output_filename),
       save_stats(save_stats),
       screen(screen),
       port(port),
-      total_sim_step_tick(total_sim_step_tick) {
+      total_sim_step_tick(total_sim_step_tick),
+      seed(seed) {
     adg = std::make_shared<ADG>(num_robots, screen, look_ahead_dist);
 
     numRobots = adg->numRobots();
@@ -41,6 +42,27 @@ void ADG_Server::saveStats() {
     stats << numRobots << "," << this->adg->getNumFinishedTasks() << endl;
     stats.close();
     std::cout << "Statistics written to " << output_filename << std::endl;
+}
+
+// Each robot can requests to freeze the simulation if it does not have enough
+// actions
+void freezeSimulationIfNecessary(std::string RobotID) {
+    std::lock_guard<std::mutex> guard(globalMutex);
+
+    int robot_id = server_ptr->adg->startIndexToRobotID[RobotID];
+    if (server_ptr->adg->getNumUnfinishedActions(robot_id) <= 0) {
+        server_ptr->freeze_simulation = true;
+        if (server_ptr->screen > 0) {
+            std::cout << "Robot " << robot_id
+                      << " requests to freeze the simulation!" << std::endl;
+        }
+    }
+}
+
+// Return the simulation freeze status
+bool isSimulationFrozen() {
+    std::lock_guard<std::mutex> guard(globalMutex);
+    return server_ptr->freeze_simulation;
 }
 
 string getRobotsLocation() {
@@ -74,8 +96,6 @@ string getRobotsLocation() {
         }
     }
 
-    // TODO@jingtian: set a task as finished when it is enqueued
-    // std::vector< std::unordered_set<int> > task_status;
     set<int> new_finished_tasks = server_ptr->adg->updateFinishedTasks();
 
     server_ptr->robots_location = robots_location;
@@ -90,29 +110,43 @@ void addNewPlan(
     std::vector<std::vector<std::tuple<int, int, double, int>>>& new_plan) {
     // x, y and time
     std::lock_guard<std::mutex> guard(globalMutex);
-    std::vector<std::vector<Step>> raw_plan;
+    std::vector<std::vector<Step>> steps;
     assert(new_plan.size() == server_ptr->numRobots);
     for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
         std::vector<Point> points;
-        std::vector<Step> tmp_plan;
+        std::vector<Step> curr_steps;
         for (auto& step : new_plan[agent_id]) {
             points.emplace_back(Point(std::get<0>(step), std::get<1>(step),
                                       std::get<2>(step), std::get<3>(step)));
         }
-        processAgentActions(points, tmp_plan,
-                            server_ptr->curr_robot_states[agent_id].orient,
-                            agent_id);
-        raw_plan.push_back(tmp_plan);
+
+        // Convert points to steps, which adds rotational states to the plan
+        // returned by the MAPF planner if needed
+        AgentPathToSteps(points, curr_steps,
+                         server_ptr->curr_robot_states[agent_id].orient,
+                         agent_id);
+        steps.push_back(curr_steps);
     }
 
-    std::vector<std::vector<Action>> plans;
-    plans = processActions(raw_plan, server_ptr->flipped_coord);
+    // Convert steps to actions, each two consecutive steps will be transformed
+    // to at most two actions.
+    std::vector<std::vector<Action>> actions;
+    actions = StepsToActions(steps, server_ptr->flipped_coord);
 #ifdef DEBUG
-    std::cout << "Finish action process, plan size: " << plans.size()
+    std::cout << "Finish action process, plan size: " << actions.size()
               << std::endl;
 #endif
 
-    server_ptr->adg->addMAPFPlan(plans);
+    server_ptr->adg->addMAPFPlan(actions);
+
+    // Defreeze the simulation if it was frozen
+    if (server_ptr->freeze_simulation) {
+        server_ptr->freeze_simulation = false;
+        if (server_ptr->screen > 0) {
+            std::cout << "Simulation is de-frozen after adding a new plan!"
+                      << std::endl;
+        }
+    }
 
 #ifdef DEBUG
     std::cout << "Finish add plan" << std::endl;
@@ -227,7 +261,8 @@ bool updateSimStep(std::string RobotID) {
 // threshold.
 bool invokePlanner() {
     std::lock_guard<std::mutex> guard(globalMutex);
-
+    int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
+                                     server_ptr->tick_per_robot.end());
     // ########## OLD logic: invoke planner every sim_window_tick ##########
     // Should take the min of the ticks of all the robots
     // int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
@@ -241,20 +276,36 @@ bool invokePlanner() {
     // Invoke planner if the number of actions left for a robot is less than
     // look_ahead_dist
     bool invoke = false;
+    int invoke_by = -1;
     for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
         if (server_ptr->adg->getNumUnfinishedActions(agent_id) <=
             server_ptr->adg->getLookAheadDist()) {
             invoke = true;
+            invoke_by = agent_id;
             break;
         }
     }
 
     if (invoke && server_ptr->screen > 0) {
-        int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
-                                         server_ptr->tick_per_robot.end());
         std::cout << "Invoke planner at sim step: " << sim_step << std::endl;
+        for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
+            // std::cout << "Robot " << agent_id << " has "
+            //           << server_ptr->adg->getNumUnfinishedActions(agent_id)
+            //           << " unfinished actions." << std::endl;
+        }
+        if (invoke_by >= 0) {
+            std::cout << "Invoke planner by robot " << invoke_by << " with "
+                      << server_ptr->adg->getNumUnfinishedActions(invoke_by)
+                      << " unfinished actions." << std::endl;
+        }
     }
     return invoke;
+}
+
+int getNumUnfinishedActions(std::string RobotID) {
+    std::lock_guard<std::mutex> guard(globalMutex);
+    int Robot_ID = server_ptr->adg->startIndexToRobotID[RobotID];
+    return server_ptr->adg->getNumUnfinishedActions(Robot_ID);
 }
 
 int main(int argc, char** argv) {
@@ -273,6 +324,7 @@ int main(int argc, char** argv) {
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
             ("look_ahead_dist,l", po::value<int>()->default_value(5), "look ahead # of actions for the robot to query its location")
+            ("seed", po::value<int>()->default_value(0), "random seed for the simulation (default: 0)")
             ;
     // clang-format on
     po::variables_map vm;
@@ -286,10 +338,14 @@ int main(int argc, char** argv) {
     std::string filename = "none";
     int port_number = vm["port_number"].as<int>();
 
+    int seed = vm["seed"].as<int>();
+    srand(seed);
+
     server_ptr = std::make_shared<ADG_Server>(
         vm["num_robots"].as<int>(), vm["output_file"].as<std::string>(),
         vm["save_stats"].as<bool>(), vm["screen"].as<int>(), port_number,
-        vm["total_sim_step_tick"].as<int>(), vm["look_ahead_dist"].as<int>());
+        vm["total_sim_step_tick"].as<int>(), vm["look_ahead_dist"].as<int>(),
+        seed);
 
     rpc::server srv(port_number);  // Setup the server to listen on the
     // specified port number
@@ -307,6 +363,9 @@ int main(int argc, char** argv) {
     srv.bind("update_sim_step", &updateSimStep);
     srv.bind("invoke_planner", &invokePlanner);
     srv.bind("close_server", [&srv]() { closeServer(srv); });
+    srv.bind("get_num_unfinished_actions", &getNumUnfinishedActions);
+    srv.bind("freeze_simulation_if_necessary", &freezeSimulationIfNecessary);
+    srv.bind("is_simulation_frozen", &isSimulationFrozen);
     srv.run();  // Start the server, blocking call
 
     return 0;

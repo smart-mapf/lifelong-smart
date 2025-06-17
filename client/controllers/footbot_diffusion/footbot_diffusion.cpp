@@ -372,6 +372,17 @@ void CFootBotDiffusion::ControlStep() {
                   << "Execution time: " << exec_duration_ms.count()
                   << " ms, with control step count: " << step_count_ << "\n";
     }
+
+    // Free simulation if necessary
+    client->call("freeze_simulation_if_necessary", this->robot_id);
+
+    // Loop until the simulation is defrozen
+    while (client->call("is_simulation_frozen").as<bool>()) {
+        // std::cout << "Robot " << this->robot_id
+        //           << ": Simulation is frozen, waiting to defrost..."
+        //           << std::endl;
+        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 }
 
 std::pair<Real, Real> CFootBotDiffusion::pidAngular(Real error) {

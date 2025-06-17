@@ -21,6 +21,25 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
         graph_offset[i] = static_cast<int>(graph[i].size());
     }
 
+    // // Print actions
+    // std::cout << "Processed Actions" << std::endl;
+    // for (size_t i = 0; i < plans.size(); i++) {
+    //     printf("Action of agent: %lu\n", i);
+    //     for (int j = 0; j < plans[i].size(); j++) {
+    //         auto& action = plans[i][j];
+    //         std::cout << "        {" << action.robot_id << ", " <<
+    //         action.time
+    //                   << ", " << std::fixed << std::setprecision(1)
+    //                   << action.orientation << ", '" << action.type << "', {"
+    //                   << action.start.first << ", " << action.start.second
+    //                   << "}, {" << action.goal.first << ", "
+    //                   << action.goal.second << "}, "
+    //                   << "nodeid = " << graph[i].size() + j << ", "
+    //                   << "taskid = " << action.task_id << "}," << std::endl;
+    //     }
+    //     printf("\n");
+    // }
+
     // Initialize nodes in the graph
     for (int i = 0; i < num_robots; i++) {
         for (const auto& action : plans[i]) {
@@ -110,6 +129,7 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
     }
     if (this->screen > 0)
         printf("Finish building ADG graph!\n");
+    // showGraph();
     // if (hasCycle()) {
     //     std::cout << "Cycle detected!" << std::endl;
     //     std::string input;
@@ -118,6 +138,8 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
     // }
 }
 
+// Check if the given coordinate ends with .0. If it does, it is a added stop
+// in the middle of the grids.
 bool isAddStop(double x) {
     double frac = std::min(x - std::floor(x), std::ceil(x) - x);
     if (std::fabs(frac) < EPS) {
@@ -564,12 +586,19 @@ set<int> ADG::updateFinishedTasks() {
     // finish_tasks.resize(num_robots);
     set<int> new_finished_tasks;
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        for (int node_id = graph[agent_id].size() - 1; node_id >= 0;
-             node_id--) {
+        for (int j = graph[agent_id].size() - 1; j >= 0; j--) {
             // Current ADGNode has a non-negative task_id, then we finish a
             // task.
-            int curr_task = graph[agent_id][node_id].action.task_id;
-            // cout << "Agent " << agent_id << ", Node " << node_id
+            // Note: this function is invoked after ComputeCommitCut, which
+            // removed actions that are to be replaced by future plans.
+            int curr_task = graph[agent_id][j].action.task_id;
+            // cout << "Agent " << agent_id << ", Node "
+            //      << graph[agent_id][j].node_id
+            //      << ", Action: " << graph[agent_id][j].action.type << " at ("
+            //      << graph[agent_id][j].action.start.first << ", "
+            //      << graph[agent_id][j].action.start.second << ") -> ("
+            //      << graph[agent_id][j].action.goal.first << ", "
+            //      << graph[agent_id][j].action.goal.second << ")"
             //      << ", Task ID: " << curr_task << std::endl;
             if (this->finished_tasks_.find(curr_task) !=
                 this->finished_tasks_.end()) {
@@ -587,16 +616,18 @@ set<int> ADG::updateFinishedTasks() {
 
 void ADG::showGraph() {
     for (size_t i = 0; i < numRobots(); i++) {
-        printf("Path of agent: %lu\n", i);
-        int j = 0;
-        for (auto& action_node : graph[i]) {
+        // if (graph[i].size() - finished_node_idx[i] < 5) {
+        printf("Graph of agent: %lu\n", i);
+        // Show the unfinished graph of the each agent
+        for (int j = finished_node_idx[i] + 1; j < graph[i].size(); j++) {
+            auto& action_node = graph[i][j];
             auto action = action_node.action;
             std::cout << "        {" << action.robot_id << ", " << action.time
                       << ", " << std::fixed << std::setprecision(1)
-                      << action.orientation << ", '" << action.type << "', {"
-                      << action.start.first << ", " << action.start.second
-                      << "}, {" << action.goal.first << ", "
-                      << action.goal.second << "}, " << action.nodeID
+                      << action.orientation << ", '" << action.type << "', "
+                      << action.task_id << " , {" << action.start.first << ", "
+                      << action.start.second << "}, {" << action.goal.first
+                      << ", " << action.goal.second << "}, " << action.nodeID
                       << "}. Node idx: " << action_node.node_id
                       << ", idx in graph is:" << j << ", Out edges: ";
             for (auto& tmp_out_edge : action_node.outEdges) {
@@ -614,6 +645,7 @@ void ADG::showGraph() {
             j++;
         }
         printf("\n");
+        // }
     }
 }
 
@@ -727,5 +759,15 @@ int ADG::getNumUnfinishedActions(int agent_id) {
     }
 
     // Some actions are finished, return the number of unfinished actions
-    return graph[agent_id].size() - finished_node_idx[agent_id];
+    // int n_unfinished_actions = 0;
+    // for (int i = graph[agent_id].size() - 1; i >= 0; --i) {
+    //     if (i == finished_node_idx[agent_id])
+    //         break;
+    //     n_unfinished_actions++;
+    // }
+    int n_unfinished_actions =
+        graph[agent_id].size() - finished_node_idx[agent_id] - 1;
+    // The actions here considers the actions that happen in the middle of the
+    // grids, so we divide by 2
+    return n_unfinished_actions / 2;
 }

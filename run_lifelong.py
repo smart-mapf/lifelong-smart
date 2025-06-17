@@ -103,6 +103,7 @@ def main(
         seed (int, optional): random seed. Defaults to 42.
         screen (int, optional): logging options. Defaults to 0.
     """
+    np.random.seed(seed)
     # print(f"Map Name: {map_filepath}")
     map_data, width, height = ArgosConfig.parse_map_file(map_filepath)
 
@@ -131,9 +132,9 @@ def main(
     # Infer the simulation window in timestep from velocity
     # sim window = distance of the robot can travel in sim_window seconds at
     # the given velocity
-    # Convert sim_window from ticks to seconds, and velocity from cm/s to m/s
-    sim_window = 50 # TODO: find more reasonable value
-    sim_window_ts = np.ceil((sim_window / 10) * (velocity / 100)).astype(int)
+    # Convert sim_window from ticks to timesteps, and velocity from cm/s to m/s
+    # sim_window_ts = np.ceil((sim_window / 10) * (velocity / 100)).astype(int)
+    sim_window_ts = int(np.ceil(look_ahead_dist * (velocity / 100)))
 
     try:
         print("Running simulator ...")
