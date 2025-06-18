@@ -38,9 +38,10 @@ This is a lifelong MAPF simulator that considers differentiable drive robots wit
     bash compile.sh server
     ```
 
-1.  Compile MAPF planner. For now we support PBS.
+1.  Compile MAPF planner. For now we support PBS and RHCR.
     ```bash
     bash compile.sh pbs
+    bash compile.sh rhcr
     ```
 
 Alternatively, you may compile rpc, server, client, and MAPF planner using:
