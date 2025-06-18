@@ -65,8 +65,8 @@ def run_simulator(args):
 
 
 def main(
-    map_filepath: str = "../maps/mapf_bench/no_guidance/random-32-32-20.json",
-    num_agents: int = 32,
+    map_filepath: str = "../maps/warehouse/no_guidance/kiva_large_w_mode.json",
+    num_agents: int = 50,
     headless: bool = False,
     argos_config_filepath: str = "output.argos",
     stats_name: str = "stats.csv",
@@ -76,7 +76,7 @@ def main(
     sim_duration: int = 1800 * 10,
     velocity: float = 200.0,
     look_ahead_dist: int = 5,
-    planner: str = "PBS",  # ["PBS", "RHCR"]
+    planner: str = "RHCR",  # ["PBS", "RHCR"]
     seed: int = 42,
     screen: int = 0,
 ):
