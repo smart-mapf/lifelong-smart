@@ -21,25 +21,6 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
         graph_offset[i] = static_cast<int>(graph[i].size());
     }
 
-    // // Print actions
-    // std::cout << "Processed Actions" << std::endl;
-    // for (size_t i = 0; i < plans.size(); i++) {
-    //     printf("Action of agent: %lu\n", i);
-    //     for (int j = 0; j < plans[i].size(); j++) {
-    //         auto& action = plans[i][j];
-    //         std::cout << "        {" << action.robot_id << ", " <<
-    //         action.time
-    //                   << ", " << std::fixed << std::setprecision(1)
-    //                   << action.orientation << ", '" << action.type << "', {"
-    //                   << action.start.first << ", " << action.start.second
-    //                   << "}, {" << action.goal.first << ", "
-    //                   << action.goal.second << "}, "
-    //                   << "nodeid = " << graph[i].size() + j << ", "
-    //                   << "taskid = " << action.task_id << "}," << std::endl;
-    //     }
-    //     printf("\n");
-    // }
-
     // Initialize nodes in the graph
     for (int i = 0; i < num_robots; i++) {
         for (const auto& action : plans[i]) {

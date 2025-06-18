@@ -286,6 +286,21 @@ bool invokePlanner() {
         }
     }
 
+    // Print the unfinished actions for each robot
+    if (server_ptr->screen > 0) {
+        // cout << "#####################" << std::endl;
+        // cout << "Checking if planner should be invoked at sim step: "
+        //      << sim_step << ", invoke: " << invoke << std::endl;
+        // std::cout << "Unfinished actions for each robot at sim step "
+        //           << sim_step << ":" << std::endl;
+        // for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
+        //     std::cout << "Robot " << agent_id << " has "
+        //               << server_ptr->adg->getNumUnfinishedActions(agent_id)
+        //               << " unfinished actions." << std::endl;
+        // }
+        // cout << "#####################" << std::endl;
+    }
+
     if (invoke && server_ptr->screen > 0) {
         std::cout << "Invoke planner at sim step: " << sim_step << std::endl;
         for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {

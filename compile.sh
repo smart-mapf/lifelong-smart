@@ -45,6 +45,13 @@ compile_pbs() {
     sudo find $current_path/planner/PBS/build/pbs -type d -exec chmod o+x {} +
 }
 
+compile_rhcr() {
+    echo "Compiling RHCR..."
+    cd $current_path/planner/RHCR
+    rm -rf build
+    bash compile.sh
+}
+
 if [ "$target" == "rpclib" ]; then
     compile_rpclib
 fi
@@ -61,15 +68,21 @@ if [ "$target" == "pbs" ]; then
     compile_pbs
 fi
 
+if [ "$target" == "rhcr" ]; then
+    compile_rhcr
+fi
+
 if [ "$target" == "all" ]; then
     compile_rpclib
     compile_client
     compile_server
     compile_pbs
+    compile_rhcr
 fi
 
 if [ "$target" == "user" ]; then
     compile_client
     compile_server
     compile_pbs
+    compile_rhcr
 fi

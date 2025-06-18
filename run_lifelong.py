@@ -76,6 +76,7 @@ def main(
     sim_duration: int = 1800 * 10,
     velocity: float = 200.0,
     look_ahead_dist: int = 5,
+    planner: str = "PBS",  # ["PBS", "RHCR"]
     seed: int = 42,
     screen: int = 0,
 ):
@@ -151,16 +152,32 @@ def main(
         ]
         client_command = ["argos3", "-c", f"../{argos_config_filepath}"]
 
-        planner_executable_path = "./planner/PBS/build/pbs"
-        planner_command = [
-            planner_executable_path,
-            f"--map={map_filepath}",
-            f"--agentNum={num_agents}",
-            f"--portNum={port_num}",
-            f"--seed={seed}",
-            f"--screen={screen}",
-            f"--simulation_window={sim_window_ts}",
-        ]
+        if planner == "PBS":
+            planner_executable_path = "./planner/PBS/build/pbs"
+            planner_command = [
+                planner_executable_path,
+                f"--map={map_filepath}",
+                f"--agentNum={num_agents}",
+                f"--portNum={port_num}",
+                f"--seed={seed}",
+                f"--screen={screen}",
+                f"--simulation_window={sim_window_ts}",
+            ]
+        elif planner == "RHCR":
+            planner_executable_path = "./planner/RHCR/build/lifelong"
+            planner_command = [
+                planner_executable_path,
+                f"--map={map_filepath}",
+                f"--agentNum={num_agents}",
+                f"--port_number={port_num}",
+                f"--seed={seed}",
+                f"--screen={screen}",
+                f"--planning_window={sim_window_ts}",
+                f"--simulation_window={sim_window_ts}",
+                f"--scenario=SMART",
+                f"--cutoffTime={5}",
+                f"--rotation=True",
+            ]
         run_simulator((server_command, client_command, planner_command))
     except KeyboardInterrupt:
         print("KeyboardInterrupt: Stopping the experiment ...")
