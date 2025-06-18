@@ -9,18 +9,58 @@ int getOrientation(int x1, int y1, int x2, int y2) {
     }
 }
 
+void showPoints(int agentId, const vector<Point>& points) {  // Print points
+    std::cout << "Points of Agent " << agentId << std::endl;
+    for (const auto& point : points) {
+        std::cout << "(" << point.x << ", " << point.y << "), "
+                  << "time: " << point.time << ", task_id: " << point.task_id
+                  << std::endl;
+    }
+}
+
+void showSteps(const std::vector<std::vector<Step>>& raw_steps) {
+    // Print steps
+    std::cout << "Raw Steps" << std::endl;
+    for (size_t i = 0; i < raw_steps.size(); i++) {
+        printf("Step of agent: %lu\n", i);
+        for (const auto& tmp_step : raw_steps[i]) {
+            std::cout << "(" << tmp_step.x << ", " << tmp_step.y << "), "
+                      << tmp_step.orientation << ", " << tmp_step.time
+                      << ", task_id: " << tmp_step.task_id << std::endl;
+        }
+        printf("\n");
+    }
+}
+
+void showActions(const std::vector<std::vector<Action>>& plans) {
+    // Print actions
+    std::cout << "Processed Actions" << std::endl;
+    for (size_t i = 0; i < plans.size(); i++) {
+        printf("Action of agent: %lu\n", i);
+        for (int j = 0; j < plans[i].size(); j++) {
+            auto& action = plans[i][j];
+            std::cout << "        {" << action.robot_id << ", " << action.time
+                      << ", " << std::fixed << std::setprecision(1)
+                      << action.orientation << ", '" << action.type << "', {"
+                      << action.start.first << ", " << action.start.second
+                      << "}, {" << action.goal.first << ", "
+                      << action.goal.second
+                      << "}, "
+                      //   << "nodeid = " << graph[i].size() + j << ", "
+                      << "taskid = " << action.task_id << "}," << std::endl;
+        }
+        printf("\n");
+    }
+}
+
 // Processes the actions of an agent, calculating necessary steps, including
 // orientation changes.
 void AgentPathToSteps(const vector<Point>& points, vector<Step>& steps,
                       int currentOrientation, int agentId) {
     steps.clear();
-    // // Print points
-    // std::cout << "Points" << std::endl;
-    // for (const auto& point : points) {
-    //     std::cout << "(" << point.x << ", " << point.y << "), "
-    //               << "time: " << point.time << ", task_id: " << point.task_id
-    //               << std::endl;
-    // }
+
+    // showPoints(agentId, points);
+
     // int currentOrientation = 0; // Assume initial orientation is West.
     double currentTime = 0;
     for (size_t i = 0; i < points.size(); ++i) {
@@ -37,8 +77,7 @@ void AgentPathToSteps(const vector<Point>& points, vector<Step>& steps,
                 // additional step on the previous timestep with the needed
                 // orientation.
                 steps.push_back(Step(points[i - 1].x, points[i - 1].y,
-                                     neededOrientation, currentTime,
-                                     points[i - 1].task_id));
+                                     neededOrientation, currentTime));
                 currentOrientation = neededOrientation;
             }
             // Move to the next position, increment time only here.
@@ -50,17 +89,7 @@ void AgentPathToSteps(const vector<Point>& points, vector<Step>& steps,
 
 std::vector<std::vector<Action>> StepsToActions(
     const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
-    // Print steps
-    // std::cout << "Raw Steps" << std::endl;
-    // for (size_t i = 0; i < raw_steps.size(); i++) {
-    //     printf("Step of agent: %lu\n", i);
-    //     for (const auto& tmp_step : raw_steps[i]) {
-    //         std::cout << "(" << tmp_step.x << ", " << tmp_step.y << "), "
-    //                   << tmp_step.orientation << ", " << tmp_step.time
-    //                   << ", task_id: " << tmp_step.task_id << std::endl;
-    //     }
-    //     printf("\n");
-    // }
+    // showSteps(raw_steps);
 
     std::vector<std::vector<Action>> plans;
     int node_id = 0;
@@ -109,6 +138,12 @@ std::vector<std::vector<Action>> StepsToActions(
                     curr_step_x = raw_steps[i][j].x;
                     curr_step_y = raw_steps[i][j].y;
                 }
+                // cout << "Processing step " << j << " for agent " << i
+                //      << ", prev: (" << prev_step_x << ", " << prev_step_y
+                //      << "), curr: (" << curr_step_x << ", " << curr_step_y
+                //      << ")"
+                //      << " with taks id " << raw_steps[i][j].task_id
+                //      << std::endl;
                 Action processedAction;
                 processedAction.robot_id = (int)i;
                 // @jingtian Note: change action start time, to be consistent
@@ -168,45 +203,23 @@ std::vector<std::vector<Action>> StepsToActions(
 
                 // Add special action for goal arrival
                 if (raw_steps[i][j].task_id >= 0) {
-                    Action goalAction = accesoray_action;
+                    cout << "Adding goal action for agent " << i
+                         << ", task_id: " << raw_steps[i][j].task_id
+                         << std::endl;
+                    Action goalAction(accesoray_action);
                     goalAction.type = 'S';  // Station
                     goalAction.task_id = raw_steps[i][j].task_id;
                     goalAction.nodeID = node_id;
                     goalAction.time += 1;
                     node_id++;
+                    processedActions.push_back(goalAction);
                 }
             }
         }
         plans.push_back(processedActions);
     }
 
+    // showActions(plans);
+
     return plans;
-}
-
-void showStepPoints(std::vector<std::vector<Step>>& raw_plan) {
-    for (size_t i = 0; i < raw_plan.size(); i++) {
-        printf("Path of agent: %lu\n", i);
-        for (auto& tmp_point : raw_plan[i]) {
-            std::cout << "(" << tmp_point.x << ", " << tmp_point.y << "), "
-                      << tmp_point.orientation << ", " << tmp_point.time << ", "
-                      << std::endl;
-        }
-        printf("\n");
-    }
-}
-
-void showActionsPlan(std::vector<std::vector<Action>>& plans) {
-    for (size_t i = 0; i < plans.size(); i++) {
-        printf("Path of agent: %lu\n", i);
-        for (auto& action : plans[i]) {
-            std::cout << "        {" << action.robot_id << ", " << action.time
-                      << ", " << std::fixed << std::setprecision(1)
-                      << action.orientation << ", '" << action.type << "', {"
-                      << action.start.first << ", " << action.start.second
-                      << "}, {" << action.goal.first << ", "
-                      << action.goal.second << "}, " << action.nodeID << "},"
-                      << std::endl;
-        }
-        printf("\n");
-    }
 }

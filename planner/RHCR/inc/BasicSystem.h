@@ -41,6 +41,10 @@ public:
     bool consider_rotation;
     int k_robust;
 
+    // params for SMART
+    int port_number = -1;
+
+
     BasicSystem(const BasicGraph& G, MAPFSolver& solver);
     ~BasicSystem();
 

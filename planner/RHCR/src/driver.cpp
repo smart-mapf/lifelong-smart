@@ -5,6 +5,7 @@
 #include "ID.h"
 #include "ManufactureSystem.h"
 #include "GreyOrangeSystem.h"
+#include "SMARTSystem.h"
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
@@ -29,6 +30,7 @@ void set_parameters(BasicSystem& system, const boost::program_options::variables
     system.stop_at_traffic_jam = vm["stop_at_traffic_jam"].as<bool>();
     system.rotation_time = vm["rotation_time"].as<int>();
     system.queue_mechanism = vm["queue_mechanism"].as<bool>();
+    system.port_number = vm["port_number"].as<int>();
 	if (vm.count("seed"))
 		system.seed = vm["seed"].as<int>();
 	else
@@ -159,16 +161,17 @@ int main(int argc, char** argv)
 		("prioritize_start", po::value<bool>()->default_value(true), "Prioritize waiting at start locations")
 		("suboptimal_bound", po::value<double>()->default_value(1), "Suboptimal bound for ECBS")
 		("log", po::value<bool>()->default_value(false), "save the search trees (and the priority trees)")
-        ("force_new_logdir", po::value<bool>()->default_value(false), "Force the program to create new hash tables even if it already exists.")
-        ("save_result", po::value<bool>()->default_value(true), "Save result on disk. This could take too much save on disk in warehouse environment generation project")
-        ("save_solver", po::value<bool>()->default_value(true), "Save solver result on disk. This could take too much save on disk in warehouse environment generation project")
-        ("save_heuristics_table", po::value<bool>()->default_value(true), "Save heuristics table on disk. This could take too much save on disk in warehouse environment generation project")
+        ("force_new_logdir", po::value<bool>()->default_value(true), "Force the program to create new hash tables even if it already exists.")
+        ("save_result", po::value<bool>()->default_value(false), "Save result on disk. This could take too much save on disk in warehouse environment generation project")
+        ("save_solver", po::value<bool>()->default_value(false), "Save solver result on disk. This could take too much save on disk in warehouse environment generation project")
+        ("save_heuristics_table", po::value<bool>()->default_value(false), "Save heuristics table on disk. This could take too much save on disk in warehouse environment generation project")
         ("stop_at_traffic_jam", po::value<bool>()->default_value(true), "Whether to stop at traffic jam. Usually we want to stop for better performance.")
         ("left_w_weight", po::value<double>()->default_value(1.0), "weight of the workstations on the left border.")
         ("right_w_weight", po::value<double>()->default_value(1.0), "weight of the workstations on the right border.")
         ("n_station_types", po::value<int>()->default_value(3), "number of types of manufacture stations for manufacture scenario.")
         ("station_wait_times", po::value<std::vector<int>>()->multitoken()->default_value(vector<int>{1, 5, 10}), "wait time of each type of manufacture station.")
         ("queue_mechanism", po::value<bool>()->default_value(false), "Whether to use queue mechanism. This is only used for GreyOrange scenario.")
+        ("port_number", po::value<int>()->default_value(8080), "port number for the server")
 		;
     // clang-format on
 	clock_t start_time = clock();
@@ -337,6 +340,34 @@ int main(int argc, char** argv)
 	// 	cout << "Overall runtime: " << runtime << " seconds." << endl;
 	// 	return 0;
 	// }
+    else if (vm["scenario"].as<string>() == "SMART")
+	{
+		SMARTGrid G;
+		G.screen = vm["screen"].as<int>();
+        G.hold_endpoints = vm["hold_endpoints"].as<bool>();
+	    G.useDummyPaths = vm["dummy_paths"].as<bool>();
+        G._save_heuristics_table = vm["save_heuristics_table"].as<bool>();
+        G.rotation_time = vm["rotation_time"].as<int>();
+        std::ifstream i(vm["map"].as<std::string>());
+        json map_json;
+        i >> map_json;
+		if (!G.load_map_from_jsonstr(
+                map_json.dump(4),
+                vm["left_w_weight"].as<double>(),
+                vm["right_w_weight"].as<double>()))
+        {
+            return -1;
+        }
+		MAPFSolver* solver = set_solver(G, vm);
+		SMARTSystem system(G, *solver);
+		set_parameters(system, vm);
+        system.start_time = start_time;
+		G.preprocessing(system.consider_rotation, "map");
+		system.simulate(vm["simulation_time"].as<int>());
+        double runtime = (double)(clock() - start_time)/ CLOCKS_PER_SEC;
+		cout << "Overall runtime: " << runtime << " seconds." << endl;
+		return 0;
+	}
 	else if (vm["scenario"].as<string>() == "ONLINE")
 	{
 		OnlineGrid G;

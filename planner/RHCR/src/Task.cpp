@@ -5,7 +5,9 @@ std::ostream& operator<<(std::ostream& os, const Task& task) {
        << ", wait_time : " << task.task_wait_time
        << ", hold_time : " << task.hold_time
        << ", is_parking : " << task.is_parking
-       << ", movable : " << task.movable << " )";
+       << ", movable : " << task.movable
+       << ", id : " << task.id
+       << " )";
     return os;
 }
 

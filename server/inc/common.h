@@ -145,20 +145,44 @@ struct Action {
     std::shared_ptr<MobileRobotTask> task_ptr = nullptr;
     int task_id = -1;  // Task ID associated with the completion of this action
 
+    // default constructor
+    Action()
+        : robot_id(-1),
+          time(0.0),
+          orientation(0.0),
+          type('M'),  // Default to 'M' for move
+          start({0.0, 0.0}),
+          goal({0.0, 0.0}),
+          nodeID(-1),
+          task_ptr(nullptr),
+          task_id(-1) {
+    }
+
     // Assignment operator
     Action& operator=(const Action& other) {
-        if (this != &other) {
-            robot_id = other.robot_id;
-            time = other.time;
-            orientation = other.orientation;
-            type = other.type;
-            start = other.start;
-            goal = other.goal;
-            nodeID = other.nodeID;
-            task_ptr = other.task_ptr;  // Shared pointer assignment
-            task_id = other.task_id;
-        }
+        robot_id = other.robot_id;
+        time = other.time;
+        orientation = other.orientation;
+        type = other.type;
+        start = other.start;
+        goal = other.goal;
+        nodeID = other.nodeID;
+        task_ptr = other.task_ptr;  // Shared pointer assignment
+        task_id = other.task_id;
         return *this;
+    }
+
+    // Copy constructor
+    Action(const Action& other)
+        : robot_id(other.robot_id),
+          time(other.time),
+          orientation(other.orientation),
+          type(other.type),
+          start(other.start),
+          goal(other.goal),
+          nodeID(other.nodeID),
+          task_ptr(other.task_ptr),  // Shared pointer copy
+          task_id(other.task_id) {
     }
 };
 

@@ -23,17 +23,19 @@ list(FILTER SOURCES EXCLUDE REGEX "src/WarehouseSimulator.h")
 find_package(Boost 1.67.0 REQUIRED COMPONENTS program_options system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
-# Add pybind11 submodule
-add_subdirectory(pybind11)
-include_directories(pybind11/include)
+# # Add pybind11 submodule
+# add_subdirectory(pybind11)
+# include_directories(pybind11/include)
 
-# Pybind11 modules
-pybind11_add_module(warehouse_sim "src/WarehouseSimulation.cpp" ${SOURCES})
-target_link_libraries(warehouse_sim PRIVATE ${Boost_LIBRARIES})
+find_package(Threads REQUIRED)
 
-pybind11_add_module(WarehouseSimulator "src/WarehouseSimulator.cpp" "inc/WarehouseSimulator.h" ${SOURCES})
-target_link_libraries(WarehouseSimulator PRIVATE ${Boost_LIBRARIES})
+# # Pybind11 modules
+# pybind11_add_module(warehouse_sim "src/WarehouseSimulation.cpp" ${SOURCES})
+# target_link_libraries(warehouse_sim PRIVATE ${Boost_LIBRARIES})
+
+# pybind11_add_module(WarehouseSimulator "src/WarehouseSimulator.cpp" "inc/WarehouseSimulator.h" ${SOURCES})
+# target_link_libraries(WarehouseSimulator PRIVATE ${Boost_LIBRARIES})
 
 # Main executable
 add_executable(lifelong ${SOURCES})
-target_link_libraries(lifelong PRIVATE ${Boost_LIBRARIES} ${Python_LIBRARIES})
+target_link_libraries(lifelong PRIVATE ${Boost_LIBRARIES} ${Python_LIBRARIES} rpc pthread)
