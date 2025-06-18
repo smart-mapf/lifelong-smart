@@ -203,9 +203,9 @@ std::vector<std::vector<Action>> StepsToActions(
 
                 // Add special action for goal arrival
                 if (raw_steps[i][j].task_id >= 0) {
-                    cout << "Adding goal action for agent " << i
-                         << ", task_id: " << raw_steps[i][j].task_id
-                         << std::endl;
+                    // cout << "Adding goal action for agent " << i
+                    //      << ", task_id: " << raw_steps[i][j].task_id
+                    //      << std::endl;
                     Action goalAction(accesoray_action);
                     goalAction.type = 'S';  // Station
                     goalAction.task_id = raw_steps[i][j].task_id;

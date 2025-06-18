@@ -263,8 +263,9 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
 
 void SMARTGrid::update_map_weights(std::vector<double>& new_weights) {
     // Read in weights
-    // G_json["weights_matrix"] of length rows * cols * 5, where each 5 entry
-    // contains the weights of `right`, `down`, `left`, `up`, `wait` in order.
+    // G_json["weights_matrix"] of length rows * cols * 7, where each 5 entry
+    // contains the weights of `right`, `down`, `left`, `up`, `wait`, `CR`,
+    // `CCR` in order. For now, CR and CCR are not used.
     // The costs of CR and CCR while considering rotation is the same as wait.
     // Note that this order is different from the order in this->move, which is
     // `right`, `up`, `left`, `down`.
@@ -291,7 +292,7 @@ void SMARTGrid::update_map_weights(std::vector<double>& new_weights) {
         }
 
         // Idxs
-        int idx = 5 * i;
+        int idx = 7 * i;
 
         // Wait cost
         this->weights[i][4] = new_weights[idx + 4];

@@ -110,13 +110,13 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
     }
     if (this->screen > 0)
         printf("Finish building ADG graph!\n");
-    showGraph();
-    if (hasCycle()) {
-        std::cout << "Cycle detected!" << std::endl;
-        std::string input;
-        std::getline(std::cin, input);
-        exit(-1);
-    }
+    // showGraph();
+    // if (hasCycle()) {
+    //     std::cout << "Cycle detected!" << std::endl;
+    //     std::string input;
+    //     std::getline(std::cin, input);
+    //     exit(-1);
+    // }
 }
 
 // Check if the given coordinate ends with .0. If it does, it is a added stop

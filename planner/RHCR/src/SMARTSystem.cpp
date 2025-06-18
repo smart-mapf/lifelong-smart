@@ -111,16 +111,11 @@ void SMARTSystem::update_start_locations(
     }
 
     // Set new starts
-    cout << "SMARTSystem::update_start_locations: "
-         << "updating starts based on start_locs." << endl;
     for (int i = 0; i < this->num_of_drives; i++) {
         // Obtain the starts
         int row = static_cast<int>(start_locs[i].first);
         int col = static_cast<int>(start_locs[i].second);
         // TODO: Add support for orientation
-        cout << "SMARTSystem::update_start_locations: "
-             << "start_locs[" << i << "] = (" << row << ", " << col << ")"
-             << endl;
         this->starts[i] = State(this->G.getCellId(row, col), 0);
     }
 }
@@ -215,13 +210,6 @@ void SMARTSystem::update_goal_locations() {
                 this->next_goal_type.push_back("w");
             }
         }
-
-        // // initialize end_points_weights
-        // this->G.initialize_end_points_weights();
-        // this->end_points_dist = discrete_distribution<int>(
-        // 	this->G.end_points_weights.begin(),
-        // 	this->G.end_points_weights.end()
-        // );
     }
 
     // RHCR Algorithm
@@ -267,6 +255,24 @@ void SMARTSystem::update_goal_locations() {
             min_timesteps +=
                 G.get_Manhattan_distance(next.location, goal.location);
             goal = next;
+        }
+    }
+
+    // Log the current start and goal locations in the format of () -> () -> ...
+    if (screen > 0) {
+        cout << "SMARTSystem::update_goal_locations: "
+             << "Current start and goal locations:" << endl;
+        for (int i = 0; i < num_of_drives; i++) {
+            cout << "Agent " << i << ": ";
+            int start_x = G.getRowCoordinate(starts[i].location);
+            int start_y = G.getColCoordinate(starts[i].location);
+            cout << "(" << start_x << ", " << start_y  << ") => ";
+            for (const auto &goal : goal_locations[i]) {
+                int goal_x = G.getRowCoordinate(goal.location);
+                int goal_y = G.getColCoordinate(goal.location);
+                cout << "(" << goal_x << ", " << goal_y << ") -> ";
+            }
+            cout << endl;
         }
     }
 }
@@ -646,10 +652,7 @@ json SMARTSystem::simulate(int simulation_time) {
             continue;
         }
 
-        cout << "Invoking planner" << endl;
         string result_message = client.call("get_location").as<string>();
-
-        cout << "Result message: " << result_message << endl;
 
         auto result_json = json::parse(result_message);
         if (!result_json["initialized"].get<bool>()) {
