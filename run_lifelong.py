@@ -176,6 +176,7 @@ def main(
                 f"--simulation_window={sim_window_ts}",
                 f"--scenario=SMART",
                 f"--cutoffTime={5}",
+                f"--rotation=True",
             ]
         run_simulator((server_command, client_command, planner_command))
     except KeyboardInterrupt:
