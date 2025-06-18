@@ -5,6 +5,9 @@ import xml.etree.ElementTree as ET
 
 from xml.dom import minidom
 from typing import List, Tuple
+from ArgosConfig import (PROJECT_ROOT, CONTAINER_PROJECT_ROOT,
+                         FOOTBOT_DIFFUSION_CONTROLLER_LIB,
+                         TRAJECTORY_LOOP_FUNCTIONS_LIB)
 
 obstacles = ['@', 'T']
 
@@ -48,7 +51,7 @@ def create_Argos(map_data: List[str],
                  sim_duration: int = 1200,
                  screen: int = 0,
                  velocity: float = 200.0,
-                 simulation_window: int = 10):
+                 container: bool = False):
     """Create an Argos configuration file based on the provided map data and robot initial positions.
 
     Args:
@@ -70,7 +73,21 @@ def create_Argos(map_data: List[str],
         screen (int, optional): screen number for logging. Defaults to 0.
         velocity (float, optional): velocity of the robots in cm/s. Defaults to
             200.0 cm/s.
+        container (bool, optional): whether to run in a container. Defaults to
+            False.
     """
+    # Process the library paths of client
+    if container:
+        footbot_diffusion_controller_lib = pathlib.Path(
+            CONTAINER_PROJECT_ROOT) / FOOTBOT_DIFFUSION_CONTROLLER_LIB
+        trajectory_loop_functions_lib = pathlib.Path(
+            CONTAINER_PROJECT_ROOT) / TRAJECTORY_LOOP_FUNCTIONS_LIB
+    else:
+        footbot_diffusion_controller_lib = pathlib.Path(
+            PROJECT_ROOT) / FOOTBOT_DIFFUSION_CONTROLLER_LIB
+        trajectory_loop_functions_lib = pathlib.Path(
+            PROJECT_ROOT) / TRAJECTORY_LOOP_FUNCTIONS_LIB
+
     # Create the root element
     argos_config = ET.Element("argos-configuration")
 
@@ -104,7 +121,7 @@ def create_Argos(map_data: List[str],
         controllers,
         "footbot_diffusion_controller",
         id="fdc",
-        library="build/controllers/footbot_diffusion/libfootbot_diffusion")
+        library=str(footbot_diffusion_controller_lib))
 
     # Actuators
     actuators = ET.SubElement(footbot_controller, "actuators")
@@ -128,9 +145,7 @@ def create_Argos(map_data: List[str],
         "params",
         alpha="45.0",
         omega="45.0",
-        #  alpha="7.5",
-        #  omega="3.0",
-        velocity=f"{velocity}", # in cm/s
+        velocity=f"{velocity}",  # in cm/s
         acceleration="200.0",
         portNumber=f"{port_num}",
         outputDir=f"metaData{port_num}/",
@@ -138,12 +153,10 @@ def create_Argos(map_data: List[str],
         screen=f"{screen}",
     )
     # Loop functions
-    loop_functions = ET.SubElement(
-        argos_config,
-        "loop_functions",
-        library=
-        "build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions",
-        label="trajectory_loop_functions")
+    loop_functions = ET.SubElement(argos_config,
+                                   "loop_functions",
+                                   library=str(trajectory_loop_functions_lib),
+                                   label="trajectory_loop_functions")
 
     ET.SubElement(loop_functions, f"port_number", value=f"{port_num}")
 
@@ -239,12 +252,10 @@ def create_Argos(map_data: List[str],
         # qt_opengl = ET.SubElement(visualization, "qt-opengl", autoplay="true")
         qt_opengl = ET.SubElement(visualization, "qt-opengl")
 
-        goal_loc = ET.SubElement(
-            qt_opengl,
-            "user_functions",
-            library=
-            "build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions",
-            label="trajectory_qtuser_functions")
+        goal_loc = ET.SubElement(qt_opengl,
+                                 "user_functions",
+                                 library=str(trajectory_loop_functions_lib),
+                                 label="trajectory_qtuser_functions")
 
         # autoplay = ET.SubElement(qt_opengl, "autoplay",
         #                           autoplay="true")

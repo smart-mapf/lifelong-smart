@@ -1,12 +1,14 @@
 import os
 import pathlib
-import ArgosConfig
 import subprocess
 import time
 import fire
 import numpy as np
 
 from typing import List, Tuple
+from ArgosConfig import (SERVER_EXE, PBS_EXE, RHCR_EXE, CONTAINER_PROJECT_ROOT,
+                         PROJECT_ROOT)
+from ArgosConfig.ToArgos import (obstacles, parse_map_file, create_Argos)
 
 
 def init_start_locations(
@@ -18,7 +20,7 @@ def init_start_locations(
     free_locations = []
     for i in range(h):
         for j in range(w):
-            if map_str[i][j] not in ArgosConfig.obstacles:
+            if map_str[i][j] not in obstacles:
                 free_locations.append(i * w + j)
     if len(free_locations) < num_agents:
         print(
@@ -46,14 +48,12 @@ def run_simulator(args):
 
     # Wait for a short period to ensure the server has started
     time.sleep(3)
+
     # Start the client process
-    os.chdir("./client")
-    # os.chdir("client")
     client_process = subprocess.Popen(client_command)
 
     # Wait for the client process to complete
     # time.sleep(5)
-    os.chdir("..")
     planner_process = subprocess.Popen(planner_command)
 
     # The client process will call the server to end, then the client end. The
@@ -64,8 +64,8 @@ def run_simulator(args):
     planner_process.kill()
 
 
-def main(
-    map_filepath: str = "../maps/warehouse/no_guidance/kiva_large_w_mode.json",
+def run_lifelong_argos(
+    map_filepath: str = "maps/warehouse/no_guidance/kiva_large_w_mode.json",
     num_agents: int = 50,
     headless: bool = False,
     argos_config_filepath: str = "output.argos",
@@ -77,6 +77,7 @@ def main(
     velocity: float = 200.0,
     look_ahead_dist: int = 5,
     planner: str = "RHCR",  # ["PBS", "RHCR"]
+    container: bool = False,
     seed: int = 42,
     screen: int = 0,
 ):
@@ -101,19 +102,25 @@ def main(
             200.0 cm/s.
         look_ahead_dist (int, optional): look ahead distance for the planner to
             obtain robot goal location.
+        planner (str, optional): planner to use. Defaults to "RHCR".
+        container (bool, optional): whether to run in a container. Defaults to
+            False.
         seed (int, optional): random seed. Defaults to 42.
         screen (int, optional): logging options. Defaults to 0.
     """
     np.random.seed(seed)
     # print(f"Map Name: {map_filepath}")
-    map_data, width, height = ArgosConfig.parse_map_file(map_filepath)
+    map_data, width, height = parse_map_file(map_filepath)
 
     # Transform the map and scen to Argos config file, obstacles: '@', 'T'
     if screen > 0:
         print("Creating Argos config file ...")
     robot_init_pos = init_start_locations(map_data, num_agents)
 
-    ArgosConfig.create_Argos(
+    # Use absolute path for argos config
+    argos_config_filepath = os.path.abspath(argos_config_filepath)
+
+    create_Argos(
         map_data=map_data,
         output_file_path=argos_config_filepath,
         width=width,
@@ -126,6 +133,7 @@ def main(
         sim_duration=sim_duration,
         screen=screen,
         velocity=velocity,
+        container=container,
     )
     if screen > 0:
         print("Argos config file created.")
@@ -137,11 +145,20 @@ def main(
     # sim_window_ts = np.ceil((sim_window / 10) * (velocity / 100)).astype(int)
     sim_window_ts = int(np.ceil(look_ahead_dist * (velocity / 100)))
 
+    # Path to the executables
+    if container:
+        server_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / SERVER_EXE
+        pbs_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / PBS_EXE
+        rhcr_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / RHCR_EXE
+    else:
+        server_path = pathlib.Path(PROJECT_ROOT) / SERVER_EXE
+        pbs_path = pathlib.Path(PROJECT_ROOT) / PBS_EXE
+        rhcr_path = pathlib.Path(PROJECT_ROOT) / RHCR_EXE
+
     try:
         print("Running simulator ...")
-        server_executable_path = "./server/build/ADG_server"
         server_command = [
-            server_executable_path,
+            str(server_path),
             f"--num_robots={num_agents}",
             f"--port_number={port_num}",
             f"--output_file={stats_name}",
@@ -150,12 +167,11 @@ def main(
             f"--total_sim_step_tick={sim_duration}",
             f"--look_ahead_dist={look_ahead_dist}",
         ]
-        client_command = ["argos3", "-c", f"../{argos_config_filepath}"]
+        client_command = ["argos3", "-c", f"{argos_config_filepath}"]
 
         if planner == "PBS":
-            planner_executable_path = "./planner/PBS/build/pbs"
             planner_command = [
-                planner_executable_path,
+                pbs_path,
                 f"--map={map_filepath}",
                 f"--agentNum={num_agents}",
                 f"--portNum={port_num}",
@@ -164,9 +180,8 @@ def main(
                 f"--simulation_window={sim_window_ts}",
             ]
         elif planner == "RHCR":
-            planner_executable_path = "./planner/RHCR/build/lifelong"
             planner_command = [
-                planner_executable_path,
+                rhcr_path,
                 f"--map={map_filepath}",
                 f"--agentNum={num_agents}",
                 f"--port_number={port_num}",
@@ -178,10 +193,11 @@ def main(
                 f"--cutoffTime={5}",
                 f"--rotation=True",
             ]
-        run_simulator((server_command, client_command, planner_command))
+        run_simulator((server_command, client_command, planner_command),
+                      container)
     except KeyboardInterrupt:
         print("KeyboardInterrupt: Stopping the experiment ...")
 
 
 if __name__ == "__main__":
-    fire.Fire(main)
+    fire.Fire(run_lifelong_argos)
