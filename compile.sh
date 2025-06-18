@@ -86,3 +86,13 @@ if [ "$target" == "user" ]; then
     compile_pbs
     compile_rhcr
 fi
+
+if [ "$target" == "clean" ]; then
+    echo "Cleaning up..."
+    rm -rf $current_path/client/build
+    rm -rf $current_path/server/build
+    rm -rf $current_path/planner/PBS/build
+    rm -rf $current_path/planner/RHCR/build
+    rm -rf $current_path/client/externalDependencies/rpclib/build
+    echo "Cleanup complete."
+fi
