@@ -193,8 +193,7 @@ def run_lifelong_argos(
                 f"--cutoffTime={5}",
                 f"--rotation=True",
             ]
-        run_simulator((server_command, client_command, planner_command),
-                      container)
+        run_simulator((server_command, client_command, planner_command))
     except KeyboardInterrupt:
         print("KeyboardInterrupt: Stopping the experiment ...")
 
