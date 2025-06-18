@@ -693,7 +693,6 @@ SMARTSystem::convert_path_to_smart() {
     vector<Path> raw_new_path = this->solver.solution;
 
     for (int i = 0; i < this->num_of_drives; i++) {
-        cout << "Agent " << i << ": ";
         // The first simulation_window steps of the path are collision free
         int goal_id = 0;
         for (int t = 0; t < this->simulation_window; t++) {
@@ -710,6 +709,7 @@ SMARTSystem::convert_path_to_smart() {
                                           this->G.getColCoordinate(s.location),
                                           static_cast<double>(t), task_id);
             if (screen > 0) {
+                cout << "Agent " << i << ": ";
                 std::cout << "(" << this->G.getRowCoordinate(s.location) << ","
                           << this->G.getColCoordinate(s.location) << ","
                           << task_id << ")->";
