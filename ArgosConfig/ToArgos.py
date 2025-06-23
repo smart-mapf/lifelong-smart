@@ -52,7 +52,8 @@ def create_Argos(map_data: List[str],
                  sim_duration: int = 1200,
                  screen: int = 0,
                  velocity: float = 200.0,
-                 container: bool = False):
+                 container: bool = False,
+                 seed: int = 42):
     """Create an Argos configuration file based on the provided map data and robot initial positions.
 
     Args:
@@ -105,13 +106,13 @@ def create_Argos(map_data: List[str],
             "experiment",
             length="0",
             ticks_per_second="10",  # 10 update per simulation second
-            random_seed="124")
+            random_seed=f"{seed}")
     else:
         experiment = ET.SubElement(framework,
                                    "experiment",
                                    length="0",
                                    ticks_per_second="10",
-                                   random_seed="124",
+                                   random_seed=f"{seed}",
                                    visualization="none")
 
     # Controllers section

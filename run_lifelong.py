@@ -136,6 +136,7 @@ def run_lifelong_argos(
         screen=screen,
         velocity=velocity,
         container=container,
+        seed=seed,
     )
     if screen > 0:
         print("Argos config file created.")
@@ -168,6 +169,7 @@ def run_lifelong_argos(
             f"--screen={screen}",
             f"--total_sim_step_tick={sim_duration}",
             f"--look_ahead_dist={look_ahead_dist}",
+            f"--seed={seed}",
         ]
         client_command = ["argos3", "-c", f"{argos_config_filepath}"]
 
