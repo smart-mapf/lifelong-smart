@@ -6,9 +6,11 @@ import fire
 import numpy as np
 
 from typing import List, Tuple
-from ArgosConfig import (SERVER_EXE, PBS_EXE, RHCR_EXE, CONTAINER_PROJECT_ROOT,
-                         PROJECT_ROOT)
-from ArgosConfig.ToArgos import (obstacles, parse_map_file, create_Argos)
+from lifelong_mapf_argos.ArgosConfig import (SERVER_EXE, PBS_EXE, RHCR_EXE,
+                                             CONTAINER_PROJECT_ROOT,
+                                             PROJECT_ROOT)
+from lifelong_mapf_argos.ArgosConfig.ToArgos import (obstacles, parse_map_file,
+                                                     create_Argos)
 
 
 def init_start_locations(
@@ -65,7 +67,7 @@ def run_simulator(args):
 
 
 def run_lifelong_argos(
-    map_filepath: str = "maps/warehouse/no_guidance/kiva_large_w_mode.json",
+    map_filepath: str = "maps/kiva_large_w_mode.json",
     num_agents: int = 50,
     headless: bool = False,
     argos_config_filepath: str = "output.argos",

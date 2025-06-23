@@ -5,9 +5,10 @@ import xml.etree.ElementTree as ET
 
 from xml.dom import minidom
 from typing import List, Tuple
-from ArgosConfig import (PROJECT_ROOT, CONTAINER_PROJECT_ROOT,
-                         FOOTBOT_DIFFUSION_CONTROLLER_LIB,
-                         TRAJECTORY_LOOP_FUNCTIONS_LIB)
+from lifelong_mapf_argos.ArgosConfig import (PROJECT_ROOT,
+                                             CONTAINER_PROJECT_ROOT,
+                                             FOOTBOT_DIFFUSION_CONTROLLER_LIB,
+                                             TRAJECTORY_LOOP_FUNCTIONS_LIB)
 
 obstacles = ['@', 'T']
 

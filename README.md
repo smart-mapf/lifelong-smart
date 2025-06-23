@@ -3,6 +3,12 @@
 This is a lifelong MAPF simulator that considers differentiable drive robots with second order dynamics. It is built based on the [SMART simulator](https://jingtianyan.github.io/publication/2025-smart/).
 
 ## Installation
+1.  Install Argos 3. Please refer to this [Link](https://www.argos-sim.info/core.php) for instruction.
+
+    You can verify the correctness of the compilation by running:
+    ```bash
+    argos3 --version
+    ```
 
 1.  Install RPC
     This repo requires [RPC](https://github.com/rpclib/rpclib) for communication
@@ -11,8 +17,6 @@ This is a lifelong MAPF simulator that considers differentiable drive robots wit
     ```bash
     bash compile.sh rpc
     ```
-
-1.  Install Argos 3. Please refer to this [Link](https://www.argos-sim.info/core.php) for instruction.
 
 1.  Compile client.
     ```bash
@@ -28,10 +32,6 @@ This is a lifelong MAPF simulator that considers differentiable drive robots wit
     cd ..
     ```
 
-    You can verify the correctness of the compilation by running: 
-    ```bash
-    argos3 -c experiments/diffusion_1.argos
-    ```
 
 1.  Compile server.
     ```bash
@@ -44,13 +44,13 @@ This is a lifelong MAPF simulator that considers differentiable drive robots wit
     bash compile.sh rhcr
     ```
 
-Alternatively, you may compile rpc, server, client, and MAPF planner using:
+Alternatively, you may compile rpc, server, client, and MAPF planners using:
 
 ```bash
 bash compile.sh all
 ```
 
-While developing, you may compile server, client, and MAPF planner using:
+While developing, you may compile server, client, and MAPF planners using:
 
 ```bash
 bash compile.sh user
