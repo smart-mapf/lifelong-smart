@@ -186,7 +186,7 @@ private:
     /* Pointer to the foot-bot proximity sensor */
     CCI_FootBotProximitySensor *m_pcProximity;
     CCI_PositioningSensor *m_pcPosSens;
-    int m_tickPerSec = 10;
+    // int m_tickPerSec = 10;
     // CPositionalEntity* m_pcPosEntity;
     std::string robot_id;
     CDegrees m_cAlpha;

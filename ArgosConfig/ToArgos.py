@@ -50,6 +50,7 @@ def create_Argos(map_data: List[str],
                  n_threads: int,
                  visualization: bool = False,
                  sim_duration: int = 1200,
+                 ticks_per_second: int = 10,
                  screen: int = 0,
                  velocity: float = 200.0,
                  container: bool = False,
@@ -72,6 +73,8 @@ def create_Argos(map_data: List[str],
         sim_duration (int, optional): duration of the simulation in number of
             ticks. Defaults to 1200. With a tick rate of 10 (ticks per second),
             this is 120 seconds.
+        ticks_per_second (int, optional): number of updates (ticks) per
+            simulation second
         screen (int, optional): screen number for logging. Defaults to 0.
         velocity (float, optional): velocity of the robots in cm/s. Defaults to
             200.0 cm/s.
@@ -105,15 +108,18 @@ def create_Argos(map_data: List[str],
             framework,
             "experiment",
             length="0",
-            ticks_per_second="10",  # 10 update per simulation second
-            random_seed=f"{seed}")
+            ticks_per_second=f"{ticks_per_second}",
+            random_seed=f"{seed}",
+        )
     else:
-        experiment = ET.SubElement(framework,
-                                   "experiment",
-                                   length="0",
-                                   ticks_per_second="10",
-                                   random_seed=f"{seed}",
-                                   visualization="none")
+        experiment = ET.SubElement(
+            framework,
+            "experiment",
+            length="0",
+            ticks_per_second=f"{ticks_per_second}",
+            random_seed=f"{seed}",
+            visualization="none",
+        )
 
     # Controllers section
     controllers = ET.SubElement(argos_config, "controllers")

@@ -19,4 +19,5 @@ output.argos
 outputPath.txt
 debug.txt
 stats.csv
+stats.json
 failed_instance.txt

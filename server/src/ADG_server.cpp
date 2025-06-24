@@ -7,12 +7,14 @@ std::shared_ptr<ADG_Server> server_ptr = nullptr;
 
 ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
                        bool save_stats, int screen, int port,
-                       int total_sim_step_tick, int look_ahead_dist, int seed)
+                       int total_sim_step_tick, int ticks_per_second,
+                       int look_ahead_dist, int seed)
     : output_filename(target_output_filename),
       save_stats(save_stats),
       screen(screen),
       port(port),
       total_sim_step_tick(total_sim_step_tick),
+      ticks_per_second(ticks_per_second),
       seed(seed) {
     adg = std::make_shared<ADG>(num_robots, screen, look_ahead_dist);
 
@@ -30,17 +32,34 @@ void ADG_Server::saveStats() {
         return;
     }
 
-    std::ifstream infile(output_filename);
-    bool exist = infile.good();
-    infile.close();
-    if (!exist) {
-        ofstream addHeads(output_filename);
-        addHeads << "Num of agent,Num of Finished Tasks" << endl;
-        addHeads.close();
-    }
-    ofstream stats(output_filename, std::ios::app);
-    stats << numRobots << "," << this->adg->getNumFinishedTasks() << endl;
-    stats.close();
+    // std::ifstream infile(output_filename);
+    // bool exist = infile.good();
+    // infile.close();
+    // if (!exist) {
+    //     ofstream addHeads(output_filename);
+    //     addHeads << "Num of agent,Num of Finished Tasks" << endl;
+    //     addHeads.close();
+    // }
+    // ofstream stats(output_filename, std::ios::app);
+    // stats << numRobots << "," << this->adg->getNumFinishedTasks() << endl;
+    // stats.close();
+
+
+    // Compute throughput as the number of finished tasks per sim second
+    int total_finished_tasks = adg->getNumFinishedTasks();
+    int sim_seconds = total_sim_step_tick / ticks_per_second;
+    double throughput = static_cast<double>(total_finished_tasks) / sim_seconds;
+    json result = {
+        {"total_finished_tasks", total_finished_tasks},
+        {"throughput", throughput},
+        {"success", true}
+    };
+
+    // Write the statistics to the output file
+    std::ofstream stats(output_filename);
+    stats << result.dump(4);  // Pretty print with 4 spaces
+
+
     std::cout << "Statistics written to " << output_filename << std::endl;
 }
 
@@ -293,7 +312,8 @@ bool invokePlanner() {
         //      << sim_step << ", invoke: " << invoke << std::endl;
         // std::cout << "Unfinished actions for each robot at sim step "
         //           << sim_step << ":" << std::endl;
-        // for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
+        // for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++)
+        // {
         //     std::cout << "Robot " << agent_id << " has "
         //               << server_ptr->adg->getNumUnfinishedActions(agent_id)
         //               << " unfinished actions." << std::endl;
@@ -331,13 +351,13 @@ int main(int argc, char** argv) {
     desc.add_options()
             ("help", "produce help message")
             // params for the input instance and experiment settings
-            ("path_file,p", po::value<string>(), "input file for path")
             ("num_robots,k", po::value<int>()->required(), "number of robots in server")
             ("port_number,n", po::value<int>()->default_value(8080), "rpc port number")
-            ("output_file,o", po::value<string>()->default_value("stats.csv"), "output statistic filename")
+            ("output_file,o", po::value<string>()->default_value("stats.json"), "output statistic filename")
             ("save_stats,s", po::value<bool>()->default_value(false), "write to files some detailed statistics")
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
+            ("ticks_per_second,f", po::value<int>()->default_value(10), "ticks per second for the simulation (default: 10)")
             ("look_ahead_dist,l", po::value<int>()->default_value(5), "look ahead # of actions for the robot to query its location")
             ("seed", po::value<int>()->default_value(0), "random seed for the simulation (default: 0)")
             ;
@@ -359,8 +379,8 @@ int main(int argc, char** argv) {
     server_ptr = std::make_shared<ADG_Server>(
         vm["num_robots"].as<int>(), vm["output_file"].as<std::string>(),
         vm["save_stats"].as<bool>(), vm["screen"].as<int>(), port_number,
-        vm["total_sim_step_tick"].as<int>(), vm["look_ahead_dist"].as<int>(),
-        seed);
+        vm["total_sim_step_tick"].as<int>(), vm["ticks_per_second"].as<int>(),
+        vm["look_ahead_dist"].as<int>(), seed);
 
     rpc::server srv(port_number);  // Setup the server to listen on the
     // specified port number

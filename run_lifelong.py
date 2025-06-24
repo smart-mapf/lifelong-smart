@@ -71,11 +71,12 @@ def run_lifelong_argos(
     num_agents: int = 50,
     headless: bool = False,
     argos_config_filepath: str = "output.argos",
-    stats_name: str = "stats.csv",
+    stats_name: str = "stats.json",
     save_stats: bool = False,
     port_num: int = 8182,
     n_threads: int = 1,
     sim_duration: int = 1800 * 10,
+    ticks_per_second: int = 10,
     velocity: float = 200.0,
     look_ahead_dist: int = 5,
     planner: str = "RHCR",  # ["PBS", "RHCR"]
@@ -100,6 +101,8 @@ def run_lifelong_argos(
         n_threads (int, optional): number of threads to run Argos. Defaults to 1.
         sim_duration (int, optional): number of simulation ticks to run the
             simulator. Defaults to 1800*10.
+        ticks_per_second (int, optional): number of updates (ticks) per
+            simulation second
         velocity (float, optional): velocity of the robots in cm/s. Defaults to
             200.0 cm/s.
         look_ahead_dist (int, optional): look ahead distance for the planner to
@@ -133,6 +136,7 @@ def run_lifelong_argos(
         n_threads=n_threads,
         visualization=not headless,
         sim_duration=sim_duration,
+        ticks_per_second=ticks_per_second,
         screen=screen,
         velocity=velocity,
         container=container,
@@ -168,6 +172,7 @@ def run_lifelong_argos(
             f"--save_stats={str(save_stats).lower()}",
             f"--screen={screen}",
             f"--total_sim_step_tick={sim_duration}",
+            f"--ticks_per_second={ticks_per_second}",
             f"--look_ahead_dist={look_ahead_dist}",
             f"--seed={seed}",
         ]
