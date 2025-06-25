@@ -755,6 +755,7 @@ void BasicSystem::solve()
     LRAStar lra(G, solver.path_planner);
     lra.simulation_window = simulation_window;
     lra.k_robust = k_robust;
+    lra.gen = this->solver.gen;
     solver.clear();
     this->n_mapf_calls++;
 
@@ -804,6 +805,7 @@ void BasicSystem::solve()
         {
             lra.resolve_conflicts(solver.solution);
             update_paths(lra.solution);
+            this->solver.solution = lra.solution;
             this->n_rule_based_calls++;
         }
     }
@@ -902,6 +904,7 @@ void BasicSystem::solve()
                 // std::cout << "solve, no sol" <<std::endl;
                 lra.resolve_conflicts(solver.solution);
                 update_paths(lra.solution);
+                this->solver.solution = lra.solution;
                 this->n_rule_based_calls++;
             }
         }
@@ -967,6 +970,7 @@ void BasicSystem::initialize_solvers()
 {
     solver.k_robust = k_robust;
     solver.window = planning_window;
+    solver.simulation_window = simulation_window;
     solver.hold_endpoints = hold_endpoints || useDummyPaths;
     solver.screen = screen;
 

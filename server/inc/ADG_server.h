@@ -45,6 +45,8 @@ public:
     int screen = 0;
     int port;
     bool freeze_simulation = false;
+    bool congested_sim = false;
+    int prev_invoke_planner_tick = -1;
     int seed;
 
     // Remember a tick count for each robot as the "simulation clock time".
@@ -84,6 +86,8 @@ public:
     //     return min_val == std::numeric_limits<int>::max() ? 0.0 : min_val; //
     //     or throw if all are 0
     // }
+
+    PlanParser parser;
 
 private:
     //    int type1EdgeCount = 0;

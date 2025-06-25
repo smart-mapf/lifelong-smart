@@ -9,7 +9,8 @@ class MAPFSolver
 {
 public:
     int k_robust;
-    int window;
+    int window; // planning window
+    int simulation_window; // simulation window
 	bool hold_endpoints;
     bool consider_task_wait = false;
 

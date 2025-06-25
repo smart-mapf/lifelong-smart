@@ -24,6 +24,8 @@ ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
     // agent_finish_sim_step.resize(numRobots, -1);
     tick_per_robot.resize(numRobots, 0);
 
+    this->parser = PlanParser(screen);
+
     // startTimers.resize(numRobots);
 }
 
@@ -44,21 +46,17 @@ void ADG_Server::saveStats() {
     // stats << numRobots << "," << this->adg->getNumFinishedTasks() << endl;
     // stats.close();
 
-
     // Compute throughput as the number of finished tasks per sim second
     int total_finished_tasks = adg->getNumFinishedTasks();
     int sim_seconds = total_sim_step_tick / ticks_per_second;
     double throughput = static_cast<double>(total_finished_tasks) / sim_seconds;
-    json result = {
-        {"total_finished_tasks", total_finished_tasks},
-        {"throughput", throughput},
-        {"success", true}
-    };
+    json result = {{"total_finished_tasks", total_finished_tasks},
+                   {"throughput", throughput},
+                   {"success", true}};
 
     // Write the statistics to the output file
     std::ofstream stats(output_filename);
     stats << result.dump(4);  // Pretty print with 4 spaces
-
 
     std::cout << "Statistics written to " << output_filename << std::endl;
 }
@@ -125,10 +123,25 @@ string getRobotsLocation() {
     return result_message.dump();
 }
 
+// Add a new MAPF plan to the ADG
+// new_plan: a vector of paths, each path is a vector of (row, col, t, task_id)
+// Raw plan --> points --> Steps --> Actions
 void addNewPlan(
     std::vector<std::vector<std::tuple<int, int, double, int>>>& new_plan) {
     // x, y and time
     std::lock_guard<std::mutex> guard(globalMutex);
+
+    if (congested(new_plan)) {
+        // Stop the server early.
+        // NOTE: We cannot call closeServer directly because we need to ensure
+        // the clients (robots) are closed. So we set a flag to let the robots
+        // know the simulation should be stopped and the robots will call
+        // closeServer.
+        std::cout << "Congested simulation detected, stopping the simulation!"
+                  << std::endl;
+        server_ptr->congested_sim = true;
+    }
+
     std::vector<std::vector<Step>> steps;
     assert(new_plan.size() == server_ptr->numRobots);
     for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
@@ -141,16 +154,17 @@ void addNewPlan(
 
         // Convert points to steps, which adds rotational states to the plan
         // returned by the MAPF planner if needed
-        AgentPathToSteps(points, curr_steps,
-                         server_ptr->curr_robot_states[agent_id].orient,
-                         agent_id);
+        server_ptr->parser.AgentPathToSteps(
+            points, curr_steps, server_ptr->curr_robot_states[agent_id].orient,
+            agent_id);
         steps.push_back(curr_steps);
     }
 
     // Convert steps to actions, each two consecutive steps will be transformed
     // to at most two actions.
     std::vector<std::vector<Action>> actions;
-    actions = StepsToActions(steps, server_ptr->flipped_coord);
+    actions =
+        server_ptr->parser.StepsToActions(steps, server_ptr->flipped_coord);
 #ifdef DEBUG
     std::cout << "Finish action process, plan size: " << actions.size()
               << std::endl;
@@ -261,6 +275,11 @@ update(std::string RobotID) {
 // Return end_sim: true if all robots have finished their simulation steps
 bool updateSimStep(std::string RobotID) {
     std::lock_guard<std::mutex> guard(globalMutex);
+
+    if (server_ptr->congested_sim) {
+        return true;  // If the simulation is congested, we stop the simulation
+    }
+
     int Robot_ID = server_ptr->adg->startIndexToRobotID[RobotID];
     server_ptr->tick_per_robot[Robot_ID]++;
 
@@ -271,8 +290,6 @@ bool updateSimStep(std::string RobotID) {
             break;
         }
     }
-    bool end_robot =
-        server_ptr->tick_per_robot[Robot_ID] >= server_ptr->total_sim_step_tick;
     return end_sim;
 }
 
@@ -282,6 +299,15 @@ bool invokePlanner() {
     std::lock_guard<std::mutex> guard(globalMutex);
     int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
                                      server_ptr->tick_per_robot.end());
+
+    // We don't want to invoke the planner at the same tick more than once,
+    // unless the simulation if frozon, in which case some agent has no actions
+    // left, so we need to replan.
+    if (server_ptr->prev_invoke_planner_tick == sim_step &&
+        !server_ptr->freeze_simulation) {
+        return false;  // No need to invoke planner at this tick
+    }
+
     // ########## OLD logic: invoke planner every sim_window_tick ##########
     // Should take the min of the ticks of all the robots
     // int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
@@ -321,17 +347,22 @@ bool invokePlanner() {
         // cout << "#####################" << std::endl;
     }
 
-    if (invoke && server_ptr->screen > 0) {
-        std::cout << "Invoke planner at sim step: " << sim_step << std::endl;
-        for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
-            // std::cout << "Robot " << agent_id << " has "
-            //           << server_ptr->adg->getNumUnfinishedActions(agent_id)
-            //           << " unfinished actions." << std::endl;
-        }
-        if (invoke_by >= 0) {
-            std::cout << "Invoke planner by robot " << invoke_by << " with "
-                      << server_ptr->adg->getNumUnfinishedActions(invoke_by)
-                      << " unfinished actions." << std::endl;
+    if (invoke) {
+        server_ptr->prev_invoke_planner_tick = sim_step;
+        if (server_ptr->screen > 0) {
+            std::cout << "Invoke planner at sim step: " << sim_step
+                      << std::endl;
+            for (int k = 0; k < server_ptr->numRobots; k++) {
+                // std::cout << "Robot " << k << " has "
+                //           <<
+                //           server_ptr->adg->getNumUnfinishedActions(k)
+                //           << " unfinished actions." << std::endl;
+            }
+            if (invoke_by >= 0) {
+                std::cout << "Invoke planner by robot " << invoke_by << " with "
+                          << server_ptr->adg->getNumUnfinishedActions(invoke_by)
+                          << " unfinished actions." << std::endl;
+            }
         }
     }
     return invoke;

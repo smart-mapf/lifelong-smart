@@ -5,8 +5,6 @@
 class LRAStar: public MAPFSolver
 {
 public:
-	int simulation_window;
-
     uint64_t num_wait_commands;
     uint64_t num_expanded;
     uint64_t num_generated;
@@ -40,8 +38,8 @@ private:
 
 
     void print_results() const;
-    void wait_command(int agent, int timestep,
-                      vector<list<pair<int, int> >::const_iterator >& traj_pointers);
+    // void wait_command(int agent, int timestep,
+    //                   vector<list<pair<int, int> >::const_iterator >& traj_pointers);
     void wait_command(int agent, int timestep, vector<int>& path_pointers);
 
 	Path find_shortest_path(

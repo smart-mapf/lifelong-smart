@@ -78,8 +78,12 @@ Path LRAStar::find_shortest_path(
             curr->state.timestep >= curr_goal.hold_time)
         {
             curr->goal_id++;
-            curr->state.timestep += curr_goal.task_wait_time;
-            curr->state.is_tasking_wait = true;
+            // if the agent is waiting for a task, update its state
+            if (curr_goal.task_wait_time > 0)
+            {
+                curr->state.timestep += curr_goal.task_wait_time;
+                curr->state.is_tasking_wait = true;
+            }
             if (curr->goal_id == (int)goal_locations.size())
             {
                 Path path(curr->state.timestep + 1);
@@ -175,12 +179,26 @@ void LRAStar::resolve_conflicts(const vector<Path> &input_paths)
     {
         // solution[k].reserve(window + 1);
         solution[k].push_back(input_paths[k][0]);
-        if (k_robust == 1)
-            curr_locations[input_paths[k][0].location] = k;
+        // if (k_robust == 1)
+        curr_locations[input_paths[k][0].location] = k;
     }
+
+    // // Print input paths
+    // cout << "Input paths:" << std::endl;
+    // for (int k = 0; k < num_of_agents; k++)
+    // {
+    //     std::cout << "Agent " << k << " path: ";
+    //     for (const auto &state : input_paths[k])
+    //     {
+    //         std::cout << "(" << state.location << ", " << state.timestep << ", "
+    //                   << state.orientation << ") ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
     for (int t = 1; t <= simulation_window; t++)
     {
+        // cout << "LRA Timestep " << t << std::endl;
         next_locations.clear();
         vector<int> agents_list(num_of_agents);
         for (int k = 0; k < num_of_agents; k++)
@@ -195,10 +213,13 @@ void LRAStar::resolve_conflicts(const vector<Path> &input_paths)
                 path_pointers[agent] = (int)input_paths[agent].size() - 1;
             }
             int loc = input_paths[agent][path_pointers[agent]].location;
+            int prev_loc = solution[agent][t - 1].location;
             int orientation = input_paths[agent][path_pointers[agent]].orientation;
             auto is_tasking_wait = input_paths[agent][path_pointers[agent]].is_tasking_wait;
-            if (loc == solution[agent][t - 1].location)
+            if (loc == prev_loc)
             { // The agent wait or rotates at its current location
+                // cout << "Agent " << agent << " waiting at location " << loc
+                //      << " at timestep " << t << std::endl;
                 solution[agent].emplace_back(loc, t, orientation, is_tasking_wait);
                 path_pointers[agent]++;
                 auto other = next_locations.find(loc); // conflict with other agent
@@ -208,59 +229,95 @@ void LRAStar::resolve_conflicts(const vector<Path> &input_paths)
                     path_pointers[other->second]--;
                 }
             }
-            else if (curr_locations.find(loc) != curr_locations.end())
+            // Resolve following conflict
+            else if (k_robust == 1 &&
+                     curr_locations.find(loc) != curr_locations.end())
             { // The agent cannot move because its next location is occupied currently
                 wait_command(agent, t, path_pointers);
             }
-            else // The agent wants to move to a location that is currently empty
+            else // The agent wants to move from prev_loc to loc
             {
-                auto other = next_locations.find(loc);
-                if (other == next_locations.end())
-                { // No other agents want to go to this location yet
+                auto vertex_other = next_locations.find(loc);
+                // Whether another agent is starting from loc
+                auto edge_other_curr = curr_locations.find(loc);
+                // Whether another agent is going to prev_loc
+                auto edge_other_next = next_locations.find(prev_loc);
+                // Resolve vertex conflict
+                // Another agent also wants to go to this location, for now we
+                // just force this agent to wait
+                if (vertex_other != next_locations.end())
+                {
+                    // cout << "Vertex conflict at timestep " << t
+                    //      << " for agent " << agent << " at location " << loc
+                    //      << ". Agent " << vertex_other->second
+                    //      << " is already at this location." << std::endl;
+                    wait_command(agent, t, path_pointers);
+                }
+                // Resolve edge conflict
+                // There is an edge conflict if another agent is going from loc
+                // to prev_loc
+                else if (edge_other_curr != curr_locations.end() &&
+                         edge_other_next != next_locations.end() &&
+                         edge_other_curr->second == edge_other_next->second &&
+                         edge_other_curr->second != agent)
+                {
+                    // cout << "Edge conflict at timestep " << t
+                    //      << " for agent " << agent << " at location " << loc
+                    //      << ". Agent " << edge_other_curr->second
+                    //      << " is going to prev_loc." << std::endl;
+                    // Force both agents to wait
+                    wait_command(agent, t, path_pointers);
+                    wait_command(edge_other_curr->second, t, path_pointers);
+                    path_pointers[edge_other_curr->second]--;
+                }
+                // No conflict. Move forward
+                else
+                {
+                    // cout << "Agent " << agent << " moving from "
+                    //      << prev_loc << " to " << loc << " at timestep " << t
+                    //      << std::endl;
                     solution[agent].emplace_back(loc, t, orientation, is_tasking_wait);
                     path_pointers[agent]++;
-                }
-                else
-                { // Another agent also wants to go to this location, for now we just force this agent to wait
-                    wait_command(agent, t, path_pointers);
                 }
             }
             next_locations[solution[agent][t].location] = agent;
         }
-        if (k_robust == 1)
-            curr_locations = next_locations;
+        // if (k_robust == 1)
+        curr_locations = next_locations;
     }
     print_results();
     // print_solution();
 }
 
-void LRAStar::wait_command(int agent, int timestep,
-                           vector<list<pair<int, int>>::const_iterator> &traj_pointers)
-{
-    int location = solution[agent][timestep - 1].location;
-    if ((int)solution[agent].size() == timestep)
-    {
-        solution[agent].push_back(solution[agent][timestep - 1]);
-    }
-    else
-    {
-        solution[agent][timestep] = solution[agent][timestep - 1];
-    }
-    solution[agent][timestep].timestep = timestep;
-    solution[agent][timestep].is_tasking_wait = false;
-    auto other = next_locations.find(location); // whether conflict with other agent
-    if (other != next_locations.end())
-    {
-        wait_command(other->second, timestep, traj_pointers); // Other agent has to wait
-        --traj_pointers[other->second];
-    }
-    next_locations[location] = agent;
-    num_wait_commands++;
-}
+// void LRAStar::wait_command(int agent, int timestep,
+//                            vector<list<pair<int, int>>::const_iterator> &traj_pointers)
+// {
+//     int location = solution[agent][timestep - 1].location;
+//     if ((int)solution[agent].size() == timestep)
+//     {
+//         solution[agent].push_back(solution[agent][timestep - 1]);
+//     }
+//     else
+//     {
+//         solution[agent][timestep] = solution[agent][timestep - 1];
+//     }
+//     solution[agent][timestep].timestep = timestep;
+//     solution[agent][timestep].is_tasking_wait = false;
+//     auto other = next_locations.find(location); // whether conflict with other agent
+//     if (other != next_locations.end())
+//     {
+//         wait_command(other->second, timestep, traj_pointers); // Other agent has to wait
+//         --traj_pointers[other->second];
+//     }
+//     next_locations[location] = agent;
+//     num_wait_commands++;
+// }
 
 void LRAStar::wait_command(int agent, int timestep,
                            vector<int> &path_pointers)
 {
+    // cout << "Agent " << agent << " waiting at timestep " << timestep
+    //      << std::endl;
     int location = solution[agent][timestep - 1].location;
     if ((int)solution[agent].size() == timestep)
     {
@@ -272,6 +329,15 @@ void LRAStar::wait_command(int agent, int timestep,
     }
     solution[agent][timestep].timestep = timestep;
     solution[agent][timestep].is_tasking_wait = false;
+
+    // Remove current agent from next_locations, if it is there
+    auto it = next_locations.find(location);
+    if (it != next_locations.end() && it->second == agent)
+    {
+        next_locations.erase(location);
+    }
+
+    // Check if there is a conflict with another agent
     auto other = next_locations.find(location); // whether conflict with other agent
     if (other != next_locations.end())
     {

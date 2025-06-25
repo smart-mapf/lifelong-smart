@@ -211,8 +211,9 @@ def run_lifelong_argos(
                 f"--planning_window={sim_window_ts}",
                 f"--simulation_window={sim_window_ts}",
                 f"--scenario=SMART",
-                f"--cutoffTime={5}",
+                f"--cutoffTime={1}",
                 f"--rotation=True",
+                f"--solver=PBS",
             ]
         run_simulator(
             args=(server_command, client_command, planner_command),

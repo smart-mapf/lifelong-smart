@@ -1,7 +1,7 @@
 #include "parser.h"
 
 // Function to determine the orientation based on current and next position.
-int getOrientation(int x1, int y1, int x2, int y2) {
+int PlanParser::getOrientation(int x1, int y1, int x2, int y2) {
     if (x2 == x1) {
         return y2 > y1 ? 1 : 3;  // North or South
     } else {
@@ -9,7 +9,8 @@ int getOrientation(int x1, int y1, int x2, int y2) {
     }
 }
 
-void showPoints(int agentId, const vector<Point>& points) {  // Print points
+void PlanParser::showPoints(int agentId,
+                            const vector<Point>& points) {  // Print points
     std::cout << "Points of Agent " << agentId << std::endl;
     for (const auto& point : points) {
         std::cout << "(" << point.x << ", " << point.y << "), "
@@ -18,7 +19,7 @@ void showPoints(int agentId, const vector<Point>& points) {  // Print points
     }
 }
 
-void showSteps(const std::vector<std::vector<Step>>& raw_steps) {
+void PlanParser::showSteps(const std::vector<std::vector<Step>>& raw_steps) {
     // Print steps
     std::cout << "Raw Steps" << std::endl;
     for (size_t i = 0; i < raw_steps.size(); i++) {
@@ -32,7 +33,7 @@ void showSteps(const std::vector<std::vector<Step>>& raw_steps) {
     }
 }
 
-void showActions(const std::vector<std::vector<Action>>& plans) {
+void PlanParser::showActions(const std::vector<std::vector<Action>>& plans) {
     // Print actions
     std::cout << "Processed Actions" << std::endl;
     for (size_t i = 0; i < plans.size(); i++) {
@@ -55,11 +56,13 @@ void showActions(const std::vector<std::vector<Action>>& plans) {
 
 // Processes the actions of an agent, calculating necessary steps, including
 // orientation changes.
-void AgentPathToSteps(const vector<Point>& points, vector<Step>& steps,
-                      int currentOrientation, int agentId) {
+void PlanParser::AgentPathToSteps(const vector<Point>& points,
+                                  vector<Step>& steps, int currentOrientation,
+                                  int agentId) {
     steps.clear();
 
-    // showPoints(agentId, points);
+    if (this->screen > 1)
+        showPoints(agentId, points);
 
     // int currentOrientation = 0; // Assume initial orientation is West.
     double currentTime = 0;
@@ -87,9 +90,10 @@ void AgentPathToSteps(const vector<Point>& points, vector<Step>& steps,
     }
 }
 
-std::vector<std::vector<Action>> StepsToActions(
+std::vector<std::vector<Action>> PlanParser::StepsToActions(
     const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
-    // showSteps(raw_steps);
+    if (this->screen > 1)
+        showSteps(raw_steps);
 
     std::vector<std::vector<Action>> plans;
     int node_id = 0;
@@ -100,9 +104,12 @@ std::vector<std::vector<Action>> StepsToActions(
             // If there are no steps for this agent, skip to the next one.
         }
 
-        // If the agent has only one step, that is the goal. We need to add a
-        // special goal action.
-        else if (raw_steps[i].size() == 1 && raw_steps[i][0].task_id >= 0) {
+        // Special cases:
+        // 1. If the agent has only one step, that is the goal. We need to add a
+        //    special goal action.
+        // 2. If the agent has more than one step, but the first step is a
+        //    goal. Then we need to process the first step then the rest.
+        else if (raw_steps[i][0].task_id >= 0) {
             Action goalAction;
             goalAction.robot_id = (int)i;
             goalAction.time = raw_steps[i][0].time;
@@ -120,11 +127,12 @@ std::vector<std::vector<Action>> StepsToActions(
             node_id++;
             goalAction.task_id = raw_steps[i][0].task_id;
             processedActions.push_back(goalAction);
-            plans.push_back(processedActions);
-            continue;
+            // plans.push_back(processedActions);
+            // continue;
         }
+
         // More than 2 steps are available, we need to process them
-        else {
+        if (raw_steps[i].size() > 1) {
             for (size_t j = 1; j < raw_steps[i].size(); j++) {
                 double prev_step_x, prev_step_y, curr_step_x, curr_step_y;
                 if (flipped_coord) {
@@ -219,7 +227,8 @@ std::vector<std::vector<Action>> StepsToActions(
         plans.push_back(processedActions);
     }
 
-    // showActions(plans);
+    if (this->screen > 1)
+        showActions(plans);
 
     return plans;
 }
