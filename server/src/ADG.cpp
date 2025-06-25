@@ -247,8 +247,8 @@ std::vector<robotState> ADG::computeCommitCut() {
                 std::cerr << dup_agent_id << ": ";
                 graph[dup_agent_id].back().showNode();
             }
-            std::cerr << "Continue? y/n" << std::endl;
-            std::cin >> skip_info;
+            // std::cerr << "Continue? y/n" << std::endl;
+            // std::cin >> skip_info;
         }
         duplicate_starts[tmp_loc].push_back(agent_id);
     }
