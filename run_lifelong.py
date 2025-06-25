@@ -43,27 +43,35 @@ def check_file(file_path: str):
     return True
 
 
-def run_simulator(args):
+def run_simulator(args, timeout: float = None, output_log: str = None):
     server_command, client_command, planner_command = args
+    f = open(output_log, 'w') if output_log else None
+
     # Start the server process
-    server_process = subprocess.Popen(server_command)
+    server_process = subprocess.Popen(server_command, stdout=f, stderr=f)
 
     # Wait for a short period to ensure the server has started
-    time.sleep(3)
+    time.sleep(10)
 
     # Start the client process
-    client_process = subprocess.Popen(client_command)
+    client_process = subprocess.Popen(client_command, stdout=f, stderr=f)
 
     # Wait for the client process to complete
     # time.sleep(5)
-    planner_process = subprocess.Popen(planner_command)
+    planner_process = subprocess.Popen(planner_command, stdout=f, stderr=f)
 
     # The client process will call the server to end, then the client end. The
     # planner will detect the end of the server and end itself.
-    client_process.wait()
-    server_process.wait()
-    # planner_process.wait()
-    planner_process.kill()
+    try:
+        client_process.wait(timeout=timeout)
+        server_process.wait(timeout=timeout)
+        # planner_process.wait()
+        planner_process.kill()
+    except subprocess.TimeoutExpired:
+        print("Timeout expired, killing processes...")
+        client_process.kill()
+        server_process.kill()
+        planner_process.kill()
 
 
 def run_lifelong_argos(
@@ -73,6 +81,7 @@ def run_lifelong_argos(
     argos_config_filepath: str = "output.argos",
     stats_name: str = "stats.json",
     save_stats: bool = False,
+    output_log: str = None,
     port_num: int = 8182,
     n_threads: int = 1,
     sim_duration: int = 1800 * 10,
@@ -97,6 +106,9 @@ def run_lifelong_argos(
             simulator. Defaults to "stats.csv".
         save_stats (bool , optional): whether to save the stats. Defaults to
             False.
+        output_log (str, optional): file path to store the stdout from the
+            simulator. If None, the output will not be saved to a file.
+            Defaults to None
         port_num (int, optional): port number of RPC server. Defaults to 8182.
         n_threads (int, optional): number of threads to run Argos. Defaults to 1.
         sim_duration (int, optional): number of simulation ticks to run the
@@ -202,7 +214,11 @@ def run_lifelong_argos(
                 f"--cutoffTime={5}",
                 f"--rotation=True",
             ]
-        run_simulator((server_command, client_command, planner_command))
+        run_simulator(
+            args=(server_command, client_command, planner_command),
+            timeout=1.5 * sim_duration / ticks_per_second,
+            output_log=output_log,
+        )
     except KeyboardInterrupt:
         print("KeyboardInterrupt: Stopping the experiment ...")
 
