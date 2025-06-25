@@ -100,7 +100,7 @@ def create_Argos(map_data: List[str],
     framework = ET.SubElement(argos_config, "framework")
 
     # System configuration
-    system = ET.SubElement(framework, "system", threads=str(n_threads - 1))
+    system = ET.SubElement(framework, "system", threads=str(n_threads))
 
     # Experiment configuration
     if visualization:
