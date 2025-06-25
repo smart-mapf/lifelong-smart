@@ -300,13 +300,13 @@ bool invokePlanner() {
     int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
                                      server_ptr->tick_per_robot.end());
 
-    // We don't want to invoke the planner at the same tick more than once,
-    // unless the simulation if frozon, in which case some agent has no actions
-    // left, so we need to replan.
-    if (server_ptr->prev_invoke_planner_tick == sim_step &&
-        !server_ptr->freeze_simulation) {
-        return false;  // No need to invoke planner at this tick
-    }
+    // // We don't want to invoke the planner at the same tick more than once,
+    // // unless the simulation if frozon, in which case some agent has no actions
+    // // left, so we need to replan.
+    // if (server_ptr->prev_invoke_planner_tick == sim_step &&
+    //     !server_ptr->freeze_simulation) {
+    //     return false;  // No need to invoke planner at this tick
+    // }
 
     // ########## OLD logic: invoke planner every sim_window_tick ##########
     // Should take the min of the ticks of all the robots

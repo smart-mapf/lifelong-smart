@@ -18,7 +18,7 @@ bool congested(
             wait_agents++;
     }
     // more than half of robots didn't make progress
-    cout << "Number of waiting robots: " << wait_agents
-         << ", Total number of robots: " << n_agents << endl;
+    // cout << "Number of waiting robots: " << wait_agents
+    //      << ", Total number of robots: " << n_agents << endl;
     return wait_agents > n_agents / 5;
 }
