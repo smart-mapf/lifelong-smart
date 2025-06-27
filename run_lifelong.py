@@ -213,7 +213,13 @@ def run_lifelong_argos(
             f"--look_ahead_dist={look_ahead_dist}",
             f"--seed={seed}",
         ]
-        client_command = ["argos3", "-c", f"{argos_config_filepath}"]
+        client_command = [
+            "argos3",
+            "-c",
+            f"{argos_config_filepath}",
+            # No color displays better in file output
+            "--no-color",
+        ]
 
         if planner == "PBS":
             planner_command = [
