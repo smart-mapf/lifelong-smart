@@ -213,9 +213,11 @@ void CFootBotDiffusion::ControlStep() {
             return;
         }
         is_initialized = true;
-        std::cout << "Robot " << robot_id
-                  << " connected to server at port: " << port_number
-                  << std::endl;
+        if (screen > 0) {
+            std::cout << "Robot " << robot_id
+                      << " connected to server at port: " << port_number
+                      << std::endl;
+        }
         client->call("init", robot_id);
         return;
     }

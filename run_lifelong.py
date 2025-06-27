@@ -92,6 +92,31 @@ def run_lifelong_argos(
     container: bool = False,
     seed: int = 42,
     screen: int = 0,
+    # RHCR parameters
+    scenario: str = "SMART",
+    task: str = "",
+    cutoffTime: int = 2,
+    solver: str = "PBS",
+    id: bool = False,
+    single_agent_solver: str = "SIPP",
+    lazyP: bool = False,
+    travel_time_window: int = 0,
+    potential_function: str = "NONE",
+    potential_threshold: int = 0,
+    rotation: bool = True,
+    rotation_time: int = 1,
+    robust: int = 0,
+    CAT: bool = False,
+    hold_endpoints: bool = False,
+    dummy_paths: bool = False,
+    prioritize_start: bool = True,
+    suboptimal_bound: float = 1,
+    log: bool = False,
+    save_result: bool = False,
+    save_solver: bool = False,
+    save_heuristics_table: bool = False,
+    left_w_weight: float = 1.0,
+    right_w_weight: float = 1.0,
 ):
     """Function to run the lifelong SMART simulator with the given parameters.
 
@@ -162,7 +187,7 @@ def run_lifelong_argos(
     # the given velocity
     # Convert sim_window from ticks to timesteps, and velocity from cm/s to m/s
     # sim_window_ts = np.ceil((sim_window / 10) * (velocity / 100)).astype(int)
-    sim_window_ts = int(np.ceil(look_ahead_dist * (velocity / 100)))
+    sim_window_ts = int(np.ceil(1.5 * look_ahead_dist * (velocity / 100)))
 
     # Path to the executables
     if container:
@@ -210,10 +235,30 @@ def run_lifelong_argos(
                 f"--screen={screen}",
                 f"--planning_window={sim_window_ts}",
                 f"--simulation_window={sim_window_ts}",
-                f"--scenario=SMART",
-                f"--cutoffTime={1}",
-                f"--rotation=True",
-                f"--solver=PBS",
+                f"--scenario={scenario}",
+                f"--cutoffTime={cutoffTime}",
+                f"--rotation={rotation}",
+                f"--solver={solver}",
+                f"--id={str(id).lower()}",
+                f"--single_agent_solver={single_agent_solver}",
+                f"--lazyP={str(lazyP).lower()}",
+                f"--travel_time_window={travel_time_window}",
+                f"--potential_function={potential_function}",
+                f"--potential_threshold={potential_threshold}",
+                f"--rotation_time={rotation_time}",
+                f"--robust={robust}",
+                f"--CAT={str(CAT).lower()}",
+                f"--hold_endpoints={str(hold_endpoints).lower()}",
+                f"--dummy_paths={str(dummy_paths).lower()}",
+                f"--prioritize_start={str(prioritize_start).lower()}",
+                f"--suboptimal_bound={suboptimal_bound}",
+                f"--log={str(log).lower()}",
+                f"--save_result={str(save_result).lower()}",
+                f"--save_solver={str(save_solver).lower()}",
+                f"--save_heuristics_table={str(save_heuristics_table).lower()}",
+                f"--left_w_weight={left_w_weight}",
+                f"--right_w_weight={right_w_weight}",
+                # f"--task={task}",
             ]
         run_simulator(
             args=(server_command, client_command, planner_command),
