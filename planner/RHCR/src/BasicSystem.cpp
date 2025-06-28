@@ -757,11 +757,13 @@ void BasicSystem::solve()
     lra.simulation_window = simulation_window;
     lra.k_robust = k_robust;
     lra.gen = this->solver.gen;
+    lra.screen = this->screen;
 
     PIBT pibt(G, solver.path_planner);
     pibt.simulation_window = simulation_window;
     pibt.k_robust = k_robust;
     pibt.gen = this->solver.gen;
+    pibt.screen = this->screen;
 
     solver.clear();
     this->n_mapf_calls++;
