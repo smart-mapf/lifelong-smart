@@ -7,6 +7,7 @@
 #include "ECBS.h"
 #include "LRAStar.h"
 #include "Task.h"
+#include "PIBT.h"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -145,7 +146,7 @@ public:
 protected:
 	bool solve_by_WHCA(vector<Path>& planned_paths,
 		const vector<State>& new_starts, const vector< vector<Task > >& new_goal_locations);
-    bool LRA_called = false;
+    bool rule_based_called = false;
 
     // Total number of MAPF algo calls
     int n_mapf_calls = 0;

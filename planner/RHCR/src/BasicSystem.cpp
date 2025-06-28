@@ -751,11 +751,20 @@ void BasicSystem::update_travel_times(unordered_map<int, double> &travel_times)
 
 void BasicSystem::solve()
 {
-    this->LRA_called = false;
+    // Back up solvers
+    this->rule_based_called = false;
     LRAStar lra(G, solver.path_planner);
     lra.simulation_window = simulation_window;
     lra.k_robust = k_robust;
     lra.gen = this->solver.gen;
+    lra.screen = this->screen;
+
+    PIBT pibt(G, solver.path_planner);
+    pibt.simulation_window = simulation_window;
+    pibt.k_robust = k_robust;
+    pibt.gen = this->solver.gen;
+    pibt.screen = this->screen;
+
     solver.clear();
     this->n_mapf_calls++;
 
@@ -808,6 +817,11 @@ void BasicSystem::solve()
             this->solver.solution = lra.solution;
             this->n_rule_based_calls++;
         }
+    }
+    else if (solver.get_name() == "PIBT")
+    {
+        bool sol = solver.run(starts, real_goal_locations, time_limit);
+        update_paths(solver.solution);
     }
     else // PBS or ECBS
     {
@@ -902,9 +916,18 @@ void BasicSystem::solve()
             else
             {
                 // std::cout << "solve, no sol" <<std::endl;
-                lra.resolve_conflicts(solver.solution);
-                update_paths(lra.solution);
-                this->solver.solution = lra.solution;
+                if (k_robust >= 1)
+                {
+                    lra.resolve_conflicts(solver.solution);
+                    update_paths(lra.solution);
+                    this->solver.solution = lra.solution;
+                }
+                else{
+                    bool sol = pibt.run(
+                        starts, real_goal_locations, time_limit, waited_time);
+                    this->solver.solution = pibt.solution;
+                    update_paths(pibt.solution);
+                }
                 this->n_rule_based_calls++;
             }
         }

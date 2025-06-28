@@ -39,6 +39,8 @@ void set_parameters(BasicSystem& system, const boost::program_options::variables
 }
 
 
+
+
 MAPFSolver* set_solver(const BasicGraph& G, const boost::program_options::variables_map& vm)
 {
 	string solver_name = vm["single_agent_solver"].as<string>();
@@ -89,6 +91,10 @@ MAPFSolver* set_solver(const BasicGraph& G, const boost::program_options::variab
 	{
 		mapf_solver = new LRAStar(G, *path_planner);
 	}
+    else if (solver_name == "PIBT")
+    {
+        mapf_solver = new PIBT(G, *path_planner);
+    }
 	else
 	{
 		cout << "Solver " << solver_name << "does not exist!" << endl;

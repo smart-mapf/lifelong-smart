@@ -208,7 +208,7 @@ void GreyOrangeGrid::update_map_weights(std::vector<double>& new_weights) {
         }
 
         // Idxs
-        int idx = 5 * i;
+        int idx = 7 * i;
 
         // Wait cost
         this->weights[i][4] = new_weights[idx + 4];
