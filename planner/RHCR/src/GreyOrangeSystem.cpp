@@ -354,7 +354,7 @@ vector<Task> GreyOrangeSystem::gen_next_goal(int agent_id) {
 }
 
 void GreyOrangeSystem::update_goal_locations(int t) {
-    if (!this->LRA_called)
+    if (!this->rule_based_called)
         new_agents.clear();
     // RHCR Algorithm
     // First determine the goal of the agents in the queue

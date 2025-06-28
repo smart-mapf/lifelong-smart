@@ -193,7 +193,7 @@ int SMARTSystem::gen_next_goal(int agent_id, bool repeat_last_goal) {
 }
 
 void SMARTSystem::update_goal_locations() {
-    if (!this->LRA_called)
+    if (!this->rule_based_called)
         new_agents.clear();
 
     // Initialize next_goal_type

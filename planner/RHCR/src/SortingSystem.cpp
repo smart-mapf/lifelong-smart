@@ -427,7 +427,7 @@ int SortingSystem::gen_next_goal(int agent_id, int last_goal_loc)
 void SortingSystem::update_goal_locations(int t)
 {
     cout << "Updating goal locations" << endl;
-    if (!this->LRA_called)
+    if (!this->rule_based_called)
         new_agents.clear();
 
     // RHCR Algorithm

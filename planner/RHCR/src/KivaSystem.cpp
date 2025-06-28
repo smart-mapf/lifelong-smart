@@ -261,7 +261,7 @@ int KivaSystem::gen_next_goal(int agent_id, bool repeat_last_goal)
 
 void KivaSystem::update_goal_locations(int t)
 {
-    if (!this->LRA_called)
+    if (!this->rule_based_called)
         new_agents.clear();
 	if (hold_endpoints)
 	{

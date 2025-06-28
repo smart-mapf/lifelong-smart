@@ -146,7 +146,7 @@ void ManufactureSystem::update_start_locations()
 
 void ManufactureSystem::update_goal_locations()
 {
-    if (!this->LRA_called)
+    if (!this->rule_based_called)
         new_agents.clear();
 	// if (hold_endpoints)
 	// {

@@ -285,7 +285,8 @@ void LRAStar::resolve_conflicts(const vector<Path> &input_paths)
         // if (k_robust == 1)
         curr_locations = next_locations;
     }
-    print_results();
+    if (screen > 0)
+        print_results();
     // print_solution();
 }
 
