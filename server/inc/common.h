@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "spdlog/spdlog.h"
 
 #define MAX_LOADS 1
 #define MAX_TASKS 100

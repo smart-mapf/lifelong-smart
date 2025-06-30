@@ -234,6 +234,10 @@ int main(int argc, char** argv)
 		boost::filesystem::create_directories(dir2);
 	}
 
+    // Set up logger
+    auto console_logger = spdlog::default_logger()->clone("Planner");
+    spdlog::set_default_logger(console_logger);
+
 	if (vm["scenario"].as<string>() == "KIVA")
 	{
 		KivaGrid G;

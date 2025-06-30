@@ -17,6 +17,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -pthread")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -pthread")
 
 find_package(Boost 1.49.0 REQUIRED COMPONENTS program_options system filesystem)
+find_package(spdlog REQUIRED)
 
 include_directories("inc")
 
@@ -26,4 +27,4 @@ file(GLOB SOURCES "src/*.cpp")
 add_executable(ADG_server ${SOURCES})
 
 # Link libraries
-target_link_libraries(ADG_server PUBLIC ${Boost_LIBRARIES} PRIVATE rpc pthread)
+target_link_libraries(ADG_server PUBLIC ${Boost_LIBRARIES} PRIVATE rpc pthread spdlog::spdlog)

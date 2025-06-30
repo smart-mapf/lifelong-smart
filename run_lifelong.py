@@ -1,16 +1,20 @@
 import os
+import sys
 import pathlib
 import subprocess
 import time
 import fire
 import numpy as np
+import logging
 
 from typing import List, Tuple
 from lifelong_mapf_argos.ArgosConfig import (SERVER_EXE, PBS_EXE, RHCR_EXE,
                                              CONTAINER_PROJECT_ROOT,
-                                             PROJECT_ROOT)
+                                             PROJECT_ROOT, setup_logging)
 from lifelong_mapf_argos.ArgosConfig.ToArgos import (obstacles, parse_map_file,
                                                      create_Argos)
+
+logger = logging.getLogger(__name__)
 
 
 def init_start_locations(
@@ -25,7 +29,7 @@ def init_start_locations(
             if map_str[i][j] not in obstacles:
                 free_locations.append(i * w + j)
     if len(free_locations) < num_agents:
-        print(
+        logger.error(
             f"Number of agents ({num_agents}) exceeds number of free locations ({len(free_locations)})."
         )
         exit(-1)
@@ -38,7 +42,7 @@ def init_start_locations(
 
 def check_file(file_path: str):
     if not os.path.exists(file_path):
-        print(f"{file_path} not exists!")
+        logger.info(f"{file_path} not exists!")
         return False
     return True
 
@@ -68,7 +72,8 @@ def run_simulator(args, timeout: float = None, output_log: str = None):
         # planner_process.wait()
         planner_process.kill()
     except subprocess.TimeoutExpired:
-        print("Timeout expired, killing processes...")
+        # print("Timeout expired, killing processes...")
+        logger.info("Timeout expired, killing processes...")
         client_process.kill()
         server_process.kill()
         planner_process.kill()
@@ -85,6 +90,7 @@ def run_lifelong_argos(
     port_num: int = 8182,
     n_threads: int = 1,
     sim_duration: int = 1800 * 10,
+    sim_window_tick: int = 50,
     ticks_per_second: int = 10,
     velocity: float = 200.0,
     look_ahead_dist: int = 5,
@@ -95,7 +101,7 @@ def run_lifelong_argos(
     # RHCR parameters
     scenario: str = "SMART",
     task: str = "",
-    cutoffTime: int = 2,
+    cutoffTime: int = 5,
     solver: str = "PBS",
     id: bool = False,
     single_agent_solver: str = "SIPP",
@@ -138,6 +144,7 @@ def run_lifelong_argos(
         n_threads (int, optional): number of threads to run Argos. Defaults to 1.
         sim_duration (int, optional): number of simulation ticks to run the
             simulator. Defaults to 1800*10.
+        sim_window_tick (int, optional): number of ticks to invoke the planner.
         ticks_per_second (int, optional): number of updates (ticks) per
             simulation second
         velocity (float, optional): velocity of the robots in cm/s. Defaults to
@@ -151,12 +158,14 @@ def run_lifelong_argos(
         screen (int, optional): logging options. Defaults to 0.
     """
     np.random.seed(seed)
+    setup_logging()
     # print(f"Map Name: {map_filepath}")
     map_data, width, height = parse_map_file(map_filepath)
 
     # Transform the map and scen to Argos config file, obstacles: '@', 'T'
-    if screen > 0:
-        print("Creating Argos config file ...")
+    # if screen > 0:
+    #     # print("Creating Argos config file ...")
+    #     logger.info("Creating Argos config file ...")
     robot_init_pos = init_start_locations(map_data, num_agents)
 
     # Use absolute path for argos config
@@ -180,14 +189,16 @@ def run_lifelong_argos(
         seed=seed,
     )
     if screen > 0:
-        print("Argos config file created.")
+        # print("Argos config file created.")
+        logger.info(f"Argos config file created at {argos_config_filepath}.")
 
     # Infer the simulation window in timestep from velocity
     # sim window = distance of the robot can travel in sim_window seconds at
     # the given velocity
     # Convert sim_window from ticks to timesteps, and velocity from cm/s to m/s
-    # sim_window_ts = np.ceil((sim_window / 10) * (velocity / 100)).astype(int)
-    sim_window_ts = int(np.ceil(1.5 * look_ahead_dist * (velocity / 100)))
+    sim_window_ts = np.ceil(
+        (sim_window_tick / ticks_per_second) * (velocity / 100)).astype(int)
+    # sim_window_ts = int(np.ceil(1.5 * look_ahead_dist * (velocity / 100)))
 
     # Path to the executables
     if container:
@@ -200,7 +211,8 @@ def run_lifelong_argos(
         rhcr_path = pathlib.Path(PROJECT_ROOT) / RHCR_EXE
 
     try:
-        print("Running simulator ...")
+        # print("Running simulator ...")
+        logger.info("Running simulator ...")
         server_command = [
             str(server_path),
             f"--num_robots={num_agents}",
@@ -212,6 +224,7 @@ def run_lifelong_argos(
             f"--ticks_per_second={ticks_per_second}",
             f"--look_ahead_dist={look_ahead_dist}",
             f"--seed={seed}",
+            f"--sim_window_tick={sim_window_tick}",
         ]
         client_command = [
             "argos3",
@@ -272,7 +285,8 @@ def run_lifelong_argos(
             output_log=output_log,
         )
     except KeyboardInterrupt:
-        print("KeyboardInterrupt: Stopping the experiment ...")
+        # print("KeyboardInterrupt: Stopping the experiment ...")
+        logger.info("KeyboardInterrupt: Stopping the experiment ...")
 
 
 if __name__ == "__main__":

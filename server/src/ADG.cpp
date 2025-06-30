@@ -109,7 +109,10 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
         }
     }
     if (this->screen > 0)
-        printf("Finish building ADG graph!\n");
+    {
+        // printf("Finish building ADG graph!\n");
+        spdlog::info("Finish building ADG graph!");
+    }
     // showGraph();
     // if (hasCycle()) {
     //     std::cout << "Cycle detected!" << std::endl;
@@ -179,7 +182,8 @@ bool ADG::fixInconsistentIncomingEdge(
 
 std::vector<robotState> ADG::computeCommitCut() {
     if (not initialized) {
-        std::cout << "computeCommitCut::Not initialized!" << std::endl;
+        // std::cout << "computeCommitCut::Not initialized!" << std::endl;
+        spdlog::warn("ADG::computeCommitCut: Not initialized!");
         return {};
     }
     curr_commit.clear();
@@ -223,10 +227,13 @@ std::vector<robotState> ADG::computeCommitCut() {
     std::unordered_map<std::pair<double, double>, std::vector<int>, pair_hash>
         duplicate_starts;
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        if (this->screen > 0) {
-            std::cout << "Agent " << agent_id << ": "
-                      << commited_actions[agent_id].first << " -> "
-                      << commited_actions[agent_id].second << std::endl;
+        if (this->screen > 1) {
+            spdlog::info("Agent {}: {} -> {}", agent_id,
+                         commited_actions[agent_id].first,
+                         commited_actions[agent_id].second);
+            // std::cout << "Agent " << agent_id << ": "
+            //           << commited_actions[agent_id].first << " -> "
+            //           << commited_actions[agent_id].second << std::endl;
         }
 
         std::pair<double, double> tmp_loc;
@@ -237,14 +244,21 @@ std::vector<robotState> ADG::computeCommitCut() {
                           .action.goal;
         }
         if (duplicate_starts.find(tmp_loc) != duplicate_starts.end()) {
-            std::cerr << "Duplicate start location found! Agent " << agent_id
-                      << ". Duplicate start location: " << tmp_loc.first << ", "
-                      << tmp_loc.second << std::endl;
+            spdlog::warn(
+                "Duplicate start location found! Agent {}. Duplicate start "
+                "location: {}, {}",
+                agent_id, tmp_loc.first, tmp_loc.second);
+            // std::cerr << "Duplicate start location found! Agent " << agent_id
+            //           << ". Duplicate start location: " << tmp_loc.first <<
+            //           ", "
+            //           << tmp_loc.second << std::endl;
             graph[agent_id].back().showNode();
             string skip_info;
-            std::cerr << "Duplicate agent: " << std::endl;
+            // std::cerr << "Duplicate agent: " << std::endl;
+            spdlog::warn("Duplicate agent: ");
             for (int dup_agent_id : duplicate_starts[tmp_loc]) {
-                std::cerr << dup_agent_id << ": ";
+                // std::cerr << dup_agent_id << ": ";
+                spdlog::warn("{}: ", dup_agent_id);
                 graph[dup_agent_id].back().showNode();
             }
             // std::cerr << "Continue? y/n" << std::endl;
@@ -310,8 +324,10 @@ std::vector<robotState> ADG::computeCommitCut() {
 #endif
     // printProgress();
     if (this->screen > 0) {
-        std::cout << "Commit cut number: " << curr_commit.size()
-                  << ", total number of robots: " << num_robots << std::endl;
+        spdlog::info("Commit cut number: {}, total number of robots: {}",
+                     curr_commit.size(), num_robots);
+        // std::cout << "Commit cut number: " << curr_commit.size()
+        //           << ", total number of robots: " << num_robots << std::endl;
     }
 
     return curr_commit;

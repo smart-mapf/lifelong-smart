@@ -28,6 +28,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 # include_directories(pybind11/include)
 
 find_package(Threads REQUIRED)
+find_package(spdlog REQUIRED)
 
 # # Pybind11 modules
 # pybind11_add_module(warehouse_sim "src/WarehouseSimulation.cpp" ${SOURCES})
@@ -38,4 +39,4 @@ find_package(Threads REQUIRED)
 
 # Main executable
 add_executable(lifelong ${SOURCES})
-target_link_libraries(lifelong PRIVATE ${Boost_LIBRARIES} ${Python_LIBRARIES} rpc pthread)
+target_link_libraries(lifelong PRIVATE ${Boost_LIBRARIES} ${Python_LIBRARIES} rpc pthread spdlog::spdlog)

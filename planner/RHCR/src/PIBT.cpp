@@ -195,7 +195,9 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
 }
 
 void PIBT::print_results() const {
-    std::cout << "PIBT*:Succeed," << runtime << "," << std::endl;
+    // std::cout << "PIBT*:Succeed," << runtime << "," << std::endl;
+    string result_str = "PIBT*:Succeed,Runtime=" + to_string(runtime);
+    spdlog::info(result_str);
 }
 
 void PIBT::save_results(const std::string &fileName,

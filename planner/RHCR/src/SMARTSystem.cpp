@@ -40,11 +40,11 @@ void SMARTSystem::initialize() {
         this->workstation_dist =
             discrete_distribution<int>(this->G.workstation_weights.begin(),
                                        this->G.workstation_weights.end());
-        cout << "Workstation distribution: ";
-        for (auto w : this->G.workstation_weights) {
-            cout << w << ", ";
-        }
-        cout << endl;
+        // cout << "Workstation distribution: ";
+        // for (auto w : this->G.workstation_weights) {
+        //     cout << w << ", ";
+        // }
+        // cout << endl;
     }
     // bool succ = load_records();  // continue simulating from the records
     // if (succ) {
@@ -83,11 +83,14 @@ void SMARTSystem::update_start_locations(
     }
 
     if (screen > 0) {
-        cout << "New finished tasks: ";
+        string new_finished_tasks = "New finished tasks: ";
+        // cout << "New finished tasks: ";
         for (const auto &task_id : finished_tasks_id) {
-            cout << task_id << " ";
+            // cout << task_id << " ";
+            new_finished_tasks += std::to_string(task_id) + " ";
         }
-        cout << endl;
+        // cout << endl;
+        spdlog::info("New finished tasks: {}", new_finished_tasks);
     }
 
     if (!this->goal_locations.empty()) {
@@ -260,13 +263,14 @@ void SMARTSystem::update_goal_locations() {
 
     // Log the current start and goal locations in the format of () -> () -> ...
     if (screen > 0) {
-        cout << "SMARTSystem::update_goal_locations: "
-             << "Current start and goal locations:" << endl;
+        // cout << "SMARTSystem::update_goal_locations: "
+        //      << "Current start and goal locations:" << endl;
+        spdlog::info("Current start and goal locations:");
         for (int i = 0; i < num_of_drives; i++) {
             cout << "Agent " << i << ": ";
             int start_x = G.getRowCoordinate(starts[i].location);
             int start_y = G.getColCoordinate(starts[i].location);
-            cout << "(" << start_x << ", " << start_y  << ") => ";
+            cout << "(" << start_x << ", " << start_y << ") => ";
             for (const auto &goal : goal_locations[i]) {
                 int goal_x = G.getRowCoordinate(goal.location);
                 int goal_y = G.getColCoordinate(goal.location);
@@ -626,7 +630,8 @@ json SMARTSystem::update_gg_and_step(int update_gg_interval) {
 }
 
 json SMARTSystem::simulate(int simulation_time) {
-    std::cout << "*** Simulating " << seed << " ***" << std::endl;
+    // std::cout << "*** Simulating " << seed << " ***" << std::endl;
+    spdlog::info("*** Simulating {} ***", seed);
     initialize();
 
     // We assume the server is already running at this point.
@@ -656,7 +661,8 @@ json SMARTSystem::simulate(int simulation_time) {
 
         auto result_json = json::parse(result_message);
         if (!result_json["initialized"].get<bool>()) {
-            printf("Planner not initialized! Retrying\n");
+            // printf("Planner not initialized! Retrying\n");
+            spdlog::info("Planner not initialized! Retrying");
             sleep(1);
             continue;
         }
@@ -686,8 +692,9 @@ SMARTSystem::convert_path_to_smart() {
     std::vector<std::vector<std::tuple<int, int, double, int>>> new_mapf_plan;
     new_mapf_plan.resize(this->num_of_drives);
     if (screen > 0) {
-        std::cout << "######################################" << std::endl;
-        printf("Num of agents: %d\n", this->num_of_drives);
+        // std::cout << "######################################" << std::endl;
+        // printf("Num of agents: %d\n", this->num_of_drives);
+        spdlog::info("Plan Result:");
     }
 
     vector<Path> raw_new_path = this->solver.solution;
@@ -724,9 +731,6 @@ SMARTSystem::convert_path_to_smart() {
         if (screen > 0) {
             std::cout << std::endl;
         }
-    }
-    if (screen > 0) {
-        std::cout << "######################################" << std::endl;
     }
     return new_mapf_plan;
 }

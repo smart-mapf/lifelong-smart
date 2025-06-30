@@ -15,6 +15,7 @@
 #include <boost/unordered_map.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
+#include "spdlog/spdlog.h"
 
 using boost::heap::fibonacci_heap;
 using boost::heap::compare;

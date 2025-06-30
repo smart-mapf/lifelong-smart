@@ -33,8 +33,10 @@ class ADG_Server {
 public:
     ADG_Server(int num_robots, std::string target_output_filename,
                bool save_stats, int screen, int port, int total_sim_step_tick,
-               int ticks_per_second, int look_ahead_dist, int seed);
+               int ticks_per_second, int look_ahead_dist, int sim_window_tick,
+               int seed);
     void saveStats();
+    int getCurrSimStep();
 
     // TODO@jingtian: move some of them into private
     std::shared_ptr<ADG> adg;
@@ -53,6 +55,8 @@ public:
     int total_sim_step_tick;
 
     int ticks_per_second;  // Ticks per second for the simulation
+
+    int sim_window_tick = 50;  // Invoke planner every sim_window_tick
 
     std::vector<std::deque<std::shared_ptr<MobileRobotTask>>> curr_mobile_tasks;
     std::vector<robotState> curr_robot_states;

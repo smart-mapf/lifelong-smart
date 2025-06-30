@@ -24,8 +24,8 @@ int SMARTGrid::get_n_valid_edges() const {
 }
 
 bool SMARTGrid::load_map_from_jsonstr(std::string G_json_str,
-                                     double left_w_weight,
-                                     double right_w_weight) {
+                                      double left_w_weight,
+                                      double right_w_weight) {
     json G_json = json::parse(G_json_str);
     if (G_json["weight"])
         return load_weighted_map_from_json(G_json, left_w_weight,
@@ -69,7 +69,7 @@ void SMARTGrid::infer_sim_mode_from_map(json G_json) {
 }
 
 void SMARTGrid::parseMap(std::vector<std::vector<double>>& map_e,
-                        std::vector<std::vector<double>>& map_w) {
+                         std::vector<std::vector<double>>& map_w) {
     map_e.clear();
     map_e.resize(this->rows, vector<double>(this->cols, 0));
     map_w.clear();
@@ -85,7 +85,8 @@ void SMARTGrid::parseMap(std::vector<std::vector<double>>& map_e,
         map_w[r][c] = 1;
     }
 }
-void SMARTGrid::update_task_dist(std::mt19937& gen, std::string task_dist_type) {
+void SMARTGrid::update_task_dist(std::mt19937& gen,
+                                 std::string task_dist_type) {
     if (task_dist_type != "Gaussian") {
         std::cout << "task dist type [" << task_dist_type << "] not support yet"
                   << std::endl;
@@ -132,8 +133,9 @@ void SMARTGrid::update_task_dist(std::mt19937& gen, std::string task_dist_type) 
 }
 
 bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
-                                             double right_w_weight) {
-    std::cout << "*** Loading map ***" << std::endl;
+                                              double right_w_weight) {
+    // std::cout << "*** Loading map ***" << std::endl;
+    spdlog::info("*** Loading map ***");
     clock_t t = std::clock();
 
     // Read in n_row, n_col, n_agent_loc, maxtime
@@ -247,17 +249,27 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
     this->n_valid_vertices = valid_vertices;
 
     double runtime = (std::clock() - t) / CLOCKS_PER_SEC;
-    std::cout << "Map size: " << this->rows << "x" << this->cols << " with ";
+    // std::cout << "Map size: " << this->rows << "x" << this->cols << " with ";
 
+    string map_info = "";
     if (this->w_mode) {
-        std::cout << this->endpoints.size() << " endpoints (home stations) and "
-                  << this->workstations.size() << " workstations." << endl;
+        // std::cout << this->endpoints.size() << " endpoints (home stations)
+        // and "
+        //           << this->workstations.size() << " workstations." << endl;
+        map_info = std::to_string(this->endpoints.size()) +
+                   " endpoints (home stations) and " +
+                   std::to_string(this->workstations.size()) + " workstations.";
     } else if (this->r_mode) {
-        std::cout << this->endpoints.size() << " endpoints and "
-                  << this->agent_home_locations.size() << " home stations."
-                  << std::endl;
+        // std::cout << this->endpoints.size() << " endpoints and "
+        //           << this->agent_home_locations.size() << " home stations."
+        //           << std::endl;
+        map_info = std::to_string(this->endpoints.size()) + " endpoints and " +
+                   std::to_string(this->agent_home_locations.size()) +
+                   " home stations.";
     }
-    std::cout << "Done! (" << runtime << " s)" << std::endl;
+    spdlog::info("Map size: {}x{} with {}", this->rows, this->cols, map_info);
+    spdlog::info("Done! ({:.2f} s)", runtime);
+    // std::cout << "Done! (" << runtime << " s)" << std::endl;
     return true;
 }
 
@@ -334,7 +346,7 @@ void SMARTGrid::update_map_weights(std::vector<double>& new_weights) {
 }
 
 bool SMARTGrid::load_weighted_map_from_json(json G_json, double left_w_weight,
-                                           double right_w_weight) {
+                                            double right_w_weight) {
     // Use load_unweighted_map_from_json to read in everything except for edge
     // weights and wait costs (technically the weights will be initialized to
     // 1). Then set the edge weights those that are given in the map json file.
@@ -351,15 +363,18 @@ bool SMARTGrid::load_weighted_map_from_json(json G_json, double left_w_weight,
     // else
     //     cout << "Optimizing one wait cost and edge weights" << endl;
     // cout << "Number of weights optimized: " << new_weights.size() << endl;
-    cout << "# valid vertices + # valid edges = " << this->n_valid_vertices
-         << " + " << this->n_valid_edges << " = "
-         << this->n_valid_vertices + this->n_valid_edges << endl;
+    // cout << "# valid vertices + # valid edges = " << this->n_valid_vertices
+    //      << " + " << this->n_valid_edges << " = "
+    //      << this->n_valid_vertices + this->n_valid_edges << endl;
+    spdlog::info("# valid vertices + # valid edges = {} + {} = {}",
+                 this->n_valid_vertices, this->n_valid_edges,
+                 this->n_valid_vertices + this->n_valid_edges);
     // assert(j == new_weights.size());
     return true;
 }
 
 bool SMARTGrid::load_map(std::string fname, double left_w_weight,
-                        double right_w_weight) {
+                         double right_w_weight) {
     std::size_t pos = fname.rfind('.');  // position of the file extension
     auto ext_name =
         fname.substr(pos, fname.size());  // get the name without extension
@@ -382,7 +397,8 @@ bool SMARTGrid::load_weighted_map(std::string fname) {
         return false;
     }
 
-    std::cout << "*** Loading map ***" << std::endl;
+    // std::cout << "*** Loading map ***" << std::endl;
+    spdlog::info("*** Loading map ***");
     clock_t t = std::clock();
     std::size_t pos = fname.rfind('.');  // position of the file extension
     map_name = fname.substr(0, pos);     // get the name without extension
@@ -449,7 +465,7 @@ bool SMARTGrid::load_weighted_map(std::string fname) {
 
 // load map
 bool SMARTGrid::load_unweighted_map(std::string fname, double left_w_weight,
-                                   double right_w_weight) {
+                                    double right_w_weight) {
     std::string line;
     std::ifstream myfile((fname).c_str());
     if (!myfile.is_open()) {
@@ -457,7 +473,8 @@ bool SMARTGrid::load_unweighted_map(std::string fname, double left_w_weight,
         return false;
     }
 
-    std::cout << "*** Loading map ***" << std::endl;
+    // std::cout << "*** Loading map ***" << std::endl;
+    spdlog::info("*** Loading map ***");
     clock_t t = std::clock();
     std::size_t pos = fname.rfind('.');  // position of the file extension
     map_name = fname.substr(0, pos);     // get the name without extension
@@ -594,7 +611,8 @@ bool SMARTGrid::load_unweighted_map(std::string fname, double left_w_weight,
 }
 
 void SMARTGrid::preprocessing(bool consider_rotation, std::string log_dir) {
-    std::cout << "*** PreProcessing map ***" << std::endl;
+    // std::cout << "*** PreProcessing map ***" << std::endl;
+    spdlog::info("*** PreProcessing map ***");
     clock_t t = std::clock();
     this->consider_rotation = consider_rotation;
     fs::path table_save_path(log_dir);
@@ -626,16 +644,18 @@ void SMARTGrid::preprocessing(bool consider_rotation, std::string log_dir) {
                 this->heuristics[workstation] = compute_heuristics(workstation);
             }
         }
-        cout << table_save_path << endl;
+        // cout << table_save_path << endl;
         save_heuristics_table(table_save_path.string());
     }
 
     double runtime = (std::clock() - t) / CLOCKS_PER_SEC;
-    std::cout << "Done! (" << runtime << " s)" << std::endl;
+    // std::cout << "Done! (" << runtime << " s)" << std::endl;
+    spdlog::info("Done! ({:.2f} s)", runtime);
 }
 
 void SMARTGrid::reset_weights(bool consider_rotation, std::string log_dir,
-                             bool optimize_wait, std::vector<double>& weights) {
+                              bool optimize_wait,
+                              std::vector<double>& weights) {
     // update weights
     this->update_map_weights(weights);
 

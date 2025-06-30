@@ -8,13 +8,14 @@ std::shared_ptr<ADG_Server> server_ptr = nullptr;
 ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
                        bool save_stats, int screen, int port,
                        int total_sim_step_tick, int ticks_per_second,
-                       int look_ahead_dist, int seed)
+                       int look_ahead_dist, int sim_window_tick, int seed)
     : output_filename(target_output_filename),
       save_stats(save_stats),
       screen(screen),
       port(port),
       total_sim_step_tick(total_sim_step_tick),
       ticks_per_second(ticks_per_second),
+      sim_window_tick(sim_window_tick),
       seed(seed) {
     adg = std::make_shared<ADG>(num_robots, screen, look_ahead_dist);
 
@@ -58,7 +59,13 @@ void ADG_Server::saveStats() {
     std::ofstream stats(output_filename);
     stats << result.dump(4);  // Pretty print with 4 spaces
 
-    std::cout << "Statistics written to " << output_filename << std::endl;
+    // std::cout << "Statistics written to " << output_filename << std::endl;
+    spdlog::info("Statistics written to {}", output_filename);
+}
+
+int ADG_Server::getCurrSimStep() {
+    // Return the minimum tick count among all robots
+    return *std::min_element(tick_per_robot.begin(), tick_per_robot.end());
 }
 
 // Each robot can requests to freeze the simulation if it does not have enough
@@ -67,11 +74,45 @@ void freezeSimulationIfNecessary(std::string RobotID) {
     std::lock_guard<std::mutex> guard(globalMutex);
 
     int robot_id = server_ptr->adg->startIndexToRobotID[RobotID];
-    if (server_ptr->adg->getNumUnfinishedActions(robot_id) <= 0) {
+    // Logic 1: freeze the simulation if at least one robot has no actions
+    // if (server_ptr->adg->getNumUnfinishedActions(robot_id) <= 0) {
+    //     server_ptr->freeze_simulation = true;
+    //     if (server_ptr->screen > 0) {
+    //         std::cout << "Robot " << robot_id
+    //                   << " requests to freeze the simulation!" << std::endl;
+    //     }
+    // }
+
+    // Logic 2: freeze the simulation if simulation tick has passed
+    // more than `sim_window_tick` than `prev_invoke_planner_tick`, or when
+    // planner has never been invoked. Basically, if the planner does not
+    // return in time. This is aim at synchronizing the simulation time with
+    // world clock time
+    int sim_step = server_ptr->getCurrSimStep();
+    if (sim_step == 0 && server_ptr->prev_invoke_planner_tick == -1) {
         server_ptr->freeze_simulation = true;
         if (server_ptr->screen > 0) {
-            std::cout << "Robot " << robot_id
-                      << " requests to freeze the simulation!" << std::endl;
+            spdlog::info(
+                "Robot {} requests to freeze the simulation at the first tick!",
+                robot_id);
+            // std::cout << "Robot " << robot_id
+            //           << " requests to freeze the simulation at the first
+            //           tick!"
+            //           << std::endl;
+        }
+    } else if (sim_step - server_ptr->prev_invoke_planner_tick >=
+               server_ptr->sim_window_tick) {
+        server_ptr->freeze_simulation = true;
+        if (server_ptr->screen > 0) {
+            spdlog::info(
+                "Robot {} requests to freeze the simulation at sim step {} "
+                "due to simulation time exceeding the window tick!",
+                robot_id, sim_step);
+            // std::cout << "Robot " << robot_id
+            //           << " requests to freeze the simulation at sim step "
+            //           << sim_step
+            //           << " due to simulation time exceeding the window tick!"
+            //           << std::endl;
         }
     }
 }
@@ -86,9 +127,10 @@ string getRobotsLocation() {
     // Return message as a JSON string
     json result_message = {};
 
-    std::lock_guard<std::mutex> guard(globalMutex);
+    // std::lock_guard<std::mutex> guard(globalMutex);
     if (server_ptr->screen > 0) {
-        std::cout << "Get robot location query received!" << std::endl;
+        spdlog::info("Get robot location query received!");
+        // std::cout << "Get robot location query received!" << std::endl;
     }
 
     server_ptr->curr_robot_states = server_ptr->adg->computeCommitCut();
@@ -137,8 +179,10 @@ void addNewPlan(
         // the clients (robots) are closed. So we set a flag to let the robots
         // know the simulation should be stopped and the robots will call
         // closeServer.
-        std::cout << "Congested simulation detected, stopping the simulation!"
-                  << std::endl;
+        // std::cout << "Congested simulation detected, stopping the
+        // simulation!"
+        //           << std::endl;
+        spdlog::info("Congested simulation detected, stopping the simulation!");
         server_ptr->congested_sim = true;
     }
 
@@ -176,8 +220,9 @@ void addNewPlan(
     if (server_ptr->freeze_simulation) {
         server_ptr->freeze_simulation = false;
         if (server_ptr->screen > 0) {
-            std::cout << "Simulation is de-frozen after adding a new plan!"
-                      << std::endl;
+            // std::cout << "Simulation is de-frozen after adding a new plan!"
+            //           << std::endl;
+            spdlog::info("Simulation is de-frozen after adding a new plan!");
         }
     }
 
@@ -231,15 +276,22 @@ inline void insertNewGoal(
 
 void closeServer(rpc::server& srv) {
     std::lock_guard<std::mutex> guard(globalMutex);
-    std::cout << "############################################################"
-              << std::endl;
-    std::cout << "Closing server at port " << server_ptr->port << std::endl;
-    std::cout << "Sim count " << server_ptr->tick_per_robot[0] << std::endl;
-    std::cout << "Num of finished tasks: "
-              << server_ptr->adg->getNumFinishedTasks() << std::endl;
+    // std::cout <<
+    // "############################################################"
+    //           << std::endl;
+    // std::cout << "Closing server at port " << server_ptr->port << std::endl;
+    // std::cout << "Sim count " << server_ptr->tick_per_robot[0] << std::endl;
+    // std::cout << "Num of finished tasks: "
+    //           << server_ptr->adg->getNumFinishedTasks() << std::endl;
+    spdlog::info("Closing server at port {}", server_ptr->port);
+    spdlog::info("Simulation count for robot 0: {}",
+                 server_ptr->tick_per_robot[0]);
+    spdlog::info("Number of finished tasks: {}",
+                 server_ptr->adg->getNumFinishedTasks());
     server_ptr->saveStats();
-    std::cout << "############################################################"
-              << std::endl;
+    // std::cout <<
+    // "############################################################"
+    //           << std::endl;
     srv.close_sessions();
     srv.stop();
 }
@@ -297,45 +349,50 @@ bool updateSimStep(std::string RobotID) {
 // threshold.
 bool invokePlanner() {
     std::lock_guard<std::mutex> guard(globalMutex);
-    int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
-                                     server_ptr->tick_per_robot.end());
 
-    // // We don't want to invoke the planner at the same tick more than once,
-    // // unless the simulation if frozon, in which case some agent has no actions
-    // // left, so we need to replan.
+    // Should take the min of the ticks of all the robots
+    int sim_step = server_ptr->getCurrSimStep();
+
+    // We don't want to invoke the planner at the same tick more than once,
+    // unless the simulation if frozon, in which case some agent has no
+    // actions left, so we need to replan.
     // if (server_ptr->prev_invoke_planner_tick == sim_step &&
     //     !server_ptr->freeze_simulation) {
     //     return false;  // No need to invoke planner at this tick
     // }
 
     // ########## OLD logic: invoke planner every sim_window_tick ##########
-    // Should take the min of the ticks of all the robots
-    // int sim_step = *std::min_element(server_ptr->tick_per_robot.begin(),
-    //                                  server_ptr->tick_per_robot.end());
-
-    // // Invoke planner every sim_window_tick
     // bool invoke = sim_step % server_ptr->sim_window_tick == 0 &&
     //               sim_step < server_ptr->total_sim_step_tick;
+    bool invoke =
+        (sim_step == 0 || sim_step - server_ptr->prev_invoke_planner_tick >=
+                              server_ptr->sim_window_tick) &&
+        sim_step < server_ptr->total_sim_step_tick;
     // ########## END OLD logic ##########
 
-    // Invoke planner if the number of actions left for a robot is less than
-    // look_ahead_dist
-    bool invoke = false;
-    int invoke_by = -1;
-    for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
-        if (server_ptr->adg->getNumUnfinishedActions(agent_id) <=
-            server_ptr->adg->getLookAheadDist()) {
-            invoke = true;
-            invoke_by = agent_id;
-            break;
-        }
-    }
+    // RHCRE logic: invoke planner when the number of actions left for a
+    // robot is less than look_ahead_dist.
+    // bool invoke = false;
+    // int invoke_by = -1;
+    // for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
+    //     if (server_ptr->adg->getNumUnfinishedActions(agent_id) <=
+    //         server_ptr->adg->getLookAheadDist()) {
+    //         invoke = true;
+    //         invoke_by = agent_id;
+    //         break;
+    //     }
+    // }
+    // End RHCRE logic
 
     // Print the unfinished actions for each robot
     if (server_ptr->screen > 0) {
         // cout << "#####################" << std::endl;
         // cout << "Checking if planner should be invoked at sim step: "
         //      << sim_step << ", invoke: " << invoke << std::endl;
+        // spdlog::info("Checking if planner should be invoked at sim step: {},
+        // "
+        //              "invoke: {}",
+        //              sim_step, invoke);
         // std::cout << "Unfinished actions for each robot at sim step "
         //           << sim_step << ":" << std::endl;
         // for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++)
@@ -350,19 +407,23 @@ bool invokePlanner() {
     if (invoke) {
         server_ptr->prev_invoke_planner_tick = sim_step;
         if (server_ptr->screen > 0) {
-            std::cout << "Invoke planner at sim step: " << sim_step
-                      << std::endl;
-            for (int k = 0; k < server_ptr->numRobots; k++) {
-                // std::cout << "Robot " << k << " has "
-                //           <<
-                //           server_ptr->adg->getNumUnfinishedActions(k)
-                //           << " unfinished actions." << std::endl;
-            }
-            if (invoke_by >= 0) {
-                std::cout << "Invoke planner by robot " << invoke_by << " with "
-                          << server_ptr->adg->getNumUnfinishedActions(invoke_by)
-                          << " unfinished actions." << std::endl;
-            }
+            spdlog::info("Invoke planner at sim step: {}, invoke: {}", sim_step,
+                         invoke);
+            // std::cout << "Invoke planner at sim step: " << sim_step
+            //           << std::endl;
+            // for (int k = 0; k < server_ptr->numRobots; k++) {
+            //     std::cout << "Robot " << k << " has "
+            //               <<
+            //               server_ptr->adg->getNumUnfinishedActions(k)
+            //               << " unfinished actions." << std::endl;
+            // }
+            // if (invoke_by >= 0) {
+            //     std::cout << "Invoke planner by robot " << invoke_by << "
+            //     with "
+            //               <<
+            //               server_ptr->adg->getNumUnfinishedActions(invoke_by)
+            //               << " unfinished actions." << std::endl;
+            // }
         }
     }
     return invoke;
@@ -387,6 +448,7 @@ int main(int argc, char** argv) {
             ("output_file,o", po::value<string>()->default_value("stats.json"), "output statistic filename")
             ("save_stats,s", po::value<bool>()->default_value(false), "write to files some detailed statistics")
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
+            ("sim_window_tick,w", po::value<int>()->default_value(50), "invoke planner every sim_window_tick (default: 50)")
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
             ("ticks_per_second,f", po::value<int>()->default_value(10), "ticks per second for the simulation (default: 10)")
             ("look_ahead_dist,l", po::value<int>()->default_value(5), "look ahead # of actions for the robot to query its location")
@@ -411,7 +473,11 @@ int main(int argc, char** argv) {
         vm["num_robots"].as<int>(), vm["output_file"].as<std::string>(),
         vm["save_stats"].as<bool>(), vm["screen"].as<int>(), port_number,
         vm["total_sim_step_tick"].as<int>(), vm["ticks_per_second"].as<int>(),
-        vm["look_ahead_dist"].as<int>(), seed);
+        vm["look_ahead_dist"].as<int>(), vm["sim_window_tick"].as<int>(), seed);
+
+    // Set up logger
+    auto console_logger = spdlog::default_logger()->clone("ADG_Server");
+    spdlog::set_default_logger(console_logger);
 
     rpc::server srv(port_number);  // Setup the server to listen on the
     // specified port number

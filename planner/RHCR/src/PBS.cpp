@@ -958,29 +958,50 @@ void PBS::update_CAT(int ex_ag)
 
 void PBS::print_results() const
 {
-    std::cout << "PBS:";
+    string result_str = "PBS:";
+    // std::cout << "PBS:";
 	if(solution_cost >= 0) // solved
-		std::cout << "Succeed,";
+		// std::cout << "Succeed,";
+        result_str += "Succeed,";
 	else if(solution_cost == -1) // time_out
-		std::cout << "Timeout,";
+		// std::cout << "Timeout,";
+        result_str += "Timeout,";
 	else if(solution_cost == -2) // no solution
-		std::cout << "No solutions,";
+		// std::cout << "No solutions,";
+        result_str += "No solutions,";
 	else if (solution_cost == -3) // nodes out
-		std::cout << "Nodesout,";
+		// std::cout << "Nodesout,";
+        result_str += "Nodesout,";
 
-	std::cout << runtime << "," <<
-		HL_num_expanded << "," << HL_num_generated << "," <<
-		solution_cost << "," << min_sum_of_costs << "," <<
-		avg_path_length << "," << dummy_start->num_of_collisions << "," <<
-		runtime_plan_paths << "," << runtime_rt << "," <<
-		runtime_get_higher_priority_agents << "," <<
-		runtime_copy_priorities << "," <<
-		runtime_detect_conflicts << "," <<
-		runtime_copy_conflicts << "," <<
-		runtime_choose_conflict << "," <<
-		runtime_find_consistent_paths << "," <<
-		runtime_find_replan_agents <<
-		std::endl;
+	// std::cout << runtime << "," <<
+	// 	HL_num_expanded << "," << HL_num_generated << "," <<
+	// 	solution_cost << "," << min_sum_of_costs << "," <<
+	// 	avg_path_length << "," << dummy_start->num_of_collisions << "," <<
+	// 	runtime_plan_paths << "," << runtime_rt << "," <<
+	// 	runtime_get_higher_priority_agents << "," <<
+	// 	runtime_copy_priorities << "," <<
+	// 	runtime_detect_conflicts << "," <<
+	// 	runtime_copy_conflicts << "," <<
+	// 	runtime_choose_conflict << "," <<
+	// 	runtime_find_consistent_paths << "," <<
+	// 	runtime_find_replan_agents <<
+	// 	std::endl;
+    result_str += "Runtime=" + to_string(runtime) + "," +
+        "HL_expanded=" + to_string(HL_num_expanded) + "," +
+        "HL_generated=" + to_string(HL_num_generated) + "," +
+        "Solution_cost=" + to_string(solution_cost) + "," +
+        // "Min_sum_of_costs=" + to_string(min_sum_of_costs) + ",";
+        "Avg_path_length=" + to_string(avg_path_length) + ",";
+        // "Runtime_plan_paths=" + to_string(runtime_plan_paths) + "," +
+        // "Runtime_rt=" + to_string(runtime_rt) + "," +
+        // "Runtime_get_higher_priority_agents=" + to_string(runtime_get_higher_priority_agents) + "," +
+        // "Runtime_copy_priorities=" + to_string(runtime_copy_priorities) + "," +
+        // "Runtime_detect_conflicts=" + to_string(runtime_detect_conflicts) + "," +
+        // "Runtime_copy_conflicts=" + to_string(runtime_copy_conflicts) + "," +
+        // "Runtime_choose_conflict=" + to_string(runtime_choose_conflict) + "," +
+        // "Runtime_find_consistent_paths=" + to_string(runtime_find_consistent_paths) + "," +
+        // "Runtime_find_replan_agents=" + to_string(runtime_find_replan_agents);
+    spdlog::info(result_str);
 }
 
 void PBS::save_results(const std::string &fileName, const std::string &instanceName) const

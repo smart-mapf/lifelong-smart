@@ -1,4 +1,6 @@
 import os
+import sys
+import logging
 
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 _parent_dir = os.path.dirname(_current_dir)
@@ -9,3 +11,10 @@ PBS_EXE = "planner/PBS/build/pbs"
 RHCR_EXE = "planner/RHCR/build/lifelong"
 FOOTBOT_DIFFUSION_CONTROLLER_LIB = "client/build/controllers/footbot_diffusion/libfootbot_diffusion"
 TRAJECTORY_LOOP_FUNCTIONS_LIB = "client/build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions"
+
+
+def setup_logging(level: int = logging.INFO):
+    """Sets up the logger to write to stdout."""
+    log_format = (f"[%(levelname)s|%(asctime)s|%(name)s:%(lineno)d]"
+                  " %(message)s")
+    logging.basicConfig(format=log_format, level=level, stream=sys.stdout)
