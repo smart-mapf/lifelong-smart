@@ -679,6 +679,7 @@ json SMARTSystem::simulate(int simulation_time) {
         auto new_mapf_plan = this->convert_path_to_smart();
 
         client.call("add_plan", new_mapf_plan);
+        sleep(0.1);  // Give the server some time to process the plan
     }
 
     // Never end. This process will be terminated by the python script.

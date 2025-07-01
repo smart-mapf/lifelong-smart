@@ -6,6 +6,7 @@ import time
 import fire
 import numpy as np
 import logging
+import datetime
 
 from typing import List, Tuple
 from lifelong_mapf_argos.ArgosConfig import (SERVER_EXE, PBS_EXE, RHCR_EXE,
@@ -15,6 +16,11 @@ from lifelong_mapf_argos.ArgosConfig.ToArgos import (obstacles, parse_map_file,
                                                      create_Argos)
 
 logger = logging.getLogger(__name__)
+
+
+def get_current_time() -> str:
+    """Get the current time in the format YYYY-MM-DD HH-MM-SS.FFF."""
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%3f")
 
 
 def init_start_locations(
@@ -68,9 +74,14 @@ def run_simulator(args, timeout: float = None, output_log: str = None):
     # planner will detect the end of the server and end itself.
     try:
         client_process.wait(timeout=timeout)
+        print(f"[{get_current_time()}] [Py] Client process finished.")
+
         server_process.wait(timeout=timeout)
         # planner_process.wait()
+        print(f"[{get_current_time()}] [Py] Server process finished.")
+
         planner_process.kill()
+        print(f"[{get_current_time()}] [Py] Planner process finished.")
     except subprocess.TimeoutExpired:
         # print("Timeout expired, killing processes...")
         logger.info("Timeout expired, killing processes...")
@@ -212,7 +223,9 @@ def run_lifelong_argos(
 
     try:
         # print("Running simulator ...")
-        logger.info("Running simulator ...")
+        logger.info(
+            f"Running simulator with {num_agents} agents at port {port_num} ..."
+        )
         server_command = [
             str(server_path),
             f"--num_robots={num_agents}",

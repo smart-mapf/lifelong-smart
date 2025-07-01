@@ -93,6 +93,8 @@ public:
     // }
 
     PlanParser parser;
+    clock_t start_time;
+    double overall_runtime = 0.0;  // Overall runtime of the simulation
 
 private:
     //    int type1EdgeCount = 0;

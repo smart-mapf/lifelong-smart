@@ -56,7 +56,8 @@ void ADG_Server::saveStats() {
     double throughput = static_cast<double>(total_finished_tasks) / sim_seconds;
     json result = {{"total_finished_tasks", total_finished_tasks},
                    {"throughput", throughput},
-                   {"success", true}};
+                   {"success", true},
+                   {"cpu_runtime", this->overall_runtime}};
 
     // Write the statistics to the output file
     std::ofstream stats(output_filename);
@@ -294,10 +295,17 @@ void closeServer(rpc::server& srv) {
     // std::cout << "Sim count " << server_ptr->tick_per_robot[0] << std::endl;
     // std::cout << "Num of finished tasks: "
     //           << server_ptr->adg->getNumFinishedTasks() << std::endl;
+
+    server_ptr->overall_runtime =
+        static_cast<double>(clock() - server_ptr->start_time) / CLOCKS_PER_SEC;
+
     spdlog::info("Closing server at port {}", server_ptr->port);
     spdlog::info("Simulation count: {}", server_ptr->tick_per_robot[0]);
     spdlog::info("Number of finished tasks: {}",
                  server_ptr->adg->getNumFinishedTasks());
+    spdlog::info("Overall runtime: {:.2f} seconds",
+                 server_ptr->overall_runtime);
+
     server_ptr->saveStats();
     // std::cout <<
     // "############################################################"
@@ -410,6 +418,12 @@ bool invokePlanner() {
     bool invoke = sim_step - server_ptr->prev_invoke_planner_tick >=
                       server_ptr->sim_window_tick &&
                   sim_step < server_ptr->total_sim_step_tick;
+
+    // First invoke, start record runtime
+    if (invoke && sim_step == 0) {
+        server_ptr->start_time = clock();
+        spdlog::info("Start time recorded at sim step 0.");
+    }
     // ########## END OLD logic ##########
 
     // RHCRE logic: invoke planner when the number of actions left for a
@@ -521,8 +535,8 @@ int main(int argc, char** argv) {
     auto console_logger = spdlog::default_logger()->clone("ADG_Server");
     spdlog::set_default_logger(console_logger);
 
-    rpc::server srv(port_number);  // Setup the server to listen on the
-    // specified port number
+    // Setup the server to listen on the specified port number
+    rpc::server srv(port_number);
 
     // Bind the function to the server
     // TODO: Remove unused functions

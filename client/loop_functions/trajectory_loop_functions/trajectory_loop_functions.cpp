@@ -115,7 +115,7 @@ void CTrajectoryLoopFunctions::PostExperiment() {
                  port_number);
     client->async_call("close_server");
     spdlog::info("Closing argos client");
-    // exit(0);  // Exit the argos simulator after closing the server
+    exit(0);  // Exit the argos simulator after closing the server
 }
 
 // Additional custom logic to determine if the experiment is finished
