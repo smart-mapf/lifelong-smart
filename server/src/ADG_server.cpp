@@ -287,7 +287,8 @@ inline void insertNewGoal(
 // }
 
 void closeServer(rpc::server& srv) {
-    std::lock_guard<std::mutex> guard(globalMutex);
+    spdlog::info("Closing server at port {}", server_ptr->port);
+    // std::lock_guard<std::mutex> guard(globalMutex);
     // std::cout <<
     // "############################################################"
     //           << std::endl;
@@ -298,8 +299,6 @@ void closeServer(rpc::server& srv) {
 
     server_ptr->overall_runtime =
         static_cast<double>(clock() - server_ptr->start_time) / CLOCKS_PER_SEC;
-
-    spdlog::info("Closing server at port {}", server_ptr->port);
     spdlog::info("Simulation count: {}", server_ptr->tick_per_robot[0]);
     spdlog::info("Number of finished tasks: {}",
                  server_ptr->adg->getNumFinishedTasks());

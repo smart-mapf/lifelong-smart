@@ -115,6 +115,7 @@ void CTrajectoryLoopFunctions::PostExperiment() {
                  port_number);
     client->async_call("close_server");
     spdlog::info("Closing argos client");
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     exit(0);  // Exit the argos simulator after closing the server
 }
 
