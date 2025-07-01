@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def get_current_time() -> str:
     """Get the current time in the format YYYY-MM-DD HH-MM-SS.FFF."""
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%3f")
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
 
 def init_start_locations(
@@ -74,20 +74,25 @@ def run_simulator(args, timeout: float = None, output_log: str = None):
     # planner will detect the end of the server and end itself.
     try:
         client_process.wait(timeout=timeout)
-        print(f"[{get_current_time()}] [Py] Client process finished.")
+        print(f"[{get_current_time()}] [Py] Client process finished.", file=f)
 
         server_process.wait(timeout=timeout)
         # planner_process.wait()
-        print(f"[{get_current_time()}] [Py] Server process finished.")
+        print(f"[{get_current_time()}] [Py] Server process finished.", file=f)
 
         planner_process.kill()
-        print(f"[{get_current_time()}] [Py] Planner process finished.")
+        print(f"[{get_current_time()}] [Py] Planner process finished.", file=f)
     except subprocess.TimeoutExpired:
         # print("Timeout expired, killing processes...")
         logger.info("Timeout expired, killing processes...")
         client_process.kill()
         server_process.kill()
         planner_process.kill()
+    finally:
+        if f:
+            f.close()
+        # print("Processes killed.")
+        logger.info("Processes killed.")
 
 
 def run_lifelong_argos(
