@@ -35,21 +35,7 @@
 #include <argos3/plugins/robots/foot-bot/control_interface/ci_footbot_turret_actuator.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 // #include <argos3/core/simulator/entity/positional_entity.h>
-#include <queue>
-#include <map>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <tuple>
-#include <rpc/client.h>
-#include <fstream>
-#include <filesystem>
-#include <chrono>
-#include <boost/asio.hpp>
+#include "utils/common.h"
 
 // #define TOTAL_SIM_STEP 1000
 #define EPS 0.03f

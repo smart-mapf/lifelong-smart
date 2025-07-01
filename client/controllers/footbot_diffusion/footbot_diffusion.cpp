@@ -157,25 +157,6 @@ double angleDifference(double curr_angle, double target_angle) {
 }
 /****************************************/
 
-bool is_port_open(const std::string& ip, int port) {
-    boost::asio::io_context io_context;
-    boost::asio::ip::tcp::socket socket(io_context);
-
-    try {
-        // Create an endpoint with the provided IP and port
-        boost::asio::ip::tcp::endpoint endpoint(
-            boost::asio::ip::address::from_string(ip), port);
-
-        // Attempt to connect to the endpoint
-        socket.connect(endpoint);
-        return true;  // Connection succeeded
-    } catch (const boost::system::system_error& e) {
-        // Catch connection errors
-        // std::cerr << "Connection failed: " << e.what() << std::endl;
-        return false;
-    }
-}
-
 void CFootBotDiffusion::updateQueue() {
     if (q.empty()) {
         return;
@@ -213,11 +194,13 @@ void CFootBotDiffusion::ControlStep() {
             return;
         }
         is_initialized = true;
-        // if (screen > 0) {
-        //     std::cout << "Robot " << robot_id
-        //               << " connected to server at port: " << port_number
-        //               << std::endl;
-        // }
+        if (screen > 0) {
+            // std::cout << "Robot " << robot_id
+            //           << " connected to server at port: " << port_number
+            //           << std::endl;
+            spdlog::info("Robot {} connected to server at port: {}", robot_id,
+                         port_number);
+        }
         client->call("init", robot_id);
         return;
     }
@@ -355,24 +338,32 @@ void CFootBotDiffusion::ControlStep() {
     // Update sim step count in client and server.
     step_count_++;
     bool end_sim = client->call("update_sim_step", robot_id).as<bool>();
-    if (end_sim) {
-        client->async_call("close_server");
-        exit(0);
-    }
+    // if (end_sim) {
+    //     client->async_call("close_server");
+    //     exit(0);
+    // }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> exec_duration_ms =
         end - end_find_act;
     std::chrono::duration<double, std::milli> total_duration_ms = end - start;
     if (total_duration_ms.count() > 1 && screen > 0) {
-        std::cout << "Agent " << robot_id
-                  << ": Total time:" << total_duration_ms.count() << " ms, "
-                  << "Update time: " << update_duration_ms.count() << " ms, "
-                  << "Queue update time: " << queue_update_duration_ms.count()
-                  << " ms, "
-                  << "Find action time: " << find_act_duration_ms.count()
-                  << " ms, "
-                  << "Execution time: " << exec_duration_ms.count()
-                  << " ms, with control step count: " << step_count_ << "\n";
+        spdlog::info(
+            "Agent {}: Total time: {:.2f} ms, Update time: {:.2f} ms, "
+            "Queue update time: {:.2f} ms, Find action time: {:.2f} ms, "
+            "Execution time: {:.2f} ms, with control step count: {}",
+            robot_id, total_duration_ms.count(), update_duration_ms.count(),
+            queue_update_duration_ms.count(), find_act_duration_ms.count(),
+            exec_duration_ms.count(), step_count_);
+        // std::cout << "Agent " << robot_id
+        //           << ": Total time:" << total_duration_ms.count() << " ms, "
+        //           << "Update time: " << update_duration_ms.count() << " ms, "
+        //           << "Queue update time: " <<
+        //           queue_update_duration_ms.count()
+        //           << " ms, "
+        //           << "Find action time: " << find_act_duration_ms.count()
+        //           << " ms, "
+        //           << "Execution time: " << exec_duration_ms.count()
+        //           << " ms, with control step count: " << step_count_ << "\n";
     }
 
     // Free simulation if necessary

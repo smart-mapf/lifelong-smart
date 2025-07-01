@@ -76,6 +76,7 @@ public:
 
     // bool debug_set_flag = false;
     vector<int> tick_per_robot;
+    // int time_step_tick = 0;  // Current simulation step tick
     // int total_confirmed_picks = 0;
     // std::vector<int> confirmed_picks_by_genre;
     // std::vector<int> genre_finish_steps;

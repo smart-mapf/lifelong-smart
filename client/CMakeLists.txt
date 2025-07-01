@@ -41,3 +41,6 @@ add_subdirectory(loop_functions)
 
 # Descend into the embedding directory
 add_subdirectory(embedding)
+
+# Descend into the utils directory
+add_subdirectory(utils)

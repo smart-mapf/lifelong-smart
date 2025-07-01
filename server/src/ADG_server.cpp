@@ -25,6 +25,9 @@ ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
     // agent_finish_sim_step.resize(numRobots, -1);
     tick_per_robot.resize(numRobots, 0);
 
+    // Hacky way to make sure the planner is only invoked once at sim_step 0
+    this->prev_invoke_planner_tick = -sim_window_tick;
+
     this->parser = PlanParser(screen);
 
     // startTimers.resize(numRobots);
@@ -89,7 +92,14 @@ void freezeSimulationIfNecessary(std::string RobotID) {
     // return in time. This is aim at synchronizing the simulation time with
     // world clock time
     int sim_step = server_ptr->getCurrSimStep();
-    if (sim_step == 0 && server_ptr->prev_invoke_planner_tick == -1) {
+    // int sim_step = server_ptr->time_step_tick;
+    // spdlog::info("Checking freeze simulation at sim step {}, "
+    //              "prev_invoke_planner_tick: {}, sim_window_tick: {}",
+    //              sim_step, server_ptr->prev_invoke_planner_tick,
+    //              server_ptr->sim_window_tick);
+    if (sim_step == 0 &&
+        server_ptr->prev_invoke_planner_tick == -server_ptr->sim_window_tick &&
+        sim_step < server_ptr->total_sim_step_tick) {
         server_ptr->freeze_simulation = true;
         if (server_ptr->screen > 0) {
             spdlog::info(
@@ -101,7 +111,8 @@ void freezeSimulationIfNecessary(std::string RobotID) {
             //           << std::endl;
         }
     } else if (sim_step - server_ptr->prev_invoke_planner_tick >=
-               server_ptr->sim_window_tick) {
+                   server_ptr->sim_window_tick &&
+               sim_step < server_ptr->total_sim_step_tick) {
         server_ptr->freeze_simulation = true;
         if (server_ptr->screen > 0) {
             spdlog::info(
@@ -284,8 +295,7 @@ void closeServer(rpc::server& srv) {
     // std::cout << "Num of finished tasks: "
     //           << server_ptr->adg->getNumFinishedTasks() << std::endl;
     spdlog::info("Closing server at port {}", server_ptr->port);
-    spdlog::info("Simulation count for robot 0: {}",
-                 server_ptr->tick_per_robot[0]);
+    spdlog::info("Simulation count: {}", server_ptr->tick_per_robot[0]);
     spdlog::info("Number of finished tasks: {}",
                  server_ptr->adg->getNumFinishedTasks());
     server_ptr->saveStats();
@@ -294,6 +304,7 @@ void closeServer(rpc::server& srv) {
     //           << std::endl;
     srv.close_sessions();
     srv.stop();
+    spdlog::info("Server closed successfully.");
 }
 
 std::vector<
@@ -324,6 +335,17 @@ update(std::string RobotID) {
 //     }
 // }
 
+bool simStatus() {
+    std::lock_guard<std::mutex> guard(globalMutex);
+    // Check if the simulation is congested
+    if (server_ptr->congested_sim) {
+        return true;  // If the simulation is congested, we stop the simulation
+    }
+
+    int sim_step = server_ptr->getCurrSimStep();
+    return sim_step >= server_ptr->total_sim_step_tick;
+}
+
 // Return end_sim: true if all robots have finished their simulation steps
 bool updateSimStep(std::string RobotID) {
     std::lock_guard<std::mutex> guard(globalMutex);
@@ -345,6 +367,21 @@ bool updateSimStep(std::string RobotID) {
     return end_sim;
 }
 
+// Update the simulation step tick and return whether the simulation should end
+// (i.e., all robots have finished their simulation steps).
+// This function is called by the client to update the simulation step tick.
+// We stop the simulation if it is congested or if the updated tick is greater
+// than or equal to the total simulation step tick.
+// tuple<int, bool> updateSimStep() {
+//     std::lock_guard<std::mutex> guard(globalMutex);
+//     server_ptr->time_step_tick++;
+
+//     bool end_sim =
+//         server_ptr->time_step_tick >= server_ptr->total_sim_step_tick ||
+//         server_ptr->congested_sim;
+//     return std::make_tuple(server_ptr->time_step_tick, end_sim);
+// }
+
 // Invoke planner when the number of actions left for a robot is less than a
 // threshold.
 bool invokePlanner() {
@@ -352,6 +389,7 @@ bool invokePlanner() {
 
     // Should take the min of the ticks of all the robots
     int sim_step = server_ptr->getCurrSimStep();
+    // int sim_step = server_ptr->time_step_tick;
 
     // We don't want to invoke the planner at the same tick more than once,
     // unless the simulation if frozon, in which case some agent has no
@@ -364,10 +402,14 @@ bool invokePlanner() {
     // ########## OLD logic: invoke planner every sim_window_tick ##########
     // bool invoke = sim_step % server_ptr->sim_window_tick == 0 &&
     //               sim_step < server_ptr->total_sim_step_tick;
-    bool invoke =
-        (sim_step == 0 || sim_step - server_ptr->prev_invoke_planner_tick >=
-                              server_ptr->sim_window_tick) &&
-        sim_step < server_ptr->total_sim_step_tick;
+    // bool invoke =
+    //     (sim_step == 0 || sim_step - server_ptr->prev_invoke_planner_tick >=
+    //                           server_ptr->sim_window_tick) &&
+    //     sim_step < server_ptr->total_sim_step_tick &&
+    //     sim_step != server_ptr->prev_invoke_planner_tick;
+    bool invoke = sim_step - server_ptr->prev_invoke_planner_tick >=
+                      server_ptr->sim_window_tick &&
+                  sim_step < server_ptr->total_sim_step_tick;
     // ########## END OLD logic ##########
 
     // RHCRE logic: invoke planner when the number of actions left for a
@@ -498,6 +540,7 @@ int main(int argc, char** argv) {
     srv.bind("get_num_unfinished_actions", &getNumUnfinishedActions);
     srv.bind("freeze_simulation_if_necessary", &freezeSimulationIfNecessary);
     srv.bind("is_simulation_frozen", &isSimulationFrozen);
+    srv.bind("sim_status", &simStatus);
     srv.run();  // Start the server, blocking call
 
     return 0;

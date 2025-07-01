@@ -103,10 +103,15 @@ def create_Argos(map_data: List[str],
     system = ET.SubElement(framework, "system", threads=str(n_threads - 1))
 
     # Experiment configuration
+    # NOTE: `length` can be used to specify the total simulation tick. However,
+    # in our case, we need to use our own counter because of the initialization
+    # lag among client/server/planner. Therefore we set it to 0 so that the
+    # simulation will run forever until we stop it manually.
     if visualization:
         experiment = ET.SubElement(
             framework,
             "experiment",
+            # length=f"{sim_duration / ticks_per_second}",
             length="0",
             ticks_per_second=f"{ticks_per_second}",
             random_seed=f"{seed}",
@@ -115,6 +120,7 @@ def create_Argos(map_data: List[str],
         experiment = ET.SubElement(
             framework,
             "experiment",
+            # length=f"{sim_duration / ticks_per_second}",
             length="0",
             ticks_per_second=f"{ticks_per_second}",
             random_seed=f"{seed}",
