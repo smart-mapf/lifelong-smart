@@ -176,7 +176,7 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
         this->solution[a_i][from_t + 1] = next_state;
 
         // Another agent a_k is currently occupying the next state. Replan it,
-        // it is not planned.
+        // if it is not planned.
         int a_k = curr_occupied[next_state.location];
         if (a_k != -1 && solution[a_k][from_t + 1].location == -1 &&
             this->goals_mem[a_k].size() > 0) {
