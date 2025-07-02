@@ -9,6 +9,7 @@ ADG::ADG(int num_robots, int screen, int look_ahead_dist)
     std::map<int, int> lastActionIndexByRobot;
     finished_node_idx.resize(num_robots, -1);
     enqueue_nodes_idx.resize(num_robots);
+    init_locs.resize(num_robots);
 }
 
 void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
@@ -108,8 +109,7 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
             }
         }
     }
-    if (this->screen > 0)
-    {
+    if (this->screen > 0) {
         // printf("Finish building ADG graph!\n");
         spdlog::info("Finish building ADG graph!");
     }
@@ -352,51 +352,69 @@ void printEdge() {
     // plans[k][l].goal.first << " , " << plans[k][l].goal.second << std::endl;
 }
 
-std::pair<std::map<int, std::string>, std::map<std::string, int>>
-ADG::createRobotIDToStartIndexMaps() {
-    // std::map<int, std::string> robotIDToStartIndex;
-    // std::map<std::string, int> startIndexToRobotID;
+// std::pair<std::map<int, std::string>, std::map<std::string, int>>
+// ADG::createRobotIDToStartIndexMaps() {
+//     // std::map<int, std::string> robotIDToStartIndex;
+//     // std::map<std::string, int> startIndexToRobotID;
 
-    for (int robot_id = 0; robot_id < num_robots; robot_id++) {
-        auto start = graph[robot_id][0].action.start;
-        std::ostringstream oss;
-        oss << static_cast<int>(start.first) << "_"
-            << static_cast<int>(start.second);
-        std::string startStr = oss.str();
+//     for (int robot_id = 0; robot_id < num_robots; robot_id++) {
+//         auto start = graph[robot_id][0].action.start;
+//         std::ostringstream oss;
+//         oss << static_cast<int>(start.first) << "_"
+//             << static_cast<int>(start.second);
+//         std::string startStr = oss.str();
 
-        robotIDToStartIndex[robot_id] = startStr;
-        startIndexToRobotID[startStr] = robot_id;
-    }
+//         robotIDToStartIndex[robot_id] = startStr;
+//         startIndexToRobotID[startStr] = robot_id;
+//     }
 
-    return {robotIDToStartIndex, startIndexToRobotID};
-}
+//     return {robotIDToStartIndex, startIndexToRobotID};
+// }
 
-bool ADG::createRobotIDToStartIndexMaps(std::string& robot_id_str) {
+bool ADG::createRobotIDToStartIndexMaps(std::string& robot_id_str,
+                                        tuple<int, int> init_loc) {
     // std::map<int, std::string> robotIDToStartIndex;
     // std::map<std::string, int> startIndexToRobotID;
     if (startIndexToRobotID.find(robot_id_str) != startIndexToRobotID.end()) {
         return false;
     }
-    int robot_id = static_cast<int>(init_locs.size());
+
+    int robot_id = stoi(robot_id_str);
     robotIDToStartIndex[robot_id] = robot_id_str;
     startIndexToRobotID[robot_id_str] = robot_id;
 
-    size_t pos = robot_id_str.find('_');
-    if (pos == std::string::npos) {
-        std::cerr << "Invalid robot locations!" << std::endl;
-        exit(-1);
-    }
+    // init_locs.emplace_back(std::get<0>(init_loc), std::get<1>(init_loc));
+    init_locs[robot_id] = robotState(static_cast<int>(std::get<0>(init_loc)),
+                                     static_cast<int>(std::get<1>(init_loc)));
+    this->n_robot_init++;
 
-    int x = std::stoi(robot_id_str.substr(0, pos));
-    int y = std::stoi(robot_id_str.substr(pos + 1));
-    init_locs.emplace_back(x, y);
-
-    if (init_locs.size() == num_robots) {
+    if (this->n_robot_init == num_robots) {
         initialized = true;
         robot_states = init_locs;
         return true;
     }
     return false;
+
+    // int robot_id = static_cast<int>(init_locs.size());
+    // robotIDToStartIndex[robot_id] = robot_id_str;
+    // startIndexToRobotID[robot_id_str] = robot_id;
+
+    // size_t pos = robot_id_str.find('_');
+    // if (pos == std::string::npos) {
+    //     std::cerr << "Invalid robot locations!" << std::endl;
+    //     exit(-1);
+    // }
+
+    // int x = std::stoi(robot_id_str.substr(0, pos));
+    // int y = std::stoi(robot_id_str.substr(pos + 1));
+    // init_locs.emplace_back(x, y);
+
+    // if (init_locs.size() == num_robots) {
+    //     initialized = true;
+    //     robot_states = init_locs;
+    //     return true;
+    // }
+    // return false;
 }
 
 void inline updateADGNode(ADGNode& tmp_node) {

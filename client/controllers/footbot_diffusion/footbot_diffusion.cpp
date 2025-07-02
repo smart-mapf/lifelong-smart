@@ -125,13 +125,18 @@ void CFootBotDiffusion::Init(TConfigurationNode& t_node) {
     GetNodeAttributeOrDefault(t_node, "screen", screen, 0);
     m_linearVelocity = 1.22 * m_angularVelocity;
     m_currVelocity = 0.0;
-    CVector3 currPos = m_pcPosSens->GetReading().Position;
-    robot_id =
-        std::to_string(
-            static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetY()))) +
-        "_" +
-        std::to_string(
-            static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetX())));
+    this->init_pos = m_pcPosSens->GetReading().Position;
+    // CVector3 currPos = m_pcPosSens->GetReading().Position;
+    // robot_id =
+    //     std::to_string(
+    //         static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetY())))
+    //         +
+    //     "_" +
+    //     std::to_string(
+    //         static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetX())));
+    // spdlog::info("My Robot ID: {}, argos Robot ID: {}", robot_id,
+    //              this->GetId());
+    this->robot_id = this->GetId();
 }
 
 /****************************************/
@@ -194,14 +199,22 @@ void CFootBotDiffusion::ControlStep() {
             return;
         }
         is_initialized = true;
+        auto init_loc = std::make_tuple(
+            static_cast<int>(
+                ChangeCoordinateFromArgosToMap(this->init_pos.GetY())),
+            static_cast<int>(
+                ChangeCoordinateFromArgosToMap(this->init_pos.GetX())))
+
+            ;
+        client->call("init", robot_id, init_loc);
         if (screen > 0) {
             // std::cout << "Robot " << robot_id
             //           << " connected to server at port: " << port_number
             //           << std::endl;
-            spdlog::info("Robot {} connected to server at port: {}", robot_id,
+            spdlog::info("Robot {} at ({},{}) connected to server at port: {}",
+                         robot_id, std::get<1>(init_loc), std::get<0>(init_loc),
                          port_number);
         }
-        client->call("init", robot_id);
         return;
     }
     auto start = std::chrono::high_resolution_clock::now();

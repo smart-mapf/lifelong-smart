@@ -65,6 +65,8 @@ struct ADGNode {
 struct robotState {
     std::pair<double, double> position;
     int orient = 0;
+    robotState() : position(-1, -1), orient(-1) {
+    }
     robotState(double x, double y) : position(x, y) {
     }
     robotState(std::pair<double, double> pos, int theta)
@@ -83,9 +85,10 @@ public:
         return total_nodes_cnt;
     }
 
-    std::pair<std::map<int, std::string>, std::map<std::string, int>>
-    createRobotIDToStartIndexMaps();
-    bool createRobotIDToStartIndexMaps(std::string& robot_id_str);
+    // std::pair<std::map<int, std::string>, std::map<std::string, int>>
+    // createRobotIDToStartIndexMaps();
+    bool createRobotIDToStartIndexMaps(std::string& robot_id_str,
+                                       tuple<int, int> init_loc);
     bool getAvailableNodes(int robot_id, std::vector<int>& available_nodes);
     bool updateFinishedNode(int robot_id, int node_id);
     // void setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes);
@@ -192,6 +195,7 @@ private:
     int num_robots = 0;
     int total_nodes_cnt = 0;
     int look_ahead_dist = 0;
+    int n_robot_init = 0;
 
     std::vector<robotState> init_locs;
     std::vector<robotState> robot_states;

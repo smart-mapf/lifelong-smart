@@ -243,7 +243,8 @@ def create_Argos(map_data: List[str],
 
     agent_count = 0
     for x, y in robot_init_pos:
-        foot_bot = ET.SubElement(arena, "foot-bot", id=f"fb_{x}_{y}")
+        # foot_bot = ET.SubElement(arena, "foot-bot", id=f"fb_{x}_{y}")
+        foot_bot = ET.SubElement(arena, "foot-bot", id=f"{agent_count}")
         x, y = -int(y), -int(x)
         body = ET.SubElement(foot_bot,
                              "body",

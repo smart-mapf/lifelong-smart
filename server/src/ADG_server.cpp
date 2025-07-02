@@ -257,9 +257,9 @@ std::string actionFinished(std::string& robot_id_str, int node_ID) {
     return "None";
 }
 
-void init(std::string RobotID) {
+void init(std::string RobotID, tuple<int, int> init_loc) {
     std::lock_guard<std::mutex> guard(globalMutex);
-    server_ptr->adg->createRobotIDToStartIndexMaps(RobotID);
+    server_ptr->adg->createRobotIDToStartIndexMaps(RobotID, init_loc);
 }
 
 bool isInitialized() {

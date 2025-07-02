@@ -223,6 +223,7 @@ private:
     CVector3 curr_station{-1,-1,-100};
     int total_sim_duration = 0;
     int screen = 0;
+    CVector3 init_pos;
 };
 
 #endif

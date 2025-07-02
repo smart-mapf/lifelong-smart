@@ -104,7 +104,7 @@ def run_lifelong_argos(
     save_stats: bool = False,
     output_log: str = None,
     port_num: int = 8182,
-    n_threads: int = 1,
+    n_threads: int = 4,
     sim_duration: int = 1800 * 10,
     sim_window_tick: int = 50,
     ticks_per_second: int = 10,
