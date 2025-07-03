@@ -556,7 +556,8 @@ bool PBS::generate_root_node()
 	paths.resize(num_of_agents, nullptr);
 
     if (screen == 2)
-        std::cout << "Generate root CT node ..." << std::endl;
+        spdlog::info("Generate root CT node ...");
+        // std::cout << "Generate root CT node ..." << std::endl;
 
     //dummy_start->priorities.copy(initial_priorities);
 
@@ -626,7 +627,8 @@ bool PBS::generate_root_node()
     if (screen == 2)
     {
         double runtime = (double)(std::clock() - time) / CLOCKS_PER_SEC;
-        std::cout << "Done! (" << runtime << "s)" << std::endl;
+        // std::cout << "Done! (" << runtime << "s)" << std::endl;
+        spdlog::info("Done generating root CT node! ({:.2f}s)", runtime);
     }
     return true;
 }

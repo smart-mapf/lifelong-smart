@@ -387,6 +387,11 @@ void CFootBotDiffusion::ControlStep() {
         // std::cout << "Robot " << this->robot_id
         //           << ": Simulation is frozen, waiting to defrost..."
         //           << std::endl;
+        if (screen > 1) {
+            spdlog::info(
+                "Robot {}: Simulation is frozen, waiting to defrost...",
+                robot_id);
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }

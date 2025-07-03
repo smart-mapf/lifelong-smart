@@ -233,7 +233,8 @@ void SMARTSystem::update_goal_locations() {
             // assign a new task
             Task next;
             if (G.types[goal.location] == "Endpoint" ||
-                G.types[goal.location] == "Workstation") {
+                G.types[goal.location] == "Workstation" ||
+                G.types[goal.location] == "Travel") {
                 // next = make_tuple(this->gen_next_goal(k), 0, 0);
                 next = Task(this->gen_next_goal(k), -1, 0, 0);
                 while (next == goal) {
@@ -241,11 +242,6 @@ void SMARTSystem::update_goal_locations() {
                     //     this->gen_next_goal(k, true), 0, 0);
                     next = Task(this->gen_next_goal(k, true), -1, 0, 0);
                 }
-            } else if (G.types[goal.location] == "Travel") {
-                int loc =
-                    this->G.task_locations[rand() %
-                                           (int)this->G.task_locations.size()];
-                next = Task(loc, -1, 0, 0);
             } else {
                 std::cout << "ERROR in update_goal_function()" << std::endl;
                 std::cout << "The fiducial type at curr=" << curr
@@ -277,6 +273,24 @@ void SMARTSystem::update_goal_locations() {
                 cout << "(" << goal_x << ", " << goal_y << ") -> ";
             }
             cout << endl;
+        }
+
+        if (screen > 1) {
+            // Check for consecutive duplicate goals for each agent
+            for (int i = 0; i < num_of_drives; i++) {
+                if (goal_locations[i].size() > 1) {
+                    auto &goals = goal_locations[i];
+                    for (size_t j = 1; j < goals.size(); j++) {
+                        if (goals[j].location == goals[j - 1].location) {
+                            spdlog::warn(
+                                "Agent {} has consecutive duplicate goals at "
+                                "location ({}, {})",
+                                i, G.getRowCoordinate(goals[j].location),
+                                G.getColCoordinate(goals[j].location));
+                        }
+                    }
+                }
+            }
         }
     }
 }

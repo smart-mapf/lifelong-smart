@@ -21,3 +21,5 @@ debug.txt
 stats.csv
 stats.json
 failed_instance.txt
+output.log
+debug.log

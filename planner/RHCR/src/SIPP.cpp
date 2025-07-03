@@ -228,7 +228,7 @@ Path SIPP::run(const BasicGraph& G,
                 }
                 else {
                     // Update tasking wait time of the node.
-                    // Make sure it is save to do so by checking the safe
+                    // Make sure it is safe to do so by checking the safe
                     // interval of the goal location
                     int wait_start_t = curr->state.timestep;
                     int wait_until_t =
