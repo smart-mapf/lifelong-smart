@@ -49,6 +49,7 @@ public:
     bool freeze_simulation = false;
     bool congested_sim = false;
     int prev_invoke_planner_tick = -1;
+    bool planner_running = false;
     int seed;
 
     // Remember a tick count for each robot as the "simulation clock time".

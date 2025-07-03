@@ -113,6 +113,7 @@ void freezeSimulationIfNecessary(std::string RobotID) {
         }
     } else if (sim_step - server_ptr->prev_invoke_planner_tick >=
                    server_ptr->sim_window_tick &&
+               server_ptr->planner_running &&
                sim_step < server_ptr->total_sim_step_tick) {
         server_ptr->freeze_simulation = true;
         if (server_ptr->screen > 0) {
@@ -136,10 +137,11 @@ bool isSimulationFrozen() {
 }
 
 string getRobotsLocation() {
+    std::lock_guard<std::mutex> guard(globalMutex);
+
     // Return message as a JSON string
     json result_message = {};
 
-    // std::lock_guard<std::mutex> guard(globalMutex);
     if (server_ptr->screen > 0) {
         spdlog::info("Get robot location query received!");
         // std::cout << "Get robot location query received!" << std::endl;
@@ -237,6 +239,9 @@ void addNewPlan(
             spdlog::info("Simulation is de-frozen after adding a new plan!");
         }
     }
+
+    // Planner stop running
+    server_ptr->planner_running = false;
 
 #ifdef DEBUG
     std::cout << "Finish add plan" << std::endl;
@@ -461,6 +466,7 @@ bool invokePlanner() {
 
     if (invoke) {
         server_ptr->prev_invoke_planner_tick = sim_step;
+        server_ptr->planner_running = true;
         if (server_ptr->screen > 0) {
             spdlog::info("Invoke planner at sim step: {}, invoke: {}", sim_step,
                          invoke);
