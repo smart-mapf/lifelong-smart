@@ -150,8 +150,9 @@ Instance::Instance(const Graph& graph, vector<Task> goal_locations, int screen,
 // }
 
 // Update the goal locations
-bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
-                          set<int> finished_tasks_id) {
+bool Instance::loadAgents(
+    std::vector<std::tuple<double, double, int>>& start_locs,
+    set<int> finished_tasks_id) {
     num_of_agents = static_cast<int>(start_locs.size());
     if (num_of_agents == 0) {
         cerr << "The number of agents should be larger than 0" << endl;
@@ -176,8 +177,8 @@ bool Instance::loadAgents(std::vector<std::pair<double, double>>& start_locs,
     // Generate new starts/goals
     for (int i = 0; i < num_of_agents; i++) {
         // Obtain the starts
-        int row = static_cast<int>(start_locs[i].first);
-        int col = static_cast<int>(start_locs[i].second);
+        int row = static_cast<int>(std::get<0>(start_locs[i]));
+        int col = static_cast<int>(std::get<1>(start_locs[i]));
         start_locations[i] = this->graph.linearizeCoordinate(row, col);
 
         // generate a goal for the agent if it does not have one

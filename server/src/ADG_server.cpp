@@ -149,7 +149,7 @@ string getRobotsLocation() {
 
     server_ptr->curr_robot_states = server_ptr->adg->computeCommitCut();
 
-    std::vector<std::pair<double, double>> robots_location;
+    std::vector<std::tuple<double, double, int>> robots_location;
     if (server_ptr->curr_robot_states.empty()) {
         result_message["robots_location"] = {};
         result_message["new_finished_tasks"] = {};
@@ -161,11 +161,11 @@ string getRobotsLocation() {
 
     for (auto& robot : server_ptr->curr_robot_states) {
         if (server_ptr->flipped_coord) {
-            robots_location.emplace_back(robot.position.second,
-                                         robot.position.first);
+            robots_location.emplace_back(make_tuple(
+                robot.position.second, robot.position.first, robot.orient));
         } else {
-            robots_location.emplace_back(robot.position.first,
-                                         robot.position.second);
+            robots_location.emplace_back(make_tuple(
+                robot.position.first, robot.position.second, robot.orient));
         }
     }
 

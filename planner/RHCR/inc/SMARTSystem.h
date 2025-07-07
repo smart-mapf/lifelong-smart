@@ -36,9 +36,8 @@ private:
     int gen_next_goal(int agent_id, bool repeat_last_goal = false);
     int sample_workstation();
     // int sample_end_points();
-    void update_start_locations(
-        vector<pair<double, double>>& start_locs,
-        set<int> finished_tasks_id);
+    void update_start_locations(vector<tuple<double, double, int>>& start_locs,
+                                set<int> finished_tasks_id);
     tuple<vector<double>, double, double> edge_pair_usage_mean_std(
         vector<vector<double>>& edge_usage);
     tuple<vector<vector<vector<double>>>, vector<vector<double>>>

@@ -64,4 +64,12 @@ public:
     // Each workstation has a set of queue locations for robots to wait in a
     // queue. Used by the queueing mechanism of GreyOrange system.
     unordered_map<int, vector<int>> queue_locations;
+
+    // Map from the orientation in SMART to the orientation in RHCR.
+    const unordered_map<int, int> ORI_SMART_TO_RHCR = {
+        {0, 1},
+        {1, 0},
+        {2, 3},
+        {3, 2},
+    };
 };

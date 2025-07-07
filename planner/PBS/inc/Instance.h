@@ -103,7 +103,7 @@ public:
         return num_of_agents;
     }
 
-    bool loadAgents(std::vector<std::pair<double, double>>& start_locs,
+    bool loadAgents(std::vector<std::tuple<double, double, int>>& start_locs,
                     set<int> finished_tasks_id);
     // void printMap() const;
     // void saveInstance();

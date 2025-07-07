@@ -69,7 +69,7 @@ public:
     std::string output_filename;
     int numRobots = 0;
     // double latest_arr_sim_step = 0;
-    std::vector<std::pair<double, double>> robots_location;
+    std::vector<std::tuple<double, double, int>> robots_location;
     // std::vector<MobileAction> current_robots_goal_type;
 
     // double total_wait_time = 0;

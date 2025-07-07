@@ -75,7 +75,8 @@ void SMARTSystem::initialize_start_locations() {
 }
 
 void SMARTSystem::update_start_locations(
-    vector<pair<double, double>> &start_locs, set<int> finished_tasks_id) {
+    vector<tuple<double, double, int>> &start_locs,
+    set<int> finished_tasks_id) {
     if (start_locs.size() != this->num_of_drives) {
         cout << "SMARTSystem::update_start_locations: start_locs size does not "
                 "match num_of_drives."
@@ -116,10 +117,14 @@ void SMARTSystem::update_start_locations(
     // Set new starts
     for (int i = 0; i < this->num_of_drives; i++) {
         // Obtain the starts
-        int row = static_cast<int>(start_locs[i].first);
-        int col = static_cast<int>(start_locs[i].second);
+        int row = static_cast<int>(std::get<0>(start_locs[i]));
+        int col = static_cast<int>(std::get<1>(start_locs[i]));
+        int ori = std::get<2>(start_locs[i]);
         // TODO: Add support for orientation
         this->starts[i] = State(this->G.getCellId(row, col), 0);
+        if (this->consider_rotation) {
+            this->starts[i].orientation = this->G.ORI_SMART_TO_RHCR.at(ori);
+        }
     }
 }
 
@@ -680,8 +685,9 @@ json SMARTSystem::simulate(int simulation_time) {
             sleep(1);
             continue;
         }
-        auto commit_cut = result_json["robots_location"]
-                              .get<std::vector<std::pair<double, double>>>();
+        auto commit_cut =
+            result_json["robots_location"]
+                .get<std::vector<std::tuple<double, double, int>>>();
         auto new_finished_tasks_id =
             result_json["new_finished_tasks"].get<std::set<int>>();
 
@@ -702,6 +708,8 @@ json SMARTSystem::simulate(int simulation_time) {
 // Convert the solution of RHCR to SMART format
 // The format is a vector of vector of tuples, where each tuple is
 // (row, col, time, task_id).
+// Orientation will be inferred by SMART (ADG). If orientatio is considered
+// during planning, that should yield better path for ADG.
 vector<vector<tuple<int, int, double, int>>>
 SMARTSystem::convert_path_to_smart() {
     std::vector<std::vector<std::tuple<int, int, double, int>>> new_mapf_plan;
@@ -724,10 +732,13 @@ SMARTSystem::convert_path_to_smart() {
             // Infer task id
             State s = raw_new_path[i][t];
             int task_id = -1;
+            Task curr_goal = this->goal_locations[i][goal_id];
             if (this->goal_locations[i].size() > goal_id &&
-                this->goal_locations[i][goal_id].location == s.location &&
-                this->goal_locations[i][goal_id].orientation == s.orientation) {
-                task_id = this->goal_locations[i][goal_id].id;
+                curr_goal.location == s.location &&
+                (curr_goal.orientation == -1 ||
+                 curr_goal.orientation >= 0 &&
+                     curr_goal.orientation == s.orientation)) {
+                task_id = curr_goal.id;
                 goal_id += 1;
             }
             new_mapf_plan[i].emplace_back(this->G.getRowCoordinate(s.location),
@@ -736,7 +747,7 @@ SMARTSystem::convert_path_to_smart() {
             if (screen > 0) {
                 std::cout << "(" << this->G.getRowCoordinate(s.location) << ","
                           << this->G.getColCoordinate(s.location) << ","
-                          << task_id << ")->";
+                          << s.orientation << "," << task_id << ")->";
                 if (task_id >= 0) {
                     std::cout << "End of task " << task_id << " at step " << t
                               << "->";

@@ -92,8 +92,9 @@ int main(int argc, char** argv) {
             sleep(1);
             continue;
         }
-        auto commit_cut = result_json["robots_location"]
-                              .get<std::vector<std::pair<double, double>>>();
+        auto commit_cut =
+            result_json["robots_location"]
+                .get<std::vector<std::tuple<double, double, int>>>();
         auto new_finished_tasks_id =
             result_json["new_finished_tasks"].get<std::set<int>>();
 
