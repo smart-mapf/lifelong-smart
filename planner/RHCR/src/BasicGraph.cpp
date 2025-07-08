@@ -246,22 +246,24 @@ std::vector<double> BasicGraph::compute_heuristics(int root_location)
     unordered_set< StateTimeAStarNode*, StateTimeAStarNode::Hasher, StateTimeAStarNode::EqNode> nodes;
 
     State root_state(root_location);
-    if(consider_rotation)
-    {
-        for (auto neighbor : get_reverse_neighbors(root_state))
-        {
-            StateTimeAStarNode* root = new StateTimeAStarNode(State(root_location, -1,
-                    get_direction(neighbor.location, root_state.location)), 0, 0, nullptr, 0);
-            root->open_handle = heap.push(root);  // add root to heap
-            nodes.insert(root);       // add root to hash_table (nodes)
-        }
-    }
-    else
-    {
+    // TODO: rotational heuristic is creating issue for some planners (lower
+    // throughput compared to no rotation). Check back later.
+    // if(consider_rotation)
+    // {
+    //     for (auto neighbor : get_reverse_neighbors(root_state))
+    //     {
+    //         StateTimeAStarNode* root = new StateTimeAStarNode(State(root_location, -1,
+    //                 get_direction(neighbor.location, root_state.location)), 0, 0, nullptr, 0);
+    //         root->open_handle = heap.push(root);  // add root to heap
+    //         nodes.insert(root);       // add root to hash_table (nodes)
+    //     }
+    // }
+    // else
+    // {
         StateTimeAStarNode* root = new StateTimeAStarNode(root_state, 0, 0, nullptr, 0);
         root->open_handle = heap.push(root);  // add root to heap
         nodes.insert(root);       // add root to hash_table (nodes)
-    }
+    // }
 
 	while (!heap.empty())
     {
@@ -273,27 +275,27 @@ std::vector<double> BasicGraph::compute_heuristics(int root_location)
                                             curr->state.location);
             double next_g_val;
             // Add in rotation time
-            if (consider_rotation)
-            {
-                // Rotating
-                if (curr->state.orientation != next_state.orientation)
-                {
-                    int degree = get_rotate_degree(curr->state.orientation,
-                                                   next_state.orientation);
-                    next_g_val = curr->g_val +
-                                 degree * rotation_time * curr_weight;
-                }
-                // Moving
-                else
-                {
-                    next_g_val = curr->g_val + curr_weight;
-                }
-            }
+            // if (consider_rotation)
+            // {
+            //     // Rotating
+            //     if (curr->state.orientation != next_state.orientation)
+            //     {
+            //         int degree = get_rotate_degree(curr->state.orientation,
+            //                                        next_state.orientation);
+            //         next_g_val = curr->g_val +
+            //                      degree * rotation_time * curr_weight;
+            //     }
+            //     // Moving
+            //     else
+            //     {
+            //         next_g_val = curr->g_val + curr_weight;
+            //     }
+            // }
             // Not considering rotation, only moving
-            else
-            {
+            // else
+            // {
                 next_g_val = curr->g_val + curr_weight;
-            }
+            // }
             StateTimeAStarNode* next = new StateTimeAStarNode(next_state, next_g_val, 0, nullptr, 0);
 			auto it = nodes.find(next);
 			if (it == nodes.end())
