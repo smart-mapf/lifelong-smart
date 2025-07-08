@@ -348,13 +348,7 @@ void CFootBotDiffusion::ControlStep() {
         right_v = 0.0f;
     }
 
-    // Update sim step count in client and server.
-    step_count_++;
-    bool end_sim = client->call("update_sim_step", robot_id).as<bool>();
-    // if (end_sim) {
-    //     client->async_call("close_server");
-    //     exit(0);
-    // }
+
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> exec_duration_ms =
         end - end_find_act;
@@ -394,6 +388,14 @@ void CFootBotDiffusion::ControlStep() {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    // Update sim step count in client and server.
+    step_count_++;
+    bool end_sim = client->call("update_sim_step", robot_id).as<bool>();
+    // if (end_sim) {
+    //     client->async_call("close_server");
+    //     exit(0);
+    // }
 }
 
 std::pair<Real, Real> CFootBotDiffusion::pidAngular(Real error) {
