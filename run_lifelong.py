@@ -105,11 +105,11 @@ def run_lifelong_argos(
     output_log: str = None,
     port_num: int = 8182,
     n_threads: int = 4,
-    sim_duration: int = 1800 * 10,
+    sim_duration: int = 900 * 10,
     sim_window_tick: int = 50,
     ticks_per_second: int = 10,
     velocity: float = 200.0,
-    look_ahead_dist: int = 5,
+    look_ahead_dist: int = 10,
     planner: str = "RHCR",  # ["PBS", "RHCR"]
     container: bool = False,
     seed: int = 42,
@@ -208,13 +208,26 @@ def run_lifelong_argos(
         # print("Argos config file created.")
         logger.info(f"Argos config file created at {argos_config_filepath}.")
 
-    # Infer the simulation window in timestep from velocity
-    # sim window = distance of the robot can travel in sim_window seconds at
-    # the given velocity
+    # Infer look_ahead_dist from cutoffTime
+    # The look_ahead_dist is the number of actions the planner should
+    # look ahead to find the start location for the robot. The planner will
+    # return in cutoffTime seconds, so look_ahead_dist should be set to the
+    # number of actions that can be executed in cutoffTime seconds.
+    # Each action corresponds to half of a grid, which is 0.5 m, so the
+    # shortest time it takes to execute an action is
+    # 0.5 m / (velocity / 100 m/s).
+    look_ahead_dist = np.ceil(cutoffTime / (0.5 /
+                                            (velocity / 100))).astype(int)
+
+    # Infer the planning window
+    # planning window = sim window in timesteps + look_ahead_dist in timesteps
+    # The planner should make sure that the plan is valid for the next
+    # simulation window + look_ahead_dist
     # Convert sim_window from ticks to timesteps, and velocity from cm/s to m/s
-    sim_window_ts = np.ceil(
-        (sim_window_tick / ticks_per_second) * (velocity / 100)).astype(int)
-    # sim_window_ts = int(np.ceil(1.5 * look_ahead_dist * (velocity / 100)))
+    plan_window_ts = np.ceil((sim_window_tick / ticks_per_second) *
+                             (velocity / 100) +
+                             look_ahead_dist / 2).astype(int)
+    # plan_window_ts = int(np.ceil(1.5 * look_ahead_dist * (velocity / 100)))
 
     # Path to the executables
     if container:
@@ -260,7 +273,7 @@ def run_lifelong_argos(
                 f"--portNum={port_num}",
                 f"--seed={seed}",
                 f"--screen={screen}",
-                f"--simulation_window={sim_window_ts}",
+                f"--simulation_window={plan_window_ts}",
             ]
         elif planner == "RHCR":
             planner_command = [
@@ -270,8 +283,8 @@ def run_lifelong_argos(
                 f"--port_number={port_num}",
                 f"--seed={seed}",
                 f"--screen={screen}",
-                f"--planning_window={sim_window_ts}",
-                f"--simulation_window={sim_window_ts}",
+                f"--planning_window={plan_window_ts}",
+                f"--simulation_window={plan_window_ts}",
                 f"--scenario={scenario}",
                 f"--cutoffTime={cutoffTime}",
                 f"--rotation={rotation}",
