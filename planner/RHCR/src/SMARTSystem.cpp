@@ -209,13 +209,32 @@ void SMARTSystem::update_goal_locations() {
         for (int i = 0; i < num_of_drives; i++) {
             int start_loc = this->starts[i].location;
             // If start from workstation, next goal is endpoint
-            if (std::find(G.workstations.begin(), G.workstations.end(),
-                          start_loc) != G.workstations.end()) {
+            if (G.types[start_loc] == "Workstation") {
                 this->next_goal_type.push_back("e");
             }
-            // Otherwise, next goal is workstation
-            else {
+            // If start from endpoint, next goal is workstation
+            else if (G.types[start_loc] == "Endpoint") {
                 this->next_goal_type.push_back("w");
+            }
+            // Otherwise, randomize the first goal
+            else {
+                // Randomly choose a goal location and infer its type
+                int tmp_goal_loc =
+                    G.task_locations[rand() %
+                                     static_cast<int>(G.task_locations.size())];
+                if (G.types[tmp_goal_loc] == "Workstation") {
+                    this->next_goal_type.push_back("w");
+                } else if (G.types[tmp_goal_loc] == "Endpoint") {
+                    this->next_goal_type.push_back("e");
+                } else {
+                    std::cout << "ERROR in update_goal_locations()"
+                              << std::endl;
+                    std::cout << "The fiducial type at start=" << start_loc
+                              << " should not be " << G.types[start_loc]
+                              << std::endl;
+                    exit(-1);
+                }
+                // this->next_goal_type.push_back("w");
             }
         }
     }
@@ -697,8 +716,12 @@ json SMARTSystem::simulate(int simulation_time) {
         solve();
 
         auto new_mapf_plan = this->convert_path_to_smart();
+        json new_plan_json = {
+            {"plan", new_mapf_plan},
+            {"congested", this->congested()},
+        };
 
-        client.call("add_plan", new_mapf_plan);
+        client.call("add_plan", new_plan_json.dump());
         sleep(0.1);  // Give the server some time to process the plan
     }
 
@@ -759,4 +782,19 @@ SMARTSystem::convert_path_to_smart() {
         }
     }
     return new_mapf_plan;
+}
+
+bool SMARTSystem::congested() const {
+    int wait_agents = 0;
+    for (const auto &path : this->solver.solution) {
+        int t = 0;
+        while (t < simulation_window &&
+               path[timestep].location == path[timestep + t].location &&
+               path[timestep].orientation == path[timestep + t].orientation)
+            t++;
+        if (t == simulation_window)
+            wait_agents++;
+    }
+    // more than half of drives didn't make progress
+    return wait_agents > num_of_drives / 2;
 }

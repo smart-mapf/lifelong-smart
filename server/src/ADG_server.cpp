@@ -57,7 +57,9 @@ void ADG_Server::saveStats() {
     json result = {{"total_finished_tasks", total_finished_tasks},
                    {"throughput", throughput},
                    {"success", true},
-                   {"cpu_runtime", this->overall_runtime}};
+                   {"cpu_runtime", this->overall_runtime},
+                   {"congested", this->congested_sim},
+                   {"tasks_finished_timestep", this->tasks_finished_per_sec}};
 
     // Write the statistics to the output file
     std::ofstream stats(output_filename);
@@ -171,6 +173,10 @@ string getRobotsLocation() {
 
     set<int> new_finished_tasks = server_ptr->adg->updateFinishedTasks();
 
+    server_ptr->tasks_finished_per_sec.push_back(std::make_tuple(
+        new_finished_tasks.size(),
+        server_ptr->getCurrSimStep() / server_ptr->ticks_per_second));
+
     server_ptr->robots_location = robots_location;
 
     result_message["robots_location"] = robots_location;
@@ -182,12 +188,19 @@ string getRobotsLocation() {
 // Add a new MAPF plan to the ADG
 // new_plan: a vector of paths, each path is a vector of (row, col, t, task_id)
 // Raw plan --> points --> Steps --> Actions
-void addNewPlan(
-    std::vector<std::vector<std::tuple<int, int, double, int>>>& new_plan) {
+void addNewPlan(string& new_plan_json_str) {
     // x, y and time
     std::lock_guard<std::mutex> guard(globalMutex);
 
-    if (congested(new_plan)) {
+    json new_plan_json = json::parse(new_plan_json_str);
+
+    auto new_plan =
+        new_plan_json["plan"]
+            .get<std::vector<std::vector<std::tuple<int, int, double, int>>>>();
+
+    bool congested = new_plan_json["congested"].get<bool>();
+
+    if (congested) {
         // Stop the server early.
         // NOTE: We cannot call closeServer directly because we need to ensure
         // the clients (robots) are closed. So we set a flag to let the robots

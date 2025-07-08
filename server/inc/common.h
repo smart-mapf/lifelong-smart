@@ -201,6 +201,6 @@ T twoPointDistance(std::pair<T, T> a, std::pair<T, T> b) {
     return std::abs(a.first - b.first) + std::abs(a.second - b.second);
 }
 
-bool congested(
-    const std::vector<std::vector<std::tuple<int, int, double, int>>>&
-        new_plan);
+// bool congested(
+//     const std::vector<std::vector<std::tuple<int, int, double, int>>>&
+//         new_plan);

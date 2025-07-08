@@ -127,7 +127,11 @@ int main(int argc, char** argv) {
                 auto new_mapf_plan = pbs.getPaths();
 
                 pbs.clearSearchEngines();
-                client.call("add_plan", new_mapf_plan);
+                json new_plan_json = {
+                    {"plan", new_mapf_plan},
+                    {"congested", false},
+                };
+                client.call("add_plan", new_plan_json.dump());
             } else {
                 std::cerr << "No solution found!" << std::endl;
                 fail_count++;

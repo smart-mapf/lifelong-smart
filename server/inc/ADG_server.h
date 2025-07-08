@@ -69,6 +69,8 @@ public:
     std::string output_filename;
     int numRobots = 0;
     // double latest_arr_sim_step = 0;
+
+    // (row, col, orientation) or (col, row, orientation)
     std::vector<std::tuple<double, double, int>> robots_location;
     // std::vector<MobileAction> current_robots_goal_type;
 
@@ -94,8 +96,13 @@ public:
     // }
 
     PlanParser parser;
+
+    // Stats related
     clock_t start_time;
     double overall_runtime = 0.0;  // Overall runtime of the simulation
+
+    // vector of <n_finished tasks, time in sim seconds>
+    std::vector<std::tuple<int, double>> tasks_finished_per_sec;
 
 private:
     //    int type1EdgeCount = 0;
