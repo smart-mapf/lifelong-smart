@@ -43,6 +43,7 @@ private:
         vector<vector<double>>& edge_usage);
     tuple<vector<vector<vector<double>>>, vector<vector<double>>>
     convert_edge_usage(vector<vector<double>>& edge_usage);
+    string get_curr_stats() const;
 
     // Used for workstation sampling
     discrete_distribution<int> workstation_dist;

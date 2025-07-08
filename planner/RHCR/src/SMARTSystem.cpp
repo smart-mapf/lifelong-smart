@@ -91,7 +91,7 @@ void SMARTSystem::update_start_locations(
             new_finished_tasks += std::to_string(task_id) + " ";
         }
         // cout << endl;
-        spdlog::info("New finished tasks: {}", new_finished_tasks);
+        spdlog::info(new_finished_tasks);
     }
 
     if (!this->goal_locations.empty()) {
@@ -719,6 +719,7 @@ json SMARTSystem::simulate(int simulation_time) {
         json new_plan_json = {
             {"plan", new_mapf_plan},
             {"congested", this->congested()},
+            {"stats", this->get_curr_stats()},
         };
 
         client.call("add_plan", new_plan_json.dump());
@@ -790,11 +791,20 @@ bool SMARTSystem::congested() const {
         int t = 0;
         while (t < simulation_window &&
                path[timestep].location == path[timestep + t].location &&
-               path[timestep].orientation == path[timestep + t].orientation)
+               path[timestep].orientation == path[timestep + t].orientation &&
+               !path[timestep].is_rotating)
             t++;
         if (t == simulation_window)
             wait_agents++;
     }
     // more than half of drives didn't make progress
     return wait_agents > num_of_drives / 2;
+}
+
+string SMARTSystem::get_curr_stats() const {
+    json stats = {
+        {"n_mapf_calls", this->n_mapf_calls},
+        {"n_rule_based_calls", this->n_rule_based_calls},
+    };
+    return stats.dump();
 }
