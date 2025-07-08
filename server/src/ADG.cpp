@@ -200,13 +200,17 @@ std::vector<robotState> ADG::computeCommitCut() {
         // set all enqueue actions as commited
         commited_actions[agent_id] = std::make_pair(
             finished_node_idx[agent_id] + 1, finished_node_idx[agent_id] + 1);
+
+        // We first find the first node idx that is not enqueued. All enqueued
+        // actions must be commited.
         if (not enqueue_nodes_idx[agent_id].empty()) {
             assert(enqueue_nodes_idx[agent_id].front() ==
                    commited_actions[agent_id].first);
             commited_actions[agent_id].second =
                 enqueue_nodes_idx[agent_id].back() + 1;
         }
-        // find actions that are staged
+        // If number of enqueued action is smaller than the pre-defined
+        // look-ahead-dist, we then find actions that are staged
         int num_commit_actions = commited_actions[agent_id].second -
                                  commited_actions[agent_id].first;
         if (num_commit_actions < this->look_ahead_dist) {
