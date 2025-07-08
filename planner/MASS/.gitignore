@@ -1,0 +1,16 @@
+.vscode
+build
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+*mp4
+Makefile
+MASS
+.cache
+debug.txt
+.idea
+.cmake
+cmake-build-debug
+Testing
+data/sortation_large/heuristic
+data/warehouse-20-40-10-2-2/heuristic
