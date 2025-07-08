@@ -208,7 +208,7 @@ void addNewPlan(string& new_plan_json_str) {
 
     // Store stats, if available
     if (new_plan_json.contains("stats")) {
-        server_ptr->planner_stats = new_plan_json["stats"].dump();
+        server_ptr->planner_stats = new_plan_json["stats"];
     }
 
     if (congested) {
