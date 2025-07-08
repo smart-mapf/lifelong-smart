@@ -100,6 +100,7 @@ public:
     // Stats related
     clock_t start_time;
     double overall_runtime = 0.0;  // Overall runtime of the simulation
+    string planner_stats = "{}";  // Store planner stats in JSON format
 
     // vector of <n_finished tasks, time in sim seconds>
     std::vector<std::tuple<int, double>> tasks_finished_per_sec;

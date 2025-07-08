@@ -27,6 +27,9 @@ bool PIBT::run(const vector<State> &starts,
         solution[i].resize(this->simulation_window);
         // Initialize the solution with the start state
         solution[i][0] = starts[i];
+        // For now PIBT only works with no orientation.
+        // TODO: Add support for orientation
+        solution[i][0].orientation = -1;
         this->curr_occupied[starts[i].location] = i;
     }
 
@@ -68,7 +71,6 @@ bool PIBT::run(const vector<State> &starts,
         };
         std::shuffle(agents.begin(), agents.end(), this->gen);
         std::sort(agents.begin(), agents.end(), agents_cmp);
-        // TODO: Use fancier priority order
         for (int k : agents) {
             // If the agent is already planned, skip it
             if (solution[k][t].location == -1 &&

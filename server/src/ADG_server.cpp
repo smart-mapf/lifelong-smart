@@ -61,6 +61,12 @@ void ADG_Server::saveStats() {
                    {"congested", this->congested_sim},
                    {"tasks_finished_timestep", this->tasks_finished_per_sec}};
 
+    // Unwrap and add planner stats to results
+    json planner_stats_json = json::parse(this->planner_stats);
+    for (auto& [key, value] : planner_stats_json.items()) {
+        result[key] = value;
+    }
+
     // Write the statistics to the output file
     std::ofstream stats(output_filename);
     stats << result.dump(4);  // Pretty print with 4 spaces
@@ -199,6 +205,11 @@ void addNewPlan(string& new_plan_json_str) {
             .get<std::vector<std::vector<std::tuple<int, int, double, int>>>>();
 
     bool congested = new_plan_json["congested"].get<bool>();
+
+    // Store stats, if available
+    if (new_plan_json.contains("stats")) {
+        server_ptr->planner_stats = new_plan_json["stats"].dump();
+    }
 
     if (congested) {
         // Stop the server early.
