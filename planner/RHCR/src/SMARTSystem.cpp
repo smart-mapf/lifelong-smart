@@ -9,8 +9,8 @@
 #include "common.h"
 #include "helper.h"
 
-SMARTSystem::SMARTSystem(SMARTGrid &G, MAPFSolver &solver)
-    : BasicSystem(G, solver), G(G) {
+SMARTSystem::SMARTSystem(SMARTGrid &G, MAPFSolver &solver, string task_file)
+    : BasicSystem(G, solver), G(G), task_file(task_file) {
 }
 
 SMARTSystem::~SMARTSystem() {
@@ -46,6 +46,8 @@ void SMARTSystem::initialize() {
         // }
         // cout << endl;
     }
+
+    bool succ = load_tasks();
     // bool succ = load_records();  // continue simulating from the records
     // if (succ) {
     //     std::cout << "load_records = " << succ << ", timestep = " << timestep
@@ -170,6 +172,13 @@ int SMARTSystem::sample_workstation() {
 
 int SMARTSystem::gen_next_goal(int agent_id, bool repeat_last_goal) {
     int next = -1;
+    if (!this->random_task && !this->tasks[agent_id].empty()) {
+        Task next = this->tasks[agent_id].front();
+        this->tasks[agent_id].pop_front();
+        return next.location; // Only take the location of the task
+    }
+
+    // Otherwise generate random tasks
     if (G.get_r_mode()) {
         next = G.endpoints[rand() % (int)G.endpoints.size()];
     }
@@ -807,4 +816,29 @@ string SMARTSystem::get_curr_stats() const {
         {"n_rule_based_calls", this->n_rule_based_calls},
     };
     return stats.dump();
+}
+
+
+bool SMARTSystem::load_tasks() {
+    // cout << "Loading tasks from file: " << this->task_file << endl;
+    spdlog::info("Loading tasks from file: {}", this->task_file);
+    this->tasks = vector<list<Task>>(this->num_of_drives);
+    if (this->task_file.empty() || this->task_file == "") {
+        this->random_task = true;
+        return false;  // No agent file provided, return false
+    }
+    try {
+        this->tasks = read_task_vec(this->task_file, this->num_of_drives);
+    } catch (const std::runtime_error &e) {
+        // cout << "Error reading task file: " << e.what() << endl;
+        spdlog::error("Error reading task file: {}", e.what());
+        return false;
+    }
+
+    // Loading task is successful, we shall use the loaded tasks onward.
+    this->random_task = false;
+    spdlog::info("Loaded {} tasks for {} agents.", this->tasks.size(),
+             this->num_of_drives);
+
+    return true;
 }

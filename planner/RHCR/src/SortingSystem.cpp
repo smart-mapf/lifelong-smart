@@ -39,12 +39,12 @@ double SortingSystem::compute_assignment_cost(
     double cost = -1;
     if (this->task_assignment_cost == "heuristic+num_agents")
     {
-        cost = this->G.heuristics.at(next_pos.first)[curr_loc] +
+        cost = this->G.get_heuristic(next_pos.first, curr_loc) +
                this->assign_C * next_pos.second;
     }
     else if (this->task_assignment_cost == "heuristic")
     {
-        cost = this->G.heuristics.at(next_pos.first)[curr_loc];
+        cost = this->G.get_heuristic(next_pos.first, curr_loc);
     }
     else if (this->task_assignment_cost == "opt_quadratic_f")
     {
@@ -53,7 +53,7 @@ double SortingSystem::compute_assignment_cost(
         // where x and y are heuristic and number of agents, respectively, and
         // a's are optimized parameters
         // Print content of G.heuristics
-        double x = this->G.heuristics.at(next_pos.first)[curr_loc];
+        double x = this->G.get_heuristic(next_pos.first, curr_loc);
         double y = next_pos.second;
         cost = this->task_assignment_params[0] * x * x +
                this->task_assignment_params[1] * y * y +
@@ -672,7 +672,7 @@ json SortingSystem::summarizeResult(){
 	double finished_len_mean, finished_len_std;
     double num_turns_mean, num_turns_std;
     double num_rev_action_mean, num_rev_action_std;
-    double avg_task_len = this->G.get_avg_task_len(this->G.heuristics);
+    // double avg_task_len = this->G.get_avg_task_len(this->G.heuristics);
     vector<vector<vector<double>>> edge_usage_matrix;
     vector<vector<double>> vertex_wait_matrix;
 
@@ -691,7 +691,7 @@ json SortingSystem::summarizeResult(){
     std::cout << "Std of edge pair usage: " << edge_pair_usage_std << std::endl;
 	std::cout << "Average wait at each timestep: " << num_wait_mean << std::endl;
 	std::cout << "Average path length of each finished task: " << finished_len_mean << std::endl;
-    std::cout << "Average path length of each task: " << avg_task_len << std::endl;
+    // std::cout << "Average path length of each task: " << avg_task_len << std::endl;
     std::cout << "Average number of turns: " << num_turns_mean << std::endl;
     std::cout << "Average number of reversed actions in highway: " << num_rev_action_mean << std::endl;
     std::cout << "Length of longest common path: " << subpath.size()
@@ -727,7 +727,7 @@ json SortingSystem::summarizeResult(){
         {"num_rev_action_mean", num_rev_action_mean},
         {"num_rev_action_std", num_rev_action_std},
         // {"tasks_finished_timestep", tasks_finished_timestep},
-        {"avg_task_len", avg_task_len},
+        // {"avg_task_len", avg_task_len},
         // {"congested", congested_sim},
         {"longest_common_path", subpath},
 	};

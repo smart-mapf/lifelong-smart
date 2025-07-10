@@ -578,7 +578,7 @@ bool ECBS::run(
 				double soc = 0;
 				for (int i = 0; i < num_of_agents; i++)
 				{
-					soc += path_planner.compute_h_value(G, paths[i]->front().location, 0, goal_locations[i]);
+					soc += path_planner.compute_h_value(G, paths[i]->front(), 0, goal_locations[i]);
 					soc -= max((int)paths[i]->size() - window, 0);
 				}
 				if (soc <= 0)
@@ -597,7 +597,7 @@ bool ECBS::run(
 				int count = 0;
 				for (int i = 0; i < num_of_agents; i++)
 				{
-					if (path_planner.compute_h_value(G, paths[i]->front().location, 0, goal_locations[i]) <= max((int)paths[i]->size() - window, 0))
+					if (path_planner.compute_h_value(G, paths[i]->front(), 0, goal_locations[i]) <= max((int)paths[i]->size() - window, 0))
 						count++;
 				}
 				if (count > num_of_agents * potential_threshold)
@@ -895,7 +895,7 @@ void ECBS::get_solution()
         vector< vector<double> > h_values(goal_locations[k].size());
         for (int j = 0; j < (int) goal_locations[k].size(); j++)
         {
-            h_values[j] = G.heuristics.at(goal_locations[k][j]);
+            h_values[j] = G.get_heuristic(goal_locations[k][j]);
         }
         solution[k] = path_planner.run(G, starts[k], goal_locations[k], rt, h_values);
         if (solution[k].empty())

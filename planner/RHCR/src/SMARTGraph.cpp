@@ -87,49 +87,51 @@ void SMARTGrid::parseMap(std::vector<std::vector<double>>& map_e,
 }
 void SMARTGrid::update_task_dist(std::mt19937& gen,
                                  std::string task_dist_type) {
-    if (task_dist_type != "Gaussian") {
-        std::cout << "task dist type [" << task_dist_type << "] not support yet"
-                  << std::endl;
-        exit(-1);
-    }
-
-    std::vector<std::vector<double>> map_e, map_w;
-
-    this->parseMap(map_e, map_w);
-
-    this->workstation_weights.clear();
-    this->workstation_weights.resize(this->workstations.size(), 1.0);
-
-    int h = this->rows;
-    int w = this->cols;
-
-    std::uniform_int_distribution<> dis_h(0, h - 1);
-    std::uniform_int_distribution<> dis_w(0, w - 1);
-
-    int center_h = dis_h(gen);
-    int center_w = dis_w(gen);
-    std::cout << "gaussian center = " << center_h << ", " << center_w
-              << std::endl;
-
-    std::vector<std::vector<double>> dist_full =
-        getGaussian(h, w, center_h, center_w);
-    // std::vector<std::vector<double>> dist_e(h, std::vector<double>(w, 0));
-    // double max_val = 0;
-
-    // for (int r = 0; r < h; ++r) {
-    //     for (int c = 0; c < w; ++c) {
-    //         dist_e[r][c] = dist_full[r][c] * map_e[r][c];
-    //         if (dist_e[r][c] > max_val) max_val = dist_e[r][c];
-    //     }
+    // if (task_dist_type != "Gaussian") {
+    //     std::cout << "task dist type [" << task_dist_type << "] not support yet"
+    //               << std::endl;
+    //     exit(-1);
     // }
 
-    // for (int r = 0; r < h; ++r) {
-    //     for (int c = 0; c < w; ++c) {
-    //         dist_e[r][c] /= max_val; // normalize
-    //     }
-    // }
+    // std::vector<std::vector<double>> map_e, map_w;
 
-    this->end_points_weights = generateVecEDist(map_e, dist_full);
+    // this->parseMap(map_e, map_w);
+
+    // this->workstation_weights.clear();
+    // this->workstation_weights.resize(this->workstations.size(), 1.0);
+
+    // int h = this->rows;
+    // int w = this->cols;
+
+    // std::uniform_int_distribution<> dis_h(0, h - 1);
+    // std::uniform_int_distribution<> dis_w(0, w - 1);
+
+    // int center_h = dis_h(gen);
+    // int center_w = dis_w(gen);
+    // std::cout << "gaussian center = " << center_h << ", " << center_w
+    //           << std::endl;
+
+    // std::vector<std::vector<double>> dist_full =
+    //     getGaussian(h, w, center_h, center_w);
+    // // std::vector<std::vector<double>> dist_e(h, std::vector<double>(w, 0));
+    // // double max_val = 0;
+
+    // // for (int r = 0; r < h; ++r) {
+    // //     for (int c = 0; c < w; ++c) {
+    // //         dist_e[r][c] = dist_full[r][c] * map_e[r][c];
+    // //         if (dist_e[r][c] > max_val) max_val = dist_e[r][c];
+    // //     }
+    // // }
+
+    // // for (int r = 0; r < h; ++r) {
+    // //     for (int c = 0; c < w; ++c) {
+    // //         dist_e[r][c] /= max_val; // normalize
+    // //     }
+    // // }
+
+    // this->end_points_weights = generateVecEDist(map_e, dist_full);
+    throw std::runtime_error(
+        "Task distribution generation is not implemented yet for SMARTGrid.");
 }
 
 bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
@@ -194,13 +196,15 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
                 this->workstations.push_back(id);
                 this->task_locations.push_back(id);
 
-                // Add weights to workstations s.t. one side of the
-                // workstations are more "popular" than the other
-                if (j == 0) {
-                    this->workstation_weights.push_back(left_w_weight);
-                } else {
-                    this->workstation_weights.push_back(right_w_weight);
-                }
+                // // Add weights to workstations s.t. one side of the
+                // // workstations are more "popular" than the other
+                // if (j == 0) {
+                //     this->workstation_weights.push_back(left_w_weight);
+                // } else {
+                //     this->workstation_weights.push_back(right_w_weight);
+                // }
+
+                this->workstation_weights.push_back(1.0);
 
                 // Under w mode, and with RHCR, agents can start from
                 // anywhere except for obstacles.
@@ -552,13 +556,15 @@ bool SMARTGrid::load_unweighted_map(std::string fname, double left_w_weight,
                 this->workstations.push_back(id);
                 this->task_locations.push_back(id);
 
-                // Add weights to workstations s.t. one side of the
-                // workstations are more "popular" than the other
-                if (j == 0) {
-                    this->workstation_weights.push_back(left_w_weight);
-                } else {
-                    this->workstation_weights.push_back(right_w_weight);
-                }
+                // // Add weights to workstations s.t. one side of the
+                // // workstations are more "popular" than the other
+                // if (j == 0) {
+                //     this->workstation_weights.push_back(left_w_weight);
+                // } else {
+                //     this->workstation_weights.push_back(right_w_weight);
+                // }
+
+                this->workstation_weights.push_back(1.0);
 
                 // Under w mode, and with RHCR, agents can start from
                 // anywhere except for obstacles.

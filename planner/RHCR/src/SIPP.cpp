@@ -140,7 +140,7 @@ Path SIPP::run(const BasicGraph& G,
     num_generated = 0;
     runtime = 0;
     clock_t t = std::clock();
-	double h_val = compute_h_value(G, start.location, 0, goal_location);
+	double h_val = compute_h_value(G, start, 0, goal_location);
 	if (h_val > INT_MAX)
 	{
 		cout << "The start and goal locations are disconnected!" << endl;
@@ -280,8 +280,14 @@ Path SIPP::run(const BasicGraph& G,
                 std::get<1>(curr->interval) - curr->state.timestep)
                 continue;
             int location = curr->state.location + G.move[orientation];
+            int next_ori = -1;
+            if (curr->state.orientation >= 0)
+            {
+                next_ori = G.get_direction(curr->state.location, location);
+            }
             // std::cout << "compute h value, location ="<<location <<", goal id = "<< curr->goal_id <<std::endl;
-            double h_val = compute_h_value(G, location, curr->goal_id, goal_location);
+            double h_val = compute_h_value(G, State(location, 0, next_ori),
+                                           curr->goal_id, goal_location);
             // std::cout << "h value = "<<h_val <<std::endl;
             if (h_val >= WEIGHT_MAX)   // This vertex cannot reach the goal vertex
                 continue;
@@ -310,8 +316,8 @@ Path SIPP::run(const BasicGraph& G,
             this->rotation_time <=
                 std::get<1>(curr->interval) - curr->state.timestep)
         {
-            double h_val = compute_h_value(G, curr->state.location,
-                curr->goal_id, goal_location);
+            double h_val = compute_h_value(G, curr->state, curr->goal_id,
+                                           goal_location);
             int degree = 1;
             int min_timestep =
                 curr->state.timestep + degree * this->rotation_time;
@@ -360,7 +366,7 @@ Path SIPP::run(const BasicGraph& G,
                 // of other agents.
                 Interval interval = rt.getFirstSafeInterval(start.location);
                 Interval interval2 = make_tuple(std::get<1>(interval), INTERVAL_MAX, 0);
-                double h_val = compute_h_value(G, start.location, 0, goal_location);
+                double h_val = compute_h_value(G, start, 0, goal_location);
                 auto node2 = new SIPPNode(start, 0, h_val, interval2, nullptr, 0);
                 num_generated++;
                 node2->open_handle = open_list.push(node2);

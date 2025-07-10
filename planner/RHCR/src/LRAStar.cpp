@@ -56,7 +56,7 @@ Path LRAStar::find_shortest_path(
     fibonacci_heap<StateTimeAStarNode *, compare<StateTimeAStarNode::compare_node>> open_list;
     unordered_set<StateTimeAStarNode *, Hasher, EqNode> allNodes_table;
     // generate start and add it to the OPEN list
-    double h_val = path_planner.compute_h_value(G, start.location, 0, goal_locations);
+    double h_val = path_planner.compute_h_value(G, start, 0, goal_locations);
     auto root = new StateTimeAStarNode(start, 0, h_val, nullptr, 0);
 
     num_generated++;
@@ -117,7 +117,7 @@ Path LRAStar::find_shortest_path(
                 continue;
             // compute cost to next_id via curr node
             double next_g_val = curr->g_val + G.get_weight(curr->state.location, next_state.location) * travel_time;
-            double next_h_val = path_planner.compute_h_value(G, next_state.location, curr->goal_id, goal_locations);
+            double next_h_val = path_planner.compute_h_value(G, next_state, curr->goal_id, goal_locations);
             if (next_h_val >= INT_MAX) // This vertex cannot reach the goal vertex
                 continue;
 

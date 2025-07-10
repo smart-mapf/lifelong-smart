@@ -11,7 +11,7 @@ using json = nlohmann::json;
 
 class SMARTSystem : public BasicSystem {
 public:
-    SMARTSystem(SMARTGrid& G, MAPFSolver& solver);
+    SMARTSystem(SMARTGrid& G, MAPFSolver& solver, string task_file = "");
     ~SMARTSystem();
 
     json simulate(int simulation_time);
@@ -29,6 +29,7 @@ private:
     unordered_set<int> held_endpoints;
     std::vector<string> next_goal_type;
     int task_id = 0;  // A global task ID for all tasks in the system.
+    string task_file;
 
     void initialize();
     void initialize_start_locations();
@@ -44,6 +45,12 @@ private:
     tuple<vector<vector<vector<double>>>, vector<vector<double>>>
     convert_edge_usage(vector<vector<double>>& edge_usage);
     string get_curr_stats() const;
+
+    // tasks
+    bool random_task = true;  // If true, tasks are randomly generated
+    // <agent id, list<Tasks > >
+    vector<list<Task>> tasks;
+    bool load_tasks();
 
     // Used for workstation sampling
     discrete_distribution<int> workstation_dist;
