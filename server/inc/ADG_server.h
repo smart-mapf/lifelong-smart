@@ -98,7 +98,8 @@ public:
     PlanParser parser;
 
     // Stats related
-    clock_t start_time;
+    // Start time of the simulation
+    std::chrono::steady_clock::time_point start_time;
     double overall_runtime = 0.0;  // Overall runtime of the simulation
     string planner_stats = "{}";  // Store planner stats in JSON format
 

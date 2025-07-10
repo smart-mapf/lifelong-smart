@@ -67,6 +67,32 @@ void ADG_Server::saveStats() {
         result[key] = value;
     }
 
+    // Add ADG statistics
+    json adg_stats = adg->getADGStats();
+    for (auto& [key, value] : adg_stats.items()) {
+        result[key] = value;
+    }
+
+    if (result.contains("n_rule_based_calls")) {
+        spdlog::info("Number of rule-based calls: {}",
+                     result["n_rule_based_calls"].get<int>());
+    }
+
+    if (result.contains("mean_avg_rotation")) {
+        spdlog::info("Mean average rotation per robot: {}",
+                     result["mean_avg_rotation"].get<double>());
+    }
+
+    if (result.contains("mean_avg_move")) {
+        spdlog::info("Mean average move per robot: {}",
+                     result["mean_avg_move"].get<double>());
+    }
+
+    if (result.contains("avg_total_actions")) {
+        spdlog::info("Total actions per robot: {}",
+                     result["avg_total_actions"].get<int>());
+    }
+
     // Write the statistics to the output file
     std::ofstream stats(output_filename);
     stats << result.dump(4);  // Pretty print with 4 spaces
@@ -122,13 +148,13 @@ void freezeSimulationIfNecessary(std::string RobotID) {
     } else if (sim_step - server_ptr->prev_invoke_planner_tick >=
                    server_ptr->sim_window_tick &&
                server_ptr->planner_running &&
-               sim_step < server_ptr->total_sim_step_tick) {
+               sim_step <= server_ptr->total_sim_step_tick) {
         server_ptr->freeze_simulation = true;
         if (server_ptr->screen > 0) {
-            spdlog::info(
-                "Robot {} requests to freeze the simulation at sim step {} "
-                "due to simulation time exceeding the window tick!",
-                robot_id, sim_step);
+            // spdlog::info(
+            //     "Robot {} requests to freeze the simulation at sim step {} "
+            //     "due to simulation time exceeding the window tick!",
+            //     robot_id, sim_step);
             // std::cout << "Robot " << robot_id
             //           << " requests to freeze the simulation at sim step "
             //           << sim_step
@@ -326,9 +352,15 @@ void closeServer(rpc::server& srv) {
     // std::cout << "Num of finished tasks: "
     //           << server_ptr->adg->getNumFinishedTasks() << std::endl;
 
-    server_ptr->overall_runtime =
-        static_cast<double>(clock() - server_ptr->start_time) / CLOCKS_PER_SEC;
+    auto end = std::chrono::steady_clock::now();
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
+        end - server_ptr->start_time);
+    server_ptr->overall_runtime = elapsed_seconds.count();
     spdlog::info("Simulation count: {}", server_ptr->tick_per_robot[0]);
+    // spdlog::info("Number of actual finished tasks: {}",
+    //              server_ptr->adg->countFinishedTasks());
+    // spdlog::info("Average num of rotation per robot: {:.2f}",
+    //              server_ptr->adg->avgRotation());
     spdlog::info("Number of finished tasks: {}",
                  server_ptr->adg->getNumFinishedTasks());
     spdlog::info("Overall runtime: {:.2f} seconds",
@@ -449,7 +481,7 @@ bool invokePlanner() {
 
     // First invoke, start record runtime
     if (invoke && sim_step == 0) {
-        server_ptr->start_time = clock();
+        server_ptr->start_time = std::chrono::steady_clock::now();
         spdlog::info("Start time recorded at sim step 0.");
     }
     // ########## END OLD logic ##########

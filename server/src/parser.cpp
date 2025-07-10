@@ -79,8 +79,20 @@ void PlanParser::AgentPathToSteps(const vector<Point>& points,
                 // Change orientation without advancing time by adding an
                 // additional step on the previous timestep with the needed
                 // orientation.
-                steps.push_back(Step(points[i - 1].x, points[i - 1].y,
-                                     neededOrientation, currentTime));
+                // Need to rotate 180 degrees
+                if (abs(neededOrientation - currentOrientation) == 2) {
+                    // If the needed orientation is opposite to the current one,
+                    // we need to add a step to turn around.
+                    int mid_ori = (currentOrientation + 1) % 4;
+                    steps.push_back(Step(points[i - 1].x, points[i - 1].y,
+                                         mid_ori, currentTime));
+                    steps.push_back(Step(points[i - 1].x, points[i - 1].y,
+                                         neededOrientation, currentTime));
+                } else {
+                    steps.push_back(Step(points[i - 1].x, points[i - 1].y,
+                                         neededOrientation, currentTime));
+                }
+
                 currentOrientation = neededOrientation;
             }
             // Move to the next position, increment time only here.
