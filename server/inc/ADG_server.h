@@ -33,8 +33,8 @@ class ADG_Server {
 public:
     ADG_Server(int num_robots, std::string target_output_filename,
                bool save_stats, int screen, int port, int total_sim_step_tick,
-               int ticks_per_second, int look_ahead_dist, int sim_window_tick,
-               int seed);
+               int ticks_per_second, int look_ahead_dist, int look_ahead_tick,
+               int sim_window_tick, int seed);
     void saveStats();
     int getCurrSimStep();
 
@@ -97,11 +97,13 @@ public:
 
     PlanParser parser;
 
+    int look_ahead_tick;
+
     // Stats related
     // Start time of the simulation
     std::chrono::steady_clock::time_point start_time;
     double overall_runtime = 0.0;  // Overall runtime of the simulation
-    string planner_stats = "{}";  // Store planner stats in JSON format
+    string planner_stats = "{}";   // Store planner stats in JSON format
 
     // vector of <n_finished tasks, time in sim seconds>
     std::vector<std::tuple<int, double>> tasks_finished_per_sec;
