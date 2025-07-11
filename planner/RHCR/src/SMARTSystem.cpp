@@ -824,6 +824,7 @@ bool SMARTSystem::load_tasks() {
     spdlog::info("Loading tasks from file: {}", this->task_file);
     this->tasks = vector<list<Task>>(this->num_of_drives);
     if (this->task_file.empty() || this->task_file == "") {
+        spdlog::info("No task file provided, using random tasks.");
         this->random_task = true;
         return false;  // No agent file provided, return false
     }
