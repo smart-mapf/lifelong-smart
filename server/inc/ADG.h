@@ -12,6 +12,9 @@
 #include <vector>
 
 #include "parser.h"
+#include "json.hpp"
+
+using json = nlohmann::json;
 
 typedef std::vector<
     std::tuple<std::string, int, double, std::string, std::pair<double, double>,
@@ -91,6 +94,8 @@ public:
                                        tuple<int, int> init_loc);
     bool getAvailableNodes(int robot_id, std::vector<int>& available_nodes);
     bool updateFinishedNode(int robot_id, int node_id);
+    json getADGStats();
+    // int countFinishedTasks();
     // void setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes);
     std::vector<robotState> computeCommitCut();
     void addMAPFPlan(const std::vector<std::vector<Action>>& plans);
@@ -186,6 +191,7 @@ public:
     std::map<std::string, int> startIndexToRobotID;
     std::vector<robotState> curr_commit;
     int screen;
+    double avg_n_rotation = 0;
 
 private:
     std::vector<std::vector<ADGNode>> graph;

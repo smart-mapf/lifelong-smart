@@ -8,7 +8,8 @@ std::shared_ptr<ADG_Server> server_ptr = nullptr;
 ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
                        bool save_stats, int screen, int port,
                        int total_sim_step_tick, int ticks_per_second,
-                       int look_ahead_dist, int sim_window_tick, int seed)
+                       int look_ahead_dist, int look_ahead_tick,
+                       int sim_window_tick, int seed)
     : output_filename(target_output_filename),
       save_stats(save_stats),
       screen(screen),
@@ -16,6 +17,7 @@ ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
       total_sim_step_tick(total_sim_step_tick),
       ticks_per_second(ticks_per_second),
       sim_window_tick(sim_window_tick),
+      look_ahead_tick(look_ahead_tick),
       seed(seed) {
     adg = std::make_shared<ADG>(num_robots, screen, look_ahead_dist);
 
@@ -26,7 +28,7 @@ ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
     tick_per_robot.resize(numRobots, 0);
 
     // Hacky way to make sure the planner is only invoked once at sim_step 0
-    this->prev_invoke_planner_tick = -sim_window_tick;
+    this->prev_invoke_planner_tick = -look_ahead_tick;
 
     this->parser = PlanParser(screen);
 
@@ -67,6 +69,32 @@ void ADG_Server::saveStats() {
         result[key] = value;
     }
 
+    // Add ADG statistics
+    json adg_stats = adg->getADGStats();
+    for (auto& [key, value] : adg_stats.items()) {
+        result[key] = value;
+    }
+
+    if (result.contains("n_rule_based_calls")) {
+        spdlog::info("Number of rule-based calls: {}",
+                     result["n_rule_based_calls"].get<int>());
+    }
+
+    if (result.contains("mean_avg_rotation")) {
+        spdlog::info("Mean average rotation per robot: {}",
+                     result["mean_avg_rotation"].get<double>());
+    }
+
+    if (result.contains("mean_avg_move")) {
+        spdlog::info("Mean average move per robot: {}",
+                     result["mean_avg_move"].get<double>());
+    }
+
+    if (result.contains("avg_total_actions")) {
+        spdlog::info("Total actions per robot: {}",
+                     result["avg_total_actions"].get<int>());
+    }
+
     // Write the statistics to the output file
     std::ofstream stats(output_filename);
     stats << result.dump(4);  // Pretty print with 4 spaces
@@ -96,7 +124,7 @@ void freezeSimulationIfNecessary(std::string RobotID) {
     // }
 
     // Logic 2: freeze the simulation if simulation tick has passed
-    // more than `sim_window_tick` than `prev_invoke_planner_tick`, or when
+    // more than `look_ahead_tick` than `prev_invoke_planner_tick`, or when
     // planner has never been invoked. Basically, if the planner does not
     // return in time. This is aim at synchronizing the simulation time with
     // world clock time
@@ -107,7 +135,7 @@ void freezeSimulationIfNecessary(std::string RobotID) {
     //              sim_step, server_ptr->prev_invoke_planner_tick,
     //              server_ptr->sim_window_tick);
     if (sim_step == 0 &&
-        server_ptr->prev_invoke_planner_tick == -server_ptr->sim_window_tick &&
+        server_ptr->prev_invoke_planner_tick == -server_ptr->look_ahead_tick &&
         sim_step < server_ptr->total_sim_step_tick) {
         server_ptr->freeze_simulation = true;
         if (server_ptr->screen > 0) {
@@ -120,14 +148,14 @@ void freezeSimulationIfNecessary(std::string RobotID) {
             //           << std::endl;
         }
     } else if (sim_step - server_ptr->prev_invoke_planner_tick >=
-                   server_ptr->sim_window_tick &&
+                   server_ptr->look_ahead_tick &&
                server_ptr->planner_running &&
-               sim_step < server_ptr->total_sim_step_tick) {
+               sim_step <= server_ptr->total_sim_step_tick) {
         server_ptr->freeze_simulation = true;
         if (server_ptr->screen > 0) {
             spdlog::info(
                 "Robot {} requests to freeze the simulation at sim step {} "
-                "due to simulation time exceeding the window tick!",
+                "due to planner not return in time (synchronize)!",
                 robot_id, sim_step);
             // std::cout << "Robot " << robot_id
             //           << " requests to freeze the simulation at sim step "
@@ -326,9 +354,15 @@ void closeServer(rpc::server& srv) {
     // std::cout << "Num of finished tasks: "
     //           << server_ptr->adg->getNumFinishedTasks() << std::endl;
 
-    server_ptr->overall_runtime =
-        static_cast<double>(clock() - server_ptr->start_time) / CLOCKS_PER_SEC;
+    auto end = std::chrono::steady_clock::now();
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
+        end - server_ptr->start_time);
+    server_ptr->overall_runtime = elapsed_seconds.count();
     spdlog::info("Simulation count: {}", server_ptr->tick_per_robot[0]);
+    // spdlog::info("Number of actual finished tasks: {}",
+    //              server_ptr->adg->countFinishedTasks());
+    // spdlog::info("Average num of rotation per robot: {:.2f}",
+    //              server_ptr->adg->avgRotation());
     spdlog::info("Number of finished tasks: {}",
                  server_ptr->adg->getNumFinishedTasks());
     spdlog::info("Overall runtime: {:.2f} seconds",
@@ -438,18 +472,18 @@ bool invokePlanner() {
     // ########## OLD logic: invoke planner every sim_window_tick ##########
     // bool invoke = sim_step % server_ptr->sim_window_tick == 0 &&
     //               sim_step < server_ptr->total_sim_step_tick;
-    // bool invoke =
-    //     (sim_step == 0 || sim_step - server_ptr->prev_invoke_planner_tick >=
-    //                           server_ptr->sim_window_tick) &&
-    //     sim_step < server_ptr->total_sim_step_tick &&
-    //     sim_step != server_ptr->prev_invoke_planner_tick;
-    bool invoke = sim_step - server_ptr->prev_invoke_planner_tick >=
-                      server_ptr->sim_window_tick &&
-                  sim_step < server_ptr->total_sim_step_tick;
+    bool invoke =
+        (sim_step == 0 || sim_step - server_ptr->prev_invoke_planner_tick >=
+                              server_ptr->sim_window_tick) &&
+        sim_step < server_ptr->total_sim_step_tick &&
+        sim_step != server_ptr->prev_invoke_planner_tick;
+    // bool invoke = sim_step - server_ptr->prev_invoke_planner_tick >=
+    //                   server_ptr->sim_window_tick &&
+    //               sim_step < server_ptr->total_sim_step_tick;
 
     // First invoke, start record runtime
     if (invoke && sim_step == 0) {
-        server_ptr->start_time = clock();
+        server_ptr->start_time = std::chrono::steady_clock::now();
         spdlog::info("Start time recorded at sim step 0.");
     }
     // ########## END OLD logic ##########
@@ -537,6 +571,7 @@ int main(int argc, char** argv) {
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
             ("ticks_per_second,f", po::value<int>()->default_value(10), "ticks per second for the simulation (default: 10)")
             ("look_ahead_dist,l", po::value<int>()->default_value(5), "look ahead # of actions for the robot to query its location")
+            ("look_ahead_tick,m", po::value<int>()->default_value(5), "look ahead tick for the robot to query its location")
             ("seed", po::value<int>()->default_value(0), "random seed for the simulation (default: 0)")
             ;
     // clang-format on
@@ -558,7 +593,8 @@ int main(int argc, char** argv) {
         vm["num_robots"].as<int>(), vm["output_file"].as<std::string>(),
         vm["save_stats"].as<bool>(), vm["screen"].as<int>(), port_number,
         vm["total_sim_step_tick"].as<int>(), vm["ticks_per_second"].as<int>(),
-        vm["look_ahead_dist"].as<int>(), vm["sim_window_tick"].as<int>(), seed);
+        vm["look_ahead_dist"].as<int>(), vm["look_ahead_tick"].as<int>(),
+        vm["sim_window_tick"].as<int>(), seed);
 
     // Set up logger
     auto console_logger = spdlog::default_logger()->clone("ADG_Server");

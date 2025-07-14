@@ -104,7 +104,7 @@ def run_lifelong_argos(
     save_stats: bool = False,
     output_log: str = None,
     port_num: int = 8182,
-    n_threads: int = 4,
+    n_threads: int = 1,
     sim_duration: int = 900 * 10,
     sim_window_tick: int = 50,
     ticks_per_second: int = 10,
@@ -116,8 +116,8 @@ def run_lifelong_argos(
     screen: int = 0,
     # RHCR parameters
     scenario: str = "SMART",
-    task: str = "",
-    cutoffTime: int = 5,
+    task: str = "../tasks/kiva_large_w_mode_random.tasks",
+    cutoffTime: int = 2,
     solver: str = "PBS",
     id: bool = False,
     single_agent_solver: str = "SIPP",
@@ -218,15 +218,19 @@ def run_lifelong_argos(
     # 0.5 m / (velocity / 100 m/s).
     look_ahead_dist = np.ceil(cutoffTime / (0.5 /
                                             (velocity / 100))).astype(int)
+    look_ahead_tick = np.ceil(look_ahead_dist * (0.5 / (velocity / 100)) *
+                              ticks_per_second).astype(int)
 
     # Infer the planning window
     # planning window = sim window in timesteps + look_ahead_dist in timesteps
     # The planner should make sure that the plan is valid for the next
     # simulation window + look_ahead_dist
     # Convert sim_window from ticks to timesteps, and velocity from cm/s to m/s
-    plan_window_ts = np.ceil((sim_window_tick / ticks_per_second) *
-                             (velocity / 100) +
-                             look_ahead_dist / 2).astype(int)
+    # plan_window_ts = np.ceil((sim_window_tick / ticks_per_second) *
+    #                          (velocity / 100) +
+    #                          look_ahead_dist / 2).astype(int)
+    plan_window_ts = np.ceil(
+        (sim_window_tick / ticks_per_second) * (velocity / 100)).astype(int)
     # plan_window_ts = int(np.ceil(1.5 * look_ahead_dist * (velocity / 100)))
 
     # Path to the executables
@@ -254,6 +258,7 @@ def run_lifelong_argos(
             f"--total_sim_step_tick={sim_duration}",
             f"--ticks_per_second={ticks_per_second}",
             f"--look_ahead_dist={look_ahead_dist}",
+            f"--look_ahead_tick={look_ahead_tick}",
             f"--seed={seed}",
             f"--sim_window_tick={sim_window_tick}",
         ]
@@ -276,9 +281,12 @@ def run_lifelong_argos(
                 f"--simulation_window={plan_window_ts}",
             ]
         elif planner == "RHCR":
+            # if rotation:
+            #     cutoffTime = int(cutoffTime * 10)
             planner_command = [
                 rhcr_path,
                 f"--map={map_filepath}",
+                # f"--task={task}",
                 f"--agentNum={num_agents}",
                 f"--port_number={port_num}",
                 f"--seed={seed}",

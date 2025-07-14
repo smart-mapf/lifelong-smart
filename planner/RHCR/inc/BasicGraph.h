@@ -9,7 +9,6 @@ class BasicGraph
 {
 public:
     vector<std::string> types;
-    unordered_map<int, vector<double>> heuristics;
 
     string map_name;
 	virtual bool load_map(string fname) = 0;
@@ -44,6 +43,7 @@ public:
     }
 
 	vector<double> compute_heuristics(int root_location); // compute distances from all lacations to the root location
+    double get_heuristic(int goal_loc, int start_loc, int start_ori = -1) const;
 	bool load_heuristics_table(std::ifstream& myfile);
 	void save_heuristics_table(string fname);
     bool _save_heuristics_table;
@@ -72,4 +72,7 @@ public:
         {2, 3},
         {3, 2},
     };
+
+protected:
+    unordered_map<int, vector<double>> heuristics;
 };

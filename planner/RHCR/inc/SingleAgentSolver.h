@@ -26,7 +26,7 @@ public:
 
 	unordered_map<int, double> travel_times;
 
-	double compute_h_value(const BasicGraph& G, int curr, int goal_id,
+	double compute_h_value(const BasicGraph& G, State curr, int goal_id,
 		const vector<Task >& goal_location) const;
 
     virtual Path run(

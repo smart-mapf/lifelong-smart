@@ -53,7 +53,7 @@ Path StateTimeAStar::run(
 	runtime = 0;
 	clock_t t = std::clock();
 
-	double h_val = compute_h_value(G, start.location, 0, goal_location);
+	double h_val = compute_h_value(G, start, 0, goal_location);
 	if (h_val > INT_MAX)
 	{
 		cout << "The start and goal locations are disconnected!" << endl;
@@ -113,7 +113,7 @@ Path StateTimeAStar::run(
             {
                 // compute cost to next_id via curr node
                 double next_g_val = curr->g_val + G.get_weight(curr->state.location, next_state.location);
-                double next_h_val = compute_h_value(G, next_state.location, curr->goal_id, goal_location);
+                double next_h_val = compute_h_value(G, next_state, curr->goal_id, goal_location);
                 if (next_h_val >= INT_MAX) // This vertex cannot reach the goal vertex
                     continue;
                 int next_conflicts = curr->conflicts;
@@ -202,7 +202,7 @@ Path StateTimeAStar::run(
             // of other agents.
             auto timesteps = rt.getConstrainedTimesteps(start.location);
             auto wait_cost = G.get_weight(start.location, start.location);
-            auto h = compute_h_value(G, start.location, 0, goal_location);
+            auto h = compute_h_value(G, start, 0, goal_location);
             for (int t : timesteps)
             {
                 State s(start.location, t, start.orientation);
@@ -256,7 +256,7 @@ void StateTimeAStar::findTrajectory(const BasicGraph& G,
     releaseClosedListNodes();
 
     // generate start and add it to the OPEN list
-    double h_val = compute_h_value(G, start.location, 0, goal_locations);
+    double h_val = compute_h_value(G, start, 0, goal_locations);
     auto root = new StateTimeAStarNode(start, 0, h_val, nullptr, 0);
 
     num_generated++;
@@ -299,7 +299,7 @@ void StateTimeAStar::findTrajectory(const BasicGraph& G,
                 continue;
             // compute cost to next_id via curr node
             double next_g_val = curr->g_val + G.get_weight(curr->state.location, next_state.location) * travel_time;
-            double next_h_val = compute_h_value(G, next_state.location, curr->goal_id, goal_locations);
+            double next_h_val = compute_h_value(G, next_state, curr->goal_id, goal_locations);
             if (next_h_val >= INT_MAX) // This vertex cannot reach the goal vertex
                 continue;
 

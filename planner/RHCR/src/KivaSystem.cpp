@@ -787,7 +787,7 @@ json KivaSystem::summarizeResult(){
 	double finished_len_mean, finished_len_std;
     double num_rotations_mean, num_rotations_std;
     // double num_rev_action_mean, num_rev_action_std;
-    double avg_task_len = this->G.get_avg_task_len(this->G.heuristics);
+    // double avg_task_len = this->G.get_avg_task_len(this->G.heuristics);
 
 
 	std::tie(tile_usage_mean, tile_usage_std) = helper::mean_std(tile_usage);
@@ -805,7 +805,7 @@ json KivaSystem::summarizeResult(){
     // std::cout << "Std of edge pair usage: " << edge_pair_usage_std << std::endl;
 	std::cout << "Average wait at each timestep: " << num_wait_mean << std::endl;
 	std::cout << "Average path length of each finished task: " << finished_len_mean << std::endl;
-    std::cout << "Average path length of each task: " << avg_task_len << std::endl;
+    // std::cout << "Average path length of each task: " << avg_task_len << std::endl;
     std::cout << "Average number of turns: " << num_rotations_mean << std::endl;
     // std::cout << "Average number of reversed actions in highway: " << num_rev_action_mean << std::endl;
     // std::cout << "Length of longest common path: " << subpath.size()
@@ -843,7 +843,7 @@ json KivaSystem::summarizeResult(){
         // {"num_rev_action_mean", num_rev_action_mean},
         // {"num_rev_action_std", num_rev_action_std},
         // {"tasks_finished_timestep", tasks_finished_timestep},
-        {"avg_task_len", avg_task_len},
+        // {"avg_task_len", avg_task_len},
         // {"congested", congested_sim},
         // {"longest_common_path", subpath},
         {"stop_at_timestep", this->timestep},

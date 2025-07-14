@@ -795,7 +795,8 @@ json GreyOrangeSystem::summarizeResult() {
             if (task.finish_t != 0 && !task.is_parking) {
                 // Compute the ideal finished task length
                 double ideal_task_len =
-                    this->G.heuristics[task.location][prev_task.location];
+                    this->G.get_heuristic(task.location, prev_task.location,
+                                          prev_task.orientation);
 
                 // path inefficiency = (actual path length - waiting) / ideal
                 // path
@@ -921,7 +922,7 @@ json GreyOrangeSystem::summarizeResult() {
     double finished_len_mean, finished_len_std;
     double num_rotations_mean, num_rotations_std;
     // double num_rev_action_mean, num_rev_action_std;
-    double avg_task_len = this->G.get_avg_task_len(this->G.heuristics);
+    // double avg_task_len = this->G.get_avg_task_len(this->G.heuristics);
     // vector<vector<vector<double>>> edge_usage_matrix;
     // vector<vector<double>> vertex_wait_matrix;
 
@@ -949,8 +950,8 @@ json GreyOrangeSystem::summarizeResult() {
               << std::endl;
     std::cout << "Average path length of each finished task: "
               << finished_len_mean << std::endl;
-    std::cout << "Average path length of each task: " << avg_task_len
-              << std::endl;
+    // std::cout << "Average path length of each task: " << avg_task_len
+    //           << std::endl;
     std::cout << "Average number of turns: " << num_rotations_mean << std::endl;
     // std::cout << "Average number of reversed actions in highway: " <<
     // num_rev_action_mean << std::endl;
@@ -988,7 +989,7 @@ json GreyOrangeSystem::summarizeResult() {
               // {"num_rev_action_mean", num_rev_action_mean},
               // {"num_rev_action_std", num_rev_action_std},
               // {"tasks_finished_timestep", tasks_finished_timestep},
-              {"avg_task_len", avg_task_len},
+            //   {"avg_task_len", avg_task_len},
               // {"congested", congested_sim},
               //   {"longest_common_path", subpath},
               {"stop_at_timestep", this->timestep},

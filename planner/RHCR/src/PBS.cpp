@@ -820,10 +820,13 @@ bool PBS::run(
     for (int i = 0; i < num_of_agents; i++)
     {
         int start_loc = starts[i].location;
+        int start_ori = starts[i].orientation;
         for (const auto& goal : goal_locations[i])
         {
-            min_sum_of_costs += G.heuristics.at(goal.location)[start_loc];
+            min_sum_of_costs += G.get_heuristic(goal.location, start_loc,
+                                                start_ori);
             start_loc = goal.location;
+            start_ori = goal.orientation;
         }
     }
 	if (screen > 0) // 1 or 2
@@ -1073,7 +1076,7 @@ void PBS::get_solution()
         vector< vector<double> > h_values(goal_locations[k].size());
         for (int j = 0; j < (int) goal_locations[k].size(); j++)
         {
-            h_values[j] = G.heuristics.at(goal_locations[k][j]);
+            h_values[j] = G.get_heuristic(goal_locations[k][j]);
         }
         solution[k] = path_planner.run(G, starts[k], goal_locations[k], rt, h_values);
         if (solution[k].empty())
