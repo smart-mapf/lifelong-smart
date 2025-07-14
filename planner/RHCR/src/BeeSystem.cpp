@@ -351,7 +351,7 @@ int BeeSystem::get_flowtime_lowerbound() const
 		for (auto task : finished_tasks[k])
 		{
 			if (task.finish_t != 0)
-				rst += G.heuristics.at(task.location)[prev];
+				rst += G.get_heuristic(task.location, prev);
 			prev = task.location;
 		}
 	}

@@ -241,29 +241,39 @@ void BasicGraph::save_heuristics_table(std::string fname)
 std::vector<double> BasicGraph::compute_heuristics(int root_location)
 {
     // std::cout << "start computing h for loc = "<< root_location <<std::endl;
-    std::vector<double> res(this->size(), DBL_MAX);
+    std::vector<double> res;
+    if (consider_rotation)
+    {
+        // If considering rotation, we need to have 4 times the size of the grid
+        res.resize(this->size() * 4, DBL_MAX);
+    }
+    else
+    {
+        // If not considering rotation, we only need the size of the grid
+        res.resize(this->size(), DBL_MAX);
+    }
 	fibonacci_heap< StateTimeAStarNode*, compare<StateTimeAStarNode::compare_node> > heap;
     unordered_set< StateTimeAStarNode*, StateTimeAStarNode::Hasher, StateTimeAStarNode::EqNode> nodes;
 
     State root_state(root_location);
     // TODO: rotational heuristic is creating issue for some planners (lower
     // throughput compared to no rotation). Check back later.
-    // if(consider_rotation)
-    // {
-    //     for (auto neighbor : get_reverse_neighbors(root_state))
-    //     {
-    //         StateTimeAStarNode* root = new StateTimeAStarNode(State(root_location, -1,
-    //                 get_direction(neighbor.location, root_state.location)), 0, 0, nullptr, 0);
-    //         root->open_handle = heap.push(root);  // add root to heap
-    //         nodes.insert(root);       // add root to hash_table (nodes)
-    //     }
-    // }
-    // else
-    // {
+    if(consider_rotation)
+    {
+        for (auto neighbor : get_reverse_neighbors(root_state))
+        {
+            StateTimeAStarNode* root = new StateTimeAStarNode(State(root_location, -1,
+                    get_direction(neighbor.location, root_state.location)), 0, 0, nullptr, 0);
+            root->open_handle = heap.push(root);  // add root to heap
+            nodes.insert(root);       // add root to hash_table (nodes)
+        }
+    }
+    else
+    {
         StateTimeAStarNode* root = new StateTimeAStarNode(root_state, 0, 0, nullptr, 0);
         root->open_handle = heap.push(root);  // add root to heap
         nodes.insert(root);       // add root to hash_table (nodes)
-    // }
+    }
 
 	while (!heap.empty())
     {
@@ -274,28 +284,38 @@ std::vector<double> BasicGraph::compute_heuristics(int root_location)
             double curr_weight = get_weight(next_state.location,
                                             curr->state.location);
             double next_g_val;
+            // double next_g_val = curr->g_val + curr_weight * rotation_time;
             // Add in rotation time
-            // if (consider_rotation)
-            // {
-            //     // Rotating
-            //     if (curr->state.orientation != next_state.orientation)
-            //     {
-            //         int degree = get_rotate_degree(curr->state.orientation,
-            //                                        next_state.orientation);
-            //         next_g_val = curr->g_val +
-            //                      degree * rotation_time * curr_weight;
-            //     }
-            //     // Moving
-            //     else
-            //     {
-            //         next_g_val = curr->g_val + curr_weight;
-            //     }
-            // }
+            if (consider_rotation)
+            {
+                // Rotating
+                if (curr->state.orientation != next_state.orientation)
+                {
+                    // int degree = get_rotate_degree(next_state.orientation,
+                    //                                curr->state.orientation);
+                    // if (degree > 1)
+                    // {
+                    //     spdlog::warn("Rotating {} degrees from {} to {}",
+                    //               degree * 90, curr->state.orientation,
+                    //               next_state.orientation);
+                    //     exit(1);
+                    // }
+                    // degree should always be 1
+                    int degree = 1;
+                    next_g_val = curr->g_val +
+                                 degree * rotation_time * curr_weight;
+                }
+                // Moving
+                else
+                {
+                    next_g_val = curr->g_val + curr_weight;
+                }
+            }
             // Not considering rotation, only moving
-            // else
-            // {
+            else
+            {
                 next_g_val = curr->g_val + curr_weight;
-            // }
+            }
             StateTimeAStarNode* next = new StateTimeAStarNode(next_state, next_g_val, 0, nullptr, 0);
 			auto it = nodes.find(next);
 			if (it == nodes.end())
@@ -319,7 +339,16 @@ std::vector<double> BasicGraph::compute_heuristics(int root_location)
 	for (auto it = nodes.begin(); it != nodes.end(); it++)
 	{
         StateTimeAStarNode* s = *it;
-		res[s->state.location] = std::min(s->g_val, res[s->state.location]);
+        if (consider_rotation)
+        {
+            int idx = s->state.location * 4 + s->state.orientation;
+            res[idx] = std::min(s->g_val, res[idx]);
+        }
+        else
+        {
+            int idx = s->state.location;
+            res[idx] = std::min(s->g_val, res[idx]);
+        }
 		delete (s);
 	}
 	nodes.clear();
@@ -339,4 +368,49 @@ void BasicGraph::copy(const BasicGraph& copy)
     rows = copy.get_rows();
     cols = copy.get_cols();
     weights = copy.get_weights();
+}
+
+double BasicGraph::get_heuristic(int goal_loc, int start_loc,
+                                 int start_ori) const
+{
+    if (this->heuristics.find(goal_loc) == this->heuristics.end()){
+        std::cout<< "error goal_loc ="<<goal_loc<<", not find in G.h"<<std::endl;
+        exit(1);
+    }
+    if (this->heuristics.at(goal_loc).size() <= start_loc){
+        std::cout << "error curr loc ="<<start_loc<<", larger than "<<this->heuristics.at(goal_loc).size()<<std::endl;
+        exit(1);
+    }
+    // No start orientation is given.
+    if (start_ori == -1)
+    {
+        // Considering rotation. Take the min of the four start orientations.
+        if (consider_rotation)
+        {
+            double min_heuristic = DBL_MAX;
+            for (int ori = 0; ori < 4; ori++)
+            {
+                double h_val = this->heuristics.at(goal_loc)[start_loc * 4 + ori];
+                if (h_val < min_heuristic)
+                    min_heuristic = h_val;
+            }
+            return min_heuristic;
+        }
+
+        // Not considering rotation.
+        return this->heuristics.at(goal_loc)[start_loc];
+    }
+    else
+    {
+        // Must be considering rotation
+        if (!consider_rotation)
+        {
+            // std::cerr << "Error: get_heuristic called with start_ori != -1 "
+            //           << "but consider_rotation is false." << std::endl;
+            spdlog::warn("Error: get_heuristic called with start_ori != -1 "
+                         "but consider_rotation is false.");
+            exit(1);
+        }
+        return this->heuristics.at(goal_loc)[start_loc * 4 + start_ori];
+    }
 }

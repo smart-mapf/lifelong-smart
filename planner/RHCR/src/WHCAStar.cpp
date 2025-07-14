@@ -128,11 +128,14 @@ bool WHCAStar::run(
             min_sum_of_costs = 0;
             for (int i = 0; i < num_of_agents; i++)
             {
-                int start = starts[i].location;
+                int start_loc = starts[i].location;
+                int start_ori = starts[i].orientation;
                 for (const auto& goal : goal_locations[i])
                 {
-                    min_sum_of_costs += G.heuristics.at(goal.location)[start];
-                    start = goal.location;
+                    min_sum_of_costs += G.get_heuristic(goal.location,
+                                                        start_loc, start_ori);
+                    start_loc = goal.location;
+                    start_ori = goal.orientation;
                 }
             }
             avg_path_length = 0;

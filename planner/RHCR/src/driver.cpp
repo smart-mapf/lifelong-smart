@@ -369,7 +369,7 @@ int main(int argc, char** argv)
             return -1;
         }
 		MAPFSolver* solver = set_solver(G, vm);
-		SMARTSystem system(G, *solver);
+		SMARTSystem system(G, *solver, vm["task"].as<string>());
 		set_parameters(system, vm);
         system.start_time = start_time;
 		G.preprocessing(system.consider_rotation, "map");

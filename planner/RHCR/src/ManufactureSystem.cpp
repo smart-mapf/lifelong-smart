@@ -450,7 +450,7 @@ json ManufactureSystem::simulate(int simulation_time)
 	double num_wait_mean, num_wait_std;
 	double finished_len_mean, finished_len_std;
     double num_turns_mean, num_turns_std;
-    double avg_task_len = this->G.get_avg_task_len(this->G.heuristics);
+    // double avg_task_len = this->G.get_avg_task_len(this->G.heuristics);
 
 	std::tie(tile_usage_mean, tile_usage_std) = helper::mean_std(tile_usage);
 	std::tie(num_wait_mean, num_wait_std) = helper::mean_std(num_wait);
@@ -463,7 +463,7 @@ json ManufactureSystem::simulate(int simulation_time)
 	std::cout << "Std of tile usage: " << tile_usage_std << std::endl;
 	std::cout << "Average wait at each timestep: " << num_wait_mean << std::endl;
 	std::cout << "Average path length of each finished task: " << finished_len_mean << std::endl;
-    std::cout << "Average path length of each task: " << avg_task_len << std::endl;
+    // std::cout << "Average path length of each task: " << avg_task_len << std::endl;
     std::cout << "Average number of turns: " << num_turns_mean << std::endl;
 
 	update_start_locations();
@@ -488,7 +488,7 @@ json ManufactureSystem::simulate(int simulation_time)
         {"num_turns_mean", num_turns_mean},
         {"num_turns_std", num_turns_std},
         {"tasks_finished_timestep", tasks_finished_timestep},
-        {"avg_task_len", avg_task_len},
+        // {"avg_task_len", avg_task_len},
         {"congested", congested_sim},
         {"n_mapf_calls", this->n_mapf_calls},
         {"n_rule_based_calls", this->n_rule_based_calls}

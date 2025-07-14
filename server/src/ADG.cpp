@@ -461,12 +461,15 @@ bool ADG::getAvailableNodes(int robot_id, std::vector<int>& available_nodes) {
 bool ADG::updateFinishedNode(int robot_id, int node_id) {
     int latest_finished_idx = finished_node_idx[robot_id];
     if (node_id <= latest_finished_idx) {
-        std::cerr << "Reconfirming nodes!" << std::endl;
+        // std::cerr << "Reconfirming nodes!" << std::endl;
+        spdlog::warn("ADG::updateFinishedNode: Reconfirming nodes!");
         return true;
     } else {
         if (not enqueue_nodes_idx[robot_id].empty() and
             node_id > enqueue_nodes_idx[robot_id].back()) {
-            std::cerr << "Confirm for nodes never enqueue!" << std::endl;
+            // std::cerr << "Confirm for nodes never enqueue!" << std::endl;
+            spdlog::warn("ADG::updateFinishedNode: Confirm for nodes never "
+                         "enqueue!");
             return false;
         } else {
             // remove type-2 edges
@@ -631,6 +634,90 @@ set<int> ADG::updateFinishedTasks() {
         }
     }
     return new_finished_tasks;
+}
+
+// int ADG::countFinishedTasks() {
+//     if (graph.empty()) {
+//         return 0;
+//     }
+//     // finish_tasks.clear();
+//     // finish_tasks.resize(num_robots);
+//     int n_finished_tasks = 0;
+//     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+//         for (int j = finished_node_idx[agent_id]; j >= 0; j--) {
+//             // Current ADGNode has a non-negative task_id, then we finish a
+//             // task.
+//             // Note: this function is invoked after ComputeCommitCut, which
+//             // removed actions that are to be replaced by future plans.
+//             int curr_task = graph[agent_id][j].action.task_id;
+//             // cout << "Agent " << agent_id << ", Node "
+//             //      << graph[agent_id][j].node_id
+//             //      << ", Action: " << graph[agent_id][j].action.type << " at
+//             ("
+//             //      << graph[agent_id][j].action.start.first << ", "
+//             //      << graph[agent_id][j].action.start.second << ") -> ("
+//             //      << graph[agent_id][j].action.goal.first << ", "
+//             //      << graph[agent_id][j].action.goal.second << ")"
+//             //      << ", Task ID: " << curr_task << std::endl;
+//             if (curr_task >= 0) {
+//                 n_finished_tasks++;
+//             }
+//         }
+//     }
+//     return n_finished_tasks;
+// }
+
+json ADG::getADGStats() {
+    json result;
+    if (graph.empty()) {
+        return result;
+    }
+    double total_rotation = 0.0;
+    double total_move = 0.0;
+    int n_finished_tasks = 0;
+    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+        for (int j = 0; j < finished_node_idx[agent_id]; j++) {
+            // Current ADGNode has a non-negative task_id, then we finish a
+            // task.
+            if (graph[agent_id][j].action.task_id >= 0) {
+                n_finished_tasks++;
+            }
+
+            // Count the number of different actions
+            if (graph[agent_id][j].action.type == 'T') {
+                if (j > 0)
+                {
+                    int degree;
+                    int abs_ = abs(
+                        graph[agent_id][j].action.orientation -
+                        graph[agent_id][j - 1].action.orientation);
+                    if (graph[agent_id][j].action.orientation == graph[agent_id][j - 1].action.orientation)
+                        degree = 0;
+                    else if (abs_ == 1 || abs_ == 3)
+                        degree = 1;
+                    else
+                    {
+                        spdlog::warn(
+                            "ADG::getADGStats: Unexpected orientation change "
+                            "from {} to {}",
+                            graph[agent_id][j - 1].action.orientation,
+                            graph[agent_id][j].action.orientation);
+                            degree = 2;
+                    }
+                    total_rotation += degree;
+                }
+                else
+                    total_rotation++;
+            } else if (graph[agent_id][j].action.type == 'M') {
+                total_move++;
+            }
+        }
+    }
+    int total_actions = total_rotation + total_move;
+    result["mean_avg_rotation"] = total_rotation / num_robots;
+    result["mean_avg_move"] = total_move / num_robots;
+    result["avg_total_actions"] = total_actions / num_robots;
+    return result;
 }
 
 void ADG::showGraph() {

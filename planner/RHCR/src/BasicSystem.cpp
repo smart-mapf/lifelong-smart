@@ -655,7 +655,7 @@ void BasicSystem::save_results()
             {
                 output << task.location << "," << task.finish_t << ",";
                 if (task.finish_t != 0)
-                    output << G.heuristics.at(task.location)[prev];
+                    output << G.get_heuristic(task.location, prev);
                 output << ";";
                 prev = task.location;
             }
