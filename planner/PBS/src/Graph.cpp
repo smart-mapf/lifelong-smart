@@ -61,6 +61,7 @@ bool Graph::loadMapFromBench() {
     this->weights.resize(num_of_rows * num_of_cols);
 
     my_map.resize(map_size, false);
+    this->types.resize(map_size);
     // read map (and start/goal locations)
     for (int i = 0; i < num_of_rows; i++) {
         getline(myfile, line);
@@ -68,12 +69,33 @@ bool Graph::loadMapFromBench() {
             int id = linearizeCoordinate(i, j);
             this->weights[id].clear();
             this->weights[id].resize(5, WEIGHT_MAX);
-            my_map[id] = (line[j] != '.' and line[j] != 'T');
-            if (not my_map[id]) {
-                // if it is not an obstacle, add it to free locations
-                free_locations.push_back(id);
-                this->weights[id][4] = 1;  // can wait here
+            // my_map[id] = (line[j] != '.' and line[j] != 'T');
+            // if (not my_map[id]) {
+            //     // if it is not an obstacle, add it to free locations
+            //     free_locations.push_back(id);
+            //     this->weights[id][4] = 1;  // can wait here
+            // }
+
+            // Add in workstations and endpoints for warehouse map
+            if (line[j] == 'w') {
+                workstations.push_back(id);
+                warehouse_task_locs.push_back(id);
+                this->types[id] = "Workstation";
+            } else if (line[j] == 'e') {
+                endpoints.push_back(id);
+                warehouse_task_locs.push_back(id);
+                this->types[id] = "Endpoint";
+            } else if (line[j] == '.') {
+                this->types[id] = "Free";
+                empty_locations.push_back(id);
+            } else if (line[j] == 'T' || line[j] == '@') {
+                this->types[id] = "Obstacle";
+                my_map[id] = true;  // mark as obstacle
             }
+
+            if (!my_map[id])
+                this->weights[id][4] = 1;  // can wait here
+            free_locations.push_back(id);
         }
     }
     myfile.close();
@@ -113,18 +135,40 @@ bool Graph::loadMapFromJson() {
     this->weights.clear();
     this->weights.resize(num_of_rows * num_of_cols);
 
+    this->types.resize(map_size);
+
     for (int i = 0; i < this->num_of_rows; i++) {
         string line = j["layout"][i];
         for (int j = 0; j < this->num_of_cols; j++) {
             int id = linearizeCoordinate(i, j);
             this->weights[id].clear();
             this->weights[id].resize(5, WEIGHT_MAX);
-            this->my_map[id] = (line[j] != '.' and line[j] != 'T');
-            if (not this->my_map[id]) {
-                // if it is not an obstacle, add it to free locations
-                free_locations.push_back(id);
-                this->weights[id][4] = 1;  // can wait here
+            // this->my_map[id] = (line[j] != '.' and line[j] != 'T');
+            // if (not this->my_map[id]) {
+            //     // if it is not an obstacle, add it to free locations
+            //     free_locations.push_back(id);
+            //     this->weights[id][4] = 1;  // can wait here
+            // }
+            // Add in workstations and endpoints for warehouse map
+            if (line[j] == 'w') {
+                workstations.push_back(id);
+                warehouse_task_locs.push_back(id);
+                this->types[id] = "Workstation";
+            } else if (line[j] == 'e') {
+                endpoints.push_back(id);
+                warehouse_task_locs.push_back(id);
+                this->types[id] = "Endpoint";
+            } else if (line[j] == '.') {
+                this->types[id] = "Free";
+                empty_locations.push_back(id);
+            } else if (line[j] == 'T' || line[j] == '@') {
+                this->types[id] = "Obstacle";
+                my_map[id] = true;  // mark as obstacle
             }
+
+            if (!my_map[id])
+                this->weights[id][4] = 1;  // can wait here
+            free_locations.push_back(id);
         }
     }
 
@@ -154,6 +198,19 @@ bool Graph::loadMapFromJson() {
     }
 
     myfile.close();
+
+    if (screen > 0) {
+        spdlog::info("Loaded map from JSON file: {}", map_fname);
+        spdlog::info("Number of rows: {}, Number of cols: {}", num_of_rows,
+                     num_of_cols);
+        spdlog::info("Map size: {}", map_size);
+        spdlog::info("Number of workstations: {}", workstations.size());
+        spdlog::info("Number of endpoints: {}", endpoints.size());
+        spdlog::info("Number of warehouse task locations: {}",
+                     warehouse_task_locs.size());
+        spdlog::info("Number of empty locations: {}", empty_locations.size());
+    }
+
     return true;
 }
 
@@ -344,10 +401,16 @@ int Graph::getDirection(int from, int to) const {
 }
 
 void Graph::computeHeuristics() {
+    vector<int> h_locations;
+    // Add free_location and task locations to h_locations
+    h_locations.insert(h_locations.end(), free_locations.begin(),
+                       free_locations.end());
+    h_locations.insert(h_locations.end(), warehouse_task_locs.begin(),
+                       warehouse_task_locs.end());
     if (this->screen > 0)
-        cout << "Computing heuristics for " << free_locations.size()
+        cout << "Computing heuristics for " << h_locations.size()
              << " free locations." << endl;
-    for (int loc : free_locations) {
+    for (int loc : h_locations) {
         // Compute heuristics for each free location
         vector<double> heuristics_for_loc;
         vector<int> d_heuristics_for_loc;

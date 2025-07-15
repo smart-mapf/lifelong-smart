@@ -338,7 +338,7 @@ PBSNode* PBS::selectNode() {
 void PBS::printPaths() const {
     for (int i = 0; i < num_of_agents; i++) {
         cout << "Agent " << i << " ("
-             << search_engines[i]->instance.graph.heuristics.at(
+             << search_engines[i]->instance.graph->heuristics.at(
                     search_engines[i]
                         ->goal_location)[search_engines[i]->start_location]
              << " -->" << paths[i]->size() - 1 << "): ";
@@ -513,10 +513,10 @@ void PBS::savePaths(const string& fileName) const {
         output << "Agent " << i << ": ";
         for (const auto& t : *paths[i])
             output << "("
-                   << search_engines[0]->instance.graph.getRowCoordinate(
+                   << search_engines[0]->instance.graph->getRowCoordinate(
                           t.location)
                    << ","
-                   << search_engines[0]->instance.graph.getColCoordinate(
+                   << search_engines[0]->instance.graph->getColCoordinate(
                           t.location)
                    << ")->";
         output << endl;
@@ -537,17 +537,18 @@ std::vector<std::vector<std::tuple<int, int, double, int>>> PBS::getPaths() {
         cout << "Agent " << i << ": ";
         for (const auto& t : *paths[i]) {
             new_mapf_plan[i].emplace_back(
-                search_engines[0]->instance.graph.getRowCoordinate(t.location),
-                search_engines[0]->instance.graph.getColCoordinate(t.location),
+                search_engines[0]->instance.graph->getRowCoordinate(t.location),
+                search_engines[0]->instance.graph->getColCoordinate(t.location),
                 static_cast<double>(tmp_step), t.task_id);
             if (screen > 0) {
-                std::cout << "("
-                          << search_engines[0]->instance.graph.getRowCoordinate(
-                                 t.location)
-                          << ","
-                          << search_engines[0]->instance.graph.getColCoordinate(
-                                 t.location)
-                          << "," << t.task_id << ")->";
+                std::cout
+                    << "("
+                    << search_engines[0]->instance.graph->getRowCoordinate(
+                           t.location)
+                    << ","
+                    << search_engines[0]->instance.graph->getColCoordinate(
+                           t.location)
+                    << "," << t.task_id << ")->";
                 if (t.task_id >= 0) {
                     std::cout << "End of task " << t.task_id << " at step "
                               << tmp_step << " ";

@@ -607,6 +607,17 @@ bool PBS::generate_root_node()
         paths[i] = &dummy_start->paths.back().second;
         dummy_start->makespan = std::max(dummy_start->makespan, paths[i]->size() - 1);
         dummy_start->g_val += path_cost;
+
+        // Update runtime
+        runtime = (double)(std::clock() - start) / CLOCKS_PER_SEC;
+        if (runtime > this->time_limit)
+		{  // timeout
+            solution_cost = -1;
+			solution_found = false;
+            spdlog::info("PBS: Timeout while generating root node! ({}s)", runtime);
+            print_results();
+			return false;
+		}
 	}
     find_conflicts(dummy_start->conflicts);
     if (!lazyPriority)

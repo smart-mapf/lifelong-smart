@@ -28,8 +28,8 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
 
     // build constraint table
     auto t = clock();
-    ConstraintTable constraint_table(instance.graph.num_of_cols,
-                                     instance.graph.map_size);
+    ConstraintTable constraint_table(instance.graph->num_of_cols,
+                                     instance.graph->map_size);
     for (int a : higher_agents) {
         constraint_table.insert2CT(*paths[a]);
     }
@@ -55,13 +55,13 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
 
     // generate start and add it to the OPEN list
     // auto start = new SIPPNode(start_location, 0,
-    // max(instance.graph.heuristics.at(goal_location)[start_location],
+    // max(instance.graph->heuristics.at(goal_location)[start_location],
     // holding_time), nullptr, 0,
     //                           get<1>(interval), get<1>(interval),
     //                           get<2>(interval), get<2>(interval));
     auto start = new SIPPNode(
         start_location, 0,
-        instance.graph.heuristics.at(goal_location)[start_location], nullptr, 0,
+        instance.graph->heuristics.at(goal_location)[start_location], nullptr, 0,
         get<1>(interval), get<1>(interval), get<2>(interval), get<2>(interval));
     // min_f_val = max(holding_time, start->getFVal());
     min_f_val = start->getFVal();
@@ -85,12 +85,12 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
         }
 
         // move to neighboring locations
-        for (int next_location : instance.graph.getNeighbors(curr->location)) {
+        for (int next_location : instance.graph->getNeighbors(curr->location)) {
             for (auto& i : reservation_table.get_safe_intervals(
                      curr->location, next_location, curr->timestep + 1,
                      curr->high_expansion + 1)) {
                 // Check if the edge if blocked.
-                if (!instance.graph.validMove(curr->location, next_location))
+                if (!instance.graph->validMove(curr->location, next_location))
                     continue;
 
                 int next_high_generation, next_timestep, next_high_expansion;
@@ -102,18 +102,18 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
                 int wait_time = next_timestep - curr->timestep - 1;
                 // cost of waiting at the current location
                 double wait_cost =
-                    instance.graph.getWeight(curr->location, curr->location);
+                    instance.graph->getWeight(curr->location, curr->location);
                 double move_cost =
-                    instance.graph.getWeight(curr->location, next_location);
+                    instance.graph->getWeight(curr->location, next_location);
                 // new g val considers the wait cost and movement cost
                 double next_g_val =
                     curr->g_val + wait_time * wait_cost + move_cost;
                 // int next_g_val = next_timestep;
                 // double next_h_val =
-                // max(instance.graph.heuristics.at(goal_location)[next_location],
+                // max(instance.graph->heuristics.at(goal_location)[next_location],
                 // curr->getFVal() - next_g_val);  // path max
                 double next_h_val =
-                    instance.graph.heuristics.at(goal_location)[next_location];
+                    instance.graph->heuristics.at(goal_location)[next_location];
                 // if (next_g_val + next_h_val >
                 // reservation_table.constraint_table.length_max)
                 //     continue;
@@ -135,7 +135,7 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
 
         // wait at the current location
         int exp_duration =
-            instance.graph.d_heuristics.at(goal_location)[curr->location];
+            instance.graph->d_heuristics.at(goal_location)[curr->location];
         if (curr->high_expansion == curr->high_generation and
             reservation_table.find_safe_interval(interval, curr->location,
                                                  curr->high_expansion) and

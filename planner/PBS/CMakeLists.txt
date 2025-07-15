@@ -14,11 +14,12 @@ add_executable(pbs ${SOURCES})
 
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS program_options system filesystem)
+find_package(spdlog REQUIRED)
 include_directories( ${Boost_INCLUDE_DIRS} )
 
 # Find Threads
 find_package(Threads REQUIRED)          # portable way
 
-target_link_libraries(pbs ${Boost_LIBRARIES} rpc pthread)
+target_link_libraries(pbs ${Boost_LIBRARIES} rpc pthread spdlog::spdlog)
 
 target_compile_options(pbs PRIVATE -pthread)   # adds -D_REENTRANT automatically

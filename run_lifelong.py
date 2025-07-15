@@ -61,7 +61,7 @@ def run_simulator(args, timeout: float = None, output_log: str = None):
     server_process = subprocess.Popen(server_command, stdout=f, stderr=f)
 
     # Wait for a short period to ensure the server has started
-    time.sleep(10)
+    time.sleep(1)
 
     # Start the client process
     client_process = subprocess.Popen(client_command, stdout=f, stderr=f)
@@ -110,17 +110,18 @@ def run_lifelong_argos(
     ticks_per_second: int = 10,
     velocity: float = 200.0,
     look_ahead_dist: int = 10,
-    planner: str = "RHCR",  # ["PBS", "RHCR"]
+    planner: str = "PBS",  # ["PBS", "RHCR"]
     container: bool = False,
     seed: int = 42,
     screen: int = 0,
     # RHCR parameters
+    planning_window: int = 50,
     scenario: str = "SMART",
     task: str = "../tasks/kiva_large_w_mode_random.tasks",
     cutoffTime: int = 2,
     solver: str = "PBS",
     id: bool = False,
-    single_agent_solver: str = "SIPP",
+    single_agent_solver: str = "ASTAR",
     lazyP: bool = False,
     travel_time_window: int = 0,
     potential_function: str = "NONE",
@@ -231,6 +232,9 @@ def run_lifelong_argos(
     #                          look_ahead_dist / 2).astype(int)
     plan_window_ts = np.ceil(
         (sim_window_tick / ticks_per_second) * (velocity / 100)).astype(int)
+    if planner in ["RHCR"]:
+        plan_window_ts = np.max([plan_window_ts, planning_window])
+    logger.info(f"Planning window in timesteps: {plan_window_ts}")
     # plan_window_ts = int(np.ceil(1.5 * look_ahead_dist * (velocity / 100)))
 
     # Path to the executables
@@ -278,6 +282,7 @@ def run_lifelong_argos(
                 f"--portNum={port_num}",
                 f"--seed={seed}",
                 f"--screen={screen}",
+                f"--cutoffTime={cutoffTime}",
                 f"--simulation_window={plan_window_ts}",
             ]
         elif planner == "RHCR":

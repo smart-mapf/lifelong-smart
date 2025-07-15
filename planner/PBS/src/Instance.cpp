@@ -6,9 +6,12 @@
 
 // int RANDOM_WALK_STEPS = 100000;
 
-Instance::Instance(const Graph& graph, vector<Task> goal_locations, int screen,
-                   int task_id, int simulation_window)
+Instance::Instance(shared_ptr<Graph> graph,
+                   shared_ptr<TaskAssigner> task_assigner,
+                   vector<Task> goal_locations, int screen, int task_id,
+                   int simulation_window)
     : graph(graph),
+      task_assigner(task_assigner),
       goal_locations(goal_locations),
       screen(screen),
       task_id(task_id),
@@ -65,16 +68,16 @@ Instance::Instance(const Graph& graph, vector<Task> goal_locations, int screen,
 //     // add padding
 //     i = 0;
 //     for (j = 0; j < num_of_cols; j++)
-//         my_map[this->graph.linearizeCoordinate(i, j)] = true;
+//         my_map[this->graph->linearizeCoordinate(i, j)] = true;
 //     i = num_of_rows - 1;
 //     for (j = 0; j < num_of_cols; j++)
-//         my_map[this->graph.linearizeCoordinate(i, j)] = true;
+//         my_map[this->graph->linearizeCoordinate(i, j)] = true;
 //     j = 0;
 //     for (i = 0; i < num_of_rows; i++)
-//         my_map[this->graph.linearizeCoordinate(i, j)] = true;
+//         my_map[this->graph->linearizeCoordinate(i, j)] = true;
 //     j = num_of_cols - 1;
 //     for (i = 0; i < num_of_rows; i++)
-//         my_map[this->graph.linearizeCoordinate(i, j)] = true;
+//         my_map[this->graph->linearizeCoordinate(i, j)] = true;
 
 //     // add obstacles uniformly at random
 //     i = 0;
@@ -96,8 +99,8 @@ Instance::Instance(const Graph& graph, vector<Task> goal_locations, int screen,
 //     if (my_map[obstacle])
 //         return false;
 //     my_map[obstacle] = true;
-//     int obstacle_x = this->graph.getRowCoordinate(obstacle);
-//     int obstacle_y = this->graph.getColCoordinate(obstacle);
+//     int obstacle_x = this->graph->getRowCoordinate(obstacle);
+//     int obstacle_y = this->graph->getColCoordinate(obstacle);
 //     int x[4] = {obstacle_x, obstacle_x + 1, obstacle_x, obstacle_x - 1};
 //     int y[4] = {obstacle_y - 1, obstacle_y, obstacle_y + 1, obstacle_y};
 //     int start = 0;
@@ -105,17 +108,17 @@ Instance::Instance(const Graph& graph, vector<Task> goal_locations, int screen,
 //     while (start < 3 && goal < 4) {
 //         if (x[start] < 0 || x[start] >= num_of_rows || y[start] < 0 ||
 //             y[start] >= num_of_cols ||
-//             my_map[this->graph.linearizeCoordinate(x[start], y[start])])
+//             my_map[this->graph->linearizeCoordinate(x[start], y[start])])
 //             start++;
 //         else if (goal <= start)
 //             goal = start + 1;
 //         else if (x[goal] < 0 || x[goal] >= num_of_rows || y[goal] < 0 ||
 //                  y[goal] >= num_of_cols ||
-//                  my_map[this->graph.linearizeCoordinate(x[goal], y[goal])])
+//                  my_map[this->graph->linearizeCoordinate(x[goal], y[goal])])
 //             goal++;
 //         else if (isConnected(
-//                      this->graph.linearizeCoordinate(x[start], y[start]),
-//                      this->graph.linearizeCoordinate(
+//                      this->graph->linearizeCoordinate(x[start], y[start]),
+//                      this->graph->linearizeCoordinate(
 //                          x[goal],
 //                          y[goal])))  // cannot find a path from start to goal
 //         {
@@ -179,39 +182,41 @@ bool Instance::loadAgents(
         // Obtain the starts
         int row = static_cast<int>(std::get<0>(start_locs[i]));
         int col = static_cast<int>(std::get<1>(start_locs[i]));
-        start_locations[i] = this->graph.linearizeCoordinate(row, col);
+        start_locations[i] = this->graph->linearizeCoordinate(row, col);
 
         // generate a goal for the agent if it does not have one
         if (goal_locations[i].id == -1) {
+            spdlog::info("Agent {} has no goal, generating a new one.", i);
             int curr_goal = goal_locations[i].loc;
-            goal_locations[i] = Task(
-                this->task_id, genGoal(unfinished_goal_locs, curr_goal, i));
+            goal_locations[i] =
+                Task(this->task_id,
+                     task_assigner->genGoal(unfinished_goal_locs, curr_goal,
+                                            start_locations[i]));
             unfinished_goal_locs.insert(goal_locations[i].loc);
             this->task_id++;
         }
     }
 
+    spdlog::info("Number of agents: {}", num_of_agents);
+    spdlog::info("Number of goals: {}", goal_locations.size());
+    spdlog::info("screen level: {}", this->screen);
+
     // Print the start and goal locations
     if (this->screen > 0) {
-        cout << "Start to goal locations: ";
+        spdlog::info("Start to goal locations:");
         for (int i = 0; i < num_of_agents; i++) {
-            cout << "Agent " << i << ":("
-                 << this->graph.getRowCoordinate(start_locations[i]) << ","
-                 << this->graph.getColCoordinate(start_locations[i]) << ") "
-                 << "-> ("
-                 << this->graph.getRowCoordinate(goal_locations[i].loc) << ","
-                 << this->graph.getColCoordinate(goal_locations[i].loc) << ") "
-                 << "d_h="
-                 << this->graph
-                        .d_heuristics[goal_locations[i].loc][start_locations[i]]
-                 << endl;
+            spdlog::info("Agent {} : S=({}, {}) ; G=({}, {})", i,
+                         this->graph->getRowCoordinate(start_locations[i]),
+                         this->graph->getColCoordinate(start_locations[i]),
+                         this->graph->getRowCoordinate(goal_locations[i].loc),
+                         this->graph->getColCoordinate(goal_locations[i].loc));
         }
         // cout << "Goal locations: ";
         // for (int i = 0; i < num_of_agents; i++) {
         //     cout << "a_" << i << ":("
-        //          << this->graph.getRowCoordinate(goal_locations[i].loc) <<
+        //          << this->graph->getRowCoordinate(goal_locations[i].loc) <<
         //          ","
-        //          << this->graph.getColCoordinate(goal_locations[i].loc)
+        //          << this->graph->getColCoordinate(goal_locations[i].loc)
         //          << ", d_h="
         //          << this->graph
         //                 .d_heuristics[goal_locations[i].loc][start_locations[i]]
@@ -220,28 +225,28 @@ bool Instance::loadAgents(
         // cout << endl;
     }
 
+    spdlog::info("Instance loaded");
     return true;
 }
 
-int Instance::genGoal(set<int> to_avoid, int curr_goal, int agent_id) {
-    int goal =
-        this->graph.free_locations[rand() % this->graph.free_locations.size()];
-    while (to_avoid.find(goal) != to_avoid.end() || goal == curr_goal ||
-           this->graph.getManhattanDistance(goal, start_locations[agent_id]) <
-               this->simulation_window) {
-        goal = this->graph
-                   .free_locations[rand() % this->graph.free_locations.size()];
-    }
-    return goal;
-}
+// int Instance::genGoal(set<int> to_avoid, int curr_goal, int agent_id) {
+//     int goal = this->genOneGoalLoc(to_avoid, curr_goal, agent_id);
+//     while (to_avoid.find(goal) != to_avoid.end() || goal == curr_goal ||
+//            this->graph->getManhattanDistance(goal, start_locations[agent_id])
+//            <
+//                this->simulation_window) {
+//         goal = this->genOneGoalLoc(to_avoid, curr_goal, agent_id);
+//     }
+//     return goal;
+// }
 
 void Instance::printAgents() const {
     for (int i = 0; i < num_of_agents; i++) {
         cout << "Agent" << i << " : S=("
-             << this->graph.getRowCoordinate(start_locations[i]) << ","
-             << this->graph.getColCoordinate(start_locations[i]) << ") ; G=("
-             << this->graph.getRowCoordinate(goal_locations[i].loc) << ","
-             << this->graph.getColCoordinate(goal_locations[i].loc) << ")"
+             << this->graph->getRowCoordinate(start_locations[i]) << ","
+             << this->graph->getColCoordinate(start_locations[i]) << ") ; G=("
+             << this->graph->getRowCoordinate(goal_locations[i].loc) << ","
+             << this->graph->getColCoordinate(goal_locations[i].loc) << ")"
              << endl;
     }
 }

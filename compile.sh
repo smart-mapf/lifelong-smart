@@ -10,7 +10,9 @@ while getopts "c:" flag; do
 done
 
 if [ -z "${CPLEX_DIR}" ]; then
-    CPLEX_DIR="${PWD}/CPLEX_Studio2210"
+    CPLEX_DIR_ARGS=""
+else
+    CPLEX_DIR_ARGS="-c ${CPLEX_DIR}"
 fi
 
 echo "In lifelong argos: Using CPLEX directory: ${CPLEX_DIR}"
@@ -71,7 +73,7 @@ compile_mass() {
     echo "Compiling MASS..."
     cd $current_path/planner/MASS
     rm -rf build
-    bash compile.sh -c "${CPLEX_DIR}"
+    bash compile.sh "${CPLEX_DIR_ARGS}"
 }
 
 if [ "$target" == "rpclib" ]; then

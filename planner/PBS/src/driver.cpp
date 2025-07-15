@@ -13,7 +13,11 @@
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 
+#include "Graph.h"
+#include "Instance.h"
 #include "PBS.h"
+#include "TaskAssigner.h"
+#include "common.h"
 
 /* Main function */
 int main(int argc, char** argv) {
@@ -51,6 +55,10 @@ int main(int argc, char** argv) {
     int seed = vm["seed"].as<int>();
     srand(seed);  // Set the random seed for reproducibility
 
+    // Set up logger
+    auto console_logger = spdlog::default_logger()->clone("Planner");
+    spdlog::set_default_logger(console_logger);
+
     ///////////////////////////////////////////////////////////////////////////
     int prev_last_task_id = 0;  // last task id from the previous iteration
     vector<Task> prev_goal_locs;
@@ -59,7 +67,21 @@ int main(int argc, char** argv) {
     int simulation_window = vm["simulation_window"].as<int>();
 
     // Create a graph, heuristic will be computed only once in the graph
-    Graph graph(vm["map"].as<string>(), screen);
+    auto graph = make_shared<Graph>(vm["map"].as<string>(), screen);
+    auto task_assigner =
+        make_shared<TaskAssigner>(graph, screen, simulation_window);
+    // Graph graph(vm["map"].as<string>(), screen);
+
+    // We must have enough empty locations for agents to "wait in queue".
+    // Since we do not consider window in this planner, it is not okay for
+    // agents to have the goal. Therefore when agent j tries to go to a
+    // location which is the goal of agent i, it must go to an empty space
+    // first.
+    if (graph->nEmptyLocations() < vm["agentNum"].as<int>()) {
+        spdlog::error("Not enough empty locations for agents to wait in queue. "
+                      "Please increase the number of empty locations.");
+        exit(-1);
+    }
 
     // We assume the server is already running at this point.
     rpc::client client("127.0.0.1", vm["portNum"].as<int>());
@@ -69,7 +91,7 @@ int main(int argc, char** argv) {
     int trial = 0;
     while (!client.call("is_initialized").as<bool>()) {
         if (screen > 0) {
-            printf("%d Waiting for server to initialize...\n", trial);
+            // printf("%d Waiting for server to initialize...\n", trial);
             trial++;
         }
     }
@@ -111,8 +133,8 @@ int main(int argc, char** argv) {
             printf("\n");
         }
 
-        Instance instance(graph, prev_goal_locs, screen, prev_last_task_id,
-                          simulation_window);
+        Instance instance(graph, task_assigner, prev_goal_locs, screen,
+                          prev_last_task_id, simulation_window);
         instance.loadAgents(commit_cut, new_finished_tasks_id);
         PBS pbs(instance, vm["sipp"].as<bool>(), screen);
         // run

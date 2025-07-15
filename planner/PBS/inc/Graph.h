@@ -29,6 +29,7 @@ public:
         return (this->num_of_cols * row + col);
     }
     inline int getRowCoordinate(int id) const {
+        spdlog::debug("getRowCoordinate: id = {}", id);
         return id / this->num_of_cols;
     }
     inline int getColCoordinate(int id) const {
@@ -80,13 +81,22 @@ public:
 
     int getDirection(int from, int to) const;
 
+    int nEmptyLocations() const {
+        return empty_locations.size();
+    }
+
 private:
     vector<bool> my_map;  // true if obstacle, false if free
+    vector<string> types;
     string map_fname;
     string agent_fname;
     vector<vector<double>> weights;  // (directed) weighted 4-neighbor grid
 
     vector<int> free_locations;  // locations that are not obstacles
+    vector<int> workstations;
+    vector<int> endpoints;
+    vector<int> warehouse_task_locs; // workstations + endpoints
+    vector<int> empty_locations; // locations that are not obstacles or task_loc
 
     // Direction of movement
     // 0: right, 1: up, 2: left, 3: down
@@ -102,4 +112,5 @@ private:
     // Classes that can access private members
     friend class SingleAgentSolver;
     friend class Instance;
+    friend class TaskAssigner;
 };

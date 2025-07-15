@@ -17,6 +17,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <json.hpp>
+#include "spdlog/spdlog.h"
 
 using boost::heap::fibonacci_heap;
 using boost::heap::pairing_heap;
@@ -48,6 +49,7 @@ using std::string;
 using std::stack;
 using std::ifstream;
 using std::getline;
+using std::make_shared;
 
 using json = nlohmann::json;
 

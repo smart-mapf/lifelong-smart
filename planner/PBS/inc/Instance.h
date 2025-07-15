@@ -1,5 +1,6 @@
 #pragma once
 #include "Graph.h"
+#include "TaskAssigner.h"
 #include "common.h"
 
 struct Task {
@@ -17,7 +18,8 @@ public:
     // int num_of_rows;
     // int map_size;
     int screen = 0;
-    Graph graph;  // graph representation of the map
+    shared_ptr<Graph> graph;                 // graph representation of the map
+    shared_ptr<TaskAssigner> task_assigner;  // task assigner for the instance
     int simulation_window = 0;  // simulation window for the planner
 
     // enum valid_moves_t { NORTH, EAST, SOUTH, WEST, WAIT_MOVE, MOVE_COUNT };
@@ -25,8 +27,9 @@ public:
 
     Instance() {
     }
-    Instance(const Graph& graph, vector<Task> goal_locations, int screen,
-             int task_id, int simulation_window);
+    Instance(shared_ptr<Graph> graph, shared_ptr<TaskAssigner> task_assigner,
+             vector<Task> goal_locations, int screen, int task_id,
+             int simulation_window);
 
     void setGoalLocations(const vector<Task>& goal_locations) {
         this->goal_locations = goal_locations;
@@ -139,7 +142,10 @@ private:
     // bool loadAgents();
     // void saveAgents() const;
 
-    int genGoal(set<int> to_avoid, int curr_goal, int agent_id);
+    // int genGoal(set<int> to_avoid, int curr_goal, int agent_id);
+    // int genOneGoalLoc(set<int> to_avoid, int curr_goal, int agent_id);
+    // int Instance::sampleUnoccupiedLoc(set<int> to_avoid,
+    //                                   vector<int> candidates);
 
     // void generateConnectedRandomGrid(
     //     int rows, int cols, int obstacles);  // initialize new [rows x cols]
