@@ -1,5 +1,20 @@
 # Compile everything in the project
 target="$1"
+shift 1
+
+while getopts "c:" flag; do
+  case "$flag" in
+      c) CPLEX_DIR=$OPTARG;;
+      *) echo "Invalid option. ${USAGE}"
+  esac
+done
+
+if [ -z "${CPLEX_DIR}" ]; then
+    CPLEX_DIR="${PWD}/CPLEX_Studio2210"
+fi
+
+echo "In lifelong argos: Using CPLEX directory: ${CPLEX_DIR}"
+
 current_path=$(pwd)
 cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
 
@@ -56,11 +71,7 @@ compile_mass() {
     echo "Compiling MASS..."
     cd $current_path/planner/MASS
     rm -rf build
-    mkdir build
-    cd build
-    cmake ..
-    make -j $cpuCores
-    cd ..
+    bash compile.sh -c "${CPLEX_DIR}"
 }
 
 if [ "$target" == "rpclib" ]; then
