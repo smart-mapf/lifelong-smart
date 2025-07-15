@@ -1,20 +1,21 @@
 /*driver.cpp
-* Solve a MAPF instance on 2D grids.
-*/
+ * Solve a MAPF instance on 2D grids.
+ */
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 #include <memory>
 #include <string>
+
+#include "common.h"
 #include "instance.h"
 #include "pbs.h"
-#include "common.h"
-
 
 /* Main function */
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
     // Declare the supported options.
     po::options_description desc("Allowed options");
+    // clang-format off
     desc.add_options()
             ("help", "produce help message")
 
@@ -46,7 +47,7 @@ int main(int argc, char **argv) {
 
             // params for CBS
             ("sipp", po::value<bool>()->default_value(false), "using sipp as the single agent solver");
-
+    // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
@@ -60,36 +61,35 @@ int main(int argc, char **argv) {
     /// check the correctness and consistence of params
     //////////////////////////////////////////////////////////////////////
 
-
     ///////////////////////////////////////////////////////////////////////////
     /// load the instance
     //////////////////////////////////////////////////////////////////////
-    std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(vm["map"].as<string>(),
-                                                                        vm["agents"].as<string>(),
-                                                                        vm["agentNum"].as<int>(),
-                                                                        vm["agentIdx"].as<string>(),
-                                                                        vm["rows"].as<int>(), vm["cols"].as<int>(),
-                                                                        vm["obs"].as<int>(),
-                                                                        vm["warehouseWidth"].as<int>(),
-                                                                        vm["partialExpansion"].as<bool>(),
-                                                                        vm["solver"].as<int>());
+    std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(
+        vm["map"].as<string>(), vm["agents"].as<string>(),
+        vm["agentNum"].as<int>(), vm["agentIdx"].as<string>(),
+        vm["rows"].as<int>(), vm["cols"].as<int>(), vm["obs"].as<int>(),
+        vm["warehouseWidth"].as<int>(), vm["partialExpansion"].as<bool>(),
+        vm["solver"].as<int>());
 
     srand(vm["seed"].as<int>());
 
     //////////////////////////////////////////////////////////////////////
     /// initialize the solver
     //////////////////////////////////////////////////////////////////////
-    PBS pbs(instance_ptr, vm["solver"].as<int>(), vm["cutoffTime"].as<double>());
+    PBS pbs(instance_ptr, vm["solver"].as<int>(),
+            vm["cutoffTime"].as<double>());
     auto init_start_time = Time::now();
     pbs.sipp_ptr->getHeuristic(vm["heuristic"].as<std::string>());
     auto init_end_time = Time::now();
     time_s debug_init_d = init_end_time - init_start_time;
     double debug_init_time = debug_init_d.count();
-    printf("Finish initialization the heuristic in %f seconds\n", debug_init_time);
+    printf("Finish initialization the heuristic in %f seconds\n",
+           debug_init_time);
     auto global_start_time = Time::now();
     bool pbs_success = pbs.solve(vm["output"].as<string>());
     auto global_end_time = Time::now();
-    std::chrono::duration<float> global_run_time = global_end_time - global_start_time;
+    std::chrono::duration<float> global_run_time =
+        global_end_time - global_start_time;
     printf("Runtime for MASS is: %f\n", global_run_time.count());
     string traj_name = vm["agents"].as<string>();
     if (pbs_success) {
@@ -101,5 +101,6 @@ int main(int argc, char **argv) {
     } else {
         printf("No solution found!\n");
     }
-    pbs.saveResults(pbs_success, vm["statistic"].as<string>(), vm["map"].as<string>());
+    pbs.saveResults(pbs_success, vm["statistic"].as<string>(),
+                    vm["map"].as<string>());
 }
