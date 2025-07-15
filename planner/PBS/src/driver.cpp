@@ -68,8 +68,8 @@ int main(int argc, char** argv) {
 
     // Create a graph, heuristic will be computed only once in the graph
     auto graph = make_shared<Graph>(vm["map"].as<string>(), screen);
-    auto task_assigner =
-        make_shared<TaskAssigner>(graph, screen, simulation_window);
+    auto task_assigner = make_shared<TaskAssigner>(
+        graph, screen, simulation_window, vm["agentNum"].as<int>());
     // Graph graph(vm["map"].as<string>(), screen);
 
     // We must have enough empty locations for agents to "wait in queue".

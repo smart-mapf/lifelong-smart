@@ -188,10 +188,11 @@ bool Instance::loadAgents(
         if (goal_locations[i].id == -1) {
             spdlog::info("Agent {} has no goal, generating a new one.", i);
             int curr_goal = goal_locations[i].loc;
-            goal_locations[i] =
-                Task(this->task_id,
-                     task_assigner->genGoal(unfinished_goal_locs, curr_goal,
-                                            start_locations[i]));
+            int next_goal;
+            bool back_up;
+            tie(next_goal, back_up) = this->task_assigner->genGoal(
+                unfinished_goal_locs, curr_goal, start_locations[i], i);
+            goal_locations[i] = Task(this->task_id, next_goal);
             unfinished_goal_locs.insert(goal_locations[i].loc);
             this->task_id++;
         }
@@ -205,11 +206,12 @@ bool Instance::loadAgents(
     if (this->screen > 0) {
         spdlog::info("Start to goal locations:");
         for (int i = 0; i < num_of_agents; i++) {
-            spdlog::info("Agent {} : S=({}, {}) ; G=({}, {})", i,
+            spdlog::info("Agent {} : S=({}, {}) ; G=({}, {}, {})", i,
                          this->graph->getRowCoordinate(start_locations[i]),
                          this->graph->getColCoordinate(start_locations[i]),
                          this->graph->getRowCoordinate(goal_locations[i].loc),
-                         this->graph->getColCoordinate(goal_locations[i].loc));
+                         this->graph->getColCoordinate(goal_locations[i].loc),
+                         this->graph->types[goal_locations[i].loc]);
         }
         // cout << "Goal locations: ";
         // for (int i = 0; i < num_of_agents; i++) {
