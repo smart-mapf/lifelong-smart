@@ -422,7 +422,7 @@ bool Instance::loadAgents()
 		char_separator<char> sep(",");
 		tokenizer<char_separator<char>> tok(line, sep);
 		tokenizer<char_separator<char>>::iterator beg = tok.begin();
-		atoi((*beg).c_str());
+        int tmp = atoi((*beg).c_str());
 		// start_locations.resize(num_of_agents);
 		// goal_locations.resize(num_of_agents);
 //        printf("Total number of agents: %d\n", num_of_agents);
