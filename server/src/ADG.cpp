@@ -630,6 +630,13 @@ set<int> ADG::updateFinishedTasks() {
                            this->finished_tasks_.end()) {
                 this->finished_tasks_.insert(curr_task);
                 new_finished_tasks.insert(curr_task);
+
+                // Only count the task that are not backup tasks to throughput
+                n_finished_tasks++;
+                if (this->backup_tasks.find(curr_task) !=
+                    this->backup_tasks.end()) {
+                    n_finished_backup_tasks++;
+                }
             }
         }
     }
@@ -674,39 +681,36 @@ json ADG::getADGStats() {
     }
     double total_rotation = 0.0;
     double total_move = 0.0;
-    int n_finished_tasks = 0;
+    // int n_finished_tasks = 0;
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
         for (int j = 0; j < finished_node_idx[agent_id]; j++) {
             // Current ADGNode has a non-negative task_id, then we finish a
             // task.
             if (graph[agent_id][j].action.task_id >= 0) {
-                n_finished_tasks++;
+                // n_finished_tasks++;
             }
 
             // Count the number of different actions
             if (graph[agent_id][j].action.type == 'T') {
-                if (j > 0)
-                {
+                if (j > 0) {
                     int degree;
-                    int abs_ = abs(
-                        graph[agent_id][j].action.orientation -
-                        graph[agent_id][j - 1].action.orientation);
-                    if (graph[agent_id][j].action.orientation == graph[agent_id][j - 1].action.orientation)
+                    int abs_ = abs(graph[agent_id][j].action.orientation -
+                                   graph[agent_id][j - 1].action.orientation);
+                    if (graph[agent_id][j].action.orientation ==
+                        graph[agent_id][j - 1].action.orientation)
                         degree = 0;
                     else if (abs_ == 1 || abs_ == 3)
                         degree = 1;
-                    else
-                    {
+                    else {
                         spdlog::warn(
                             "ADG::getADGStats: Unexpected orientation change "
                             "from {} to {}",
                             graph[agent_id][j - 1].action.orientation,
                             graph[agent_id][j].action.orientation);
-                            degree = 2;
+                        degree = 2;
                     }
                     total_rotation += degree;
-                }
-                else
+                } else
                     total_rotation++;
             } else if (graph[agent_id][j].action.type == 'M') {
                 total_move++;

@@ -54,9 +54,13 @@ void ADG_Server::saveStats() {
 
     // Compute throughput as the number of finished tasks per sim second
     int total_finished_tasks = adg->getNumFinishedTasks();
+    int total_finished_backup_tasks = adg->getNumFinishedBackupTasks();
     int sim_seconds = total_sim_step_tick / ticks_per_second;
-    double throughput = static_cast<double>(total_finished_tasks) / sim_seconds;
+    double throughput = static_cast<double>(total_finished_tasks -
+                                            total_finished_backup_tasks) /
+                        sim_seconds;
     json result = {{"total_finished_tasks", total_finished_tasks},
+                   {"total_finished_backup_tasks", total_finished_backup_tasks},
                    {"throughput", throughput},
                    {"success", true},
                    {"cpu_runtime", this->overall_runtime},
@@ -239,6 +243,12 @@ void addNewPlan(string& new_plan_json_str) {
         server_ptr->planner_stats = new_plan_json["stats"];
     }
 
+    // update backup tasks, if available
+    if (new_plan_json.contains("backup_tasks")) {
+        auto backup_tasks = new_plan_json["backup_tasks"].get<std::set<int>>();
+        server_ptr->adg->backup_tasks = backup_tasks;
+    }
+
     if (congested) {
         // Stop the server early.
         // NOTE: We cannot call closeServer directly because we need to ensure
@@ -365,6 +375,8 @@ void closeServer(rpc::server& srv) {
     //              server_ptr->adg->avgRotation());
     spdlog::info("Number of finished tasks: {}",
                  server_ptr->adg->getNumFinishedTasks());
+    spdlog::info("Number of finished backup tasks: {}",
+                 server_ptr->adg->getNumFinishedBackupTasks());
     spdlog::info("Overall runtime: {:.2f} seconds",
                  server_ptr->overall_runtime);
 

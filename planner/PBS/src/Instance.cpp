@@ -162,45 +162,56 @@ bool Instance::loadAgents(
         exit(-1);
     }
     start_locations.resize(num_of_agents);
-    if (goal_locations.size() != num_of_agents) {
-        goal_locations.resize(num_of_agents, Task(-1, -1));
-    }
-
-    // Remove finished tasks from goal locations
-    set<int> unfinished_goal_locs;  // For duplicate checking
+    // Generate start locations
     for (int i = 0; i < num_of_agents; i++) {
-        if (finished_tasks_id.find(goal_locations[i].id) !=
-            finished_tasks_id.end()) {
-            goal_locations[i].id = -1;  // reset goal id
-        } else {
-            unfinished_goal_locs.insert(goal_locations[i].loc);
-        }
-    }
-
-    // Generate new starts/goals
-    for (int i = 0; i < num_of_agents; i++) {
-        // Obtain the starts
         int row = static_cast<int>(std::get<0>(start_locs[i]));
         int col = static_cast<int>(std::get<1>(start_locs[i]));
         start_locations[i] = this->graph->linearizeCoordinate(row, col);
-
-        // generate a goal for the agent if it does not have one
-        if (goal_locations[i].id == -1) {
-            spdlog::info("Agent {} has no goal, generating a new one.", i);
-            int curr_goal = goal_locations[i].loc;
-            int next_goal;
-            bool back_up;
-            tie(next_goal, back_up) = this->task_assigner->genGoal(
-                unfinished_goal_locs, curr_goal, start_locations[i], i);
-            goal_locations[i] = Task(this->task_id, next_goal);
-            unfinished_goal_locs.insert(goal_locations[i].loc);
-            this->task_id++;
-        }
     }
 
-    spdlog::info("Number of agents: {}", num_of_agents);
-    spdlog::info("Number of goals: {}", goal_locations.size());
-    spdlog::info("screen level: {}", this->screen);
+    this->task_assigner->updateGoalLocations(start_locations,
+                                             finished_tasks_id);
+    goal_locations = this->task_assigner->getGoalLocations();
+
+    // if (goal_locations.size() != num_of_agents) {
+    //     goal_locations.resize(num_of_agents, Task(-1, -1));
+    // }
+
+    // // Remove finished tasks from goal locations
+    // set<int> unfinished_goal_locs;  // For duplicate checking
+    // for (int i = 0; i < num_of_agents; i++) {
+    //     if (finished_tasks_id.find(goal_locations[i].id) !=
+    //         finished_tasks_id.end()) {
+    //         goal_locations[i].id = -1;  // reset goal id
+    //     } else {
+    //         unfinished_goal_locs.insert(goal_locations[i].loc);
+    //     }
+    // }
+
+    // // Generate new starts/goals
+    // for (int i = 0; i < num_of_agents; i++) {
+    //     // Obtain the starts
+    //     int row = static_cast<int>(std::get<0>(start_locs[i]));
+    //     int col = static_cast<int>(std::get<1>(start_locs[i]));
+    //     start_locations[i] = this->graph->linearizeCoordinate(row, col);
+
+    //     // generate a goal for the agent if it does not have one
+    //     if (goal_locations[i].id == -1) {
+    //         spdlog::info("Agent {} has no goal, generating a new one.", i);
+    //         int curr_goal = goal_locations[i].loc;
+    //         int next_goal;
+    //         bool back_up;
+    //         tie(next_goal, back_up) = this->task_assigner->genGoal(
+    //             unfinished_goal_locs, curr_goal, start_locations[i], i);
+    //         goal_locations[i] = Task(this->task_id, next_goal);
+    //         unfinished_goal_locs.insert(goal_locations[i].loc);
+    //         this->task_id++;
+    //     }
+    // }
+
+    // spdlog::info("Number of agents: {}", num_of_agents);
+    // spdlog::info("Number of goals: {}", goal_locations.size());
+    // spdlog::info("screen level: {}", this->screen);
 
     // Print the start and goal locations
     if (this->screen > 0) {

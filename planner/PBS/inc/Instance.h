@@ -3,14 +3,6 @@
 #include "TaskAssigner.h"
 #include "common.h"
 
-struct Task {
-    int id;
-    int loc;
-
-    Task(int id, int loc) : id(id), loc(loc) {
-    }
-};
-
 // Currently only works for undirected unweighted 4-nighbor grids
 class Instance {
 public:

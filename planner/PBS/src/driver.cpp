@@ -152,6 +152,7 @@ int main(int argc, char** argv) {
                 json new_plan_json = {
                     {"plan", new_mapf_plan},
                     {"congested", false},
+                    {"backup_tasks", task_assigner->getBackupTasks()},
                 };
                 client.call("add_plan", new_plan_json.dump());
             } else {

@@ -1,5 +1,45 @@
 #include "TaskAssigner.h"
 
+void TaskAssigner::updateGoalLocations(vector<int> start_locations,
+                                       set<int> finished_tasks_id) {
+    if (goal_locations.size() != num_of_agents) {
+        goal_locations.resize(num_of_agents, Task(-1, -1));
+    }
+
+    // Remove finished tasks from goal locations
+    set<int> unfinished_goal_locs;  // For duplicate checking
+    for (int i = 0; i < num_of_agents; i++) {
+        if (finished_tasks_id.find(goal_locations[i].id) !=
+            finished_tasks_id.end()) {
+            goal_locations[i].id = -1;  // reset goal id
+        } else {
+            unfinished_goal_locs.insert(goal_locations[i].loc);
+        }
+    }
+
+    // Generate new goals
+    for (int i = 0; i < num_of_agents; i++) {
+        // generate a goal for the agent if it does not have one
+        if (goal_locations[i].id == -1) {
+            spdlog::info("Agent {} has no goal, generating a new one.", i);
+            int curr_goal = goal_locations[i].loc;
+            int next_goal;
+            bool back_up;
+            tie(next_goal, back_up) = this->genGoal(
+                unfinished_goal_locs, curr_goal, start_locations[i], i);
+            goal_locations[i] = Task(this->task_id, next_goal);
+            if (back_up)
+                this->backup_tasks.insert(goal_locations[i].id);
+            unfinished_goal_locs.insert(goal_locations[i].loc);
+            this->task_id++;
+        }
+    }
+
+    spdlog::info("Number of agents: {}", num_of_agents);
+    spdlog::info("Number of goals: {}", goal_locations.size());
+    spdlog::info("screen level: {}", this->screen);
+}
+
 // Return the goal loc and if the goal is a backup goal.
 tuple<int, bool> TaskAssigner::genGoal(set<int> to_avoid, int curr_goal,
                                        int start_loc, int agent_id) {
