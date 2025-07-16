@@ -61,7 +61,7 @@ def run_simulator(args, timeout: float = None, output_log: str = None):
     server_process = subprocess.Popen(server_command, stdout=f, stderr=f)
 
     # Wait for a short period to ensure the server has started
-    time.sleep(1)
+    time.sleep(5)
 
     # Start the client process
     client_process = subprocess.Popen(client_command, stdout=f, stderr=f)
@@ -110,7 +110,7 @@ def run_lifelong_argos(
     ticks_per_second: int = 10,
     velocity: float = 200.0,
     look_ahead_dist: int = 10,
-    planner: str = "PBS",  # ["PBS", "RHCR"]
+    planner: str = "RHCR",  # ["PBS", "RHCR"]
     container: bool = False,
     seed: int = 42,
     screen: int = 0,
