@@ -373,9 +373,10 @@ list<int> Graph::getNeighbors(int curr) const {
     if (curr < 0)
         return neighbors;  // invalid location
 
-    int candidates[4] = {curr + 1, curr - 1, curr + num_of_cols,
-                         curr - num_of_cols};
-    for (int next : candidates) {
+    // int candidates[4] = {curr + 1, curr - 1, curr + num_of_cols,
+    //                      curr - num_of_cols};
+    for (int d : this->move) {
+        int next = curr + d;
         if (validMove(curr, next))
             neighbors.emplace_back(next);
     }
