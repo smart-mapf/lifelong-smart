@@ -237,8 +237,6 @@ bool Instance::loadAgents(
         // }
         // cout << endl;
     }
-
-    spdlog::info("Instance loaded");
     return true;
 }
 

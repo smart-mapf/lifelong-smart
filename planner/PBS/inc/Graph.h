@@ -125,6 +125,19 @@ public:
         return free_locations[idx];
     }
 
+    int size() const {
+        return map_size;
+    }
+
+    double getHeuristic(int goal_loc, int start_loc) const {
+        if (heuristics.find(goal_loc) == heuristics.end()) {
+            spdlog::error("Error: goal_loc = {} not found in heuristics.",
+                          goal_loc);
+            exit(1);
+        }
+        return heuristics.at(goal_loc)[start_loc];
+    }
+
 private:
     vector<bool> my_map;  // true if obstacle, false if free
     vector<string> types;
@@ -135,8 +148,9 @@ private:
     vector<int> free_locations;  // locations that are not obstacles
     vector<int> workstations;
     vector<int> endpoints;
-    vector<int> warehouse_task_locs; // workstations + endpoints
-    vector<int> empty_locations; // locations that are not obstacles or task_loc
+    vector<int> warehouse_task_locs;  // workstations + endpoints
+    vector<int>
+        empty_locations;  // locations that are not obstacles or task_loc
 
     // Direction of movement
     // 0: right, 1: up, 2: left, 3: down

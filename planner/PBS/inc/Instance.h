@@ -1,5 +1,6 @@
 #pragma once
 #include "Graph.h"
+#include "States.h"
 #include "TaskAssigner.h"
 #include "common.h"
 
@@ -37,6 +38,19 @@ public:
             goal_locs.push_back(task.loc);
         }
         return goal_locs;
+    }
+
+    vector<int> getStartLocations() const {
+        return start_locations;
+    }
+
+    vector<State> getStartStates() const {
+        vector<State> start_states;
+        for (int loc : start_locations) {
+            // t = 0, ori = -1
+            start_states.emplace_back(State(loc, 0, -1));
+        }
+        return start_states;
     }
 
     int getTaskId() const {

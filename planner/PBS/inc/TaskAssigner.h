@@ -19,7 +19,7 @@ public:
                              int agent_id);
     // int genOneGoalLoc(set<int> to_avoid, int curr_goal, int start_loc,
     //                   int agent_id);
-    // int sampleUnoccupiedLoc(set<int> to_avoid, vector<int> candidates);
+    int sampleUnoccupiedLoc(set<int> to_avoid, vector<int> candidates);
     int sampleBackupGoal(set<int> to_avoid, int curr_goal, int start_loc,
                          int agent_id);
     void updateGoalLocations(vector<int> start_locations,

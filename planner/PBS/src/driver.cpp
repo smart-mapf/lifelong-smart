@@ -16,6 +16,7 @@
 #include "Graph.h"
 #include "Instance.h"
 #include "PBS.h"
+#include "PIBT.h"
 #include "TaskAssigner.h"
 #include "common.h"
 
@@ -65,19 +66,27 @@ int main(int argc, char** argv) {
     set<int> finished_tasks_id;
     int screen = vm["screen"].as<int>();
     int simulation_window = vm["simulation_window"].as<int>();
+    int num_agents = vm["agentNum"].as<int>();
 
     // Create a graph, heuristic will be computed only once in the graph
     auto graph = make_shared<Graph>(vm["map"].as<string>(), screen);
-    auto task_assigner = make_shared<TaskAssigner>(
-        graph, screen, simulation_window, vm["agentNum"].as<int>());
+    auto task_assigner =
+        make_shared<TaskAssigner>(graph, screen, simulation_window, num_agents);
     // Graph graph(vm["map"].as<string>(), screen);
+
+    // Setup PIBT backup solver
+    PIBT pibt(graph, simulation_window, screen, seed, num_agents);
+
+    // Stats
+    int n_mapf_calls = 0;        // number of MAPF calls
+    int n_rule_based_calls = 0;  // number of rule-based calls
 
     // We must have enough empty locations for agents to "wait in queue".
     // Since we do not consider window in this planner, it is not okay for
     // agents to have the goal. Therefore when agent j tries to go to a
     // location which is the goal of agent i, it must go to an empty space
     // first.
-    if (graph->nEmptyLocations() < vm["agentNum"].as<int>()) {
+    if (graph->nEmptyLocations() < num_agents) {
         spdlog::error("Not enough empty locations for agents to wait in queue. "
                       "Please increase the number of empty locations.");
         exit(-1);
@@ -142,31 +151,41 @@ int main(int argc, char** argv) {
         bool success = false;
         double runtime_limit = vm["cutoffTime"].as<double>();
         int fail_count = 0;
-        while (not success) {
-            success = pbs.solve(runtime_limit);
-            runtime_limit = runtime_limit * 2;
-            if (success) {
-                auto new_mapf_plan = pbs.getPaths();
+        n_mapf_calls += 1;
+        success = pbs.solve(runtime_limit);
+        runtime_limit = runtime_limit * 2;
+        vector<vector<tuple<int, int, double, int>>> new_mapf_plan;
+        if (success) {
+            new_mapf_plan = pbs.getPaths();
 
-                pbs.clearSearchEngines();
-                json new_plan_json = {
-                    {"plan", new_mapf_plan},
-                    {"congested", false},
-                    {"backup_tasks", task_assigner->getBackupTasks()},
-                };
-                client.call("add_plan", new_plan_json.dump());
-            } else {
-                std::cerr << "No solution found!" << std::endl;
-                fail_count++;
-                pbs.clear();
-                if (fail_count > 10) {
-                    std::cerr << "Fail to find a solution after " << fail_count
-                              << " attempts! Exiting." << std::endl;
-                    // instance.saveInstance();
-                    exit(-1);
-                }
+            pbs.clearSearchEngines();
+            pbs.clear();
+
+        } else {
+            pibt.clear();
+            n_rule_based_calls += 1;
+            success =
+                pibt.run(instance.getStartStates(), instance.getGoalTasks());
+            new_mapf_plan = pibt.getPaths();
+            if (!success) {
+                spdlog::error("PIBT failed to find a solution.");
+                // If PIBT also fails, we will not send any plan to the server.
+                exit(-1);
             }
         }
+
+        // Send new plan
+        json stats = {{"n_mapf_calls", n_mapf_calls},
+                      {"n_rule_based_calls", n_rule_based_calls}};
+        json new_plan_json = {
+            {"plan", new_mapf_plan},
+            {"congested", congested(new_mapf_plan)},
+            {"backup_tasks", task_assigner->getBackupTasks()},
+            {"stats", stats.dump()},
+
+        };
+        client.call("add_plan", new_plan_json.dump());
+
         // instance.printMap();
         // Update task id for the next iteration
         prev_last_task_id = instance.getTaskId();

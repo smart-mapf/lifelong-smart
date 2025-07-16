@@ -93,9 +93,10 @@ bool Graph::loadMapFromBench() {
                 my_map[id] = true;  // mark as obstacle
             }
 
-            if (!my_map[id])
+            if (!my_map[id]) {
                 this->weights[id][4] = 1;  // can wait here
-            free_locations.push_back(id);
+                free_locations.push_back(id);
+            }
         }
     }
     myfile.close();
@@ -166,9 +167,10 @@ bool Graph::loadMapFromJson() {
                 my_map[id] = true;  // mark as obstacle
             }
 
-            if (!my_map[id])
+            if (!my_map[id]) {
                 this->weights[id][4] = 1;  // can wait here
-            free_locations.push_back(id);
+                free_locations.push_back(id);
+            }
         }
     }
 
