@@ -115,7 +115,7 @@ def run_lifelong_argos(
     seed: int = 42,
     screen: int = 0,
     # RHCR parameters
-    planning_window: int = 50,
+    planning_window: int = 20,
     scenario: str = "SMART",
     task: str = "../tasks/kiva_large_w_mode_random.tasks",
     cutoffTime: int = 2,
