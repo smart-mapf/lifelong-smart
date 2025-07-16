@@ -385,7 +385,7 @@ void PBS::printResults() const {
     //      << num_LL_expanded << ","
     //      <<  // HL_num_generated << "," << LL_num_generated << "," <<
     //     dummy_start->cost << "," << endl;
-    spdlog::info("{},runtime={},num_HL_expanded={},num_LL_expanded={},cost_"
+    spdlog::info("{}runtime={},num_HL_expanded={},num_LL_expanded={},cost_"
                  "lower_bound={}",
                  result_str, runtime, num_HL_expanded, num_LL_expanded,
                  dummy_start->cost);
