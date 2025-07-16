@@ -258,7 +258,13 @@ void SMARTSystem::update_goal_locations() {
         } else {
             goal = goal_locations[k].back();
         }
-        double min_timesteps = G.get_Manhattan_distance((goal.location), curr);
+        double min_timesteps = 0;
+        int prev_loc = curr;
+        for(const auto &g : goal_locations[k]) {
+            min_timesteps += G.get_Manhattan_distance(g.location, prev_loc);
+            prev_loc = g.location;
+        }
+        // double min_timesteps = G.get_Manhattan_distance((goal.location), curr);
         while (min_timesteps <= simulation_window)
         // The agent might finish its tasks during the next planning
         // horizon
