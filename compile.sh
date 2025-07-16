@@ -73,7 +73,7 @@ compile_mass() {
     echo "Compiling MASS..."
     cd $current_path/planner/MASS
     rm -rf build
-    bash compile.sh "${CPLEX_DIR_ARGS}"
+    bash compile.sh ${CPLEX_DIR_ARGS}
 }
 
 if [ "$target" == "rpclib" ]; then
@@ -101,12 +101,12 @@ if [ "$target" == "mass" ]; then
 fi
 
 if [ "$target" == "all" ]; then
+    compile_mass
     compile_rpclib
     compile_client
     compile_server
     compile_pbs
     compile_rhcr
-    compile_mass
 fi
 
 if [ "$target" == "user" ]; then

@@ -10,8 +10,11 @@ done
 if [ -z "${CPLEX_DIR}" ]; then
     CPLEX_DIR_ARGS=""
 else
-    CPLEX_DIR_ARGS="-DCPLEX_BASE_DIR=${CPLEX_DIR}"
+    CPLEX_DIR_ARGS="-DCPLEX_BASE_DIR:STRING=${CPLEX_DIR}"
 fi
+
+echo "In MASS compile: Using CPLEX directory: ${CPLEX_DIR}"
+echo "CPLEX_DIR_ARGS: ${CPLEX_DIR_ARGS}"
 
 mkdir build
 
