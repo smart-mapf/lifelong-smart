@@ -21,7 +21,8 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
     for (int i = 0; i < num_of_agents; i++) {
         // generate a goal for the agent if it does not have one
         if (goal_locations[i].id == -1) {
-            spdlog::info("Agent {} has no goal, generating a new one.", i);
+            if (screen > 1)
+                spdlog::info("Agent {} has no goal, generating a new one.", i);
             int curr_goal = goal_locations[i].loc;
             int next_goal;
             bool back_up;
@@ -34,10 +35,6 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
             this->task_id++;
         }
     }
-
-    spdlog::info("Number of agents: {}", num_of_agents);
-    spdlog::info("Number of goals: {}", goal_locations.size());
-    spdlog::info("screen level: {}", this->screen);
 }
 
 // Return the goal loc and if the goal is a backup goal.
@@ -46,21 +43,29 @@ tuple<int, bool> TaskAssigner::genGoal(set<int> to_avoid, int curr_goal,
     // No goal in the buffer, generate a new goal.
     int next_goal;
     if (this->goal_buffer[agent_id] == -1) {
-        spdlog::info("Generating a goal location from start location {}.",
-                     start_loc);
+        if (screen > 1) {
+            spdlog::info("Generating a goal location from start location {}.",
+                         start_loc);
+        }
+
         // Warehouse tasks alternate between workstations and endpoints
         if (this->graph->warehouse_task_locs.size() > 0) {
-            spdlog::info("Generating goal for warehouse tasks.");
+            if (screen > 1)
+                spdlog::info("Generating goal for warehouse tasks.");
             // This is the first goal, determine the next goal based on current
             // location.
             if (curr_goal == -1) {
-                spdlog::info("No current goal, generating the first goal.");
+                if (screen > 1)
+                    spdlog::info("No current goal, generating the first goal.");
                 if (this->graph->types[start_loc] == "Workstation") {
-                    next_goal = this->graph->sampleEndpoint();
+                    next_goal = this->sampleUnoccupiedLoc(
+                        to_avoid, this->graph->endpoints);
                 } else if (this->graph->types[start_loc] == "Endpoint") {
-                    next_goal = this->graph->sampleWorkstation();
+                    next_goal = this->sampleUnoccupiedLoc(
+                        to_avoid, this->graph->workstations);
                 } else {
-                    next_goal = this->graph->sampleWarehouseTaskLoc();
+                    next_goal = this->sampleUnoccupiedLoc(
+                        to_avoid, this->graph->warehouse_task_locs);
                 }
             }
             // Subsequent goals alternate between workstations and endpoints
@@ -68,20 +73,40 @@ tuple<int, bool> TaskAssigner::genGoal(set<int> to_avoid, int curr_goal,
                 // If the current goal is a workstation, the next goal is an
                 // endpoint
                 if (this->graph->types[curr_goal] == "Workstation") {
-                    next_goal = this->graph->sampleEndpoint();
+                    next_goal = this->sampleUnoccupiedLoc(
+                        to_avoid, this->graph->endpoints);
                 } else if (this->graph->types[curr_goal] == "Endpoint") {
-                    next_goal = this->graph->sampleWorkstation();
+                    next_goal = this->sampleUnoccupiedLoc(
+                        to_avoid, this->graph->workstations);
                 } else {
                     spdlog::error(
                         "Agent {}: Must have a goal in the goal buffer.",
                         agent_id);
+                    exit(-1);
+                    // The agent fails to sample a goal last time, try again
+                    // here.
+                    // next_goal = this->sampleUnoccupiedLoc(
+                    //     to_avoid, this->graph->warehouse_task_locs);
                 }
             }
         }
         // For non-warehouse, generate goals from free locations
         else {
-            next_goal = this->graph->sampleFreeLocation();
+            next_goal = this->sampleUnoccupiedLoc(to_avoid,
+                                                  this->graph->free_locations);
         }
+
+        // if (next_goal == -1) {
+        //     if (screen > 0) {
+        //         spdlog::info(
+        //             "Agent {}: No valid goal found from start location {}, "
+        //             "sampling a backup goal.",
+        //             agent_id, start_loc);
+        //     }
+        //     int backup_goal = this->sampleBackupGoal(to_avoid, curr_goal,
+        //                                              start_loc, agent_id);
+        //     return make_tuple(backup_goal, false);  // No valid goal found
+        // }
 
         // Add goal to buffer. Judge if we want to use it later.
         this->goal_buffer[agent_id] = next_goal;
@@ -96,7 +121,7 @@ tuple<int, bool> TaskAssigner::genGoal(set<int> to_avoid, int curr_goal,
     if (to_avoid.find(next_goal) != to_avoid.end() || next_goal == curr_goal) {
         int backup_goal =
             this->sampleBackupGoal(to_avoid, curr_goal, start_loc, agent_id);
-        if (screen > 0) {
+        if (screen > 1) {
             spdlog::info("Agent {}: Current goal {} is occupied, sampling a "
                          "backup goal: {}",
                          agent_id, next_goal, backup_goal);
@@ -110,27 +135,29 @@ tuple<int, bool> TaskAssigner::genGoal(set<int> to_avoid, int curr_goal,
     return make_tuple(next_goal, false);
 }
 
-// int TaskAssigner::genOneGoalLoc(set<int> to_avoid, int curr_goal, int
-// start_loc,
-//                                 int agent_id) {
-// }
+int TaskAssigner::sampleUnoccupiedLoc(set<int> to_avoid,
+                                      vector<int> candidates) {
+    vector<int> valid_candidates;
+    for (int loc : candidates) {
+        if (to_avoid.find(loc) == to_avoid.end()) {
+            valid_candidates.push_back(loc);
+        }
+    }
 
-// int TaskAssigner::sampleUnoccupiedLoc(set<int> to_avoid,
-//                                       vector<int> candidates) {
-//     vector<int> valid_candidates;
-//     for (int loc : candidates) {
-//         if (to_avoid.find(loc) == to_avoid.end()) {
-//             valid_candidates.push_back(loc);
-//         }
-//     }
+    // Sample from valid candidates
+    if (valid_candidates.empty()) {
+        if (screen > 1) {
+            spdlog::info(
+                "No valid candidates to sample from. Sampling from all "
+                "candidates.");
+        }
 
-//     // Sample from valid candidates
-//     if (valid_candidates.empty()) {
-//         spdlog::info("No valid candidates to sample from.");
-//         return -1;  // or handle the error as needed
-//     }
-//     return valid_candidates[rand() % valid_candidates.size()];
-// }
+        // We can only sample from the candidate. The tasking logic later will
+        // prevent the agent from going to there momentarily.
+        return candidates[rand() % candidates.size()];
+    }
+    return valid_candidates[rand() % valid_candidates.size()];
+}
 
 int TaskAssigner::sampleBackupGoal(set<int> to_avoid, int curr_goal,
                                    int start_loc, int agent_id) {
