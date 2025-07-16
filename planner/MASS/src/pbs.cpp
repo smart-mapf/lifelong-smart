@@ -33,7 +33,7 @@ PBS::PBS(std::shared_ptr<Instance> user_instance_ptr, int single_agent_solver_na
 bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id)
 {
     assert(need_replan[agent_id]);
-	ReservationTable rt(instance_ptr->GetNumOfVertices());
+	ReservationTable rt(instance_ptr->graph->map_size);
     node.getRTFromP(rt, rtp);
     InsertInitLocation(agent_id, *instance_ptr, rt);
     double solution_cost = 0.0;
@@ -48,7 +48,7 @@ bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id)
 	node.plan[agent_id] = path;
     node.solution_cost[agent_id] = solution_cost;
 
-	ReservationTable rtdebug(instance_ptr->GetNumOfVertices());
+	ReservationTable rtdebug(instance_ptr->graph->map_size);
 	node.getRTFromP(rtdebug, rtp);
 	if(!checkValid(rtdebug, path, agent_id)) {
 		std::fstream outputRT("ReservationTable.txt", std::fstream::in |
@@ -90,7 +90,7 @@ bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id)
 bool PBS::UpdatePlan(PTNode& node, int index)
 {
 	std::list<int> priority_list = node.topologicalSort(index);
-    ReservationTable tmp_rt(instance_ptr->GetNumOfVertices());
+    ReservationTable tmp_rt(instance_ptr->graph->map_size);
     std::set<int> higher_agents;
     for (int agent_id: priority_list){
         if (agent_id == index
@@ -547,8 +547,8 @@ void PBS::saveTimedPath(const string & file_name) const
     {
         output << "Agent " << i << ":";
         for (const auto &state : solution_node->all_agents_timed_path[i])
-            output << "(" << instance_ptr->getRowCoordinate(state.first) << "," <<
-                instance_ptr->getColCoordinate(state.first) << "," << state.second << ")->";
+            output << "(" << instance_ptr->graph->getRowCoordinate(state.first) << "," <<
+                instance_ptr->graph->getColCoordinate(state.first) << "," << state.second << ")->";
         output << endl;
     }
     output.close();
@@ -563,8 +563,8 @@ void PBS::savePath(const string & file_name) const
     {
         output << "Agent " << i << ":";
         for (const auto &state : solution_node->plan[i])
-            output << "(" << instance_ptr->getRowCoordinate(state.location) << "," <<
-                   instance_ptr->getColCoordinate(state.location) << "," << state.arrival_time
+            output << "(" << instance_ptr->graph->getRowCoordinate(state.location) << "," <<
+                   instance_ptr->graph->getColCoordinate(state.location) << "," << state.arrival_time
                     << "," << state.leaving_time_tail << ")->";
         output << endl;
     }

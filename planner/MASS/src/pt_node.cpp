@@ -175,7 +175,7 @@ int PTNode::checkValid(ReservationTable& rt, int agent_id){
 
 bool PTNode::checkSolution(Instance& instance){
     std::pair<int, int> result(-1, -1);
-    ReservationTable rt_table(instance.GetNumOfVertices());
+    ReservationTable rt_table(instance.graph->map_size);
     std::set<int> s;
     for(int i = 0; i < (signed) plan.size();++i) s.insert(i);
     getRTFromP(rt_table, s);
@@ -190,7 +190,7 @@ bool PTNode::checkSolution(Instance& instance){
 
 std::pair<int, int> PTNode::getFirstCollision(Instance& instance){
     std::pair<int, int> result(-1, -1);
-	ReservationTable rt_table(instance.GetNumOfVertices());
+	ReservationTable rt_table(instance.graph->map_size);
 	std::set<int> s;
 	for(int i = 0; i < (signed) plan.size();++i) s.insert(i);
 	getRTFromP(rt_table, s);

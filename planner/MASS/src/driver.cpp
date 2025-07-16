@@ -1,6 +1,9 @@
 /*driver.cpp
  * Solve a MAPF instance on 2D grids.
  */
+#include <rpc/client.h>
+#include <rpc/rpc_error.h>
+
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 #include <memory>
@@ -37,16 +40,20 @@ int main(int argc, char **argv) {
             ("outputPaths", po::value<string>(), "output file for paths")
             ("partialExpansion,p", po::value<bool>()->default_value(1), "enable partial expansion")
             ("cutoffTime,t", po::value<double>()->default_value(300), "cutoff time (seconds)")
+            ("screen", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
 
             // params for instance generators
-            ("rows", po::value<int>()->default_value(0), "number of rows")
-            ("cols", po::value<int>()->default_value(0), "number of columns")
-            ("obs", po::value<int>()->default_value(0), "number of obstacles")
-            ("warehouseWidth", po::value<int>()->default_value(0),
-             "width of working stations on both sides, for generating instances")
+            // ("rows", po::value<int>()->default_value(0), "number of rows")
+            // ("cols", po::value<int>()->default_value(0), "number of columns")
+            // ("obs", po::value<int>()->default_value(0), "number of obstacles")
+            // ("warehouseWidth", po::value<int>()->default_value(0),
+            //  "width of working stations on both sides, for generating instances")
 
             // params for CBS
-            ("sipp", po::value<bool>()->default_value(false), "using sipp as the single agent solver");
+            ("sipp", po::value<bool>()->default_value(false), "using sipp as the single agent solver")
+
+            // params for rpc
+            ("portNum", po::value<int>()->default_value(8080), "port number for the server");
     // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -64,11 +71,11 @@ int main(int argc, char **argv) {
     ///////////////////////////////////////////////////////////////////////////
     /// load the instance
     //////////////////////////////////////////////////////////////////////
+    std::shared_ptr<Graph> graph =
+        make_shared<Graph>(vm["map"].as<string>(), vm["screen"].as<int>());
     std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(
-        vm["map"].as<string>(), vm["agents"].as<string>(),
-        vm["agentNum"].as<int>(), vm["agentIdx"].as<string>(),
-        vm["rows"].as<int>(), vm["cols"].as<int>(), vm["obs"].as<int>(),
-        vm["warehouseWidth"].as<int>(), vm["partialExpansion"].as<bool>(),
+        graph, vm["agents"].as<string>(), vm["agentNum"].as<int>(),
+        vm["agentIdx"].as<string>(), vm["partialExpansion"].as<bool>(),
         vm["solver"].as<int>());
 
     srand(vm["seed"].as<int>());

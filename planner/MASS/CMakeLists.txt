@@ -4,6 +4,10 @@ project(MASS)
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -pthread -g -ldl -O3 -ffast-math")
 set(CMAKE_CXX_STANDARD 14)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "RELEASE")
+endif()
+
 # set base path for cplex directory, change this path if using different version of CPLEX
 SET(CPLEX_BASE_DIR "/home/yulun/Desktop/MAPF_group/surrogate_ggo/CPLEX_Studio2210" CACHE STRING "Path to CPLEX base directory")
 
@@ -19,6 +23,7 @@ set(ILOCPLEX_LIBRARIES         "${CPLEX_BASE_DIR}/cplex/lib/x86-64_linux/static_
 set(CONCERT_LIBRARIES         "${CPLEX_BASE_DIR}/concert/lib/x86-64_linux/static_pic/libconcert.a")
 
 find_package(Boost 1.49.0 REQUIRED COMPONENTS program_options system filesystem)
+find_package(spdlog REQUIRED)
 
 include_directories(
   include
@@ -38,5 +43,5 @@ set_property(
 )
 
 target_include_directories(MASS PUBLIC ${Boost_INCLUDE_DIRS} ${CPLEX_INCLUDE_DIRS} ${CONCERT_INCLUDE_DIRS})
-target_link_libraries(MASS ${Boost_LIBRARIES}  ${ILOCPLEX_LIBRARIES} ${CONCERT_LIBRARIES} ${CPLEX_LIBRARIES} ${CPLEXDISTMIP_LIBRARIES}  ${CMAKE_DL_LIBS})
+target_link_libraries(MASS ${Boost_LIBRARIES}  ${ILOCPLEX_LIBRARIES} ${CONCERT_LIBRARIES} ${CPLEX_LIBRARIES} ${CPLEXDISTMIP_LIBRARIES}  ${CMAKE_DL_LIBS} rpc spdlog::spdlog)
 set (target_link_options "-lilocplex -lconcert -lcplex -lm -lpthread")

@@ -13,6 +13,12 @@
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/filesystem.hpp>
+#include <spdlog/spdlog.h>
+#include <random>
+#include <json.hpp>
 
 using boost::heap::pairing_heap;
 using boost::heap::compare;
@@ -37,6 +43,20 @@ using std::endl;
 using std::ofstream;
 using std::cerr;
 using std::string;
+using boost::char_separator;
+using boost::tokenizer;
+using boost::heap::fibonacci_heap;
+using std::cerr;
+using std::getline;
+using std::ifstream;
+using std::map;
+using std::mt19937;
+using std::set;
+using std::shared_ptr;
+using std::stack;
+using std::to_string;
+
+using json = nlohmann::json;
 
 // Hyper-parameters
 #define INF 10000.0
@@ -45,6 +65,7 @@ using std::string;
 #define TIME_STEP_SIZE 0.05
 
 #define WINDOW_SIZE INF
+#define WEIGHT_MAX INT_MAX / 2
 
 
 #define NUM_ORIENT 4

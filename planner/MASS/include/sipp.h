@@ -15,8 +15,8 @@
 #include <vector>
 
 #include "instance.h"
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
+// #include "rapidjson/document.h"
+// #include "rapidjson/filereadstream.h"
 #include "berstein.h"
 #include "milp_cache.h"
 #include "common.h"
@@ -24,8 +24,37 @@
 #include "crise_solver.h"
 //#include "sipp_ip.h"
 
-using std::vector;
+struct Node
+{
+    bool is_expanded = false;
+    int current_point;
+    Action prev_action;
+    orient curr_o;
 
+    int interval_index;
+    double arrival_time_min; // arrival time of the head of the vehicle
+    double arrival_time_max; // arrival time of the head of the vehicle
+    
+	double g = 0;      //
+	double f = 0;      // f = h + g;
+	double h = 0;      //
+
+    std::shared_ptr<MotionNode> bezier_solution = nullptr;
+    std::shared_ptr<Node> parent;
+    IntervalQueue partial_intervals;
+};
+
+class NodeCompare
+{
+public:
+    bool operator() (const std::shared_ptr<Node>& N1, const std::shared_ptr<Node>& N2) {
+        if (N1->f > N2->f) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+};
 
 typedef vector<Node> Successors;
 
@@ -62,7 +91,7 @@ private:
     void Reset();
     inline int DistHeuristic(int curr_loc)
     {
-        int h_val = instance_ptr->getManhattanDistance(curr_loc, curr_agent.goal_location);
+        int h_val = instance_ptr->graph->getManhattanDistance(curr_loc, curr_agent.goal_location);
         return h_val;
     }
     bool Dijkstra(size_t curr_id);

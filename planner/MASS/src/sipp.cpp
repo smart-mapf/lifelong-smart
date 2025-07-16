@@ -13,8 +13,8 @@ void SIPP::PrintNonzeroRT(ReservationTable& rt) const {
     for (unsigned int i = 0; i < rt.size(); i++) {
         if (!rt[i].empty()) {
             printf("Interval at location: %d (%d, %d):\t", i,
-                   instance_ptr->getCoordinate(i).first,
-                   instance_ptr->getCoordinate(i).second);
+                   instance_ptr->graph->getCoordinate(i).first,
+                   instance_ptr->graph->getCoordinate(i).second);
 
             for (TimeInterval tmp_interval : rt[i]) {
                 printf("From agent: %d, %f -> %f,\t", tmp_interval.agent_id,
@@ -133,8 +133,8 @@ void SIPP::showSolution(std::shared_ptr<Node>& s) {
         double curr_time_max = local_path_entry.leaving_time_tail;
         printf("Forward::The location (%d, %d, %d), the arrive time is: %f, "
                "the leave time is: %f\n",
-               instance_ptr->getCoordinate(curr_loc).first,
-               instance_ptr->getCoordinate(curr_loc).second, s->curr_o,
+               instance_ptr->graph->getCoordinate(curr_loc).first,
+               instance_ptr->graph->getCoordinate(curr_loc).second, s->curr_o,
                local_path_entry.arrival_time,
                local_path_entry.leaving_time_tail);
     }
@@ -371,7 +371,7 @@ bool SIPP::dominanceCheck(const std::shared_ptr<Node>& new_node) {
  */
 void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
     Neighbors neighbors;
-    instance_ptr->getNeighbors(n->current_point, n->curr_o, neighbors);
+    instance_ptr->graph->getNeighbors(n->current_point, n->curr_o, neighbors);
     // Previous action is forward. Do rotation expansion here.
     if (n->parent == nullptr or n->prev_action == Action::forward) {
         // Insert three nodes, turn left, turn right, and turn back
@@ -572,7 +572,7 @@ void SIPP::getHeuristic(const std::string& heuristic_file) {
  */
 bool SIPP::Dijkstra(size_t curr_id) {
     std::vector<std::vector<double>> curr_agent_heuristic(
-        instance_ptr->map_size, std::vector<double>(NUM_ORIENT));
+        instance_ptr->graph->map_size, std::vector<double>(NUM_ORIENT));
     std::priority_queue<std::shared_ptr<Node>,
                         std::vector<std::shared_ptr<Node>>, NodeCompare>
         dij_open;
@@ -607,7 +607,7 @@ bool SIPP::Dijkstra(size_t curr_id) {
         }
         // For all the neighbor location, all need to do this operation
         Neighbors neighbors;
-        instance_ptr->getInverseNeighbors(n->current_point, n->curr_o,
+        instance_ptr->graph->getInverseNeighbors(n->current_point, n->curr_o,
                                           neighbors);
         if (n->parent == nullptr or n->prev_action == Action::forward) {
             // Insert two nodes, turn left and turn right
