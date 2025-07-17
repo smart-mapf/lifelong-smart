@@ -175,7 +175,7 @@ int SMARTSystem::gen_next_goal(int agent_id, bool repeat_last_goal) {
     if (!this->random_task && !this->tasks[agent_id].empty()) {
         Task next = this->tasks[agent_id].front();
         this->tasks[agent_id].pop_front();
-        return next.location; // Only take the location of the task
+        return next.location;  // Only take the location of the task
     }
 
     // Otherwise generate random tasks
@@ -260,11 +260,12 @@ void SMARTSystem::update_goal_locations() {
         }
         double min_timesteps = 0;
         int prev_loc = curr;
-        for(const auto &g : goal_locations[k]) {
+        for (const auto &g : goal_locations[k]) {
             min_timesteps += G.get_Manhattan_distance(g.location, prev_loc);
             prev_loc = g.location;
         }
-        // double min_timesteps = G.get_Manhattan_distance((goal.location), curr);
+        // double min_timesteps = G.get_Manhattan_distance((goal.location),
+        // curr);
         while (min_timesteps <= simulation_window)
         // The agent might finish its tasks during the next planning
         // horizon
@@ -824,7 +825,6 @@ string SMARTSystem::get_curr_stats() const {
     return stats.dump();
 }
 
-
 bool SMARTSystem::load_tasks() {
     // cout << "Loading tasks from file: " << this->task_file << endl;
     spdlog::info("Loading tasks from file: {}", this->task_file);
@@ -844,8 +844,8 @@ bool SMARTSystem::load_tasks() {
 
     // Loading task is successful, we shall use the loaded tasks onward.
     this->random_task = false;
-    spdlog::info("Loaded {} tasks for {} agents.", this->tasks.size(),
-             this->num_of_drives);
+    spdlog::info("Loaded {} tasks for {} agents.", this->tasks[0].size(),
+                 this->num_of_drives);
 
     return true;
 }

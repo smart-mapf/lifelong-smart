@@ -321,8 +321,9 @@ def run_lifelong_argos(
                 f"--save_heuristics_table={str(save_heuristics_table).lower()}",
                 f"--left_w_weight={left_w_weight}",
                 f"--right_w_weight={right_w_weight}",
-                # f"--task={task}",
             ]
+            if task != "":
+                planner_command.append(f"--task={task}")
         run_simulator(
             args=(server_command, client_command, planner_command),
             timeout=10 * sim_duration / ticks_per_second,
