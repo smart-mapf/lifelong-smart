@@ -13,7 +13,7 @@ def plot_runtime_vs_agents(csv_path, label=None):
     agents = means.index
 
     # Plot
-    plt.plot(agents, means, label=label or csv_path, linewidth=2)
+    plt.plot(agents, means, label=label or csv_path, linewidth=2, marker='o')
     plt.fill_between(agents, means - stds, means + stds, alpha=0.3)
 
     plt.xlabel("#agents")

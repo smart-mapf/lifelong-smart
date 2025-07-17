@@ -17,3 +17,4 @@ data/warehouse-20-40-10-2-2/heuristic
 durationPath.txt
 output
 paths.txt
+*.png

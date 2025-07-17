@@ -4,13 +4,14 @@ int RANDOM_WALK_STEPS = 100000;
 
 Instance::Instance(shared_ptr<Graph> graph, const string& in_agent_fname,
                    int in_agents_num, const string& in_agent_indices,
-                   bool use_partial_expansion, int used_sps_solver)
+                   bool use_partial_expansion, int used_sps_solver, int screen)
     : graph(graph),
       agent_fname(in_agent_fname),
       agent_indices(in_agent_indices),
       num_of_agents(in_agents_num),
       use_pe(use_partial_expansion),
-      use_sps_type(used_sps_solver) {
+      use_sps_type(used_sps_solver),
+      screen(screen) {
     // bool succ = loadMap();
     // if (!succ)
     // {
@@ -30,16 +31,13 @@ Instance::Instance(shared_ptr<Graph> graph, const string& in_agent_fname,
     GetRawReservationTable();
     bool succ = loadAgents();
     if (!succ) {
-        // if (num_of_agents > 0)
-        // {
-        // 	generateRandomAgents(warehouse_width);
-        // 	saveAgents();
-        // }
-        // else
-        // {
-        cerr << "Agent file " << agent_fname << " not found." << endl;
-        exit(-1);
-        // }
+        if (num_of_agents > 0) {
+            generateRandomAgents();
+            // saveAgents();
+        } else {
+            cerr << "Agent file " << agent_fname << " not found." << endl;
+            exit(-1);
+        }
     }
     for (int i = 0; i < num_of_agents; i++) {
         agents[i].id = i;
@@ -63,117 +61,138 @@ void Instance::GetAgents(std::vector<Agent>& agents_list) {
     agents_list = agents;
 }
 
-// void Instance::generateRandomAgents(int warehouse_width)
-// {
-// 	cout << "Generate " << num_of_agents << " random start and goal
-// locations " << endl; 	vector<bool> starts(this->graph->map_size,
-// false); 	vector<bool> goals(this->graph->map_size, false);
-// 	agents.resize(num_of_agents);
+void Instance::generateRandomAgents() {
+    cout << "Generate " << num_of_agents << " random start and goal locations "
+         << endl;
+    vector<bool> starts(this->graph->map_size, false);
+    vector<bool> goals(this->graph->map_size, false);
+    agents.resize(num_of_agents);
 
-// 	if (warehouse_width == 0)//Generate agents randomly
-// 	{
-// 		// Choose random start locations
-// 		int k = 0;
-// 		while (k < num_of_agents)
-// 		{
-// 			int x = rand() % num_of_rows, y = rand() % num_of_cols;
-// 			int start = this->graph->linearizeCoordinate(x, y);
-// 			if (my_map[start] || starts[start])
-// 				continue;
+    // Non-warehouse scenario
+    if (this->graph->workstations.size() == 0)  // Generate agents randomly
+    {
+        if (screen > 0)
+            spdlog::info("Generating {} random agents...", num_of_agents);
+        // Choose random start locations
+        int k = 0;
+        while (k < num_of_agents) {
+            int x = rand() % this->graph->num_of_rows,
+                y = rand() % this->graph->num_of_cols;
+            int start = this->graph->linearizeCoordinate(x, y);
+            if (this->graph->my_map[start] || starts[start])
+                continue;
 
-// 			// update start
-// 			starts[start] = true;
+            // update start
+            starts[start] = true;
 
-// 			// find goal
-// 			int goal = randomWalk(start, RANDOM_WALK_STEPS);
-// 			while (goals[goal])
-// 				goal = randomWalk(goal, 1);
+            // find goal
+            int goal = this->graph->randomWalk(start, RANDOM_WALK_STEPS);
+            while (goals[goal])
+                goal = this->graph->randomWalk(goal, 1);
 
-// 			//update goal
-// 			goals[goal] = true;
-// 			agents[k] = Agent(start, goal);
-// 			k++;
-// 		}
-// 	}
-// 	else //Generate agents for warehouse scenario
-// 	{
-// 		// Choose random start locations
-// 		int k = 0;
-// 		while (k < num_of_agents)
-// 		{
-// 			int x = rand() % num_of_rows, y = rand() %
-// warehouse_width; 			if (k % 2 == 0)
-// y = num_of_cols - y - 1; 			int start =
-// this->graph->linearizeCoordinate(x, y); 			if
-// (starts[start]) 				continue;
-// 			// update start
+            // update goal
+            goals[goal] = true;
+            agents[k] = Agent(start, goal);
+            k++;
+        }
+    } else  // Generate agents for warehouse scenario
+    {
+        spdlog::info("Generating {} random agents for warehouse scenario...",
+                     num_of_agents);
+        // Choose random start locations
+        for (int k = 0; k < num_of_agents; k++) {
+            int start = this->graph->sampleFreeLocation();
+            while (starts[start]) {
+                start = this->graph->sampleFreeLocation();
+            }
+            starts[start] = true;
 
-// 			agents[k] = Agent(start, 0);
-// 			starts[start] = true;
+            int goal = this->graph->sampleWarehouseTaskLoc();
+            while (goals[goal] || goal == start) {
+                goal = this->graph->sampleWarehouseTaskLoc();
+            }
+            goals[goal] = true;
 
-// 			k++;
-// 		}
-// 		// Choose random goal locations
-// 		k = 0;
-// 		while (k < num_of_agents)
-// 		{
-// 			int x = rand() % num_of_rows, y = rand() %
-// warehouse_width; 			if (k % 2 == 1)
-// y = num_of_cols - y - 1; 			int goal =
-// this->graph->linearizeCoordinate(x, y); 			if (goals[goal])
-// continue;
-// 			// update goal
-// 			agents[k].goal_location = goal;
-// 			goals[goal] = true;
-// 			k++;
-// 		}
-// 	}
-// }
+            agents[k] = Agent(start, goal);
+        }
 
-// bool Instance::addObstacle(int obstacle)
-// {
-// 	if (my_map[obstacle])
-// 		return false;
-// 	my_map[obstacle] = true;
-// 	int obstacle_x = this->graph->getRowCoordinate(obstacle);
-// 	int obstacle_y = this->graph->getColCoordinate(obstacle);
-// 	int x[4] = { obstacle_x, obstacle_x + 1, obstacle_x, obstacle_x - 1 };
-// 	int y[4] = { obstacle_y - 1, obstacle_y, obstacle_y + 1, obstacle_y };
-// 	int start = 0;
-// 	int goal = 1;
-// 	while (start < 3 && goal < 4)
-// 	{
-// 		if (x[start] < 0 || x[start] >= num_of_rows || y[start] < 0 ||
-// y[start] >= num_of_cols
-// 			|| my_map[this->graph->linearizeCoordinate(x[start],
-// y[start])]) 			start++; 		else if (goal <= start)
-// goal = start + 1; 		else if (x[goal] < 0 || x[goal] >= num_of_rows
-// || y[goal] < 0 || y[goal] >= num_of_cols
-// 				 ||
-// my_map[this->graph->linearizeCoordinate(x[goal], y[goal])])
-// goal++; 		else if
-// (graph->isConnected(this->graph->linearizeCoordinate(x[start], y[start]),
-// 							 this->graph->linearizeCoordinate(x[goal],
-// y[goal]))) // cannot find a path from start to goal
-// 		{
-// 			start = goal;
-// 			goal++;
-// 		}
-// 		else
-// 		{
-// 			my_map[obstacle] = false;
-// 			return false;
-// 		}
-// 	}
-// 	return true;
+        // int k = 0;
+        // while (k < num_of_agents) {
+        //     int x = rand() % this->graph->num_of_rows,
+        //         y = rand() % this->graph->num_of_cols;
+        //     if (k % 2 == 0)
+        //         y = this->graph->num_of_cols - y - 1;
+        //     int start = this->graph->linearizeCoordinate(x, y);
+        //     if (starts[start])
+        //         continue;
+        //     // update start
+
+        //     agents[k] = Agent(start, 0);
+        //     starts[start] = true;
+
+        //     k++;
+        // }
+        // // Choose random goal locations
+        // k = 0;
+        // while (k < num_of_agents) {
+        //     int x = rand() % this->graph->num_of_rows,
+        //         y = rand() % this->graph->num_of_cols;
+        //     if (k % 2 == 1)
+        //         y = this->graph->num_of_cols - y - 1;
+        //     int goal = this->graph->linearizeCoordinate(x, y);
+        //     if (goals[goal])
+        //         continue;
+        //     // update goal
+        //     agents[k].goal_location = goal;
+        //     goals[goal] = true;
+        //     k++;
+        // }
+    }
+}
+
+// bool Instance::addObstacle(int obstacle) {
+//     if (my_map[obstacle])
+//         return false;
+//     my_map[obstacle] = true;
+//     int obstacle_x = this->graph->getRowCoordinate(obstacle);
+//     int obstacle_y = this->graph->getColCoordinate(obstacle);
+//     int x[4] = {obstacle_x, obstacle_x + 1, obstacle_x, obstacle_x - 1};
+//     int y[4] = {obstacle_y - 1, obstacle_y, obstacle_y + 1, obstacle_y};
+//     int start = 0;
+//     int goal = 1;
+//     while (start < 3 && goal < 4) {
+//         if (x[start] < 0 || x[start] >= num_of_rows || y[start] < 0 ||
+//             y[start] >= num_of_cols ||
+//             my_map[this->graph->linearizeCoordinate(x[start], y[start])])
+//             start++;
+//         else if (goal <= start)
+//             goal = start + 1;
+//         else if (x[goal] < 0 || x[goal] >= num_of_rows || y[goal] < 0 ||
+//                  y[goal] >= num_of_cols ||
+//                  my_map[this->graph->linearizeCoordinate(x[goal], y[goal])])
+//             goal++;
+//         else if (graph->isConnected(
+//                      this->graph->linearizeCoordinate(x[start], y[start]),
+//                      this->graph->linearizeCoordinate(
+//                          x[goal],
+//                          y[goal])))  // cannot find a path from start to goal
+//         {
+//             start = goal;
+//             goal++;
+//         } else {
+//             my_map[obstacle] = false;
+//             return false;
+//         }
+//     }
+//     return true;
 // }
 
 // void Instance::generateConnectedRandomGrid(int rows, int cols, int obstacles)
 // {
 // 	cout << "Generate a " << rows << " x " << cols << " grid with " <<
 // obstacles << " obstacles. " << endl; 	int i, j; 	num_of_rows =
-// rows + 2; 	num_of_cols = cols + 2; 	this->graph->map_size = num_of_rows *
-// num_of_cols; 	my_map.resize(this->graph->map_size, false);
+// rows + 2; 	num_of_cols = cols + 2; 	this->graph->map_size =
+// num_of_rows * num_of_cols; 	my_map.resize(this->graph->map_size, false);
 // 	// add padding
 // 	i = 0;
 // 	for (j = 0; j < num_of_cols; j++)

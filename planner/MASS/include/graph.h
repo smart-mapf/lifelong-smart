@@ -16,10 +16,10 @@ public:
     int screen = 0;
 
     // heuristics for guidance graph, low level search optimize this.
-    boost::unordered_map<int, vector<double>> heuristics;
+    boost::unordered_map<int, vector<vector<double>>> heuristics;
 
     // distance heuristics, used for reasoning target conflicts
-    boost::unordered_map<int, vector<int>> d_heuristics;
+    // boost::unordered_map<int, vector<int>> d_heuristics;
 
     Graph() {
     }
@@ -30,14 +30,13 @@ public:
         return my_map[loc];
     }
     // bool validMove(int curr, int next) const;
-    inline bool validMove(int curr, int next) const
-	{
-		if (next < 0 || next >= map_size)
-			return false;
-		if (my_map[next])
-			return false;
-		return getManhattanDistance(curr, next) < 2;
-	}
+    inline bool validMove(int curr, int next) const {
+        if (next < 0 || next >= map_size)
+            return false;
+        if (my_map[next])
+            return false;
+        return getManhattanDistance(curr, next) < 2;
+    }
     list<int> getNeighbors(int curr) const;
     void getNeighbors(
         int curr, orient curr_o,
@@ -93,9 +92,8 @@ public:
     // void printMap() const;
 
     void computeHeuristics();
-
-    tuple<vector<double>, vector<int>> computeHeuristicsOneLoc(
-        int root_location);
+    vector<double> computeHeuristicsOneLoc(int root_location);
+    std::vector<std::vector<double>> BackDijkstra(int root_location);
 
     // nodes from and to are neighbors
     double getWeight(int from, int to) const;
@@ -150,13 +148,13 @@ public:
         return map_size;
     }
 
-    double getHeuristic(int goal_loc, int start_loc) const {
+    double getHeuristic(int goal_loc, int start_loc, orient start_ori) const {
         if (heuristics.find(goal_loc) == heuristics.end()) {
             spdlog::error("Error: goal_loc = {} not found in heuristics.",
                           goal_loc);
             exit(1);
         }
-        return heuristics.at(goal_loc)[start_loc];
+        return heuristics.at(goal_loc)[start_loc][start_ori];
     }
 
     int walkCounterClockwise(int from, int to) const {
@@ -195,8 +193,6 @@ public:
         return map_size;
     };
 
-
-
 private:
     vector<bool> my_map;  // true if obstacle, false if free
     vector<string> types;
@@ -228,7 +224,7 @@ private:
     // exists.
     // bool isConnected(int start, int goal) const;
 
-    // int randomWalk(int loc, int steps) const;
+    int randomWalk(int loc, int steps) const;
 
     // Classes that can access private members
     // friend class SingleAgentSolver;

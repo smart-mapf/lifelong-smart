@@ -24,11 +24,11 @@ int main(int argc, char **argv) {
 
             // params for the input instance and experiment settings
             ("map,m", po::value<string>()->default_value("random-32-32-20.map"), "input file for map")
-            ("agents,a", po::value<string>()->default_value("random-32-32-20-random-1.scen"), "input file for agents")
+            ("agents,a", po::value<string>()->default_value(""), "input file for agents")
 
-            ("heuristic,h",
-             po::value<string>()->default_value("./data/sortation_large/heuristic/sortation_large-random-1.heuristic"),
-             "heuristic for agents")
+            // ("heuristic,h",
+            //  po::value<string>()->default_value("./data/sortation_large/heuristic/sortation_large-random-1.heuristic"),
+            //  "heuristic for agents")
             ("output,o", po::value<string>()->default_value("./output/output.txt"), "output file for schedule")
             ("statistic,c", po::value<string>()->default_value("./output/output.csv"),
              "output file for statistic result")
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
              "single agent solver for PBS, choose from sipp-ip and bezier")
             ("outputPaths", po::value<string>(), "output file for paths")
             ("partialExpansion,p", po::value<bool>()->default_value(1), "enable partial expansion")
-            ("cutoffTime,t", po::value<double>()->default_value(300), "cutoff time (seconds)")
+            ("cutoffTime,t", po::value<double>()->default_value(60), "cutoff time (seconds)")
             ("screen", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
 
             // params for instance generators
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
     std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(
         graph, vm["agents"].as<string>(), vm["agentNum"].as<int>(),
         vm["agentIdx"].as<string>(), vm["partialExpansion"].as<bool>(),
-        vm["solver"].as<int>());
+        vm["solver"].as<int>(), vm["screen"].as<int>());
 
     srand(vm["seed"].as<int>());
 
@@ -86,12 +86,12 @@ int main(int argc, char **argv) {
     PBS pbs(instance_ptr, vm["solver"].as<int>(),
             vm["cutoffTime"].as<double>());
     auto init_start_time = Time::now();
-    pbs.sipp_ptr->getHeuristic(vm["heuristic"].as<std::string>());
+    // pbs.sipp_ptr->getHeuristic(vm["heuristic"].as<std::string>());
     auto init_end_time = Time::now();
     time_s debug_init_d = init_end_time - init_start_time;
     double debug_init_time = debug_init_d.count();
-    printf("Finish initialization the heuristic in %f seconds\n",
-           debug_init_time);
+    // printf("Finish initialization the heuristic in %f seconds\n",
+    //        debug_init_time);
     auto global_start_time = Time::now();
     bool pbs_success = pbs.solve(vm["output"].as<string>());
     auto global_end_time = Time::now();

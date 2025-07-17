@@ -314,10 +314,20 @@ bool Graph::loadMap() {
         return false;
     }
 
-    // this->computeHeuristics();
+    // Compute heuristics
+    if (screen > 0) {
+        spdlog::info("Computing heuristics...");
+    }
+    auto start_time = Time::now();
+    this->computeHeuristics();
+    auto end_time = Time::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        end_time - start_time);
+    if (screen > 0) {
+        spdlog::info("Computed heuristics in {} s", duration.count() / 1000.0);
+    }
     return true;
 }
-
 list<int> Graph::getNeighbors(int curr) const {
     list<int> neighbors;
     // int candidates[4] = {curr + 1, curr - 1, curr + num_of_cols,
@@ -447,21 +457,21 @@ void Graph::getNeighbors(int curr, orient direct, Neighbors& neighbor) const {
 //     return false;
 // }
 
-// int Graph::randomWalk(int curr, int steps) const {
-//     for (int walk = 0; walk < steps; walk++) {
-//         list<int> l = this->getNeighbors(curr);
-//         vector<int> next_locations(l.cbegin(), l.cend());
-//         auto rng = std::default_random_engine{};
-//         std::shuffle(std::begin(next_locations), std::end(next_locations),
-//         rng); for (int next : next_locations) {
-//             if (this->validMove(curr, next)) {
-//                 curr = next;
-//                 break;
-//             }
-//         }
-//     }
-//     return curr;
-// }
+int Graph::randomWalk(int curr, int steps) const {
+    for (int walk = 0; walk < steps; walk++) {
+        list<int> l = this->getNeighbors(curr);
+        vector<int> next_locations(l.cbegin(), l.cend());
+        auto rng = std::default_random_engine{};
+        std::shuffle(std::begin(next_locations),
+        std::end(next_locations), rng); for (int next : next_locations) {
+            if (this->validMove(curr, next)) {
+                curr = next;
+                break;
+            }
+        }
+    }
+    return curr;
+}
 
 void Graph::printMap() const {
     for (int i = 0; i < num_of_rows; i++) {
@@ -514,4 +524,133 @@ int Graph::getDirection(int from, int to) const {
     if (from == to)
         return 4;
     return -1;
+}
+
+void Graph::computeHeuristics() {
+    vector<int> h_locations;
+    // Add free_location and task locations to h_locations
+    h_locations.insert(h_locations.end(), free_locations.begin(),
+                       free_locations.end());
+    // h_locations.insert(h_locations.end(), warehouse_task_locs.begin(),
+    //                    warehouse_task_locs.end());
+    heuristics.clear();
+    for (int loc : h_locations) {
+        std::vector<std::vector<double>> heuristics_for_loc;
+        heuristics_for_loc = BackDijkstra(loc);
+        this->heuristics[loc] = heuristics_for_loc;
+    }
+}
+
+// vector<double> Graph::computeHeuristicsOneLoc(int root_location) {
+//     vector<double> h(num_of_rows * num_of_cols, WEIGHT_MAX);
+//     h[root_location] = 0;
+
+//     return h;
+// }
+
+/**
+ * @brief Help function, get the heuristic values
+ *
+ * @param start_loc The start location of the agent
+ * @return Bool value determine if the search success
+ */
+std::vector<std::vector<double>> Graph::BackDijkstra(int root_location) {
+    std::vector<std::vector<double>> curr_heuristic(
+        this->map_size, std::vector<double>(NUM_ORIENT));
+    std::priority_queue<std::shared_ptr<Node>,
+                        std::vector<std::shared_ptr<Node>>, NodeCompare>
+        dij_open;
+    std::unordered_set<std::shared_ptr<Node>, NodeHash, NodeEqual>
+        dij_close_set;
+
+    // TODO: We do not consider orientation at the goal, so we add all four
+    // orientations as root
+    for (int ori = 0; ori < NUM_ORIENT; ori++) {
+        std::shared_ptr<Node> root_node = std::make_shared<Node>();
+        root_node->g = 0.0;
+        root_node->f = 0.0;
+        root_node->current_point = root_location;
+        root_node->curr_o = orient(ori);
+        root_node->parent = nullptr;
+        dij_open.push(root_node);
+    }
+
+    // std::shared_ptr<Node> root_node = std::make_shared<Node>();
+    //     root_node->g = 0.0;
+    //     root_node->f = 0.0;
+    //     root_node->current_point = root_location;
+    //     root_node->curr_o = orient::East;
+    //     root_node->parent = nullptr;
+    //     dij_open.push(root_node);
+
+    size_t h_count = 0;
+    while (!dij_open.empty()) {
+        std::shared_ptr<Node> n = dij_open.top();
+        dij_open.pop();
+        auto close_item_it = dij_close_set.find(n);
+        if (close_item_it != dij_close_set.end()) {
+            if (close_item_it->get()->f <= n->f) {
+                continue;
+            } else {
+                dij_close_set.erase(close_item_it);
+                curr_heuristic[n->current_point][n->curr_o] = n->g * 2;
+                dij_close_set.insert(n);
+            }
+        } else {
+            assert(n->current_point < curr_heuristic.size());
+            assert(n->curr_o < NUM_ORIENT);
+            curr_heuristic[n->current_point][n->curr_o] = n->g * 2;
+            h_count++;
+            dij_close_set.insert(n);
+        }
+        // For all the neighbor location, all need to do this operation
+        Neighbors neighbors;
+        this->getInverseNeighbors(n->current_point, n->curr_o, neighbors);
+        if (n->parent == nullptr or n->prev_action == Action::forward) {
+            // Insert two nodes, turn left and turn right
+            std::shared_ptr<Node> n_left = std::make_shared<Node>();
+            n_left->is_expanded = false;
+            n_left->prev_action = Action::turnLeft;
+            n_left->current_point = n->current_point;
+            n_left->curr_o = neighbors.left.second;
+            n_left->g = n->g + ROTATE_COST;
+            n_left->f = n_left->g;
+            n_left->parent = n;
+            dij_open.push(n_left);
+
+            std::shared_ptr<Node> n_right = std::make_shared<Node>();
+            n_right->is_expanded = false;
+            n_right->prev_action = Action::turnRight;
+            n_right->current_point = n->current_point;
+            n_right->curr_o = neighbors.right.second;
+            n_right->g = n->g + ROTATE_COST;
+            n_right->f = n_right->g;
+            n_right->parent = n;
+            dij_open.push(n_right);
+
+            std::shared_ptr<Node> n_back = std::make_shared<Node>();
+            n_back->is_expanded = false;
+            n_back->prev_action = Action::turnBack;
+            n_back->current_point = n->current_point;
+            n_back->curr_o = neighbors.back.second;
+            n_back->g = n->g + TURN_BACK_COST;
+            n_back->f = n_back->g;
+            n_back->parent = n;
+            dij_open.push(n_back);
+        }
+
+        for (int i = 0; i < neighbors.forward_locs.size(); i++) {
+            std::shared_ptr<Node> n_back = std::make_shared<Node>();
+            n_back->is_expanded = false;
+            n_back->prev_action = Action::forward;
+            n_back->current_point = neighbors.forward_locs[i];
+            n_back->curr_o = n->curr_o;
+            n_back->g = n->g + arrLowerBound(i);
+            n_back->f = n_back->g;
+            n_back->parent = n;
+            dij_open.push(n_back);
+        }
+    }
+
+    return curr_heuristic;
 }

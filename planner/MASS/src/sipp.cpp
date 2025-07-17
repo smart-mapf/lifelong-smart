@@ -6,7 +6,7 @@ SIPP::SIPP(const std::shared_ptr<Instance>& instance, double cutoff_time)
     : instance_ptr(instance), cutoff_time(cutoff_time) {
     failure_cache_ptr = std::make_shared<FailureCache>();
     success_cache_ptr = std::make_shared<SuccessCache>();
-    heuristic_vec.resize(instance_ptr->agents.size());
+    // heuristic_vec.resize(instance_ptr->agents.size());
 }
 
 void SIPP::PrintNonzeroRT(ReservationTable& rt) const {
@@ -56,8 +56,11 @@ bool SIPP::getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node) {
         init_node->g = 0;
         // If node is not expanded, h value is the heuristic value. Otherwise,
         // we use the least value in partial interval
-        init_node->h = heuristic_vec[curr_agent.id][init_node->current_point]
-                                    [init_node->curr_o];
+        // init_node->h = heuristic_vec[curr_agent.id][init_node->current_point]
+        //                             [init_node->curr_o];
+        init_node->h = instance_ptr->graph->getHeuristic(
+            curr_agent.goal_location, init_node->current_point,
+            init_node->curr_o);
         init_node->f = init_node->g + init_node->h;
         init_node->parent = nullptr;
     }
@@ -196,9 +199,14 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         // Found a goal node, might not be the optimal. Update the current
         // optimal and continue the search.
         if (s->current_point == curr_agent.goal_location and
-            s->curr_o == curr_agent.end_o and s->arrival_time_max == INF) {
+            (curr_agent.end_o == orient::None or
+             s->curr_o == curr_agent.end_o) and
+            s->arrival_time_max == INF) {
             optimal_travel_time = s->g;
             optimal_n = s;
+            // NOTE: To get optimal solution we should `continue` here. By
+            // `break`, we stop the search when the first solution is found.
+            // This can speed up the search.
             break;
         }
         // Expand the node
@@ -276,9 +284,12 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                         // TODO: Change the computation of g, h to weighted sum
                         // of edge weights and travel time.
                         new_node->g = new_node->arrival_time_min;
-                        new_node->h = heuristic_vec[curr_agent.id]
-                                                   [new_node->current_point]
-                                                   [new_node->curr_o];
+                        // new_node->h = heuristic_vec[curr_agent.id]
+                        //                            [new_node->current_point]
+                        //                            [new_node->curr_o];
+                        new_node->h = instance_ptr->graph->getHeuristic(
+                            curr_agent.goal_location, new_node->current_point,
+                            new_node->curr_o);
                         new_node->f = new_node->g + new_node->h;
                         tpg_solution->start_t =
                             tpg_solution->local_path.front().arrival_time;
@@ -395,8 +406,11 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
                 n->arrival_time_min + curr_agent.rotation_cost;
             n_left->arrival_time_max = n->arrival_time_max;
             n_left->g = n_left->arrival_time_min;
-            n_left->h = heuristic_vec[curr_agent.id][n_left->current_point]
-                                     [n_left->curr_o];
+            // n_left->h = heuristic_vec[curr_agent.id][n_left->current_point]
+            //                          [n_left->curr_o];
+            n_left->h = instance_ptr->graph->getHeuristic(
+                curr_agent.goal_location, n_left->current_point,
+                n_left->curr_o);
             n_left->f = n_left->g + n_left->h;
             n_left->parent = n;
             pushToOpen(n_left);
@@ -422,8 +436,11 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
                 n->arrival_time_min + curr_agent.rotation_cost;
             n_right->arrival_time_max = n->arrival_time_max;
             n_right->g = n_right->arrival_time_min;
-            n_right->h = heuristic_vec[curr_agent.id][n_right->current_point]
-                                      [n_right->curr_o];
+            // n_right->h = heuristic_vec[curr_agent.id][n_right->current_point]
+            //                           [n_right->curr_o];
+            n_right->h = instance_ptr->graph->getHeuristic(
+                curr_agent.goal_location, n_right->current_point,
+                n_right->curr_o);
             n_right->f = n_right->g + n_right->h;
             n_right->parent = n;
             pushToOpen(n_right);
@@ -449,8 +466,11 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
                 n->arrival_time_min + curr_agent.turn_back_cost;
             n_back->arrival_time_max = n->arrival_time_max;
             n_back->g = n_back->arrival_time_min;
-            n_back->h = heuristic_vec[curr_agent.id][n_back->current_point]
-                                     [n_back->curr_o];
+            // n_back->h = heuristic_vec[curr_agent.id][n_back->current_point]
+            //                          [n_back->curr_o];
+            n_back->h = instance_ptr->graph->getHeuristic(
+                curr_agent.goal_location, n_back->current_point,
+                n_back->curr_o);
             n_back->f = n_back->g + n_back->h;
             n_back->parent = n;
             pushToOpen(n_back);
@@ -539,125 +559,125 @@ std::vector<std::vector<std::vector<double>>> loadVector(
     return vec;
 }
 
-void SIPP::getHeuristic(const std::string& heuristic_file) {
-    ifstream myfile(heuristic_file.c_str());
-    if (myfile.is_open()) {
-        printf("success in loading heuristic!\n");
+// void SIPP::getHeuristic(const std::string& heuristic_file) {
+//     ifstream myfile(heuristic_file.c_str());
+//     if (myfile.is_open()) {
+//         printf("success in loading heuristic!\n");
 
-        heuristic_vec = loadVector(heuristic_file);
-    } else {
-        printf("Start to compute global heuristic!\n");
-        size_t numCores = std::thread::hardware_concurrency();
-        numCores = min(5, (int)numCores);
-        for (size_t i = 0; i < instance_ptr->num_of_agents; i += numCores) {
-            std::vector<std::thread> threads;
-            // Pass member function and object reference
-            for (size_t j = i;
-                 j < min(instance_ptr->num_of_agents, (int)(i + numCores));
-                 j++) {
-                threads.emplace_back(&SIPP::Dijkstra, this, j);
-            }
-            for (auto& thread : threads) {
-                thread.join();
-            }
-        }
-    }
-}
+//         heuristic_vec = loadVector(heuristic_file);
+//     } else {
+//         printf("Start to compute global heuristic!\n");
+//         size_t numCores = std::thread::hardware_concurrency();
+//         numCores = min(5, (int)numCores);
+//         for (size_t i = 0; i < instance_ptr->num_of_agents; i += numCores) {
+//             std::vector<std::thread> threads;
+//             // Pass member function and object reference
+//             for (size_t j = i;
+//                  j < min(instance_ptr->num_of_agents, (int)(i + numCores));
+//                  j++) {
+//                 threads.emplace_back(&SIPP::Dijkstra, this, j);
+//             }
+//             for (auto& thread : threads) {
+//                 thread.join();
+//             }
+//         }
+//     }
+// }
 
-/**
- * @brief Help function, get the heuristic values
- *
- * @param start_loc The start location of the agent
- * @return Bool value determine if the search success
- */
-bool SIPP::Dijkstra(size_t curr_id) {
-    std::vector<std::vector<double>> curr_agent_heuristic(
-        instance_ptr->graph->map_size, std::vector<double>(NUM_ORIENT));
-    std::priority_queue<std::shared_ptr<Node>,
-                        std::vector<std::shared_ptr<Node>>, NodeCompare>
-        dij_open;
-    std::unordered_set<std::shared_ptr<Node>, NodeHash, NodeEqual>
-        dij_close_set;
-    std::shared_ptr<Node> root_node = std::make_shared<Node>();
-    root_node->g = 0.0;
-    root_node->f = 0.0;
-    root_node->current_point = instance_ptr->agents[curr_id].goal_location;
-    root_node->curr_o = instance_ptr->agents[curr_id].end_o;
-    root_node->parent = nullptr;
-    dij_open.push(root_node);
-    size_t h_count = 0;
-    while (!dij_open.empty()) {
-        std::shared_ptr<Node> n = dij_open.top();
-        dij_open.pop();
-        auto close_item_it = dij_close_set.find(n);
-        if (close_item_it != dij_close_set.end()) {
-            if (close_item_it->get()->f <= n->f) {
-                continue;
-            } else {
-                dij_close_set.erase(close_item_it);
-                curr_agent_heuristic[n->current_point][n->curr_o] = n->g * 2;
-                dij_close_set.insert(n);
-            }
-        } else {
-            assert(n->current_point < curr_agent_heuristic.size());
-            assert(n->curr_o < curr_agent_heuristic[0].size());
-            curr_agent_heuristic[n->current_point][n->curr_o] = n->g * 2;
-            h_count++;
-            dij_close_set.insert(n);
-        }
-        // For all the neighbor location, all need to do this operation
-        Neighbors neighbors;
-        instance_ptr->graph->getInverseNeighbors(n->current_point, n->curr_o,
-                                          neighbors);
-        if (n->parent == nullptr or n->prev_action == Action::forward) {
-            // Insert two nodes, turn left and turn right
-            std::shared_ptr<Node> n_left = std::make_shared<Node>();
-            n_left->is_expanded = false;
-            n_left->prev_action = Action::turnLeft;
-            n_left->current_point = n->current_point;
-            n_left->curr_o = neighbors.left.second;
-            n_left->g = n->g + curr_agent.rotation_cost;
-            n_left->f = n_left->g;
-            n_left->parent = n;
-            dij_open.push(n_left);
+// /**
+//  * @brief Help function, get the heuristic values
+//  *
+//  * @param start_loc The start location of the agent
+//  * @return Bool value determine if the search success
+//  */
+// bool SIPP::Dijkstra(size_t curr_id) {
+//     std::vector<std::vector<double>> curr_agent_heuristic(
+//         instance_ptr->graph->map_size, std::vector<double>(NUM_ORIENT));
+//     std::priority_queue<std::shared_ptr<Node>,
+//                         std::vector<std::shared_ptr<Node>>, NodeCompare>
+//         dij_open;
+//     std::unordered_set<std::shared_ptr<Node>, NodeHash, NodeEqual>
+//         dij_close_set;
+//     std::shared_ptr<Node> root_node = std::make_shared<Node>();
+//     root_node->g = 0.0;
+//     root_node->f = 0.0;
+//     root_node->current_point = instance_ptr->agents[curr_id].goal_location;
+//     root_node->curr_o = instance_ptr->agents[curr_id].end_o;
+//     root_node->parent = nullptr;
+//     dij_open.push(root_node);
+//     size_t h_count = 0;
+//     while (!dij_open.empty()) {
+//         std::shared_ptr<Node> n = dij_open.top();
+//         dij_open.pop();
+//         auto close_item_it = dij_close_set.find(n);
+//         if (close_item_it != dij_close_set.end()) {
+//             if (close_item_it->get()->f <= n->f) {
+//                 continue;
+//             } else {
+//                 dij_close_set.erase(close_item_it);
+//                 curr_agent_heuristic[n->current_point][n->curr_o] = n->g * 2;
+//                 dij_close_set.insert(n);
+//             }
+//         } else {
+//             assert(n->current_point < curr_agent_heuristic.size());
+//             assert(n->curr_o < curr_agent_heuristic[0].size());
+//             curr_agent_heuristic[n->current_point][n->curr_o] = n->g * 2;
+//             h_count++;
+//             dij_close_set.insert(n);
+//         }
+//         // For all the neighbor location, all need to do this operation
+//         Neighbors neighbors;
+//         instance_ptr->graph->getInverseNeighbors(n->current_point, n->curr_o,
+//                                           neighbors);
+//         if (n->parent == nullptr or n->prev_action == Action::forward) {
+//             // Insert two nodes, turn left and turn right
+//             std::shared_ptr<Node> n_left = std::make_shared<Node>();
+//             n_left->is_expanded = false;
+//             n_left->prev_action = Action::turnLeft;
+//             n_left->current_point = n->current_point;
+//             n_left->curr_o = neighbors.left.second;
+//             n_left->g = n->g + curr_agent.rotation_cost;
+//             n_left->f = n_left->g;
+//             n_left->parent = n;
+//             dij_open.push(n_left);
 
-            std::shared_ptr<Node> n_right = std::make_shared<Node>();
-            n_right->is_expanded = false;
-            n_right->prev_action = Action::turnRight;
-            n_right->current_point = n->current_point;
-            n_right->curr_o = neighbors.right.second;
-            n_right->g = n->g + curr_agent.rotation_cost;
-            n_right->f = n_right->g;
-            n_right->parent = n;
-            dij_open.push(n_right);
+//             std::shared_ptr<Node> n_right = std::make_shared<Node>();
+//             n_right->is_expanded = false;
+//             n_right->prev_action = Action::turnRight;
+//             n_right->current_point = n->current_point;
+//             n_right->curr_o = neighbors.right.second;
+//             n_right->g = n->g + curr_agent.rotation_cost;
+//             n_right->f = n_right->g;
+//             n_right->parent = n;
+//             dij_open.push(n_right);
 
-            std::shared_ptr<Node> n_back = std::make_shared<Node>();
-            n_back->is_expanded = false;
-            n_back->prev_action = Action::turnBack;
-            n_back->current_point = n->current_point;
-            n_back->curr_o = neighbors.back.second;
-            n_back->g = n->g + curr_agent.turn_back_cost;
-            n_back->f = n_back->g;
-            n_back->parent = n;
-            dij_open.push(n_back);
-        }
+//             std::shared_ptr<Node> n_back = std::make_shared<Node>();
+//             n_back->is_expanded = false;
+//             n_back->prev_action = Action::turnBack;
+//             n_back->current_point = n->current_point;
+//             n_back->curr_o = neighbors.back.second;
+//             n_back->g = n->g + curr_agent.turn_back_cost;
+//             n_back->f = n_back->g;
+//             n_back->parent = n;
+//             dij_open.push(n_back);
+//         }
 
-        for (int i = 0; i < neighbors.forward_locs.size(); i++) {
-            std::shared_ptr<Node> n_back = std::make_shared<Node>();
-            n_back->is_expanded = false;
-            n_back->prev_action = Action::forward;
-            n_back->current_point = neighbors.forward_locs[i];
-            n_back->curr_o = n->curr_o;
-            n_back->g = n->g + arrLowerBound(i);
-            n_back->f = n_back->g;
-            n_back->parent = n;
-            dij_open.push(n_back);
-        }
-    }
-    std::lock_guard<std::mutex> lock(mutex);
-    heuristic_vec[curr_id] = curr_agent_heuristic;
-    return false;
-}
+//         for (int i = 0; i < neighbors.forward_locs.size(); i++) {
+//             std::shared_ptr<Node> n_back = std::make_shared<Node>();
+//             n_back->is_expanded = false;
+//             n_back->prev_action = Action::forward;
+//             n_back->current_point = neighbors.forward_locs[i];
+//             n_back->curr_o = n->curr_o;
+//             n_back->g = n->g + arrLowerBound(i);
+//             n_back->f = n_back->g;
+//             n_back->parent = n;
+//             dij_open.push(n_back);
+//         }
+//     }
+//     std::lock_guard<std::mutex> lock(mutex);
+//     heuristic_vec[curr_id] = curr_agent_heuristic;
+//     return false;
+// }
 
 /**
  * @brief Find next free intervals recurrently
@@ -708,8 +728,11 @@ void SIPP::GetNextInterval(const std::shared_ptr<IntervalEntry>& prev_interval,
         // old: buggy because it does not consider the waiting time
         // new_interval->f = arrLowerBound(prev_interval->step) +
         //                   heuristic_vec[curr_agent.id][next_loc][s->curr_o];
+        // new_interval->f = new_interval->t_min +
+        //                   heuristic_vec[curr_agent.id][next_loc][s->curr_o];
         new_interval->f = new_interval->t_min +
-                          heuristic_vec[curr_agent.id][next_loc][s->curr_o];
+                          instance_ptr->graph->getHeuristic(
+                              curr_agent.goal_location, next_loc, s->curr_o);
         new_interval->location = next_loc;
         new_interval->step = prev_interval->step + 1;
         new_interval->prev_entry = prev_interval;
@@ -736,8 +759,10 @@ void SIPP::getSuccessors(const std::shared_ptr<Node>& s,
     init_interval->step = 0;
     init_interval->t_min = s->arrival_time_min;
     init_interval->t_max = s->arrival_time_max;
-    init_interval->f =
-        heuristic_vec[curr_agent.id][s->current_point][s->curr_o];
+    // init_interval->f =
+    //     heuristic_vec[curr_agent.id][s->current_point][s->curr_o];
+    init_interval->f = instance_ptr->graph->getHeuristic(
+        curr_agent.goal_location, s->current_point, s->curr_o);
     init_interval->prev_entry = nullptr;
     init_interval->location = s->current_point;
     init_interval->interval_idx = s->interval_index;

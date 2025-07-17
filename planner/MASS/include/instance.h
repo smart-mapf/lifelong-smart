@@ -44,7 +44,9 @@ struct Agent {
     int start_location = -1;
     orient start_o = orient::East;
     int goal_location = -1;
-    orient end_o = orient::East;
+
+    // By default we do not consider orientation at the goal
+    orient end_o = orient::None;
 
     double v_min = V_MIN;
     double v_max = V_MAX;
@@ -74,8 +76,8 @@ struct Agent {
 // Currently only works for undirected unweighted 4-neighbor grids
 class Instance {
 public:
-    int num_of_cols = 0;
-    int num_of_rows = 0;
+    // int num_of_cols = 0;
+    // int num_of_rows = 0;
     // int map_size = 0;
     std::vector<Agent> agents;
     int num_of_agents = 0;
@@ -88,7 +90,8 @@ public:
     Instance() = default;
     Instance(shared_ptr<Graph> graph, const string& agent_fname,
              int num_of_agents = 0, const string& agent_indices = "",
-             bool use_partial_expansion = false, int used_sps_solver = 0);
+             bool use_partial_expansion = false, int used_sps_solver = 0,
+             int screen = 0);
 
     void printAgents() const;
 
@@ -215,8 +218,10 @@ private:
     void saveAgents() const;
 
     // void generateConnectedRandomGrid(int rows, int cols, int obstacles); //
-    // initialize new [rows x cols] map with random obstacles void
-    // generateRandomAgents(int warehouse_width); bool addObstacle(int
+    // initialize new [rows x cols] map with random obstacles
+    void generateRandomAgents();
+    int screen;
+    // bool addObstacle(int
     // obstacle); // add this obsatcle only if the map is still connected
 
     // Class  SingleAgentSolver can access private members of Node

@@ -206,3 +206,56 @@ struct MotionNode
 };
 
 typedef vector<std::shared_ptr<MotionNode>> MotionInfo;
+
+
+struct Node
+{
+    bool is_expanded = false;
+    int current_point;
+    Action prev_action;
+    orient curr_o;
+
+    int interval_index;
+    double arrival_time_min; // arrival time of the head of the vehicle
+    double arrival_time_max; // arrival time of the head of the vehicle
+
+	double g = 0;      //
+	double f = 0;      // f = h + g;
+	double h = 0;      //
+
+    std::shared_ptr<MotionNode> bezier_solution = nullptr;
+    std::shared_ptr<Node> parent;
+    IntervalQueue partial_intervals;
+};
+
+class NodeCompare
+{
+public:
+    bool operator() (const std::shared_ptr<Node>& N1, const std::shared_ptr<Node>& N2) {
+        if (N1->f > N2->f) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+};
+
+typedef vector<Node> Successors;
+
+struct NodeEqual{
+    bool operator()(const std::shared_ptr<Node>& lhs, const std::shared_ptr<Node>& rhs) const {
+        return lhs->current_point == rhs->current_point and lhs->curr_o == rhs->curr_o
+               and lhs->interval_index == rhs->interval_index;
+    }
+};
+
+struct NodeHash {
+    size_t operator()(const std::shared_ptr<Node>& key) const {
+        size_t hashA = std::hash<int>()(key->current_point);
+        size_t hashB = std::hash<int>()(key->curr_o);
+        size_t hashC = std::hash<int>()(key->interval_index);
+
+        size_t combined = (hashA << 8) + (hashC << 2) + hashB;
+        return combined;
+    }
+};
