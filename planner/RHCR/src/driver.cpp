@@ -259,6 +259,7 @@ int main(int argc, char** argv)
             return -1;
         }
 		MAPFSolver* solver = set_solver(G, vm);
+        solver->consider_task_wait = true;
 		KivaSystem system(G, *solver);
 		set_parameters(system, vm);
         system.start_time = start_time;
