@@ -117,7 +117,7 @@ def run_lifelong_argos(
     # RHCR parameters
     planning_window: int = 10,
     scenario: str = "SMART",
-    task: str = "../tasks/kiva_large_w_mode_random.tasks",
+    task: str = "",
     cutoffTime: int = 1,
     solver: str = "PBS",
     id: bool = False,
