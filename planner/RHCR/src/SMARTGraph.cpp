@@ -11,14 +11,6 @@
 
 namespace fs = boost::filesystem;
 
-bool SMARTGrid::get_r_mode() const {
-    return this->r_mode;
-}
-
-bool SMARTGrid::get_w_mode() const {
-    return this->w_mode;
-}
-
 int SMARTGrid::get_n_valid_edges() const {
     return this->n_valid_edges;
 }
@@ -33,39 +25,6 @@ bool SMARTGrid::load_map_from_jsonstr(std::string G_json_str,
     else
         return load_unweighted_map_from_json(G_json, left_w_weight,
                                              right_w_weight);
-}
-
-void SMARTGrid::check_mode() {
-    // r and w cannot both be true
-    if (this->r_mode && this->w_mode) {
-        throw std::invalid_argument("Map layout contains both 'r' and 'w'");
-    }
-
-    // r and w cannot both be false
-    if (!this->r_mode && !this->w_mode) {
-        throw std::invalid_argument(
-            "Map layout does not contain either 'r' or 'w'");
-    }
-}
-
-/**
- * Infer simulation mode (r or w) from map layout.
- */
-void SMARTGrid::infer_sim_mode_from_map(json G_json) {
-    this->r_mode = false;
-    this->w_mode = false;
-    std::string line;
-    for (int i = 0; i < this->rows; i++) {
-        line = G_json["layout"][i];
-        for (int j = 0; j < this->cols; j++) {
-            if (line[j] == 'r')
-                this->r_mode = true;
-            if (line[j] == 'w')
-                this->w_mode = true;
-        }
-    }
-
-    check_mode();
 }
 
 void SMARTGrid::parseMap(std::vector<std::vector<double>>& map_e,
@@ -88,7 +47,8 @@ void SMARTGrid::parseMap(std::vector<std::vector<double>>& map_e,
 void SMARTGrid::update_task_dist(std::mt19937& gen,
                                  std::string task_dist_type) {
     // if (task_dist_type != "Gaussian") {
-    //     std::cout << "task dist type [" << task_dist_type << "] not support yet"
+    //     std::cout << "task dist type [" << task_dist_type << "] not support
+    //     yet"
     //               << std::endl;
     //     exit(-1);
     // }
@@ -153,8 +113,6 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
     this->move[3] = cols;   // down
     this->map_name = G_json["name"];
 
-    infer_sim_mode_from_map(G_json);
-
     this->types.resize(this->rows * this->cols);
     this->weights.clear();
     this->weights.resize(this->rows * this->cols);
@@ -177,19 +135,10 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
                 this->endpoints.push_back(id);
                 this->task_locations.push_back(id);
                 // Under w mode, endpoints are start locations
-                if (this->w_mode) {
-                    this->agent_home_locations.push_back(id);
-                }
-            }
-            // Only applies to r mode
-            else if (line[j] == 'r' && this->r_mode)  // robot rest
-            {
-                this->types[id] = "Home";
-                this->weights[id][4] = 1;
                 this->agent_home_locations.push_back(id);
             }
             // Only applies to w mode
-            else if (line[j] == 'w' && this->w_mode)  // workstation
+            else if (line[j] == 'w')  // workstation
             {
                 this->types[id] = "Workstation";
                 this->weights[id][4] = 1;
@@ -208,8 +157,7 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
 
                 // Under w mode, and with RHCR, agents can start from
                 // anywhere except for obstacles.
-                if (this->w_mode && !this->useDummyPaths &&
-                    !this->hold_endpoints) {
+                if (!this->useDummyPaths && !this->hold_endpoints) {
                     this->agent_home_locations.push_back(id);
                 }
             } else {
@@ -218,8 +166,7 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
 
                 // Under w mode, and with RHCR, agents can start from
                 // anywhere except for obstacles.
-                if (this->w_mode && !this->useDummyPaths &&
-                    !this->hold_endpoints) {
+                if (!this->useDummyPaths && !this->hold_endpoints) {
                     this->agent_home_locations.push_back(id);
                 }
             }
@@ -256,21 +203,14 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
     // std::cout << "Map size: " << this->rows << "x" << this->cols << " with ";
 
     string map_info = "";
-    if (this->w_mode) {
-        // std::cout << this->endpoints.size() << " endpoints (home stations)
-        // and "
-        //           << this->workstations.size() << " workstations." << endl;
-        map_info = std::to_string(this->endpoints.size()) +
-                   " endpoints (home stations) and " +
-                   std::to_string(this->workstations.size()) + " workstations.";
-    } else if (this->r_mode) {
-        // std::cout << this->endpoints.size() << " endpoints and "
-        //           << this->agent_home_locations.size() << " home stations."
-        //           << std::endl;
-        map_info = std::to_string(this->endpoints.size()) + " endpoints and " +
-                   std::to_string(this->agent_home_locations.size()) +
-                   " home stations.";
-    }
+
+    // std::cout << this->endpoints.size() << " endpoints (home stations)
+    // and "
+    //           << this->workstations.size() << " workstations." << endl;
+    map_info = std::to_string(this->endpoints.size()) +
+               " endpoints (home stations) and " +
+               std::to_string(this->workstations.size()) + " workstations.";
+
     spdlog::info("Map size: {}x{} with {}", this->rows, this->cols, map_info);
     spdlog::info("Done! ({:.2f} s)", runtime);
     // std::cout << "Done! (" << runtime << " s)" << std::endl;
@@ -521,8 +461,6 @@ bool SMARTGrid::load_unweighted_map(std::string fname, double left_w_weight,
     //  read map
     // int ep = 0, ag = 0;
 
-    this->r_mode = false;
-    this->w_mode = true;
     for (int i = 0; i < rows; i++) {
         getline(myfile, line);
         for (int j = 0; j < cols; j++) {
@@ -538,18 +476,10 @@ bool SMARTGrid::load_unweighted_map(std::string fname, double left_w_weight,
                 endpoints.push_back(id);
                 this->task_locations.push_back(id);
                 // Under w mode, endpoints are start locations
-                if (this->w_mode)
-                    this->agent_home_locations.push_back(id);
-            }
-            // Only applies to r mode
-            else if (line[j] == 'r' && this->r_mode)  // robot rest
-            {
-                this->types[id] = "Home";
-                this->weights[id][4] = 1;
                 this->agent_home_locations.push_back(id);
             }
             // Only applies to w mode
-            else if (line[j] == 'w' && this->w_mode)  // workstation
+            else if (line[j] == 'w')  // workstation
             {
                 this->types[id] = "Workstation";
                 this->weights[id][4] = 1;
@@ -568,8 +498,7 @@ bool SMARTGrid::load_unweighted_map(std::string fname, double left_w_weight,
 
                 // Under w mode, and with RHCR, agents can start from
                 // anywhere except for obstacles.
-                if (this->w_mode && !this->useDummyPaths &&
-                    !this->hold_endpoints) {
+                if (!this->useDummyPaths && !this->hold_endpoints) {
                     this->agent_home_locations.push_back(id);
                 }
             } else {
@@ -578,8 +507,7 @@ bool SMARTGrid::load_unweighted_map(std::string fname, double left_w_weight,
 
                 // Under w mode, and with RHCR, agents can start from
                 // anywhere except for obstacles.
-                if (this->w_mode && !this->useDummyPaths &&
-                    !this->hold_endpoints) {
+                if (!this->useDummyPaths && !this->hold_endpoints) {
                     this->agent_home_locations.push_back(id);
                 }
             }
@@ -637,19 +565,12 @@ void SMARTGrid::preprocessing(bool consider_rotation, std::string log_dir) {
             this->heuristics[endpoint] = compute_heuristics(endpoint);
         }
 
-        // Under r mode, agent home location is separated from endpoints
-        if (this->r_mode) {
-            for (auto home : this->agent_home_locations) {
-                this->heuristics[home] = compute_heuristics(home);
-            }
-        }
         // Under w mode, home location is endpoints but need additional
         // heuristics to workstations
-        else if (this->w_mode) {
-            for (auto workstation : this->workstations) {
-                this->heuristics[workstation] = compute_heuristics(workstation);
-            }
+        for (auto workstation : this->workstations) {
+            this->heuristics[workstation] = compute_heuristics(workstation);
         }
+
         // cout << table_save_path << endl;
         save_heuristics_table(table_save_path.string());
     }
@@ -684,26 +605,19 @@ void SMARTGrid::reset_weights(bool consider_rotation, std::string log_dir,
     std::cout << "after compute h, h size =" << this->heuristics.size()
               << ", end points size =" << this->endpoints.size() << std::endl;
 
-    // Under r mode, agent home location is separated from endpoints
-    if (this->r_mode) {
-        for (auto home : this->agent_home_locations) {
-            this->heuristics[home] = compute_heuristics(home);
-        }
-    }
     // Under w mode, home location is endpoints but need additional
     // heuristics to workstations
-    else if (this->w_mode) {
-        for (auto workstation : this->workstations) {
-            this->heuristics[workstation] = compute_heuristics(workstation);
-            // std::cout << "workstation= "<<workstation<<", h size ="<<
-            // this->heuristics[workstation].size() <<std::endl;
-        }
-        if (this->heuristics.size() !=
-            this->endpoints.size() + this->workstations.size()) {
-            std::cout << "error h size!" << std::endl;
-            exit(1);
-        }
+    for (auto workstation : this->workstations) {
+        this->heuristics[workstation] = compute_heuristics(workstation);
+        // std::cout << "workstation= "<<workstation<<", h size ="<<
+        // this->heuristics[workstation].size() <<std::endl;
     }
+    if (this->heuristics.size() !=
+        this->endpoints.size() + this->workstations.size()) {
+        std::cout << "error h size!" << std::endl;
+        exit(1);
+    }
+
     // cout << table_save_path << endl;
     // save_heuristics_table(table_save_path.string());
 
@@ -715,21 +629,11 @@ double SMARTGrid::get_avg_task_len(
     unordered_map<int, vector<double>> heuristics) const {
     double total_task_len = 0.0;
     int n_tasks = 0;
-    if (this->r_mode) {
-        for (auto endpoint1 : this->endpoints) {
-            for (auto endpoint2 : this->endpoints) {
-                if (endpoint1 != endpoint2) {
-                    total_task_len += heuristics[endpoint1][endpoint2];
-                    n_tasks += 1;
-                }
-            }
-        }
-    } else if (this->w_mode) {
-        for (auto workstation : this->workstations) {
-            for (auto endpoint2 : this->endpoints) {
-                total_task_len += heuristics[workstation][endpoint2];
-                n_tasks += 1;
-            }
+
+    for (auto workstation : this->workstations) {
+        for (auto endpoint2 : this->endpoints) {
+            total_task_len += heuristics[workstation][endpoint2];
+            n_tasks += 1;
         }
     }
     return total_task_len / n_tasks;

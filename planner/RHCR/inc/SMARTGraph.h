@@ -6,6 +6,12 @@
 
 using json = nlohmann::json;
 
+
+enum class SMARTGridType {
+    REGULAR, // Regular grid
+    ONE_BOT_PER_AISLE, // At most one bot per endpoint paisle
+};
+
 class SMARTGrid :
 	public BasicGraph
 {
@@ -39,12 +45,6 @@ public:
     void update_task_dist(std::mt19937& gen, std::string task_dist_type);
 
 private:
-    bool r_mode; // Robot start location is 'r'
-    bool w_mode; // Added workstation 'w' to the map and removed 'r'. Robot
-                 // will start from endpoints ('e'), and robots' tasks will
-                 // then alternate between endpoints and workstations.
-                 // Under 'w' mode, 'r' must be removed, and vice versa
-
     // Number of valid edges.
     int n_valid_edges = -1;
 
@@ -58,6 +58,4 @@ private:
         json G_json, double left_w_weight, double right_w_weight);
     bool load_weighted_map_from_json(
         json G_json, double left_w_weight, double right_w_weight);
-    void infer_sim_mode_from_map(json G_json);
-    void check_mode();
 };

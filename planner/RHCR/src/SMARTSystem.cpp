@@ -31,21 +31,17 @@ void SMARTSystem::initialize() {
     // std::random_device rd;
     this->gen = mt19937(this->seed);
 
-    if (this->G.get_w_mode()) {
-        // Create workstation distribution
-        // Number of weight must be the same as number of workstations
-        assert(this->G.workstation_weights.size() ==
-               this->G.workstations.size());
+    // Create workstation distribution
+    // Number of weight must be the same as number of workstations
+    assert(this->G.workstation_weights.size() == this->G.workstations.size());
 
-        this->workstation_dist =
-            discrete_distribution<int>(this->G.workstation_weights.begin(),
-                                       this->G.workstation_weights.end());
-        // cout << "Workstation distribution: ";
-        // for (auto w : this->G.workstation_weights) {
-        //     cout << w << ", ";
-        // }
-        // cout << endl;
-    }
+    this->workstation_dist = discrete_distribution<int>(
+        this->G.workstation_weights.begin(), this->G.workstation_weights.end());
+    // cout << "Workstation distribution: ";
+    // for (auto w : this->G.workstation_weights) {
+    //     cout << w << ", ";
+    // }
+    // cout << endl;
 
     bool succ = load_tasks();
     // bool succ = load_records();  // continue simulating from the records
@@ -178,34 +174,30 @@ int SMARTSystem::gen_next_goal(int agent_id, bool repeat_last_goal) {
         return next.location;  // Only take the location of the task
     }
 
-    // Otherwise generate random tasks
-    if (G.get_r_mode()) {
-        next = G.endpoints[rand() % (int)G.endpoints.size()];
-    }
     // Under w mode, alternate goal locations between workstations and endpoints
-    else if (G.get_w_mode()) {
-        if (this->next_goal_type[agent_id] == "w") {
-            if (repeat_last_goal) {
-                next = G.endpoints[rand() % (int)G.endpoints.size()];
-                // next = this->sample_end_points();
-            } else {
-                next = sample_workstation();
-                this->next_goal_type[agent_id] = "e";
-            }
-        } else if (this->next_goal_type[agent_id] == "e") {
-            if (repeat_last_goal) {
-                next = sample_workstation();
-            } else {
-                // next = this->sample_end_points();
-                next = G.endpoints[rand() % (int)G.endpoints.size()];
-                this->next_goal_type[agent_id] = "w";
-            }
+
+    if (this->next_goal_type[agent_id] == "w") {
+        if (repeat_last_goal) {
+            next = G.endpoints[rand() % (int)G.endpoints.size()];
+            // next = this->sample_end_points();
         } else {
-            std::cout << "error! next goal type is not w or e, but "
-                      << this->next_goal_type[agent_id] << std::endl;
-            exit(1);
+            next = sample_workstation();
+            this->next_goal_type[agent_id] = "e";
         }
+    } else if (this->next_goal_type[agent_id] == "e") {
+        if (repeat_last_goal) {
+            next = sample_workstation();
+        } else {
+            // next = this->sample_end_points();
+            next = G.endpoints[rand() % (int)G.endpoints.size()];
+            this->next_goal_type[agent_id] = "w";
+        }
+    } else {
+        std::cout << "error! next goal type is not w or e, but "
+                  << this->next_goal_type[agent_id] << std::endl;
+        exit(1);
     }
+
     return next;
 }
 
@@ -214,7 +206,7 @@ void SMARTSystem::update_goal_locations() {
         new_agents.clear();
 
     // Initialize next_goal_type
-    if (this->next_goal_type.empty() && G.get_w_mode()) {
+    if (this->next_goal_type.empty()) {
         for (int i = 0; i < num_of_drives; i++) {
             int start_loc = this->starts[i].location;
             // If start from workstation, next goal is endpoint
