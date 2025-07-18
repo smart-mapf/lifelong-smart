@@ -31,6 +31,7 @@ void set_parameters(BasicSystem& system, const boost::program_options::variables
     system.rotation_time = vm["rotation_time"].as<int>();
     system.queue_mechanism = vm["queue_mechanism"].as<bool>();
     system.port_number = vm["port_number"].as<int>();
+    system.backup_solver = vm["backup_solver"].as<string>();
 	if (vm.count("seed"))
 		system.seed = vm["seed"].as<int>();
 	else
@@ -144,6 +145,7 @@ int main(int argc, char** argv)
 		("seed,d", po::value<int>(), "random seed")
 		("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
 		("solver", po::value<string>()->default_value("PBS"), "solver (LRA, PBS, WHCA, ECBS)")
+        ("backup_solver", po::value<string>()->default_value("PIBT"), "backup solver (PIBT, LRA)")
 		("id", po::value<bool>()->default_value(false), "independence detection")
 		("single_agent_solver", po::value<string>()->default_value("SIPP"), "single-agent solver (ASTAR, SIPP)")
 		("lazyP", po::value<bool>()->default_value(false), "use lazy priority")

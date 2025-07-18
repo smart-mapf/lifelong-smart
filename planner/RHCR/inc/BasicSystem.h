@@ -18,6 +18,7 @@ class BasicSystem
 public:
     // params for MAPF algotithms
 	MAPFSolver& solver;
+    string backup_solver = "PIBT";
 	bool hold_endpoints;
 	bool useDummyPaths;
     int time_limit;
