@@ -10,6 +10,7 @@
 #include <random>
 #include <map>
 #include <stdexcept>
+#include <queue>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
@@ -40,6 +41,7 @@ using std::discrete_distribution;
 using std::mt19937;
 using std::to_string;
 using std::map;
+using std::queue;
 
 //#include <boost/graph/adjacency_list.hpp>
 //typedef boost::adjacency_list_traits<int, int, boost::undirectedS > confilctGraph_t;

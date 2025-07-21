@@ -187,7 +187,7 @@ void BasicSystem::update_start_locations()
     }
 }
 
-void BasicSystem::update_paths(const std::vector<Path *> &MAPF_paths, int max_timestep = INT_MAX)
+void BasicSystem::update_paths(const std::vector<Path *> &MAPF_paths, int max_timestep)
 {
     for (int k = 0; k < num_of_drives; k++)
     {
@@ -211,7 +211,7 @@ void BasicSystem::update_paths(const std::vector<Path *> &MAPF_paths, int max_ti
     }
 }
 
-void BasicSystem::update_paths(const std::vector<Path> &MAPF_paths, int max_timestep = INT_MAX)
+void BasicSystem::update_paths(const std::vector<Path> &MAPF_paths, int max_timestep)
 {
     for (int k = 0; k < num_of_drives; k++)
     {
@@ -792,6 +792,163 @@ void BasicSystem::solve()
         }
     }
 
+    this->solve_helper(lra, pibt, real_goal_locations);
+}
+
+bool BasicSystem::solve_by_WHCA(vector<Path> &planned_paths,
+                                const vector<State> &new_starts,
+                                const vector<vector<Task>> &new_goal_locations)
+{
+    WHCAStar whca(G, solver.path_planner);
+    whca.k_robust = k_robust;
+    whca.window = INT_MAX;
+    whca.hold_endpoints = hold_endpoints || useDummyPaths;
+    whca.screen = screen;
+    whca.initial_rt.hold_endpoints = true;
+    whca.initial_rt.map_size = G.size();
+    whca.initial_rt.k_robust = k_robust;
+    whca.initial_rt.window = INT_MAX;
+    whca.initial_rt.copy(solver.initial_rt);
+    whca.initial_solution.resize(new_starts.size());
+    if (whca.hold_endpoints)
+    {
+        if (timestep == 0)
+        {
+            for (int i = 0; i < (int)new_starts.size(); i++)
+                whca.initial_solution[i].emplace_back(starts[i]); // hold initial location
+        }
+        else
+        {
+            whca.initial_solution.clear();
+            for (auto agent : new_agents)
+                whca.initial_solution.emplace_back(planned_paths[agent]); // hold old paths
+        }
+    }
+    bool sol = false;
+    if (timestep == 0)
+        sol = whca.run(new_starts, new_goal_locations, 20 * time_limit);
+    else
+        sol = whca.run(new_starts, new_goal_locations, time_limit);
+    whca.save_results(outfile + "/solver.csv", std::to_string(timestep) + "," + std::to_string(num_of_drives) + "," + std::to_string(seed));
+    if (sol)
+    {
+        auto pt = whca.solution.begin();
+        for (int i : new_agents)
+        {
+            planned_paths[i] = *pt;
+            ++pt;
+        }
+    }
+    whca.clear();
+    return sol;
+}
+
+void BasicSystem::initialize_solvers()
+{
+    solver.k_robust = k_robust;
+    solver.window = planning_window;
+    solver.simulation_window = simulation_window;
+    solver.hold_endpoints = hold_endpoints || useDummyPaths;
+    solver.screen = screen;
+
+    solver.initial_rt.hold_endpoints = true;
+    solver.initial_rt.map_size = G.size();
+    solver.initial_rt.k_robust = k_robust;
+    solver.initial_rt.window = INT_MAX;
+}
+
+bool BasicSystem::load_records()
+{
+    boost::char_separator<char> sep1(";");
+    boost::char_separator<char> sep2(",");
+    string line;
+
+    // load paths
+    std::ifstream myfile(outfile + "/paths.txt");
+
+    if (!myfile.is_open()){
+        std::cout << "not find log file:" <<outfile + "/paths.txt"<<std::endl;
+        return false;
+    }
+        
+
+    timestep = INT_MAX;
+    getline(myfile, line);
+    if (atoi(line.c_str()) != num_of_drives)
+    {
+        cout << "The path file does not match the settings." << endl;
+        exit(-1);
+    }
+    for (int k = 0; k < num_of_drives; k++)
+    {
+        getline(myfile, line);
+        boost::tokenizer<boost::char_separator<char>> tok1(line, sep1);
+        for (auto task : tok1)
+        {
+            boost::tokenizer<boost::char_separator<char>> tok2(task, sep2);
+            boost::tokenizer<boost::char_separator<char>>::iterator beg = tok2.begin();
+            int loc = atoi((*beg).c_str());
+            beg++;
+            int orientation = atoi((*beg).c_str());
+            beg++;
+            int time = atoi((*beg).c_str());
+            paths[k].emplace_back(loc, time, orientation);
+        }
+        timestep = min(timestep, paths[k].back().timestep);
+        // std::cout << "timestep for k="<<k<<", "<<timestep<<std::endl;
+    }
+    myfile.close();
+
+    // pick the timestep
+    // timestep = int((timestep - 1) / simulation_window) * simulation_window; // int((timestep - 1) / simulation_window) * simulation_window;
+
+    // load tasks
+    myfile.open(outfile + "/tasks.txt");
+    if (!myfile.is_open())
+        return false;
+
+    getline(myfile, line);
+    if (atoi(line.c_str()) != num_of_drives)
+    {
+        cout << "The task file does not match the settings." << endl;
+        exit(-1);
+    }
+    for (int k = 0; k < num_of_drives; k++)
+    {
+        getline(myfile, line);
+        boost::tokenizer<boost::char_separator<char>> tok1(line, sep1);
+        for (auto task : tok1)
+        {
+            boost::tokenizer<boost::char_separator<char>> tok2(task, sep2);
+            boost::tokenizer<boost::char_separator<char>>::iterator beg = tok2.begin();
+            int loc = atoi((*beg).c_str());
+            beg++;
+            int time = atoi((*beg).c_str());
+            if (time >= 0 && time <= timestep)
+            {
+                finished_tasks[k].emplace_back(Task(loc, -1, 0, 0, k, time));
+                timestep = max(timestep, time);
+            }
+            else
+            {
+                goal_locations[k].emplace_back(loc, 0, 0);
+            }
+        }
+        std::cout << "agent "<<k<<" reload goals"<<std::endl;
+        for(int j=0; j<goal_locations[k].size(); ++j){
+            std::cout << goal_locations[k][j].location <<", ";
+        }
+        std::cout << std::endl;
+    }
+    myfile.close();
+    // exit(1);
+    return true;
+}
+
+
+void BasicSystem::solve_helper(LRAStar &lra, PIBT &pibt,
+                               const vector<vector<Task>> &real_goal_locations)
+{
     if (solver.get_name() == "LRA")
     {
         // predict travel time
@@ -956,152 +1113,23 @@ void BasicSystem::solve()
     }
 }
 
-bool BasicSystem::solve_by_WHCA(vector<Path> &planned_paths,
-                                const vector<State> &new_starts,
-                                const vector<vector<Task>> &new_goal_locations)
+void BasicSystem::print_mapf_instance(vector<State> &starts_,
+                                      vector<vector<Task>> &goals_) const
 {
-    WHCAStar whca(G, solver.path_planner);
-    whca.k_robust = k_robust;
-    whca.window = INT_MAX;
-    whca.hold_endpoints = hold_endpoints || useDummyPaths;
-    whca.screen = screen;
-    whca.initial_rt.hold_endpoints = true;
-    whca.initial_rt.map_size = G.size();
-    whca.initial_rt.k_robust = k_robust;
-    whca.initial_rt.window = INT_MAX;
-    whca.initial_rt.copy(solver.initial_rt);
-    whca.initial_solution.resize(new_starts.size());
-    if (whca.hold_endpoints)
-    {
-        if (timestep == 0)
-        {
-            for (int i = 0; i < (int)new_starts.size(); i++)
-                whca.initial_solution[i].emplace_back(starts[i]); // hold initial location
+    for (int i = 0; i < num_of_drives; i++) {
+        cout << "Agent " << i << ": ";
+        int start_x = G.getRowCoordinate(starts_[i].location);
+        int start_y = G.getColCoordinate(starts_[i].location);
+        cout << "(" << start_x << ", " << start_y << ", t = "
+             << starts_[i].timestep << ") => ";
+        for (const auto &goal : goals_[i]) {
+            int goal_x = G.getRowCoordinate(goal.location);
+            int goal_y = G.getColCoordinate(goal.location);
+            int wait_t = goal.task_wait_time;
+            cout << "(" << goal_x << ", " << goal_y << ", "
+                 << this->G.types[goal.location] << ", "
+                 << "wait: " << wait_t << ") -> ";
         }
-        else
-        {
-            whca.initial_solution.clear();
-            for (auto agent : new_agents)
-                whca.initial_solution.emplace_back(planned_paths[agent]); // hold old paths
-        }
+        cout << endl;
     }
-    bool sol = false;
-    if (timestep == 0)
-        sol = whca.run(new_starts, new_goal_locations, 20 * time_limit);
-    else
-        sol = whca.run(new_starts, new_goal_locations, time_limit);
-    whca.save_results(outfile + "/solver.csv", std::to_string(timestep) + "," + std::to_string(num_of_drives) + "," + std::to_string(seed));
-    if (sol)
-    {
-        auto pt = whca.solution.begin();
-        for (int i : new_agents)
-        {
-            planned_paths[i] = *pt;
-            ++pt;
-        }
-    }
-    whca.clear();
-    return sol;
-}
-
-void BasicSystem::initialize_solvers()
-{
-    solver.k_robust = k_robust;
-    solver.window = planning_window;
-    solver.simulation_window = simulation_window;
-    solver.hold_endpoints = hold_endpoints || useDummyPaths;
-    solver.screen = screen;
-
-    solver.initial_rt.hold_endpoints = true;
-    solver.initial_rt.map_size = G.size();
-    solver.initial_rt.k_robust = k_robust;
-    solver.initial_rt.window = INT_MAX;
-}
-
-bool BasicSystem::load_records()
-{
-    boost::char_separator<char> sep1(";");
-    boost::char_separator<char> sep2(",");
-    string line;
-
-    // load paths
-    std::ifstream myfile(outfile + "/paths.txt");
-
-    if (!myfile.is_open()){
-        std::cout << "not find log file:" <<outfile + "/paths.txt"<<std::endl;
-        return false;
-    }
-        
-
-    timestep = INT_MAX;
-    getline(myfile, line);
-    if (atoi(line.c_str()) != num_of_drives)
-    {
-        cout << "The path file does not match the settings." << endl;
-        exit(-1);
-    }
-    for (int k = 0; k < num_of_drives; k++)
-    {
-        getline(myfile, line);
-        boost::tokenizer<boost::char_separator<char>> tok1(line, sep1);
-        for (auto task : tok1)
-        {
-            boost::tokenizer<boost::char_separator<char>> tok2(task, sep2);
-            boost::tokenizer<boost::char_separator<char>>::iterator beg = tok2.begin();
-            int loc = atoi((*beg).c_str());
-            beg++;
-            int orientation = atoi((*beg).c_str());
-            beg++;
-            int time = atoi((*beg).c_str());
-            paths[k].emplace_back(loc, time, orientation);
-        }
-        timestep = min(timestep, paths[k].back().timestep);
-        // std::cout << "timestep for k="<<k<<", "<<timestep<<std::endl;
-    }
-    myfile.close();
-
-    // pick the timestep
-    // timestep = int((timestep - 1) / simulation_window) * simulation_window; // int((timestep - 1) / simulation_window) * simulation_window;
-
-    // load tasks
-    myfile.open(outfile + "/tasks.txt");
-    if (!myfile.is_open())
-        return false;
-
-    getline(myfile, line);
-    if (atoi(line.c_str()) != num_of_drives)
-    {
-        cout << "The task file does not match the settings." << endl;
-        exit(-1);
-    }
-    for (int k = 0; k < num_of_drives; k++)
-    {
-        getline(myfile, line);
-        boost::tokenizer<boost::char_separator<char>> tok1(line, sep1);
-        for (auto task : tok1)
-        {
-            boost::tokenizer<boost::char_separator<char>> tok2(task, sep2);
-            boost::tokenizer<boost::char_separator<char>>::iterator beg = tok2.begin();
-            int loc = atoi((*beg).c_str());
-            beg++;
-            int time = atoi((*beg).c_str());
-            if (time >= 0 && time <= timestep)
-            {
-                finished_tasks[k].emplace_back(Task(loc, -1, 0, 0, k, time));
-                timestep = max(timestep, time);
-            }
-            else
-            {
-                goal_locations[k].emplace_back(loc, 0, 0);
-            }
-        }
-        std::cout << "agent "<<k<<" reload goals"<<std::endl;
-        for(int j=0; j<goal_locations[k].size(); ++j){
-            std::cout << goal_locations[k][j].location <<", ";
-        }
-        std::cout << std::endl;
-    }
-    myfile.close();
-    // exit(1);
-    return true;
 }

@@ -23,6 +23,7 @@ public:
     void set_total_sim_time(int total_sim_time, int warmup_time);
     // void update_task_dist();
     bool congested() const;
+    void solve();
 
 private:
     SMARTGrid& G;
@@ -46,6 +47,9 @@ private:
     convert_edge_usage(vector<vector<double>>& edge_usage);
     string get_curr_stats() const;
 
+    Path get_aisle_path(State start, const vector<Task>& tasks,
+                        const set<int>& aisle, const int move[4]);
+
     // tasks
     bool random_task = true;  // If true, tasks are randomly generated
     // <agent id, list<Tasks > >
@@ -57,6 +61,17 @@ private:
     discrete_distribution<int> end_points_dist;
     mt19937 gen;
 
-    // Used for SMART
+    // Convert path to SMART format.
     vector<vector<tuple<int, int, double, int>>> convert_path_to_smart();
+
+    // Aisle related
+    // A rt used for aisle path planning.
+    ReservationTable aisle_rt;
+    // Initial aisle paths
+    // agent_id -> Path. We need this because some agents might be exiting
+    // the aisle, which has no task id at the moment.
+    unordered_map<int, Path> init_aisle_paths;
+
+    // Task id -> aisle path
+    unordered_map<int, Path> aisle_paths;
 };

@@ -599,7 +599,8 @@ bool PBS::generate_root_node()
 
         if (path.empty())
         {
-            std::cout << "NO SOLUTION EXISTS";
+            // std::cout << "NO SOLUTION EXISTS";
+            spdlog::info("PBS: No solution exists for agent {}!", i);
             return false;
         }
 
@@ -623,7 +624,10 @@ bool PBS::generate_root_node()
     if (!lazyPriority)
     {
         if(!find_consistent_paths(dummy_start, -1))
+        {
+            spdlog::info("PBS: Failed to find consistent paths for root node!");
             return false;
+        }
     }
 
 	dummy_start->f_val = dummy_start->g_val;

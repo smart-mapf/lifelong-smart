@@ -26,13 +26,18 @@ def get_current_time() -> str:
 def init_start_locations(
     map_str: List[str],
     num_agents: int,
+    grid_type: str = "regular",
 ) -> List[Tuple[str, str]]:
+    if grid_type == "regular":
+        non_starts = obstacles
+    elif grid_type == "one_bot_per_aisle":
+        non_starts = obstacles + ["e"]
     # Get free locations
     h, w = len(map_str), len(map_str[0])
     free_locations = []
     for i in range(h):
         for j in range(w):
-            if map_str[i][j] not in obstacles:
+            if map_str[i][j] not in non_starts:
                 free_locations.append(i * w + j)
     if len(free_locations) < num_agents:
         logger.error(
@@ -61,7 +66,7 @@ def run_simulator(args, timeout: float = None, output_log: str = None):
     server_process = subprocess.Popen(server_command, stdout=f, stderr=f)
 
     # Wait for a short period to ensure the server has started
-    time.sleep(5)
+    time.sleep(1)
 
     # Start the client process
     client_process = subprocess.Popen(client_command, stdout=f, stderr=f)
@@ -105,7 +110,7 @@ def run_lifelong_argos(
     output_log: str = None,
     port_num: int = 8182,
     n_threads: int = 1,
-    sim_duration: int = 100 * 10,
+    sim_duration: int = 600 * 10,
     sim_window_tick: int = 20,
     ticks_per_second: int = 10,
     velocity: float = 200.0,
@@ -121,7 +126,7 @@ def run_lifelong_argos(
     cutoffTime: int = 1,
     id: bool = False,
     solver: str = "PBS",
-    single_agent_solver: str = "ASTAR",
+    single_agent_solver: str = "SIPP",
     backup_solver: str = "PIBT",  # ["PIBT", "LRA"]
     lazyP: bool = False,
     travel_time_window: int = 0,
@@ -141,6 +146,7 @@ def run_lifelong_argos(
     save_heuristics_table: bool = False,
     left_w_weight: float = 1.0,
     right_w_weight: float = 1.0,
+    grid_type: str = "regular",
 ):
     """Function to run the lifelong SMART simulator with the given parameters.
 
@@ -184,7 +190,7 @@ def run_lifelong_argos(
     # if screen > 0:
     #     # print("Creating Argos config file ...")
     #     logger.info("Creating Argos config file ...")
-    robot_init_pos = init_start_locations(map_data, num_agents)
+    robot_init_pos = init_start_locations(map_data, num_agents, grid_type)
 
     # Use absolute path for argos config
     argos_config_filepath = os.path.abspath(argos_config_filepath)
@@ -323,6 +329,7 @@ def run_lifelong_argos(
                 f"--save_heuristics_table={str(save_heuristics_table).lower()}",
                 f"--left_w_weight={left_w_weight}",
                 f"--right_w_weight={right_w_weight}",
+                f"--grid_type={grid_type}",
             ]
             if task != "":
                 planner_command.append(f"--task={task}")
