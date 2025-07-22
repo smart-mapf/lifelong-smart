@@ -20,6 +20,7 @@ public:
 	int total_sim_time;
 	void set_total_sim_time(int total_sim_time, int warmup_time);
 	// void update_task_dist();
+    bool congested() const;
 
 private:
 	KivaGrid& G;

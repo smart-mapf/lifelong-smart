@@ -94,7 +94,7 @@ public:
 	// vector<double> my_heuristic;
 	double compute_heuristic(int from, int to) const  // compute admissible heuristic between two locations
 	{
-		return max(get_DH_heuristic(from, to), static_cast<double>(instance.graph.getManhattanDistance(from, to)));
+		return max(get_DH_heuristic(from, to), static_cast<double>(instance.graph->getManhattanDistance(from, to)));
 	}
 	const Instance& instance;
 
@@ -102,7 +102,7 @@ public:
 	virtual string getName() const = 0;
 
 	list<int> getNextLocations(int curr) const; // including itself and its neighbors
-	list<int> getNeighbors(int curr) const { return instance.graph.getNeighbors(curr); }
+	list<int> getNeighbors(int curr) const { return instance.graph->getNeighbors(curr); }
 
 	// int getStartLocation() const {return instance.start_locations[agent]; }
 	// int getGoalLocation() const {return instance.goal_locations[agent]; }
@@ -123,8 +123,8 @@ protected:
 
 	// void compute_heuristics();
     double get_DH_heuristic(int from, int to) const {
-        return abs(instance.graph.heuristics.at(goal_location)[from] -
-                   instance.graph.heuristics.at(goal_location)[to]);
+        return abs(instance.graph->heuristics.at(goal_location)[from] -
+                   instance.graph->heuristics.at(goal_location)[to]);
     }
 };
 

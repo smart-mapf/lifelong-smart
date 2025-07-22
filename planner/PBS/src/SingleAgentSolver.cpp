@@ -3,7 +3,7 @@
 list<int> SingleAgentSolver::getNextLocations(
     int curr) const  // including itself and its neighbors
 {
-    list<int> rst = instance.graph.getNeighbors(curr);
+    list<int> rst = instance.graph->getNeighbors(curr);
     rst.emplace_back(curr);
     return rst;
 }
@@ -75,7 +75,8 @@ list<int> SingleAgentSolver::getNextLocations(
 
 //         struct EqNode {
 //             bool operator()(const Node* n1, const Node* n2) const {
-//                 return (n1 == n2) || (n1 && n2 && n1->location == n2->location);
+//                 return (n1 == n2) || (n1 && n2 && n1->location ==
+//                 n2->location);
 //             }
 //         };
 
@@ -92,8 +93,8 @@ list<int> SingleAgentSolver::getNextLocations(
 
 //     my_heuristic.resize(instance.graph.map_size, DBL_MAX);
 
-//     // std::cout << "start computing h for loc = "<< goal_location <<std::endl;
-//     fibonacci_heap<Node*, compare<Node::compare_node> > heap;
+//     // std::cout << "start computing h for loc = "<< goal_location
+//     <<std::endl; fibonacci_heap<Node*, compare<Node::compare_node> > heap;
 //     unordered_set<Node*, Node::Hasher, Node::EqNode> nodes;
 
 //     // if(consider_rotation)
@@ -101,7 +102,8 @@ list<int> SingleAgentSolver::getNextLocations(
 //     //     for (auto neighbor : get_reverse_neighbors(root_state))
 //     //     {
 //     //         Node* root = new Node(State(goal_location, -1,
-//     //                 get_direction(neighbor.location, root_state.location)),
+//     //                 get_direction(neighbor.location,
+//     root_state.location)),
 //     //                 0, 0, nullptr, 0);
 //     //         root->open_handle = heap.push(root);  // add root to heap
 //     //         nodes.insert(root);       // add root to hash_table (nodes)
@@ -118,16 +120,17 @@ list<int> SingleAgentSolver::getNextLocations(
 //         Node* curr = heap.top();
 //         heap.pop();
 //         for (auto next_state : instance.graph.getNeighbors(curr->location)) {
-//             double curr_weight = instance.graph.getWeight(next_state, curr->location);
-//             double next_g_val;
+//             double curr_weight = instance.graph.getWeight(next_state,
+//             curr->location); double next_g_val;
 //             // // Add in rotation time
 //             // if (consider_rotation)
 //             // {
 //             //     // Rotating
 //             //     if (curr->state.orientation != next_state.orientation)
 //             //     {
-//             //         int degree = get_rotate_degree(curr->state.orientation,
-//             //                                        next_state.orientation);
+//             //         int degree =
+//             get_rotate_degree(curr->state.orientation,
+//             // next_state.orientation);
 //             //         next_g_val = curr->g_val +
 //             //                      degree * rotation_time * curr_weight;
 //             //     }
@@ -150,7 +153,8 @@ list<int> SingleAgentSolver::getNextLocations(
 //                 nodes.insert(next);
 //             } else {  // update existing node's g_val if needed (only in the
 //                       // heap)
-//                 delete (next);  // not needed anymore -- we already generated it
+//                 delete (next);  // not needed anymore -- we already generated
+//                 it
 //                                 // before
 //                 Node* existing_next = *it;
 //                 if (existing_next->value > next_g_val) {

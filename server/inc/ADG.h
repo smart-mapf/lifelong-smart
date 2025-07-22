@@ -11,8 +11,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include "parser.h"
 #include "json.hpp"
+#include "parser.h"
 
 using json = nlohmann::json;
 
@@ -132,7 +132,11 @@ public:
     }
 
     int getNumFinishedTasks() const {
-        return static_cast<int>(finished_tasks_.size());
+        return n_finished_tasks;
+    }
+
+    int getNumFinishedBackupTasks() const {
+        return n_finished_backup_tasks;
     }
 
     void printProgress();
@@ -192,10 +196,13 @@ public:
     std::vector<robotState> curr_commit;
     int screen;
     double avg_n_rotation = 0;
+    set<int> backup_tasks;
 
 private:
     std::vector<std::vector<ADGNode>> graph;
     std::unordered_set<int> finished_tasks_;
+    int n_finished_tasks = 0;
+    int n_finished_backup_tasks = 0;
     // std::vector<std::pair<double, double>> commitCut;
 
     int num_robots = 0;

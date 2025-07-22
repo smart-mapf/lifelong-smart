@@ -187,7 +187,7 @@ void BasicSystem::update_start_locations()
     }
 }
 
-void BasicSystem::update_paths(const std::vector<Path *> &MAPF_paths, int max_timestep = INT_MAX)
+void BasicSystem::update_paths(const std::vector<Path *> &MAPF_paths, int max_timestep)
 {
     for (int k = 0; k < num_of_drives; k++)
     {
@@ -211,7 +211,7 @@ void BasicSystem::update_paths(const std::vector<Path *> &MAPF_paths, int max_ti
     }
 }
 
-void BasicSystem::update_paths(const std::vector<Path> &MAPF_paths, int max_timestep = INT_MAX)
+void BasicSystem::update_paths(const std::vector<Path> &MAPF_paths, int max_timestep)
 {
     for (int k = 0; k < num_of_drives; k++)
     {
@@ -219,7 +219,7 @@ void BasicSystem::update_paths(const std::vector<Path> &MAPF_paths, int max_time
         paths[k].resize(timestep + length);
         for (int t = 0; t < length; t++)
         {
-            bool prev_is_tasking_wait = paths[k][timestep + t].is_tasking_wait;
+            // bool prev_is_tasking_wait = paths[k][timestep + t].is_tasking_wait;
             paths[k][timestep + t] = MAPF_paths[k][t];
             paths[k][timestep + t].timestep = timestep + t;
 
@@ -230,9 +230,9 @@ void BasicSystem::update_paths(const std::vector<Path> &MAPF_paths, int max_time
             // run. But then we need to make sure that `is_tasking_wait` in the
             // `paths` conforms to the value in the previous window.
             if (t == 0 && timestep > 0 &&
-                prev_is_tasking_wait != MAPF_paths[k][t].is_tasking_wait)
+                paths[k][timestep + t - 1].is_tasking_wait != MAPF_paths[k][t].is_tasking_wait && solver.get_name() != "PIBT")
                 {
-                    paths[k][timestep + t].is_tasking_wait = prev_is_tasking_wait;
+                    paths[k][timestep + t].is_tasking_wait = paths[k][timestep + t - 1].is_tasking_wait;
                 }
         }
     }
@@ -792,153 +792,7 @@ void BasicSystem::solve()
         }
     }
 
-    if (solver.get_name() == "LRA")
-    {
-        // predict travel time
-        unordered_map<int, double> travel_times;
-        update_travel_times(solver.travel_times);
-
-        bool sol = solver.run(starts, real_goal_locations, time_limit);
-        update_paths(solver.solution);
-    }
-    else if (solver.get_name() == "WHCA")
-    {
-        update_initial_constraints(solver.initial_constraints);
-
-        bool sol = solver.run(starts, real_goal_locations, time_limit);
-        if (sol)
-        {
-            update_paths(solver.solution);
-        }
-        else
-        {
-            lra.resolve_conflicts(solver.solution);
-            update_paths(lra.solution);
-            this->solver.solution = lra.solution;
-            this->n_rule_based_calls++;
-        }
-    }
-    else if (solver.get_name() == "PIBT")
-    {
-        bool sol = solver.run(starts, real_goal_locations, time_limit);
-        update_paths(solver.solution);
-    }
-    else // PBS or ECBS
-    {
-        // PriorityGraph initial_priorities;
-        // std::cout << "solve, update_initial_constraints" <<std::endl;
-        update_initial_constraints(solver.initial_constraints);
-
-        // solve
-        if (hold_endpoints || useDummyPaths)
-        {
-            if (solver.consider_task_wait)
-            {
-                cout << "Task wait is not supported for `hold_endpoints` and "
-                        "`useDummyPaths`"
-                     << endl;
-                exit(-1);
-            }
-            vector<State> new_starts;
-            vector<vector<Task>> new_goal_locations;
-            for (int i : new_agents)
-            {
-                new_starts.emplace_back(starts[i]);
-                new_goal_locations.emplace_back(goal_locations[i]);
-            }
-            vector<Path> planned_paths(num_of_drives);
-            solver.initial_rt.clear();
-            auto p = new_agents.begin();
-            for (int i = 0; i < num_of_drives; i++)
-            {
-                planned_paths[i].resize(paths[i].size() - timestep);
-                for (int t = 0; t < (int)planned_paths[i].size(); t++)
-                {
-                    planned_paths[i][t] = paths[i][timestep + t];
-                    planned_paths[i][t].timestep = t;
-                }
-                if (p == new_agents.end() || *p != i)
-                {
-                    solver.initial_rt.insertPath2CT(planned_paths[i]);
-                }
-                else
-                    ++p;
-            }
-            if (!new_agents.empty())
-            {
-                bool sol;
-                if (timestep == 0)
-                {
-                    sol = solver.run(
-                        new_starts, new_goal_locations, 20 * time_limit);
-                }
-                else
-                {
-                    sol = solver.run(
-                        new_starts, new_goal_locations, time_limit);
-                }
-                if (sol)
-                {
-                    auto pt = solver.solution.begin();
-                    for (int i : new_agents)
-                    {
-                        planned_paths[i] = *pt;
-                        ++pt;
-                    }
-                    if (check_collisions(planned_paths))
-                    {
-                        cout << "COLLISIONS!" << endl;
-                        exit(-1);
-                    }
-                }
-                else
-                {
-                    sol = solve_by_WHCA(
-                        planned_paths, new_starts, new_goal_locations);
-                    assert(sol);
-                }
-            }
-            // lra.resolve_conflicts(planned_paths, k_robust);
-            update_paths(planned_paths);
-        }
-        else
-        {
-            // std::cout << "solve, solver.run" <<std::endl;
-            bool sol = solver.run(
-                starts, real_goal_locations, time_limit, waited_time);
-            if (sol)
-            {
-                // std::cout << "solve, has sol" <<std::endl;
-                if (log)
-                    solver.save_constraints_in_goal_node(outfile + "/goal_nodes/" + std::to_string(timestep) + ".gv");
-                update_paths(solver.solution);
-            }
-            else
-            {
-                // std::cout << "solve, no sol" <<std::endl;
-                if (k_robust >= 1)
-                {
-                    lra.resolve_conflicts(solver.solution);
-                    update_paths(lra.solution);
-                    this->solver.solution = lra.solution;
-                }
-                else{
-                    bool sol = pibt.run(
-                        starts, real_goal_locations, time_limit, waited_time);
-                    this->solver.solution = pibt.solution;
-                    update_paths(pibt.solution);
-                }
-                this->n_rule_based_calls++;
-            }
-        }
-        if (log)
-            solver.save_search_tree(outfile + "/search_trees/" + std::to_string(timestep) + ".gv");
-    }
-
-    if (this->save_solver)
-    {
-        solver.save_results(outfile + "/solver.csv", std::to_string(timestep) + "," + std::to_string(num_of_drives) + "," + std::to_string(seed));
-    }
+    this->solve_helper(lra, pibt, real_goal_locations);
 }
 
 bool BasicSystem::solve_by_WHCA(vector<Path> &planned_paths,
@@ -1089,4 +943,193 @@ bool BasicSystem::load_records()
     myfile.close();
     // exit(1);
     return true;
+}
+
+
+void BasicSystem::solve_helper(LRAStar &lra, PIBT &pibt,
+                               const vector<vector<Task>> &real_goal_locations)
+{
+    if (solver.get_name() == "LRA")
+    {
+        // predict travel time
+        unordered_map<int, double> travel_times;
+        update_travel_times(solver.travel_times);
+
+        bool sol = solver.run(starts, real_goal_locations, time_limit);
+        update_paths(solver.solution);
+    }
+    else if (solver.get_name() == "WHCA")
+    {
+        update_initial_constraints(solver.initial_constraints);
+
+        bool sol = solver.run(starts, real_goal_locations, time_limit);
+        if (sol)
+        {
+            update_paths(solver.solution);
+        }
+        else
+        {
+            lra.resolve_conflicts(solver.solution);
+            update_paths(lra.solution);
+            this->solver.solution = lra.solution;
+            this->n_rule_based_calls++;
+        }
+    }
+    else if (solver.get_name() == "PIBT")
+    {
+        bool sol = solver.run(starts, real_goal_locations, time_limit);
+        update_paths(solver.solution);
+    }
+    else // PBS or ECBS
+    {
+        // PriorityGraph initial_priorities;
+        // std::cout << "solve, update_initial_constraints" <<std::endl;
+        update_initial_constraints(solver.initial_constraints);
+
+        // solve
+        if (hold_endpoints || useDummyPaths)
+        {
+            if (solver.consider_task_wait)
+            {
+                cout << "Task wait is not supported for `hold_endpoints` and "
+                        "`useDummyPaths`"
+                     << endl;
+                exit(-1);
+            }
+            vector<State> new_starts;
+            vector<vector<Task>> new_goal_locations;
+            for (int i : new_agents)
+            {
+                new_starts.emplace_back(starts[i]);
+                new_goal_locations.emplace_back(goal_locations[i]);
+            }
+            vector<Path> planned_paths(num_of_drives);
+            solver.initial_rt.clear();
+            auto p = new_agents.begin();
+            for (int i = 0; i < num_of_drives; i++)
+            {
+                planned_paths[i].resize(paths[i].size() - timestep);
+                for (int t = 0; t < (int)planned_paths[i].size(); t++)
+                {
+                    planned_paths[i][t] = paths[i][timestep + t];
+                    planned_paths[i][t].timestep = t;
+                }
+                if (p == new_agents.end() || *p != i)
+                {
+                    solver.initial_rt.insertPath2CT(planned_paths[i]);
+                }
+                else
+                    ++p;
+            }
+            if (!new_agents.empty())
+            {
+                bool sol;
+                if (timestep == 0)
+                {
+                    sol = solver.run(
+                        new_starts, new_goal_locations, 20 * time_limit);
+                }
+                else
+                {
+                    sol = solver.run(
+                        new_starts, new_goal_locations, time_limit);
+                }
+                if (sol)
+                {
+                    auto pt = solver.solution.begin();
+                    for (int i : new_agents)
+                    {
+                        planned_paths[i] = *pt;
+                        ++pt;
+                    }
+                    if (check_collisions(planned_paths))
+                    {
+                        cout << "COLLISIONS!" << endl;
+                        exit(-1);
+                    }
+                }
+                else
+                {
+                    sol = solve_by_WHCA(
+                        planned_paths, new_starts, new_goal_locations);
+                    assert(sol);
+                }
+            }
+            // lra.resolve_conflicts(planned_paths, k_robust);
+            update_paths(planned_paths);
+        }
+        else
+        {
+            // std::cout << "solve, solver.run" <<std::endl;
+            bool sol = solver.run(
+                starts, real_goal_locations, time_limit, waited_time);
+            if (sol)
+            {
+                // std::cout << "solve, has sol" <<std::endl;
+                if (log)
+                    solver.save_constraints_in_goal_node(outfile + "/goal_nodes/" + std::to_string(timestep) + ".gv");
+                    update_paths(solver.solution);
+            }
+            else
+            {
+                // std::cout << "solve, no sol" <<std::endl;
+                if (k_robust >= 1)
+                {
+                    lra.resolve_conflicts(solver.solution);
+                    update_paths(lra.solution);
+                    this->solver.solution = lra.solution;
+                }
+                else{
+                    if (this->backup_solver == "PIBT")
+                    {
+                        bool sol = pibt.run(
+                        starts, real_goal_locations, time_limit, waited_time);
+                        this->solver.solution = pibt.solution;
+                        update_paths(pibt.solution);
+                    }
+                    else if (this->backup_solver == "LRA")
+                    {
+                        lra.resolve_conflicts(solver.solution);
+                        update_paths(lra.solution);
+                        this->solver.solution = lra.solution;
+                    }
+                    else
+                    {
+                        spdlog::warn("Unknown backup solver: {}", this->backup_solver);
+                        exit(-1);
+                    }
+
+                }
+                this->n_rule_based_calls++;
+            }
+        }
+        if (log)
+            solver.save_search_tree(outfile + "/search_trees/" + std::to_string(timestep) + ".gv");
+    }
+
+    if (this->save_solver)
+    {
+        solver.save_results(outfile + "/solver.csv", std::to_string(timestep) + "," + std::to_string(num_of_drives) + "," + std::to_string(seed));
+    }
+}
+
+void BasicSystem::print_mapf_instance(vector<State> &starts_,
+                                      vector<vector<Task>> &goals_) const
+{
+    for (int i = 0; i < num_of_drives; i++) {
+        cout << "Agent " << i << ": ";
+        int start_x = G.getRowCoordinate(starts_[i].location);
+        int start_y = G.getColCoordinate(starts_[i].location);
+        cout << "(" << start_x << ", " << start_y << ", t = "
+             << starts_[i].timestep << ") => ";
+        for (const auto &goal : goals_[i]) {
+            int goal_x = G.getRowCoordinate(goal.location);
+            int goal_y = G.getColCoordinate(goal.location);
+            int wait_t = goal.task_wait_time;
+            cout << "(" << goal_x << ", " << goal_y << ", "
+                 << this->G.types[goal.location] << ", "
+                 << "wait: " << wait_t << ") -> ";
+        }
+        cout << endl;
+    }
 }

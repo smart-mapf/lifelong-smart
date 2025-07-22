@@ -15,27 +15,80 @@ bool PIBT::run(const vector<State> &starts,
     int num_of_agents = starts.size();
 
     // Initialize
+    this->curr_occupied.clear();
     this->curr_occupied.resize(this->G.size(), -1);
+    this->next_occupied.clear();
     this->next_occupied.resize(this->G.size(), -1);
+
+    this->is_waiting.clear();
+    this->is_waiting.resize(num_of_agents, false);
+
+    vector<int> curr_waited_time(num_of_agents, 0);
 
     if (solution.size() == 0)
         solution.resize(num_of_agents);
 
-    // Clear previous solutions, if any
-    for (int i = 0; i < num_of_agents; i++) {
-        solution[i].clear();
-        solution[i].resize(this->simulation_window);
-        // Initialize the solution with the start state
-        solution[i][0] = starts[i];
-        // For now PIBT only works with no orientation.
-        // TODO: Add support for orientation
-        solution[i][0].orientation = -1;
-        this->curr_occupied[starts[i].location] = i;
-    }
-
     // `goals_mem` is a memory of goals for each agent. Reached goals will be
     // removed.
     this->goals_mem = goal_locations;
+
+    // Pre-process solutions
+    for (int i = 0; i < num_of_agents; i++) {
+        // Clear previous solutions, if any
+        solution[i].clear();
+        solution[i].resize(this->simulation_window + 1);
+        // The agent starts at timestep 0, initialize the solution with the
+        // start state
+        if (starts[i].timestep == 0 &&
+            starts[i].location != goal_locations[i][0].location) {
+            solution[i][0] = starts[i];
+            // For now PIBT only works with no orientation.
+            // TODO: Add support for orientation
+            solution[i][0].orientation = -1;
+            this->curr_occupied[starts[i].location] = i;
+        }
+        // The agent does not start at timestep 0, or the first goal is right at
+        // the its initial timestep, then it is waiting at the start until the
+        // given timestep
+        else {
+            int n_t_to_wait = 0;
+            if (starts[i].timestep > 0) {
+                n_t_to_wait = starts[i].timestep + 1;
+            } else {
+                this->goals_mem[i].erase(this->goals_mem[i].begin());
+                n_t_to_wait = goal_locations[i][0].task_wait_time + 1;
+            }
+
+            State actual_start = State(starts[i]);
+            actual_start.timestep = 0;
+            actual_start.orientation = -1;  // No orientation in PIBT
+            actual_start.is_tasking_wait = true;
+            solution[i][0] = actual_start;
+            int t = 1;
+            while (t < n_t_to_wait && t < this->simulation_window + 1) {
+                solution[i][t] = solution[i][t - 1].wait();
+                t++;
+            }
+            // is_waiting[i] = false;
+            // curr_waited_time[i] += starts[i].timestep;
+            this->curr_occupied[starts[i].location] = i;
+            this->next_occupied[starts[i].location] = i;
+        }
+    }
+
+    // Print the solution
+    if (screen > 1) {
+        cout << "Initialized solution:" << endl;
+        for (int i = 0; i < num_of_agents; i++) {
+            cout << "Agent " << i << ": ";
+            for (const auto &state : solution[i]) {
+                cout << "(" << state.location << "," << state.timestep << ","
+                     << state.orientation << "," << state.is_tasking_wait
+                     << ") ";
+            }
+            cout << endl;
+        }
+    }
 
     // Order of agents
     vector<int> agents(num_of_agents);
@@ -43,18 +96,58 @@ bool PIBT::run(const vector<State> &starts,
         agents[i] = i;
     }
 
-    for (int t = 1; t < this->simulation_window; t++) {
+    for (int t = 1; t < this->simulation_window + 1; t++) {
         // Each iteration plans from t - 1 to t, until t is larer than
         // planning_window
 
-        if (screen > 1) {
-            cout << "#################" << endl;
-            cout << "Planning from timestep " << t - 1 << " to " << t << endl;
-        }
+        // if (screen > 1) {
+        //     cout << "#################" << endl;
+        //     cout << "Planning from timestep " << t - 1 << " to " << t <<
+        //     endl;
+        //     // Print curr occupied and next occupied locations
+        //     cout << "Current occupied locations: ";
+        //     for (int i = 0; i < this->curr_occupied.size(); i++) {
+        //         if (this->curr_occupied[i] != -1) {
+        //             cout << i << "(" << this->curr_occupied[i] << ") ";
+        //         }
+        //     }
+        //     cout << endl;
+        //     cout << "Next occupied locations: ";
+        //     for (int i = 0; i < this->next_occupied.size(); i++) {
+        //         if (this->next_occupied[i] != -1) {
+        //             cout << i << "(" << this->next_occupied[i] << ") ";
+        //         }
+        //     }
+        // }
 
         // Planning
         // Sort agents by their distance to the goal, breaking ties randomly.
         auto agents_cmp = [&](int a, int b) {
+            // In one bot per aisle grid, we prioritize the agents that are
+            // deeper in the aisles
+            int loc_a = solution[a][t - 1].location;
+            int loc_b = solution[b][t - 1].location;
+            // if (this->G.get_grid_type() == SMARTGridType::ONE_BOT_PER_AISLE &&
+            //     this->G.getColCoordinate(loc_a) ==
+            //         this->G.getColCoordinate(loc_b)) {
+            //     {
+            //         if (this->G.types[loc_a] == this->G.types[loc_b]) {
+            //             if (this->G.types[loc_a] == "Endpoint")
+            //                 return this->G.getRowCoordinate(loc_a) <
+            //                        this->G.getRowCoordinate(loc_b);
+            //             else if (this->G.types[loc_a] == "Workstation")
+            //                 return this->G.getColCoordinate(loc_a) >
+            //                        this->G.getColCoordinate(loc_b);
+            //         }
+            //         else {
+            //             // if the types are different, we prioritize the agent
+            //             // in the workstation or endpoint
+            //             return this->G.types[loc_a] == "Workstation" ||
+            //                    this->G.types[loc_a] == "Endpoint";
+            //         }
+            //     }
+            // }
+
             // Compare the distance to the goal for each agent
             // If one of the agents has no goals, do not compare
             if (this->goals_mem[a].empty() || this->goals_mem[b].empty())
@@ -111,14 +204,45 @@ bool PIBT::run(const vector<State> &starts,
 
             // Check for any goals reached
             State state = solution[k][t];
+            auto curr_goal = this->goals_mem[k].begin();
             if (!this->goals_mem[k].empty() &&
-                state.location == this->goals_mem[k].begin()->location) {
-                this->goals_mem[k].erase(this->goals_mem[k].begin());
+                state.location == curr_goal->location) {
+                // Agent is at the goal, and it finished waiting or does not
+                // need to wait
+                if (curr_waited_time[k] >= curr_goal->task_wait_time) {
+                    this->goals_mem[k].erase(curr_goal);
+                    curr_waited_time[k] = 0;  // Reset the waited time
+                    // The agent is not waiting anymore
+                    this->is_waiting[k] = false;
+                } else {
+                    // The agent requires waiting
+                    this->is_waiting[k] = true;
+                    curr_waited_time[k] += 1;
+                }
+            }
+
+            // Some agent might already has path in the next timestep (such
+            // as those tasking wait agents). We need to update the curr and
+            // next occupied locations accordingly.
+            if (t + 1 < this->simulation_window + 1 &&
+                solution[k][t + 1].location != -1) {
+                // The agent has a path in the next timestep
+                this->next_occupied[solution[k][t + 1].location] = k;
             }
         }
 
         // Print the content of goal_mem:
         if (screen > 1) {
+            cout << "Current solution:" << endl;
+            for (int i = 0; i < num_of_agents; i++) {
+                cout << "Agent " << i << ": ";
+                for (const auto &state : solution[i]) {
+                    cout << "(" << state.location << "," << state.timestep
+                         << "," << state.orientation << ","
+                         << state.is_tasking_wait << ") ";
+                }
+                cout << endl;
+            }
             cout << "Goals memory after planning from " << t - 1 << " to " << t
                  << ": " << endl;
             for (int i = 0; i < num_of_agents; i++) {
@@ -201,8 +325,8 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     //     double cost2 = move_cost2 + rot_cost2 + h2;
     //     if (cost1 != cost2)
     //         return cost1 < cost2;
-    //     // Tie breaking. Prefer the next state that is currently not occupied
-    //     if (this->curr_occupied[n1.location] == -1 &&
+    //     // Tie breaking. Prefer the next state that is currently not
+    //     occupied if (this->curr_occupied[n1.location] == -1 &&
     //         this->curr_occupied[n2.location] != -1) {
     //         return true;  // n1 is not occupied, n2 is occupied
     //     } else if (this->curr_occupied[n1.location] != -1 &&
@@ -215,6 +339,32 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     // ########### OLD implementation without orientation ###########
     // Determine the actions
     list<State> next_states_ = this->G.get_neighbors(start_state);
+
+    // If the agent is waiting, it can only wait in place
+    if (this->is_waiting[a_i]) {
+        // If the agent is waiting, it can only wait in place
+        next_states_.clear();
+        next_states_.push_back(start_state.wait());
+    }
+
+    // Print next states
+    // if (screen > 1) {
+    //     cout << "Next states for agent " << a_i << " at timestep " <<
+    //     from_t
+    //          << ": " << endl;
+    //     for (const auto &next_state : next_states_) {
+    //         cout << next_state << " (cost: "
+    //              << this->G.get_weight(start_state.location,
+    //                                    next_state.location)
+    //              << ", heuristic: "
+    //              << this->G.get_heuristic(goal.location,
+    //              next_state.location,
+    //                                       next_state.orientation)
+    //              << ")" << endl;
+    //     }
+    //     cout << endl;
+    // }
+
     vector<State> next_states(next_states_.begin(), next_states_.end());
 
     // Sort the next states by action cost + heuristic values, breaking ties
@@ -228,7 +378,8 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
             this->G.get_heuristic(goal.location, n2.location, n2.orientation);
         if (cost1 + h1 != cost2 + h2)
             return (cost1 + h1) < (cost2 + h2);
-        // Tie breaking. Prefer the next state that is currently not occupied
+        // Tie breaking. Prefer the next state that is currently not
+        // occupied
         if (this->curr_occupied[n1.location] == -1 &&
             this->curr_occupied[n2.location] != -1) {
             return true;  // n1 is not occupied, n2 is occupied
@@ -249,7 +400,8 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     // cout << "Next states: " << endl;
     // for (const auto &next_state : next_states) {
     //     cout << next_state << " (cost: "
-    //          << this->G.get_weight(start_state.location, next_state.location)
+    //          << this->G.get_weight(start_state.location,
+    //          next_state.location)
     //          << ", heuristic: "
     //          << this->G.get_heuristic(goal.location, next_state.location,
     //                                   next_state.orientation)
@@ -262,7 +414,8 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
         // if (start_state.orientation >= 0 &&
         //     start_state.location != next_state.location &&
         //     start_state.orientation != next_state.orientation) {
-        //     // The agent is rotating and moving at the same time. We make it
+        //     // The agent is rotating and moving at the same time. We make
+        //     it
         //     // rotate first
         //     cout << "Moving and rotating from " << start_state << " to "
         //          << next_state << endl;
@@ -287,18 +440,22 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
         // }
 
         // avoid vertex conflicts
-        if (this->next_occupied[next_state.location] != -1)
+        if (this->next_occupied[next_state.location] != -1) {
             continue;
+        }
+
         // avoid edge conflicts
-        if (a_j != -1 && next_state.location == solution[a_j][from_t].location)
+        if (a_j != -1 &&
+            next_state.location == solution[a_j][from_t].location) {
             continue;
+        }
 
         // reserve the next state
         this->next_occupied[next_state.location] = a_i;
         this->solution[a_i][from_t + 1] = next_state;
 
-        // Another agent a_k is currently occupying the next state. Replan it,
-        // if it is not planned.
+        // Another agent a_k is currently occupying the next state. Replan
+        // it, if it is not planned.
         int a_k = curr_occupied[next_state.location];
         if (a_k != -1 && solution[a_k][from_t + 1].location == -1 &&
             this->goals_mem[a_k].size() > 0) {
@@ -312,7 +469,9 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
 
     // Fail to find a valid next state, we can only let a_i wait in place.
     next_occupied[start_state.location] = a_i;
-    this->solution[a_i][from_t + 1] = start_state.wait();
+    State wait = start_state.wait();
+    wait.is_tasking_wait = false;
+    this->solution[a_i][from_t + 1] = wait;
     return false;
 }
 
@@ -328,8 +487,8 @@ void PIBT::save_results(const std::string &fileName,
     stats.open(fileName, std::ios::app);
     stats << runtime << "," << num_restarts << "," << num_restarts << ","
           << num_expanded << "," << num_generated << "," << solution_cost << ","
-          << min_sum_of_costs << "," << avg_path_length << "," << "0" << ","
-          << instanceName << std::endl;
+          << min_sum_of_costs << "," << avg_path_length << "," << "0"
+          << "," << instanceName << std::endl;
     stats.close();
 }
 

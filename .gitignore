@@ -23,3 +23,6 @@ stats.json
 failed_instance.txt
 output.log
 debug.log
+debug_instance.log
+durationPath.txt
+planner/RHCR/output

@@ -9,7 +9,7 @@ struct State
     bool is_tasking_wait; // is waiting in order to finish task
     bool is_rotating; // is waiting in order to finish rotation
 
-    State wait() const {return State(location, timestep + 1, orientation); }
+    State wait() const {return State(location, timestep + 1, orientation, is_tasking_wait, is_rotating); }
 
     struct Hasher
     {

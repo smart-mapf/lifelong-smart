@@ -29,12 +29,12 @@ PBS::PBS(const Instance& instance, bool sipp, int screen)
 bool PBS::solve(double _time_limit) {
     this->time_limit = _time_limit;
 
-    if (screen > 0)  // 1 or 2
-    {
-        string name = getSolverName();
-        name.resize(35, ' ');
-        cout << name << ": ";
-    }
+    // if (screen > 0)  // 1 or 2
+    // {
+    //     string name = getSolverName();
+    //     name.resize(35, ' ');
+    //     cout << name << ": ";
+    // }
     // set timer
     start = clock();
 
@@ -338,7 +338,7 @@ PBSNode* PBS::selectNode() {
 void PBS::printPaths() const {
     for (int i = 0; i < num_of_agents; i++) {
         cout << "Agent " << i << " ("
-             << search_engines[i]->instance.graph.heuristics.at(
+             << search_engines[i]->instance.graph->heuristics.at(
                     search_engines[i]
                         ->goal_location)[search_engines[i]->start_location]
              << " -->" << paths[i]->size() - 1 << "): ";
@@ -360,19 +360,35 @@ void PBS::printPriorityGraph() const {
 }
 
 void PBS::printResults() const {
+    string result_str = "PBS,";
     if (solution_cost >= 0)  // solved
-        cout << "Succeed,";
-    else if (solution_cost == -1)  // time_out
-        cout << "Timeout,";
-    else if (solution_cost == -2)  // no solution
-        cout << "No solutions,";
-    else if (solution_cost == -3)  // nodes out
-        cout << "Nodesout,";
+    {
+        // cout << "Succeed,";
+        result_str += "Succeed,";
+    } else if (solution_cost == -1)  // time_out
+    {
+        // cout << "Timeout,";
+        result_str += "Timeout,";
+    } else if (solution_cost == -2)  // no solution
+    {
+        // cout << "No solutions,";
+        result_str += "No solutions,";
+    }
 
-    cout << solution_cost << "," << runtime << "," << num_HL_expanded << ","
-         << num_LL_expanded << ","
-         <<  // HL_num_generated << "," << LL_num_generated << "," <<
-        dummy_start->cost << "," << endl;
+    else if (solution_cost == -3)  // nodes out
+    {
+        // cout << "Nodesout,";
+        result_str += "Nodesout,";
+    }
+
+    // cout << solution_cost << "," << runtime << "," << num_HL_expanded << ","
+    //      << num_LL_expanded << ","
+    //      <<  // HL_num_generated << "," << LL_num_generated << "," <<
+    //     dummy_start->cost << "," << endl;
+    spdlog::info("{}runtime={},num_HL_expanded={},num_LL_expanded={},cost_"
+                 "lower_bound={}",
+                 result_str, runtime, num_HL_expanded, num_LL_expanded,
+                 dummy_start->cost);
     /*if (solution_cost >= 0) // solved
     {
         cout << "fhat = [";
@@ -513,10 +529,10 @@ void PBS::savePaths(const string& fileName) const {
         output << "Agent " << i << ": ";
         for (const auto& t : *paths[i])
             output << "("
-                   << search_engines[0]->instance.graph.getRowCoordinate(
+                   << search_engines[0]->instance.graph->getRowCoordinate(
                           t.location)
                    << ","
-                   << search_engines[0]->instance.graph.getColCoordinate(
+                   << search_engines[0]->instance.graph->getColCoordinate(
                           t.location)
                    << ")->";
         output << endl;
@@ -534,22 +550,35 @@ std::vector<std::vector<std::tuple<int, int, double, int>>> PBS::getPaths() {
 
     for (int i = 0; i < num_of_agents; i++) {
         int tmp_step = 0;
-        cout << "Agent " << i << ": ";
+        if (screen > 0)
+            cout << "Agent " << i << ": ";
+        bool task_finished = false;
         for (const auto& t : *paths[i]) {
+            int task_id = -1;
+            if (t.location == search_engines[i]->goal_location &&
+                !task_finished) {
+                task_id = t.task_id;
+                task_finished = true;  // Task is finished
+            }
+            // We only finish a task if we arrive at the goal
+            // if (tmp_step == paths[i]->size() - 1) {
+            //     task_id = t.task_id;  // last step is the end of the task
+            // }
             new_mapf_plan[i].emplace_back(
-                search_engines[0]->instance.graph.getRowCoordinate(t.location),
-                search_engines[0]->instance.graph.getColCoordinate(t.location),
-                static_cast<double>(tmp_step), t.task_id);
+                search_engines[0]->instance.graph->getRowCoordinate(t.location),
+                search_engines[0]->instance.graph->getColCoordinate(t.location),
+                static_cast<double>(tmp_step), task_id);
             if (screen > 0) {
-                std::cout << "("
-                          << search_engines[0]->instance.graph.getRowCoordinate(
-                                 t.location)
-                          << ","
-                          << search_engines[0]->instance.graph.getColCoordinate(
-                                 t.location)
-                          << "," << t.task_id << ")->";
-                if (t.task_id >= 0) {
-                    std::cout << "End of task " << t.task_id << " at step "
+                std::cout
+                    << "("
+                    << search_engines[0]->instance.graph->getRowCoordinate(
+                           t.location)
+                    << ","
+                    << search_engines[0]->instance.graph->getColCoordinate(
+                           t.location)
+                    << "," << task_id << ")->";
+                if (task_id >= 0) {
+                    std::cout << "End of task " << task_id << " at step "
                               << tmp_step << " ";
                 }
             }

@@ -31,6 +31,7 @@ void set_parameters(BasicSystem& system, const boost::program_options::variables
     system.rotation_time = vm["rotation_time"].as<int>();
     system.queue_mechanism = vm["queue_mechanism"].as<bool>();
     system.port_number = vm["port_number"].as<int>();
+    system.backup_solver = vm["backup_solver"].as<string>();
 	if (vm.count("seed"))
 		system.seed = vm["seed"].as<int>();
 	else
@@ -144,6 +145,7 @@ int main(int argc, char** argv)
 		("seed,d", po::value<int>(), "random seed")
 		("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
 		("solver", po::value<string>()->default_value("PBS"), "solver (LRA, PBS, WHCA, ECBS)")
+        ("backup_solver", po::value<string>()->default_value("PIBT"), "backup solver (PIBT, LRA)")
 		("id", po::value<bool>()->default_value(false), "independence detection")
 		("single_agent_solver", po::value<string>()->default_value("SIPP"), "single-agent solver (ASTAR, SIPP)")
 		("lazyP", po::value<bool>()->default_value(false), "use lazy priority")
@@ -178,6 +180,7 @@ int main(int argc, char** argv)
         ("station_wait_times", po::value<std::vector<int>>()->multitoken()->default_value(vector<int>{1, 5, 10}), "wait time of each type of manufacture station.")
         ("queue_mechanism", po::value<bool>()->default_value(false), "Whether to use queue mechanism. This is only used for GreyOrange scenario.")
         ("port_number", po::value<int>()->default_value(8080), "port number for the server")
+        ("grid_type", po::value<std::string>()->default_value("regular"), "Grid type (regular, one_bot_per_aisle)")
 		;
     // clang-format on
 	clock_t start_time = clock();
@@ -238,6 +241,9 @@ int main(int argc, char** argv)
     auto console_logger = spdlog::default_logger()->clone("Planner");
     spdlog::set_default_logger(console_logger);
 
+    // Grid type
+    std::string grid_type = vm["grid_type"].as<std::string>();
+
 	if (vm["scenario"].as<string>() == "KIVA")
 	{
 		KivaGrid G;
@@ -257,6 +263,7 @@ int main(int argc, char** argv)
             return -1;
         }
 		MAPFSolver* solver = set_solver(G, vm);
+        solver->consider_task_wait = true;
 		KivaSystem system(G, *solver);
 		set_parameters(system, vm);
         system.start_time = start_time;
@@ -358,6 +365,13 @@ int main(int argc, char** argv)
 	    G.useDummyPaths = vm["dummy_paths"].as<bool>();
         G._save_heuristics_table = vm["save_heuristics_table"].as<bool>();
         G.rotation_time = vm["rotation_time"].as<int>();
+        // Grid type
+        if (!convert_G_type.count(grid_type))
+        {
+            spdlog::error("Grid type {} does not exist!", grid_type);
+            exit(-1);
+        }
+        G.set_grid_type(convert_G_type.at(grid_type));
         std::ifstream i(vm["map"].as<std::string>());
         json map_json;
         i >> map_json;
@@ -369,6 +383,7 @@ int main(int argc, char** argv)
             return -1;
         }
 		MAPFSolver* solver = set_solver(G, vm);
+        solver->consider_task_wait = true;
 		SMARTSystem system(G, *solver, vm["task"].as<string>());
 		set_parameters(system, vm);
         system.start_time = start_time;

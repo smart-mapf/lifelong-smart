@@ -1,72 +1,79 @@
 #pragma once
-#include <tuple>
-#include <list>
-#include <vector>
-#include <set>
-#include <map>
-#include <stack>
+#include <boost/filesystem.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
+#include <boost/heap/pairing_heap.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
+#include <cfloat>
 #include <ctime>
 #include <fstream>
-#include <iostream>     // std::cout, std::fixed
-#include <iomanip>      // std::setprecision
-#include <cfloat>
-#include <boost/heap/pairing_heap.hpp>
-#include <boost/unordered_set.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/heap/fibonacci_heap.hpp>
+#include <iomanip>   // std::setprecision
+#include <iostream>  // std::cout, std::fixed
 #include <json.hpp>
+#include <list>
+#include <map>
+#include <random>
+#include <set>
+#include <stack>
+#include <tuple>
+#include <vector>
 
-using boost::heap::fibonacci_heap;
-using boost::heap::pairing_heap;
-using boost::heap::compare;
+#include "spdlog/spdlog.h"
+
+using boost::char_separator;
+using boost::tokenizer;
 using boost::unordered_map;
 using boost::unordered_set;
-using boost::tokenizer;
-using boost::char_separator;
-using std::vector;
-using std::list;
-using std::set;
-using std::map;
-using std::get;
-using std::tuple;
-using std::make_tuple;
-using std::pair;
-using std::make_pair;
-using std::tie;
-using std::min;
-using std::max;
-using std::shared_ptr;
-using std::make_shared;
+using boost::heap::compare;
+using boost::heap::fibonacci_heap;
+using boost::heap::pairing_heap;
+using std::cerr;
 using std::clock;
 using std::cout;
 using std::endl;
-using std::ofstream;
-using std::cerr;
-using std::string;
-using std::stack;
-using std::ifstream;
+using std::get;
 using std::getline;
+using std::ifstream;
+using std::list;
+using std::make_pair;
+using std::make_shared;
+using std::make_tuple;
+using std::map;
+using std::max;
+using std::min;
+using std::mt19937;
+using std::ofstream;
+using std::pair;
+using std::set;
+using std::shared_ptr;
+using std::stack;
+using std::string;
+using std::tie;
+using std::to_string;
+using std::tuple;
+using std::vector;
 
 using json = nlohmann::json;
 
 #define MAX_TIMESTEP INT_MAX / 2
 #define MAX_COST INT_MAX / 2
 #define MAX_NODES INT_MAX / 2
-#define WEIGHT_MAX INT_MAX/2
+#define WEIGHT_MAX INT_MAX / 2
 
-struct PathEntry
-{
-	int location = -1;
+struct PathEntry {
+    int location = -1;
     int task_id = -1;  // task id of the task that this location belongs to
-	explicit PathEntry(int loc = -1): location(loc) { }
+    explicit PathEntry(int loc = -1) : location(loc) {
+    }
 };
 
 typedef vector<PathEntry> Path;
 std::ostream& operator<<(std::ostream& os, const Path& path);
 
 bool isSamePath(const Path& p1, const Path& p2);
+
+bool congested(const vector<vector<tuple<int, int, double, int>>>& new_plan);
 
 // Only for three-tuples of std::hash-able types for simplicity.
 // You can of course template this struct to allow other hash functions
@@ -81,4 +88,3 @@ bool isSamePath(const Path& p1, const Path& p2);
         return h1 ^ h2 ^ h3;
     }
 };*/
-

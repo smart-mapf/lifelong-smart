@@ -143,7 +143,8 @@ Path SIPP::run(const BasicGraph& G,
 	double h_val = compute_h_value(G, start, 0, goal_location);
 	if (h_val > INT_MAX)
 	{
-		cout << "The start and goal locations are disconnected!" << endl;
+		// cout << "The start and goal locations are disconnected!" << endl;
+        spdlog::error("The start and goal locations are disconnected!");
 		return Path();
 	}
     Interval interval = rt.getFirstSafeInterval(start.location);
@@ -181,11 +182,13 @@ Path SIPP::run(const BasicGraph& G,
     while (!focal_list.empty())
     {
         // std::cout << "sipp, pop node" <<std::endl;
+        // spdlog::info("SIPP: Popping node from focal list...");
         SIPPNode* curr = focal_list.top(); focal_list.pop();
         open_list.erase(curr->open_handle);
         curr->in_openlist = false;
         num_expanded++;
         // cout << "node expanded " << num_expanded << endl;
+        // spdlog::info("SIPP: Popped node");
 
         // Make sure agents wait enough time at each goal.
         // For manufactual system, consecutive goals could be the same.
@@ -210,6 +213,8 @@ Path SIPP::run(const BasicGraph& G,
             }
         }
         else{
+            // spdlog::info("SIPP: Considering task wait time for goal id: {}",
+            //             curr->goal_id);
             while (curr->state.location == curr_goal.location &&
                 // We do not consider goal orientation if it is the given as -1
                 // otherwise the goal orientation must match.
@@ -255,6 +260,7 @@ Path SIPP::run(const BasicGraph& G,
 		{
             // cout << "is goal: " << curr->goal_id << " "
             //      << (int)goal_location.size() << endl;
+            // spdlog::info("SIPP: Found goal node with goal id: {}", curr->goal_id);
 			Path path = updatePath(G, curr);
 			releaseClosedListNodes();
 			open_list.clear();

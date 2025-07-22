@@ -10,7 +10,7 @@
 #include "helper.h"
 
 SMARTSystem::SMARTSystem(SMARTGrid &G, MAPFSolver &solver, string task_file)
-    : BasicSystem(G, solver), G(G), task_file(task_file) {
+    : BasicSystem(G, solver), G(G), task_file(task_file), aisle_rt(G) {
 }
 
 SMARTSystem::~SMARTSystem() {
@@ -28,24 +28,25 @@ void SMARTSystem::initialize() {
     rotate_time.resize(num_of_drives, 0);
     is_rotating.resize(num_of_drives, false);
 
+    // Initialize aisle rt used for aisle path planning
+    aisle_rt.map_size = G.size();
+    aisle_rt.k_robust = k_robust;
+    aisle_rt.window = INT_MAX;
+
     // std::random_device rd;
     this->gen = mt19937(this->seed);
 
-    if (this->G.get_w_mode()) {
-        // Create workstation distribution
-        // Number of weight must be the same as number of workstations
-        assert(this->G.workstation_weights.size() ==
-               this->G.workstations.size());
+    // Create workstation distribution
+    // Number of weight must be the same as number of workstations
+    assert(this->G.workstation_weights.size() == this->G.workstations.size());
 
-        this->workstation_dist =
-            discrete_distribution<int>(this->G.workstation_weights.begin(),
-                                       this->G.workstation_weights.end());
-        // cout << "Workstation distribution: ";
-        // for (auto w : this->G.workstation_weights) {
-        //     cout << w << ", ";
-        // }
-        // cout << endl;
-    }
+    this->workstation_dist = discrete_distribution<int>(
+        this->G.workstation_weights.begin(), this->G.workstation_weights.end());
+    // cout << "Workstation distribution: ";
+    // for (auto w : this->G.workstation_weights) {
+    //     cout << w << ", ";
+    // }
+    // cout << endl;
 
     bool succ = load_tasks();
     // bool succ = load_records();  // continue simulating from the records
@@ -175,37 +176,33 @@ int SMARTSystem::gen_next_goal(int agent_id, bool repeat_last_goal) {
     if (!this->random_task && !this->tasks[agent_id].empty()) {
         Task next = this->tasks[agent_id].front();
         this->tasks[agent_id].pop_front();
-        return next.location; // Only take the location of the task
+        return next.location;  // Only take the location of the task
     }
 
-    // Otherwise generate random tasks
-    if (G.get_r_mode()) {
-        next = G.endpoints[rand() % (int)G.endpoints.size()];
-    }
     // Under w mode, alternate goal locations between workstations and endpoints
-    else if (G.get_w_mode()) {
-        if (this->next_goal_type[agent_id] == "w") {
-            if (repeat_last_goal) {
-                next = G.endpoints[rand() % (int)G.endpoints.size()];
-                // next = this->sample_end_points();
-            } else {
-                next = sample_workstation();
-                this->next_goal_type[agent_id] = "e";
-            }
-        } else if (this->next_goal_type[agent_id] == "e") {
-            if (repeat_last_goal) {
-                next = sample_workstation();
-            } else {
-                // next = this->sample_end_points();
-                next = G.endpoints[rand() % (int)G.endpoints.size()];
-                this->next_goal_type[agent_id] = "w";
-            }
+
+    if (this->next_goal_type[agent_id] == "w") {
+        if (repeat_last_goal) {
+            next = G.endpoints[rand() % (int)G.endpoints.size()];
+            // next = this->sample_end_points();
         } else {
-            std::cout << "error! next goal type is not w or e, but "
-                      << this->next_goal_type[agent_id] << std::endl;
-            exit(1);
+            next = sample_workstation();
+            this->next_goal_type[agent_id] = "e";
         }
+    } else if (this->next_goal_type[agent_id] == "e") {
+        if (repeat_last_goal) {
+            next = sample_workstation();
+        } else {
+            // next = this->sample_end_points();
+            next = G.endpoints[rand() % (int)G.endpoints.size()];
+            this->next_goal_type[agent_id] = "w";
+        }
+    } else {
+        std::cout << "error! next goal type is not w or e, but "
+                  << this->next_goal_type[agent_id] << std::endl;
+        exit(1);
     }
+
     return next;
 }
 
@@ -214,7 +211,7 @@ void SMARTSystem::update_goal_locations() {
         new_agents.clear();
 
     // Initialize next_goal_type
-    if (this->next_goal_type.empty() && G.get_w_mode()) {
+    if (this->next_goal_type.empty()) {
         for (int i = 0; i < num_of_drives; i++) {
             int start_loc = this->starts[i].location;
             // If start from workstation, next goal is endpoint
@@ -258,8 +255,16 @@ void SMARTSystem::update_goal_locations() {
         } else {
             goal = goal_locations[k].back();
         }
-        double min_timesteps = G.get_Manhattan_distance((goal.location), curr);
-        while (min_timesteps <= simulation_window)
+        double min_timesteps = 0;
+        int prev_loc = curr;
+        for (const auto &g : goal_locations[k]) {
+            min_timesteps += G.get_Manhattan_distance(g.location, prev_loc);
+            prev_loc = g.location;
+        }
+        // double min_timesteps = G.get_Manhattan_distance((goal.location),
+        // curr);
+        while (min_timesteps <= simulation_window ||
+               goal_locations[k].size() < 2)
         // The agent might finish its tasks during the next planning
         // horizon
         {
@@ -295,19 +300,7 @@ void SMARTSystem::update_goal_locations() {
         // cout << "SMARTSystem::update_goal_locations: "
         //      << "Current start and goal locations:" << endl;
         spdlog::info("Current start and goal locations:");
-        for (int i = 0; i < num_of_drives; i++) {
-            cout << "Agent " << i << ": ";
-            int start_x = G.getRowCoordinate(starts[i].location);
-            int start_y = G.getColCoordinate(starts[i].location);
-            cout << "(" << start_x << ", " << start_y << ") => ";
-            for (const auto &goal : goal_locations[i]) {
-                int goal_x = G.getRowCoordinate(goal.location);
-                int goal_y = G.getColCoordinate(goal.location);
-                cout << "(" << goal_x << ", " << goal_y << ") -> ";
-            }
-            cout << endl;
-        }
-
+        this->print_mapf_instance(this->starts, this->goal_locations);
         if (screen > 1) {
             // Check for consecutive duplicate goals for each agent
             for (int i = 0; i < num_of_drives; i++) {
@@ -727,7 +720,7 @@ json SMARTSystem::simulate(int simulation_time) {
         auto new_mapf_plan = this->convert_path_to_smart();
         json new_plan_json = {
             {"plan", new_mapf_plan},
-            {"congested", this->congested()},
+            {"congested", congested()},
             {"stats", this->get_curr_stats()},
         };
 
@@ -818,7 +811,6 @@ string SMARTSystem::get_curr_stats() const {
     return stats.dump();
 }
 
-
 bool SMARTSystem::load_tasks() {
     // cout << "Loading tasks from file: " << this->task_file << endl;
     spdlog::info("Loading tasks from file: {}", this->task_file);
@@ -838,8 +830,499 @@ bool SMARTSystem::load_tasks() {
 
     // Loading task is successful, we shall use the loaded tasks onward.
     this->random_task = false;
-    spdlog::info("Loaded {} tasks for {} agents.", this->tasks.size(),
-             this->num_of_drives);
+    spdlog::info("Loaded {} tasks for {} agents.", this->tasks[0].size(),
+                 this->num_of_drives);
 
     return true;
+}
+
+void SMARTSystem::solve() {
+    // Back up solvers
+    this->rule_based_called = false;
+    LRAStar lra(G, solver.path_planner);
+    lra.simulation_window = simulation_window;
+    lra.k_robust = k_robust;
+    lra.gen = this->solver.gen;
+    lra.screen = this->screen;
+
+    PIBT pibt(G, solver.path_planner);
+    pibt.simulation_window = simulation_window;
+    pibt.k_robust = k_robust;
+    pibt.gen = this->solver.gen;
+    pibt.screen = this->screen;
+
+    solver.clear();
+    this->n_mapf_calls++;
+
+    // If each aisle only serves one robot, we should "push" the start location
+    // of the robot to the entry point of the aisle, and remove the first goal
+    // of the robot if necessart.
+    vector<vector<Task>> real_goal_locations;
+    real_goal_locations.resize(num_of_drives);
+
+    if (this->G.get_grid_type() == SMARTGridType::REGULAR) {
+        // If we consider waiting time of tasks, we should ignore the first
+        // goal of the agent if the agent still doing task in that goal
+        // from the previous windowed MAPF run
+        for (int k = 0; k < num_of_drives; k++) {
+            int j = 0;
+            // Agent is still doing task if the next goal is the same at the
+            // start location
+            if (this->is_tasking[k] &&
+                starts[k].location == goal_locations[k].front().location &&
+                (goal_locations[k].front().orientation == -1 ||
+                 goal_locations[k].front().orientation ==
+                     starts[k].orientation)) {
+                j = 1;
+            }
+            for (; j < goal_locations[k].size(); j++) {
+                real_goal_locations[k].emplace_back(goal_locations[k][j]);
+            }
+        }
+
+        if (screen > 0) {
+            spdlog::info("Post-processed goal locations for REGULAR:");
+            this->print_mapf_instance(this->starts, real_goal_locations);
+        }
+    }
+
+    else if (this->G.get_grid_type() == SMARTGridType::ONE_BOT_PER_AISLE) {
+        // When the grid type is ONE_BOT_PER_AISLE, we should post-process the
+        // start and goals such that:
+        // 1. If the agent is still inside the aisle, we should push the
+        //    start location to the entry point of the aisle, and remove the
+        //    first goal of the agent if necessary. The start timestep of the
+        //    agent should be updated to the distance it still needs to travel
+        //    in the aisle
+        // 2. For each of the remaining goals, if the goal is an endpoint
+        //    (inside the aisle), we should move the goal location to the aisle
+        //    entry point while set the timestep it shall wait to be the
+        //    distance it needs to travel inside the aisle. By doing this,
+        //    other agents cannot enter the aisle until the agent leave the
+        //    aisle.
+
+        init_aisle_paths.clear();
+        aisle_paths.clear();
+
+        for (int k = 0; k < num_of_drives; k++) {
+            int j = 0;
+            // Agent is still in the aisle. We need to update the start
+            // location and timestep
+            if (this->G.in_aisle(this->starts[k].location)) {
+                // Compute the number of timesteps required by the agent to go
+                // to the exit point of the aisle If the first goal is an
+                // endpoint, that means the agent is still on its way to the
+                // goal
+                // Goal should not be empty here
+                State start = this->starts[k];
+                Task first_goal = goal_locations[k].front();
+                int aisle_entry = this->G.aisle_entry(start.location);
+                int distance_to_travel_in_aisle = 0;
+                if (this->G.types[first_goal.location] == "Endpoint" &&
+                    this->G.getColCoordinate(first_goal.location) ==
+                        this->G.getColCoordinate(aisle_entry)) {
+                    // The agent is still on its way to the first goal, which is
+                    // an endpoint. It shall first travel to the first goal, and
+                    // then to the aisle entry
+                    if (screen > 1) {
+                        spdlog::info(
+                            "Agent {} is still on its way to the first goal: "
+                            "({},{})",
+                            k, G.getRowCoordinate(first_goal.location),
+                            G.getColCoordinate(first_goal.location));
+                    }
+                    Path aisle_path = this->get_aisle_path(
+                        start, {first_goal, Task(aisle_entry, -1, 0)},
+                        this->G.get_aisle(aisle_entry), this->G.move);
+                    distance_to_travel_in_aisle = aisle_path.size() - 1;
+
+                    // Sanity check
+                    if (distance_to_travel_in_aisle !=
+                        G.get_Manhattan_distance(start.location,
+                                                 first_goal.location) +
+                            G.get_Manhattan_distance(first_goal.location,
+                                                     aisle_entry)) {
+                        spdlog::error(
+                            "Distance to travel in aisle is not correct for "
+                            "agent {}: {} != {} + {}",
+                            k, distance_to_travel_in_aisle,
+                            G.get_Manhattan_distance(start.location,
+                                                     first_goal.location),
+                            G.get_Manhattan_distance(first_goal.location,
+                                                     aisle_entry));
+                        throw std::runtime_error(
+                            "Distance to travel in aisle is not correct");
+                    }
+
+                    // aisle_paths[first_goal.id] = aisle_path;
+                    init_aisle_paths[k] = aisle_path;
+
+                    j = 1;  // The MAPF planner shall skip the first goal
+                } else {
+                    if (screen > 1) {
+                        spdlog::info(
+                            "Agent {} is going to the aisle entry: ({},{})", k,
+                            G.getRowCoordinate(aisle_entry),
+                            G.getColCoordinate(aisle_entry));
+                    }
+                    // otherwise, the agent travel from the current
+                    // location to the exit of the aisle
+                    Path aisle_path = this->get_aisle_path(
+                        start, {Task(aisle_entry, -1, 0)},
+                        this->G.get_aisle(aisle_entry), this->G.move);
+
+                    distance_to_travel_in_aisle = aisle_path.size() - 1;
+
+                    // Sanity check
+                    if (distance_to_travel_in_aisle !=
+                        G.get_Manhattan_distance(start.location, aisle_entry)) {
+                        spdlog::error(
+                            "Distance to travel in aisle is not correct for "
+                            "agent {}: {} != {}",
+                            k, distance_to_travel_in_aisle,
+                            G.get_Manhattan_distance(start.location,
+                                                     aisle_entry));
+                        throw std::runtime_error(
+                            "Distance to travel in aisle is not correct");
+                    }
+
+                    // The agent's path shall start with the aisle path
+                    init_aisle_paths[k] = aisle_path;
+                }
+
+                // The start timestep of the agent shall be the distance to the
+                // exit point of the aisle, plus the current start timestep
+                this->starts[k].timestep += distance_to_travel_in_aisle;
+
+                // The start location of the agent shall be the exit point
+                // of the aisle
+                this->starts[k].location = aisle_entry;
+
+                // The start location shall be "task_wait" as a hacky way to
+                // make the low level planner insert wait actions at the start
+                this->starts[k].is_tasking_wait = true;
+            }
+
+            // For each of the remaining goals, if the goal is an endpoint
+            // (inside the aisle), we should process the goal accordingly
+            for (; j < goal_locations[k].size(); j++) {
+                Task real_task = goal_locations[k][j];
+                if (this->G.in_aisle(real_task.location)) {
+                    int aisle_entry = this->G.aisle_entry(real_task.location);
+
+                    // The agent shall travel from the aisle entry point to the
+                    // goal, then from the goal back to the aisle entry point
+                    State aisle_start = State(aisle_entry, 0, -1);
+                    Path aisle_path = this->get_aisle_path(
+                        aisle_start, {real_task, Task(aisle_entry, -1, 0)},
+                        this->G.get_aisle(aisle_entry), this->G.move);
+                    int distance_to_travel_in_aisle = aisle_path.size() - 1;
+
+                    // Sanity check
+                    if (distance_to_travel_in_aisle !=
+                        2 * G.get_Manhattan_distance(real_task.location,
+                                                     aisle_entry)) {
+                        spdlog::error(
+                            "Distance to travel in aisle is not correct for "
+                            "agent {}: {} != 2 * {}",
+                            k, distance_to_travel_in_aisle,
+                            G.get_Manhattan_distance(real_task.location,
+                                                     aisle_entry));
+                        throw std::runtime_error(
+                            "Distance to travel in aisle is not correct");
+                    }
+
+                    aisle_paths[real_task.id] = aisle_path;
+
+                    // The goal location should be the aisle entry point
+                    // The agent should wait at the aisle entry point for the
+                    // distance to travel in the aisle
+                    Task shadow_task = Task(real_task);
+                    shadow_task.location = aisle_entry;
+                    shadow_task.task_wait_time =
+                        distance_to_travel_in_aisle + real_task.task_wait_time;
+                    real_goal_locations[k].emplace_back(shadow_task);
+                }
+                // Other tasks are added as usual.
+                else {
+                    real_goal_locations[k].emplace_back(goal_locations[k][j]);
+                }
+            }
+        }
+
+        if (screen > 0) {
+            spdlog::info(
+                "Post-processed goal locations for ONE_BOT_PER_AISLE:");
+            this->print_mapf_instance(this->starts, real_goal_locations);
+
+            // Print init_aisle_paths
+            spdlog::info("Initial aisle paths:");
+            for (const auto &pair : init_aisle_paths) {
+                int agent_id = pair.first;
+                const Path &aisle_path = pair.second;
+                cout << "Agent " << agent_id << ": ";
+                for (const auto &state : aisle_path) {
+                    cout << "(" << this->G.getRowCoordinate(state.location)
+                         << "," << this->G.getColCoordinate(state.location)
+                         << "," << state.timestep << ") -> ";
+                }
+                cout << endl;
+            }
+
+            // Print aisle paths
+            spdlog::info("Aisle paths:");
+            for (const auto &pair : aisle_paths) {
+                int task_id = pair.first;
+                const Path &aisle_path = pair.second;
+                cout << "Task " << task_id << ": ";
+                for (const auto &state : aisle_path) {
+                    cout << "(" << this->G.getRowCoordinate(state.location)
+                         << "," << this->G.getColCoordinate(state.location)
+                         << "," << state.timestep << ") -> ";
+                }
+                cout << endl;
+            }
+        }
+
+    } else {
+        throw std::runtime_error("Unknown grid type");
+    }
+
+    this->solve_helper(lra, pibt, real_goal_locations);
+
+    // Print path found by the solver
+    if (screen > 0) {
+        spdlog::info("Raw Path found by the solver:");
+        for (int k = 0; k < num_of_drives; k++) {
+            std::cout << "Agent " << k << ": ";
+            for (const auto &state : this->solver.solution[k]) {
+                std::cout << "(" << this->G.getRowCoordinate(state.location)
+                          << "," << this->G.getColCoordinate(state.location)
+                          << "," << state.timestep << ","
+                          << state.is_tasking_wait << ") -> ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    if (this->G.get_grid_type() == SMARTGridType::ONE_BOT_PER_AISLE) {
+        // Here the path solved by the solver contains movement everywhere
+        // except for in the aisles. We need to populate the paths with the
+        // aisle paths.
+        if (screen > 0)
+            spdlog::info(
+                "Populating paths with aisle paths for ONE_BOT_PER_AISLE");
+        for (int k = 0; k < num_of_drives; k++) {
+            // If the agent starts in the aisle, we should replace the init
+            // aisle path to the agent's path
+            if (init_aisle_paths.find(k) != init_aisle_paths.end()) {
+                if (screen > 1) {
+                    spdlog::info("Agent {} starts in the aisle, replacing the "
+                                 "initial aisle "
+                                 "path",
+                                 k);
+                }
+
+                Path &path = this->solver.solution[k];
+                Path &aisle_path = init_aisle_paths[k];
+                int path_size = path.size();
+                int aisle_path_size = aisle_path.size();
+                // Replace the first aisle_path_size states with the aisle path
+                int aisle_path_idx = 0;
+                int state_idx = 0;
+                while (state_idx < path_size &&
+                       aisle_path_idx < aisle_path_size) {
+                    State &state = this->solver.solution[k][state_idx];
+                    State &aisle_state = aisle_path[aisle_path_idx];
+                    // spdlog::info(
+                    //     "Replacing state {} with aisle path state {} for
+                    //     agent "
+                    //     "{}",
+                    //     state.location, aisle_state.location, k);
+                    // // Print path
+                    // if (screen > 0) {
+                    //     spdlog::info("path after populating with aisle
+                    //     paths:",
+                    //                  k);
+                    //     for (int k_ = 0; k_ < num_of_drives; k_++) {
+                    //         for (const auto &state :
+                    //              this->solver.solution[k_]) {
+                    //             std::cout
+                    //                 << "("
+                    //                 <<
+                    //                 this->G.getRowCoordinate(state.location)
+                    //                 << ","
+                    //                 <<
+                    //                 this->G.getColCoordinate(state.location)
+                    //                 << "," << state.timestep << ","
+                    //                 << state.is_tasking_wait << ") -> ";
+                    //         }
+                    //         std::cout << std::endl;
+                    //     }
+                    // }
+                    // Update the state with the aisle path state
+                    // Note: we do not change the timestep
+                    state.location = aisle_state.location;
+                    state.orientation = aisle_state.orientation;
+                    state.is_tasking_wait = false;  // No longer waiting
+                    aisle_path_idx++;
+                    state_idx++;
+                }
+
+                // spdlog::info(
+                //     "Finished replacing the initial aisle path for agent {}",
+                //     k);
+                // for (const auto &state : this->solver.solution[k]) {
+                //     std::cout << "(" <<
+                //     this->G.getRowCoordinate(state.location)
+                //               << "," <<
+                //               this->G.getColCoordinate(state.location)
+                //               << "," << state.timestep << ","
+                //               << state.is_tasking_wait << ") -> ";
+                // }
+                // std::cout << std::endl;
+            }
+
+            // For each of the endpoint goals, we should replace the waiting at
+            // the aisle entry point with the aisle path
+            int goal_idx = 0;
+            int state_idx = 0;
+            while (state_idx < this->solver.solution[k].size()) {
+                State &state = this->solver.solution[k][state_idx];
+                if (this->G.is_aisle_entry(state.location) &&
+                    state.is_tasking_wait) {
+                    if (screen > 1) {
+                        spdlog::info(
+                            "Agent {} is at aisle entry ({},{}), t = {}, "
+                            "populating with aisle path",
+                            k, this->G.getRowCoordinate(state.location),
+                            this->G.getColCoordinate(state.location),
+                            state.timestep);
+                    }
+
+                    // Find the goal corresponding to this state, starting from
+                    // goal_idx.
+                    while (goal_idx < real_goal_locations[k].size() &&
+                           real_goal_locations[k][goal_idx].location !=
+                               state.location) {
+                        goal_idx++;
+                    }
+
+                    if (screen > 1) {
+                        spdlog::info(
+                            "Agent {} is in aisle at state {}, t = {}, "
+                            "goal {} with index {}",
+                            k, state.location, state.timestep,
+                            real_goal_locations[k][goal_idx].location,
+                            goal_idx);
+                    }
+
+                    if (goal_idx >= real_goal_locations[k].size()) {
+                        spdlog::error(
+                            "Goal index {} out of bounds for agent {}",
+                            goal_idx, k);
+                        throw std::runtime_error(
+                            "Goal index out of bounds for agent");
+                    }
+
+                    // Find the aisle path for this goal
+                    int task_id = real_goal_locations[k][goal_idx].id;
+                    if (aisle_paths.find(task_id) == aisle_paths.end()) {
+                        spdlog::error(
+                            "Aisle path for task {} not found for agent {}",
+                            task_id, k);
+                        throw std::runtime_error(
+                            "Aisle path not found for task");
+                    }
+
+                    Path &aisle_path = aisle_paths[task_id];
+                    int aisle_path_size = aisle_path.size();
+                    if (aisle_path_size == 1) {
+                        // A one step path. No need to replace anything.
+                        State &state = this->solver.solution[k][state_idx];
+                        state.is_tasking_wait = false;  // No longer waiting
+                        state_idx++;
+                    } else {
+                        // Replace the next aisle_path_size states with the
+                        // aisle path
+                        // Start from 1 to skip the first state, which is the
+                        // aisle entry
+                        int aisle_path_idx = 1;
+                        while (state_idx < this->solver.solution[k].size() &&
+                               aisle_path_idx < aisle_path_size) {
+                            State &state = this->solver.solution[k][state_idx];
+                            State &aisle_state = aisle_path[aisle_path_idx];
+                            // Update the state with the aisle path state
+                            // Note: we do not change the timestep
+                            state.location = aisle_state.location;
+                            state.orientation = aisle_state.orientation;
+                            state.is_tasking_wait = false;  // No longer waiting
+                            aisle_path_idx++;
+                            state_idx++;
+                        }
+                    }
+
+                } else {
+                    state_idx++;
+                }
+            }
+        }
+    }
+}
+
+Path SMARTSystem::get_aisle_path(State start, const vector<Task> &tasks,
+                                 const set<int> &aisle, const int move[4]) {
+    // Run a simple multi-label BFS to find path from start to tasks
+    // We cannot use path_planner in solver here because the graph there has
+    // the aisles as obstacles.
+    Path path;
+    State curr_start = State(start);
+    for (const auto &task : tasks) {
+        queue<int> q;
+        set<int> visited;
+        unordered_map<int, int> parent;
+        q.push(curr_start.location);
+        visited.insert(curr_start.location);
+        parent[curr_start.location] = -1;
+        while (!q.empty()) {
+            int curr = q.front();
+            q.pop();
+
+            // Exit if goal_id is equal to the number of tasks
+            if (curr == task.location) {
+                Path curr_path;
+                while (curr != -1) {
+                    State state = State(curr, 0, -1);
+                    curr_path.insert(curr_path.begin(), state);
+                    curr = parent[curr];
+                }
+
+                // Remove the duplicate last state
+                if (!path.empty())
+                    path.erase(path.end() - 1);
+
+                path.insert(path.end(), curr_path.begin(), curr_path.end());
+                curr_start = State(task.location, 0, -1);
+                break;
+            }
+
+            // Check all neighbors
+            for (int i = 0; i < 4; i++) {
+                int next = curr + move[i];
+                if (aisle.count(next) > 0 && !visited.count(next)) {
+                    visited.insert(next);
+                    parent[next] = curr;
+                    q.push(next);
+                }
+            }
+        }
+    }
+    // should never happen
+    if (path.empty()) {
+        spdlog::error("No path found in get_aisle_path for start: ({},{})",
+                      G.getRowCoordinate(start.location),
+                      G.getColCoordinate(start.location));
+        throw std::runtime_error("No path found in get_aisle_path");
+    }
+    return path;
 }

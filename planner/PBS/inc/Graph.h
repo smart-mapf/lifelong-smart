@@ -29,6 +29,7 @@ public:
         return (this->num_of_cols * row + col);
     }
     inline int getRowCoordinate(int id) const {
+        spdlog::debug("getRowCoordinate: id = {}", id);
         return id / this->num_of_cols;
     }
     inline int getColCoordinate(int id) const {
@@ -80,13 +81,76 @@ public:
 
     int getDirection(int from, int to) const;
 
+    int nEmptyLocations() const {
+        return empty_locations.size();
+    }
+
+    int sampleEmptyLocation() const {
+        if (empty_locations.empty()) {
+            return -1;  // no empty locations
+        }
+        int idx = rand() % empty_locations.size();
+        return empty_locations[idx];
+    }
+
+    int sampleWorkstation() const {
+        if (workstations.empty()) {
+            return -1;  // no workstations
+        }
+        int idx = rand() % workstations.size();
+        return workstations[idx];
+    }
+
+    int sampleEndpoint() const {
+        if (endpoints.empty()) {
+            return -1;  // no endpoints
+        }
+        int idx = rand() % endpoints.size();
+        return endpoints[idx];
+    }
+
+    int sampleWarehouseTaskLoc() const {
+        if (warehouse_task_locs.empty()) {
+            return -1;  // no warehouse task locations
+        }
+        int idx = rand() % warehouse_task_locs.size();
+        return warehouse_task_locs[idx];
+    }
+
+    int sampleFreeLocation() const {
+        if (free_locations.empty()) {
+            return -1;  // no free locations
+        }
+        int idx = rand() % free_locations.size();
+        return free_locations[idx];
+    }
+
+    int size() const {
+        return map_size;
+    }
+
+    double getHeuristic(int goal_loc, int start_loc) const {
+        if (heuristics.find(goal_loc) == heuristics.end()) {
+            spdlog::error("Error: goal_loc = {} not found in heuristics.",
+                          goal_loc);
+            exit(1);
+        }
+        return heuristics.at(goal_loc)[start_loc];
+    }
+
 private:
     vector<bool> my_map;  // true if obstacle, false if free
+    vector<string> types;
     string map_fname;
     string agent_fname;
     vector<vector<double>> weights;  // (directed) weighted 4-neighbor grid
 
     vector<int> free_locations;  // locations that are not obstacles
+    vector<int> workstations;
+    vector<int> endpoints;
+    vector<int> warehouse_task_locs;  // workstations + endpoints
+    vector<int>
+        empty_locations;  // locations that are not obstacles or task_loc
 
     // Direction of movement
     // 0: right, 1: up, 2: left, 3: down
@@ -102,4 +166,5 @@ private:
     // Classes that can access private members
     friend class SingleAgentSolver;
     friend class Instance;
+    friend class TaskAssigner;
 };

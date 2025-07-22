@@ -290,6 +290,79 @@ void LRAStar::resolve_conflicts(const vector<Path> &input_paths)
     // print_solution();
 }
 
+
+// void LRAStar::resolve_conflicts(const vector<Path> &input_paths)
+// {
+//     num_wait_commands = 0;
+//     num_of_agents = input_paths.size();
+//     vector<int> path_pointers(num_of_agents, 1);
+//     solution.clear();
+//     solution.resize(num_of_agents);
+//     curr_locations.clear();
+//     for (int k = 0; k < num_of_agents; k++)
+//     {
+//         // solution[k].reserve(window + 1);
+//         solution[k].push_back(input_paths[k][0]);
+//         if (k_robust == 1)
+//             curr_locations[input_paths[k][0].location] = k;
+//     }
+
+//     for (int t = 1; t <= simulation_window; t++)
+//     {
+//         next_locations.clear();
+//         vector<int> agents_list(num_of_agents);
+//         for (int k = 0; k < num_of_agents; k++)
+//         {
+//             agents_list[k] = k;
+//         }
+//         std::shuffle(agents_list.begin(), agents_list.end(), this->gen);
+//         for (auto agent : agents_list)
+//         {
+//             if (path_pointers[agent] >= (int)input_paths[agent].size())
+//             {
+//                 path_pointers[agent] = (int)input_paths[agent].size() - 1;
+//             }
+//             int loc = input_paths[agent][path_pointers[agent]].location;
+//             int orientation = input_paths[agent][path_pointers[agent]].orientation;
+//             auto is_tasking_wait = input_paths[agent][path_pointers[agent]].is_tasking_wait;
+//             if (loc == solution[agent][t - 1].location)
+//             { // The agent wait or rotates at its current location
+//                 solution[agent].emplace_back(loc, t, orientation, is_tasking_wait);
+//                 path_pointers[agent]++;
+//                 auto other = next_locations.find(loc); // conflict with other agent
+//                 if (other != next_locations.end())
+//                 {
+//                     wait_command(other->second, t, path_pointers); // Other agent has to wait
+//                     path_pointers[other->second]--;
+//                 }
+//             }
+//             else if (curr_locations.find(loc) != curr_locations.end())
+//             { // The agent cannot move because its next location is occupied currently
+//                 wait_command(agent, t, path_pointers);
+//             }
+//             else // The agent wants to move to a location that is currently empty
+//             {
+//                 auto other = next_locations.find(loc);
+//                 if (other == next_locations.end())
+//                 { // No other agents want to go to this location yet
+//                     solution[agent].emplace_back(loc, t, orientation, is_tasking_wait);
+//                     path_pointers[agent]++;
+//                 }
+//                 else
+//                 { // Another agent also wants to go to this location, for now we just force this agent to wait
+//                     wait_command(agent, t, path_pointers);
+//                 }
+//             }
+//             next_locations[solution[agent][t].location] = agent;
+//         }
+//         if (k_robust == 1)
+//             curr_locations = next_locations;
+//     }
+//     print_results();
+//     // print_solution();
+// }
+
+
 // void LRAStar::wait_command(int agent, int timestep,
 //                            vector<list<pair<int, int>>::const_iterator> &traj_pointers)
 // {
@@ -352,7 +425,10 @@ void LRAStar::wait_command(int agent, int timestep,
 void LRAStar::print_results() const
 {
     if (num_wait_commands > 0)
-        std::cout << "LRA*:Succeed," << runtime << "," << num_wait_commands << "," << num_expanded << "," << num_generated << std::endl;
+    {
+        // std::cout << "LRA*:Succeed," << runtime << "," << num_wait_commands << "," << num_expanded << "," << num_generated << std::endl;
+        spdlog::info("LRA*:Succeed, runtime: {}, num_wait_commands: {}, num_expanded: {}, num_generated: {}", runtime, num_wait_commands, num_expanded, num_generated);
+    }
 }
 
 void LRAStar::save_results(const string &fileName, const string &instanceName) const

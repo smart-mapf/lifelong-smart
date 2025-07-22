@@ -18,6 +18,7 @@ class BasicSystem
 public:
     // params for MAPF algotithms
 	MAPFSolver& solver;
+    string backup_solver = "PIBT";
 	bool hold_endpoints;
 	bool useDummyPaths;
     int time_limit;
@@ -113,8 +114,8 @@ public:
     // update
     void update_start_locations();
     void update_travel_times(unordered_map<int, double>& travel_times);
-    void update_paths(const std::vector<Path*>& MAPF_paths, int max_timestep);
-    void update_paths(const std::vector<Path>& MAPF_paths, int max_timestep);
+    void update_paths(const std::vector<Path*>& MAPF_paths, int max_timestep = INT_MAX);
+    void update_paths(const std::vector<Path>& MAPF_paths, int max_timestep = INT_MAX);
     void update_initial_paths(vector<Path>& initial_paths) const;
     void update_initial_constraints(list< tuple<int, int, int> >& initial_constraints) const;
     
@@ -146,6 +147,10 @@ public:
 protected:
 	bool solve_by_WHCA(vector<Path>& planned_paths,
 		const vector<State>& new_starts, const vector< vector<Task > >& new_goal_locations);
+    void solve_helper(LRAStar &lra, PIBT &pibt,
+                      const vector<vector<Task>> &real_goal_locations);
+    void print_mapf_instance(
+        vector<State> &starts_, vector<vector<Task>> &goals_) const;
     bool rule_based_called = false;
 
     // Total number of MAPF algo calls

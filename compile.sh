@@ -1,5 +1,22 @@
 # Compile everything in the project
 target="$1"
+shift 1
+
+while getopts "c:" flag; do
+  case "$flag" in
+      c) CPLEX_DIR=$OPTARG;;
+      *) echo "Invalid option. ${USAGE}"
+  esac
+done
+
+if [ -z "${CPLEX_DIR}" ]; then
+    CPLEX_DIR_ARGS=""
+else
+    CPLEX_DIR_ARGS="-c ${CPLEX_DIR}"
+fi
+
+echo "In lifelong argos: Using CPLEX directory: ${CPLEX_DIR}"
+
 current_path=$(pwd)
 cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
 
@@ -52,6 +69,13 @@ compile_rhcr() {
     bash compile.sh
 }
 
+compile_mass() {
+    echo "Compiling MASS..."
+    cd $current_path/planner/MASS
+    rm -rf build
+    bash compile.sh ${CPLEX_DIR_ARGS}
+}
+
 if [ "$target" == "rpclib" ]; then
     compile_rpclib
 fi
@@ -72,7 +96,12 @@ if [ "$target" == "rhcr" ]; then
     compile_rhcr
 fi
 
+if [ "$target" == "mass" ]; then
+    compile_mass
+fi
+
 if [ "$target" == "all" ]; then
+    compile_mass
     compile_rpclib
     compile_client
     compile_server
@@ -85,6 +114,7 @@ if [ "$target" == "user" ]; then
     compile_server
     compile_pbs
     compile_rhcr
+    compile_mass
 fi
 
 if [ "$target" == "clean" ]; then
@@ -93,6 +123,7 @@ if [ "$target" == "clean" ]; then
     rm -rf $current_path/server/build
     rm -rf $current_path/planner/PBS/build
     rm -rf $current_path/planner/RHCR/build
+    rm -rf $current_path/planner/MASS/build
     rm -rf $current_path/client/externalDependencies/rpclib/build
     echo "Cleanup complete."
 fi

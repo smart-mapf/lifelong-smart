@@ -590,6 +590,9 @@ bool PBS::generate_root_node()
         runtime_rt += (double)(std::clock() - t) / CLOCKS_PER_SEC;
         vector< vector<double> > h_values(goal_locations[i].size());
         t = std::clock();
+        if (screen > 1)
+            spdlog::info("PBS root: Find path for agent {} ...", i);
+            // std::cout << "Find path for agent " << i << " ..." << std::endl;
         path = path_planner.run(G, starts[i], goal_locations[i], rt);
 		runtime_plan_paths += (double)(std::clock() - t) / CLOCKS_PER_SEC;
         path_cost = get_path_cost(path);
@@ -599,7 +602,8 @@ bool PBS::generate_root_node()
 
         if (path.empty())
         {
-            std::cout << "NO SOLUTION EXISTS";
+            // std::cout << "NO SOLUTION EXISTS";
+            spdlog::info("PBS: No solution exists for agent {}!", i);
             return false;
         }
 
@@ -607,12 +611,26 @@ bool PBS::generate_root_node()
         paths[i] = &dummy_start->paths.back().second;
         dummy_start->makespan = std::max(dummy_start->makespan, paths[i]->size() - 1);
         dummy_start->g_val += path_cost;
+
+        // Update runtime
+        runtime = (double)(std::clock() - start) / CLOCKS_PER_SEC;
+        if (runtime > this->time_limit)
+		{  // timeout
+            solution_cost = -1;
+			solution_found = false;
+            spdlog::info("PBS: Timeout while generating root node! ({}s)", runtime);
+            print_results();
+			return false;
+		}
 	}
     find_conflicts(dummy_start->conflicts);
     if (!lazyPriority)
     {
         if(!find_consistent_paths(dummy_start, -1))
+        {
+            spdlog::info("PBS: Failed to find consistent paths for root node!");
             return false;
+        }
     }
 
 	dummy_start->f_val = dummy_start->g_val;

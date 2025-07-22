@@ -111,13 +111,70 @@ void KivaSystem::initialize_start_locations()
 	}
 }
 
-void KivaSystem::update_start_locations(int t)
-{
-    // std::cout << "in update start location, timestep = "<<timestep<<std::endl;
-    for (int k = 0; k < num_of_drives; k++)
-    {
-        starts[k] = State(paths[k][timestep+t].location, 0, paths[k][timestep+t].orientation);
-        // std::cout << "agent "<<k<<": loc="<<starts[k].location<<std::endl;
+// void KivaSystem::update_start_locations(int t)
+// {
+//     // std::cout << "in update start location, timestep = "<<timestep<<std::endl;
+//     for (int k = 0; k < num_of_drives; k++)
+//     {
+//         starts[k] = State(paths[k][timestep+t].location, 0, paths[k][timestep+t].orientation);
+//         // std::cout << "agent "<<k<<": loc="<<starts[k].location<<std::endl;
+//     }
+// }
+
+
+void KivaSystem::update_start_locations(int t) {
+    // std::cout << "in update start location, timestep =
+    // "<<timestep<<std::endl;
+    // cout << "In update start locations " << endl;
+    for (int k = 0; k < num_of_drives; k++) {
+        // 1. Set start timestep for each agent to the number of timesteps it
+        // needs to wait
+        // 2. Insert proper number of wait actions at the start of the path
+        // (updatePath in SIPP/Astar)
+
+        // The agent is still doing task in the previous goal. Let it finish it.
+        if (this->is_tasking[k]) {
+            int start_timestep =
+                goal_locations[k].front().task_wait_time - this->waited_time[k];
+            if (screen > 0) {
+                cout << "Tasking Agent " << k << ": start_timestep = "
+                     << goal_locations[k].front().task_wait_time << " - "
+                     << this->waited_time[k]
+                     << ", start location = " << paths[k][timestep].location
+                     << endl;
+            }
+            // assert(start_timestep > 0);
+            if (start_timestep < 0) {
+                cout << "Error while task waiting: start_timestep <= 0" << endl;
+                exit(0);
+            }
+
+            starts[k] = State(paths[k][timestep].location, start_timestep,
+                              paths[k][timestep].orientation, true,
+                              paths[k][timestep].is_rotating);
+        } else if (this->is_rotating[k]) {
+            // The agent is still rotating in the previous goal. Let it finish
+            // it.
+            int start_timestep = this->rotation_time - this->rotate_time[k];
+            if (screen > 0) {
+                cout << "Rotating Agent " << k
+                     << ": start_timestep = " << start_timestep
+                     << ", start location = " << paths[k][timestep].location
+                     << endl;
+            }
+            if (start_timestep < 0) {
+                cout << "Error while rotating: start_timestep <= 0" << endl;
+                exit(0);
+            }
+
+            starts[k] = State(paths[k][timestep].location, start_timestep,
+                              paths[k][timestep].orientation, false, true);
+        } else {
+            starts[k] = State(paths[k][timestep].location, 0,
+                              paths[k][timestep].orientation,
+                              paths[k][timestep].is_tasking_wait,
+                              paths[k][timestep].is_rotating);
+        }
     }
 }
 
@@ -493,12 +550,12 @@ void KivaSystem::update_goal_locations(int t)
 						G.types[goal.location] == "Workstation")
 					{
                         // next = make_tuple(this->gen_next_goal(k), 0, 0);
-                        next = Task(this->gen_next_goal(k), -1, 0, 0);
+                        next = Task(this->gen_next_goal(k), -1, 5, 0);
                         while (next == goal)
 						{
 							// next = make_tuple(
                             //     this->gen_next_goal(k, true), 0, 0);
-                            next = Task(this->gen_next_goal(k, true), -1, 0, 0);
+                            next = Task(this->gen_next_goal(k, true), -1, 5, 0);
 						}
 					}
 					else
@@ -1177,7 +1234,7 @@ json KivaSystem::simulate(int simulation_time)
 		// 	this->update_task_dist();
 		// }
 
-		if (congested())
+		if (this->congested())
 		{
 			cout << "***** Timestep " << timestep
                  << ": Too many traffic jams *****" << endl;
@@ -1201,4 +1258,26 @@ json KivaSystem::simulate(int simulation_time)
 	result["tasks_finished_timestep"] = tasks_finished_timestep;
 	result["congested"] = congested_sim;
 	return result;
+}
+
+
+bool KivaSystem::congested() const {
+    if (simulation_window <= 1)
+        return false;
+    int wait_agents = 0;
+    for (const auto &path : paths) {
+        int t = 0;
+        while (t < simulation_window &&
+               path[timestep].location == path[timestep + t].location &&
+               path[timestep].orientation == path[timestep + t].orientation &&
+               !path[timestep + t].is_tasking_wait &&  // Rule out tasking wait
+               !path[timestep + t].is_rotating)        // Rule out rotating
+        {
+            t++;
+        }
+        if (t == simulation_window)
+            wait_agents++;
+    }
+    // more than half of drives didn't make progress
+    return wait_agents > num_of_drives / 2;
 }
