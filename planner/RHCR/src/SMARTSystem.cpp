@@ -1090,12 +1090,15 @@ void SMARTSystem::solve() {
 
     this->solve_helper(lra, pibt, real_goal_locations);
 
-    if (!this->validateSolution()) {
-        spdlog::error("Solution is NOT valid after solving the MAPF instance.");
-        throw std::runtime_error(
-            "Solution is NOT valid after solving the MAPF instance.");
-    } else {
-        spdlog::info("Solution is valid after solving the MAPF instance.");
+    if (screen > 0) {
+        if (!this->validateSolution()) {
+            spdlog::error(
+                "Solution is NOT valid after solving the MAPF instance.");
+            throw std::runtime_error(
+                "Solution is NOT valid after solving the MAPF instance.");
+        } else {
+            spdlog::info("Solution is valid after solving the MAPF instance.");
+        }
     }
 
     // Print path found by the solver
@@ -1275,16 +1278,17 @@ void SMARTSystem::solve() {
                 }
             }
         }
-
-        // For collision between all agents
-        if (!this->validateSolution()) {
-            spdlog::error("Solution is not valid after populating aisle "
-                          "paths for ONE_BOT_PER_AISLE");
-            throw std::runtime_error(
-                "Solution is not valid after populating aisle paths");
-        } else {
-            spdlog::info("Solution is valid after populating aisle paths "
-                         "for ONE_BOT_PER_AISLE");
+        if (screen > 0) {
+            // For collision between all agents
+            if (!this->validateSolution()) {
+                spdlog::error("Solution is not valid after populating aisle "
+                              "paths for ONE_BOT_PER_AISLE");
+                throw std::runtime_error(
+                    "Solution is not valid after populating aisle paths");
+            } else {
+                spdlog::info("Solution is valid after populating aisle paths "
+                             "for ONE_BOT_PER_AISLE");
+            }
         }
     }
 }
