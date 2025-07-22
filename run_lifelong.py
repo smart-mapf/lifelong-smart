@@ -125,7 +125,7 @@ def run_lifelong_argos(
     task: str = "",
     cutoffTime: int = 1,
     id: bool = False,
-    solver: str = "PBS",
+    solver: str = "PBS", # ["PBS", "PIBT"]
     single_agent_solver: str = "SIPP",
     backup_solver: str = "PIBT",  # ["PIBT", "LRA"]
     lazyP: bool = False,

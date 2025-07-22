@@ -263,7 +263,8 @@ void SMARTSystem::update_goal_locations() {
         }
         // double min_timesteps = G.get_Manhattan_distance((goal.location),
         // curr);
-        while (min_timesteps <= simulation_window)
+        while (min_timesteps <= simulation_window ||
+               goal_locations[k].size() < 2)
         // The agent might finish its tasks during the next planning
         // horizon
         {
@@ -719,7 +720,7 @@ json SMARTSystem::simulate(int simulation_time) {
         auto new_mapf_plan = this->convert_path_to_smart();
         json new_plan_json = {
             {"plan", new_mapf_plan},
-            {"congested", false},
+            {"congested", congested()},
             {"stats", this->get_curr_stats()},
         };
 
@@ -917,15 +918,19 @@ void SMARTSystem::solve() {
                 Task first_goal = goal_locations[k].front();
                 int aisle_entry = this->G.aisle_entry(start.location);
                 int distance_to_travel_in_aisle = 0;
-                if (this->G.types[first_goal.location] == "Endpoint") {
+                if (this->G.types[first_goal.location] == "Endpoint" &&
+                    this->G.getColCoordinate(first_goal.location) ==
+                        this->G.getColCoordinate(aisle_entry)) {
                     // The agent is still on its way to the first goal, which is
                     // an endpoint. It shall first travel to the first goal, and
                     // then to the aisle entry
-                    spdlog::info(
-                        "Agent {} is still on its way to the first goal: "
-                        "({},{})",
-                        k, G.getRowCoordinate(first_goal.location),
-                        G.getColCoordinate(first_goal.location));
+                    if (screen > 1) {
+                        spdlog::info(
+                            "Agent {} is still on its way to the first goal: "
+                            "({},{})",
+                            k, G.getRowCoordinate(first_goal.location),
+                            G.getColCoordinate(first_goal.location));
+                    }
                     Path aisle_path = this->get_aisle_path(
                         start, {first_goal, Task(aisle_entry, -1, 0)},
                         this->G.get_aisle(aisle_entry), this->G.move);
@@ -954,10 +959,12 @@ void SMARTSystem::solve() {
 
                     j = 1;  // The MAPF planner shall skip the first goal
                 } else {
-                    spdlog::info(
-                        "Agent {} is going to the aisle entry: ({},{})", k,
-                        G.getRowCoordinate(aisle_entry),
-                        G.getColCoordinate(aisle_entry));
+                    if (screen > 1) {
+                        spdlog::info(
+                            "Agent {} is going to the aisle entry: ({},{})", k,
+                            G.getRowCoordinate(aisle_entry),
+                            G.getColCoordinate(aisle_entry));
+                    }
                     // otherwise, the agent travel from the current
                     // location to the exit of the aisle
                     Path aisle_path = this->get_aisle_path(
@@ -1091,7 +1098,8 @@ void SMARTSystem::solve() {
             for (const auto &state : this->solver.solution[k]) {
                 std::cout << "(" << this->G.getRowCoordinate(state.location)
                           << "," << this->G.getColCoordinate(state.location)
-                          << "," << state.timestep << ") -> ";
+                          << "," << state.timestep << ","
+                          << state.is_tasking_wait << ") -> ";
             }
             std::cout << std::endl;
         }
@@ -1101,25 +1109,57 @@ void SMARTSystem::solve() {
         // Here the path solved by the solver contains movement everywhere
         // except for in the aisles. We need to populate the paths with the
         // aisle paths.
-        spdlog::info("Populating paths with aisle paths for ONE_BOT_PER_AISLE");
+        if (screen > 0)
+            spdlog::info(
+                "Populating paths with aisle paths for ONE_BOT_PER_AISLE");
         for (int k = 0; k < num_of_drives; k++) {
             // If the agent starts in the aisle, we should replace the init
             // aisle path to the agent's path
             if (init_aisle_paths.find(k) != init_aisle_paths.end()) {
-                spdlog::info(
-                    "Agent {} starts in the aisle, replacing the initial aisle "
-                    "path",
-                    k);
+                if (screen > 1) {
+                    spdlog::info("Agent {} starts in the aisle, replacing the "
+                                 "initial aisle "
+                                 "path",
+                                 k);
+                }
+
                 Path &path = this->solver.solution[k];
                 Path &aisle_path = init_aisle_paths[k];
+                int path_size = path.size();
                 int aisle_path_size = aisle_path.size();
                 // Replace the first aisle_path_size states with the aisle path
                 int aisle_path_idx = 0;
                 int state_idx = 0;
-                while (state_idx < aisle_path_size &&
+                while (state_idx < path_size &&
                        aisle_path_idx < aisle_path_size) {
                     State &state = this->solver.solution[k][state_idx];
                     State &aisle_state = aisle_path[aisle_path_idx];
+                    // spdlog::info(
+                    //     "Replacing state {} with aisle path state {} for
+                    //     agent "
+                    //     "{}",
+                    //     state.location, aisle_state.location, k);
+                    // // Print path
+                    // if (screen > 0) {
+                    //     spdlog::info("path after populating with aisle
+                    //     paths:",
+                    //                  k);
+                    //     for (int k_ = 0; k_ < num_of_drives; k_++) {
+                    //         for (const auto &state :
+                    //              this->solver.solution[k_]) {
+                    //             std::cout
+                    //                 << "("
+                    //                 <<
+                    //                 this->G.getRowCoordinate(state.location)
+                    //                 << ","
+                    //                 <<
+                    //                 this->G.getColCoordinate(state.location)
+                    //                 << "," << state.timestep << ","
+                    //                 << state.is_tasking_wait << ") -> ";
+                    //         }
+                    //         std::cout << std::endl;
+                    //     }
+                    // }
                     // Update the state with the aisle path state
                     // Note: we do not change the timestep
                     state.location = aisle_state.location;
@@ -1128,6 +1168,19 @@ void SMARTSystem::solve() {
                     aisle_path_idx++;
                     state_idx++;
                 }
+
+                // spdlog::info(
+                //     "Finished replacing the initial aisle path for agent {}",
+                //     k);
+                // for (const auto &state : this->solver.solution[k]) {
+                //     std::cout << "(" <<
+                //     this->G.getRowCoordinate(state.location)
+                //               << "," <<
+                //               this->G.getColCoordinate(state.location)
+                //               << "," << state.timestep << ","
+                //               << state.is_tasking_wait << ") -> ";
+                // }
+                // std::cout << std::endl;
             }
 
             // For each of the endpoint goals, we should replace the waiting at
@@ -1138,9 +1191,15 @@ void SMARTSystem::solve() {
                 State &state = this->solver.solution[k][state_idx];
                 if (this->G.is_aisle_entry(state.location) &&
                     state.is_tasking_wait) {
-                    spdlog::info("Agent {} is at aisle entry at state {}, t = "
-                                 "{}, waiting for aisle path",
-                                 k, state.location, state.timestep);
+                    if (screen > 1) {
+                        spdlog::info(
+                            "Agent {} is at aisle entry ({},{}), t = {}, "
+                            "populating with aisle path",
+                            k, this->G.getRowCoordinate(state.location),
+                            this->G.getColCoordinate(state.location),
+                            state.timestep);
+                    }
+
                     // Find the goal corresponding to this state, starting from
                     // goal_idx.
                     while (goal_idx < real_goal_locations[k].size() &&
@@ -1149,9 +1208,14 @@ void SMARTSystem::solve() {
                         goal_idx++;
                     }
 
-                    spdlog::info("Agent {} is in aisle at state {}, t = {}, "
-                                 "goal index {}",
-                                 k, state.location, state.timestep, goal_idx);
+                    if (screen > 1) {
+                        spdlog::info(
+                            "Agent {} is in aisle at state {}, t = {}, "
+                            "goal {} with index {}",
+                            k, state.location, state.timestep,
+                            real_goal_locations[k][goal_idx].location,
+                            goal_idx);
+                    }
 
                     if (goal_idx >= real_goal_locations[k].size()) {
                         spdlog::error(
@@ -1173,21 +1237,31 @@ void SMARTSystem::solve() {
 
                     Path &aisle_path = aisle_paths[task_id];
                     int aisle_path_size = aisle_path.size();
-                    // Replace the next aisle_path_size states with the
-                    // aisle path
-                    int aisle_path_idx = 0;
-                    while (state_idx < this->solver.solution[k].size() &&
-                           aisle_path_idx < aisle_path_size) {
+                    if (aisle_path_size == 1) {
+                        // A one step path. No need to replace anything.
                         State &state = this->solver.solution[k][state_idx];
-                        State &aisle_state = aisle_path[aisle_path_idx];
-                        // Update the state with the aisle path state
-                        // Note: we do not change the timestep
-                        state.location = aisle_state.location;
-                        state.orientation = aisle_state.orientation;
                         state.is_tasking_wait = false;  // No longer waiting
-                        aisle_path_idx++;
                         state_idx++;
+                    } else {
+                        // Replace the next aisle_path_size states with the
+                        // aisle path
+                        // Start from 1 to skip the first state, which is the
+                        // aisle entry
+                        int aisle_path_idx = 1;
+                        while (state_idx < this->solver.solution[k].size() &&
+                               aisle_path_idx < aisle_path_size) {
+                            State &state = this->solver.solution[k][state_idx];
+                            State &aisle_state = aisle_path[aisle_path_idx];
+                            // Update the state with the aisle path state
+                            // Note: we do not change the timestep
+                            state.location = aisle_state.location;
+                            state.orientation = aisle_state.orientation;
+                            state.is_tasking_wait = false;  // No longer waiting
+                            aisle_path_idx++;
+                            state_idx++;
+                        }
                     }
+
                 } else {
                     state_idx++;
                 }
@@ -1202,7 +1276,7 @@ Path SMARTSystem::get_aisle_path(State start, const vector<Task> &tasks,
     // We cannot use path_planner in solver here because the graph there has
     // the aisles as obstacles.
     Path path;
-    State curr_start = start;
+    State curr_start = State(start);
     for (const auto &task : tasks) {
         queue<int> q;
         set<int> visited;
@@ -1242,6 +1316,13 @@ Path SMARTSystem::get_aisle_path(State start, const vector<Task> &tasks,
                 }
             }
         }
+    }
+    // should never happen
+    if (path.empty()) {
+        spdlog::error("No path found in get_aisle_path for start: ({},{})",
+                      G.getRowCoordinate(start.location),
+                      G.getColCoordinate(start.location));
+        throw std::runtime_error("No path found in get_aisle_path");
     }
     return path;
 }

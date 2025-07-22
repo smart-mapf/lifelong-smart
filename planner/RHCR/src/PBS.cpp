@@ -590,6 +590,9 @@ bool PBS::generate_root_node()
         runtime_rt += (double)(std::clock() - t) / CLOCKS_PER_SEC;
         vector< vector<double> > h_values(goal_locations[i].size());
         t = std::clock();
+        if (screen > 1)
+            spdlog::info("PBS root: Find path for agent {} ...", i);
+            // std::cout << "Find path for agent " << i << " ..." << std::endl;
         path = path_planner.run(G, starts[i], goal_locations[i], rt);
 		runtime_plan_paths += (double)(std::clock() - t) / CLOCKS_PER_SEC;
         path_cost = get_path_cost(path);

@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include "States.h"
+#include "enums.h"
 
 #define WEIGHT_MAX INT_MAX/2
 
@@ -73,6 +74,20 @@ public:
         {3, 2},
     };
 
+
+    void set_grid_type(SMARTGridType type) {
+        this->grid_type = type;
+    }
+
+    SMARTGridType get_grid_type() const {
+        return this->grid_type;
+    }
+
+
 protected:
     unordered_map<int, vector<double>> heuristics;
+
+    // Type of the SMART grid.
+    SMARTGridType grid_type = SMARTGridType::REGULAR;
+
 };

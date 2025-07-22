@@ -219,7 +219,7 @@ void BasicSystem::update_paths(const std::vector<Path> &MAPF_paths, int max_time
         paths[k].resize(timestep + length);
         for (int t = 0; t < length; t++)
         {
-            bool prev_is_tasking_wait = paths[k][timestep + t].is_tasking_wait;
+            // bool prev_is_tasking_wait = paths[k][timestep + t].is_tasking_wait;
             paths[k][timestep + t] = MAPF_paths[k][t];
             paths[k][timestep + t].timestep = timestep + t;
 
@@ -230,9 +230,9 @@ void BasicSystem::update_paths(const std::vector<Path> &MAPF_paths, int max_time
             // run. But then we need to make sure that `is_tasking_wait` in the
             // `paths` conforms to the value in the previous window.
             if (t == 0 && timestep > 0 &&
-                prev_is_tasking_wait != MAPF_paths[k][t].is_tasking_wait)
+                paths[k][timestep + t - 1].is_tasking_wait != MAPF_paths[k][t].is_tasking_wait && solver.get_name() != "PIBT")
                 {
-                    paths[k][timestep + t].is_tasking_wait = prev_is_tasking_wait;
+                    paths[k][timestep + t].is_tasking_wait = paths[k][timestep + t - 1].is_tasking_wait;
                 }
         }
     }
@@ -1068,7 +1068,7 @@ void BasicSystem::solve_helper(LRAStar &lra, PIBT &pibt,
                 // std::cout << "solve, has sol" <<std::endl;
                 if (log)
                     solver.save_constraints_in_goal_node(outfile + "/goal_nodes/" + std::to_string(timestep) + ".gv");
-                update_paths(solver.solution);
+                    update_paths(solver.solution);
             }
             else
             {

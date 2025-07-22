@@ -41,6 +41,7 @@ public:
 
 private:
     void print_results() const;
+    vector<bool> is_waiting;   // is the agent waiting at the current timestep
     vector<vector<Task>> goals_mem;  // Memory of goals for each agent
 
     // loc -> agent id, where the agents are currently and nextly occupied

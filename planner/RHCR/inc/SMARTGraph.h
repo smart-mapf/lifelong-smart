@@ -2,7 +2,7 @@
 #include "BasicGraph.h"
 #include <nlohmann/json.hpp>
 #include <random>
-#include "enums.h"
+
 #include "TaskDistGenerator.h"
 
 using json = nlohmann::json;
@@ -37,14 +37,6 @@ public:
     void parseMap(std::vector<std::vector<double>>& map_e, std::vector<std::vector<double>>& map_w);
     void update_task_dist(std::mt19937& gen, std::string task_dist_type);
 
-    void set_grid_type(SMARTGridType type) {
-        this->grid_type = type;
-    }
-
-    SMARTGridType get_grid_type() const {
-        return this->grid_type;
-    }
-
     bool in_aisle(int loc) const {
         return this->endpt_to_aisle.count(loc) > 0;
     }
@@ -76,9 +68,6 @@ private:
 
     // Number of valid vertices
     int n_valid_vertices = -1;
-
-    // Type of the SMART grid.
-    SMARTGridType grid_type = SMARTGridType::REGULAR;
 
     // Relevant for the SMARTGridType::ONE_BOT_PER_AISLE.
     // Map from node ID to aisle ID, where aisle ID is the id of the entry
