@@ -26,3 +26,6 @@ debug.log
 debug_instance.log
 durationPath.txt
 planner/RHCR/output
+debug_map.json
+debug.argos
+debug_stats.json

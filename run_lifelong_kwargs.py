@@ -29,7 +29,8 @@ def run_lifelong_kwargs(kwargs_file):
     run_lifelong_argos(
         map_filepath=map_filepath,
         num_agents=kwargs["num_agents"],
-        headless=kwargs["headless"],
+        # headless=kwargs["headless"],
+        headless=False,
         argos_config_filepath=argos_config_filepath,
         stats_name=stats_filepath,
         save_stats=kwargs["save_stats"],
@@ -41,14 +42,17 @@ def run_lifelong_kwargs(kwargs_file):
         velocity=kwargs["velocity"],
         look_ahead_dist=kwargs["look_ahead_dist"],
         planner=kwargs["planner"],
-        container=kwargs["container"],
+        # container=kwargs["container"],
+        container=False,
         seed=kwargs["seed"],
-        screen=kwargs["screen"],
+        # screen=kwargs["screen"],
+        screen=1,
         # RHCR parameters
         scenario=kwargs["scenario"],
         task=kwargs["task"],
         cutoffTime=kwargs["cutoffTime"],
         solver=kwargs["solver"],
+        backup_solver=kwargs["backup_solver"],
         id=kwargs["id"],
         single_agent_solver=kwargs["single_agent_solver"],
         lazyP=kwargs["lazyP"],
@@ -69,6 +73,7 @@ def run_lifelong_kwargs(kwargs_file):
         save_heuristics_table=kwargs["save_heuristics_table"],
         left_w_weight=kwargs["left_w_weight"],
         right_w_weight=kwargs["right_w_weight"],
+        grid_type=kwargs["grid_type"],
     )
 
 
