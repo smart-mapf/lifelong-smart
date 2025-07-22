@@ -1090,6 +1090,14 @@ void SMARTSystem::solve() {
 
     this->solve_helper(lra, pibt, real_goal_locations);
 
+    if (!this->validateSolution()) {
+        spdlog::error("Solution is NOT valid after solving the MAPF instance.");
+        throw std::runtime_error(
+            "Solution is NOT valid after solving the MAPF instance.");
+    } else {
+        spdlog::info("Solution is valid after solving the MAPF instance.");
+    }
+
     // Print path found by the solver
     if (screen > 0) {
         spdlog::info("Raw Path found by the solver:");
@@ -1267,6 +1275,17 @@ void SMARTSystem::solve() {
                 }
             }
         }
+
+        // For collision between all agents
+        if (!this->validateSolution()) {
+            spdlog::error("Solution is not valid after populating aisle "
+                          "paths for ONE_BOT_PER_AISLE");
+            throw std::runtime_error(
+                "Solution is not valid after populating aisle paths");
+        } else {
+            spdlog::info("Solution is valid after populating aisle paths "
+                         "for ONE_BOT_PER_AISLE");
+        }
     }
 }
 
@@ -1325,4 +1344,59 @@ Path SMARTSystem::get_aisle_path(State start, const vector<Task> &tasks,
         throw std::runtime_error("No path found in get_aisle_path");
     }
     return path;
+}
+
+bool SMARTSystem::validateSolution() const {
+    // Check whether the paths are feasible.
+    double soc = 0;
+    for (int a1 = 0; a1 < num_of_drives; a1++) {
+        for (int a2 = a1 + 1; a2 < num_of_drives; a2++) {
+            size_t min_path_length = this->simulation_window;
+            for (size_t timestep = 0; timestep < min_path_length; timestep++) {
+                int loc1 = this->solver.solution[a1][timestep].location;
+                int loc2 = this->solver.solution[a2][timestep].location;
+                if (loc1 == loc2) {
+                    cout << "Agents " << a1 << " and " << a2 << " collides at "
+                         << loc1 << " at timestep " << timestep << endl;
+                    return false;
+                } else if (timestep < min_path_length - 1 &&
+                           loc1 == this->solver.solution[a2][timestep + 1]
+                                       .location &&
+                           loc2 == this->solver.solution[a1][timestep + 1]
+                                       .location) {
+                    cout << "Agents " << a1 << " and " << a2 << " collides at ("
+                         << loc1 << "-->" << loc2 << ") at timestep "
+                         << timestep << endl;
+                    return false;
+                }
+            }
+
+            // Don't need target conflict as the agents will disappear at goal.
+            // if (this->solver.solution[a1]->size() !=
+            // this->solver.solution[a2]->size())
+            // {
+            // 	int a1_ = this->solver.solution[a1]->size() <
+            // this->solver.solution[a2]->size() ? a1 : a2; 	int a2_ =
+            // this->solver.solution[a1]->size() <
+            // this->solver.solution[a2]->size() ? a2 : a1; 	int loc1 =
+            // this->solver.solution[a1_]->back().location; 	for (size_t
+            // timestep = min_path_length; timestep <
+            // this->solver.solution[a2_]->size(); timestep++)
+            // 	{
+            // 		int loc2 =
+            // this->solver.solution[a2_][timestep).location; 		if (loc1
+            // == loc2)
+            // 		{
+            // 			cout << "Agents " << a1 << " and " << a2 << "
+            // collides at
+            // "
+            // << loc1 << " at timestep " << timestep << endl;
+            // return false; // It's at least a semi conflict
+            // 		}
+            // 	}
+            // }
+        }
+    }
+
+    return true;
 }

@@ -56,6 +56,8 @@ private:
     vector<list<Task>> tasks;
     bool load_tasks();
 
+    bool validateSolution() const;
+
     // Used for workstation sampling
     discrete_distribution<int> workstation_dist;
     discrete_distribution<int> end_points_dist;

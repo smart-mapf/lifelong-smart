@@ -19,12 +19,18 @@ bool SMARTGrid::load_map_from_jsonstr(std::string G_json_str,
                                       double left_w_weight,
                                       double right_w_weight) {
     json G_json = json::parse(G_json_str);
+    bool succ;
     if (G_json["weight"])
-        return load_weighted_map_from_json(G_json, left_w_weight,
-                                           right_w_weight);
+        succ =
+            load_weighted_map_from_json(G_json, left_w_weight, right_w_weight);
     else
-        return load_unweighted_map_from_json(G_json, left_w_weight,
+        succ = load_unweighted_map_from_json(G_json, left_w_weight,
                                              right_w_weight);
+    // Analyze the aisle information if the grid type is ONE_BOT_PER_AISLE.
+    if (this->grid_type == SMARTGridType::ONE_BOT_PER_AISLE) {
+        this->analyze_aisle();
+    }
+    return succ;
 }
 
 void SMARTGrid::parseMap(std::vector<std::vector<double>>& map_e,
@@ -199,11 +205,6 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
     this->n_valid_edges = valid_edges;
     this->n_valid_vertices = valid_vertices;
 
-    // Analyze the aisle information if the grid type is ONE_BOT_PER_AISLE.
-    if (this->grid_type == SMARTGridType::ONE_BOT_PER_AISLE) {
-        this->analyze_aisle();
-    }
-
     // Done with loading the map
     double runtime = (std::clock() - t) / CLOCKS_PER_SEC;
 
@@ -243,6 +244,13 @@ void SMARTGrid::update_map_weights(std::vector<double>& new_weights) {
         if (this->types[i] == "Obstacle") {
             continue;
         }
+
+        // // For one-bot-per-aisle, skip if the current vertex is in aisle but
+        // // not an aisle entry
+        // if (this->grid_type == SMARTGridType::ONE_BOT_PER_AISLE &&
+        //     this->in_aisle(i) && !this->is_aisle_entry(i)) {
+        //     continue;
+        // }
 
         // Idxs
         int idx = 7 * i;
