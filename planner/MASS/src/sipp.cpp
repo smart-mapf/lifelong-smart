@@ -25,7 +25,8 @@ void SIPP::PrintNonzeroRT(ReservationTable& rt) const {
     }
 }
 
-bool SIPP::getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node) {
+bool SIPP::getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node,
+                       int goal_id) {
     std::vector<TimeInterval> safe_intervals;
     findFreeIntervals(rt[curr_agent.start_location], safe_intervals);
     if (safe_intervals.empty()) {
@@ -52,6 +53,7 @@ bool SIPP::getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node) {
         init_node->arrival_time_min = curr_agent.earliest_start_time;
         init_node->arrival_time_max = init_safe_interval.t_max;
         init_node->prev_action = Action::none;
+        init_node->goal_id = goal_id;
         // g is the actual time value to that node
         init_node->g = 0;
         // If node is not expanded, h value is the heuristic value. Otherwise,
@@ -59,8 +61,8 @@ bool SIPP::getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node) {
         // init_node->h = heuristic_vec[curr_agent.id][init_node->current_point]
         //                             [init_node->curr_o];
         init_node->h = instance_ptr->graph->getHeuristic(
-            curr_agent.goal_location, init_node->current_point,
-            init_node->curr_o);
+            curr_agent.goal_locations, init_node->current_point,
+            init_node->curr_o, init_node->goal_id);
         init_node->f = init_node->g + init_node->h;
         init_node->parent = nullptr;
     }
@@ -73,7 +75,7 @@ void SIPP::Reset() {
     std::priority_queue<std::shared_ptr<Node>,
                         std::vector<std::shared_ptr<Node>>, NodeCompare>()
         .swap(open);
-    allNodes_table.clear();
+    // allNodes_table.clear();
     useless_nodes.clear();
 }
 
@@ -150,18 +152,33 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
     auto debug_start_t = Time::now();
     count_called++;
     curr_agent = instance_ptr->agents[agentID];
-    if (curr_agent.goal_location == curr_agent.start_location) {
+    int goal_id = 0;
+    Task curr_goal = curr_agent.goal_locations[goal_id];
+
+    // Skip the goals if they are the same as the start location
+    while (goal_id < curr_agent.goal_locations.size() &&
+           curr_goal.loc == curr_agent.start_location &&
+           (curr_goal.ori == orient::None ||
+            curr_goal.ori == curr_agent.start_o)) {
+        goal_id++;
+        if (goal_id >= curr_agent.goal_locations.size())
+            break;
+    }
+
+    if (goal_id >= curr_agent.goal_locations.size()) {
         solution.clear();
         path.clear();
         solution_cost = 0.0;
-        return true;
+        return false;
     }
+
+    // Start planning
     path.clear();
     double optimal_travel_time = INF;
     std::shared_ptr<Node> optimal_n = nullptr;
 
     std::shared_ptr<Node> init_node;
-    if (!getInitNode(rt, init_node)) {
+    if (!getInitNode(rt, init_node, goal_id)) {
         path.clear();
         PrintNonzeroRT(rt);
         return false;
@@ -177,12 +194,13 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         // remove s with the smallest f-value from OPEN
         auto tmp_end_time = Time::now();
         std::chrono::duration<float> tmp_duration = tmp_end_time - start_time;
-        if (tmp_duration.count() > cutoff_time) {
-            printf("Hit cut off time!\n");
-            break;
-        }
+        // if (tmp_duration.count() > cutoff_time) {
+        //     printf("Hit cut off time!\n");
+        //     break;
+        // }
         std::shared_ptr<Node> s = open.top();
         open.pop();
+        curr_goal = curr_agent.goal_locations[s->goal_id];
 
         if (closed_set.find(s) == closed_set.end()) {
             closed_set.insert(s);
@@ -196,20 +214,57 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             break;
         }
 
-        // Found a goal node, might not be the optimal. Update the current
-        // optimal and continue the search.
-        if (s->current_point == curr_agent.goal_location and
-            (curr_agent.end_o == orient::None or
-             s->curr_o == curr_agent.end_o) and
-            s->arrival_time_max == INF) {
+        // Found path to the current goal. Increment the goal_id and check if
+        // we have reached the last goal.
+        bool reached_goal = false;
+        if (s->current_point == curr_goal.loc and
+            (curr_goal.ori == orient::None or s->curr_o == curr_goal.ori)) {
+            // For the last goal, we must make sure we can hold it forever (in
+            // non-windowed case). Do not increment goal_id if we cannot hold
+            // it.
+            if (s->goal_id + 1 == curr_agent.goal_locations.size()) {
+                if (s->arrival_time_max < INF) {
+                    spdlog::info("Agent {}: Reached last goal {}, time: {}, g: "
+                                 "{}, h: {}, "
+                                 "f: {}, but cannot hold.",
+                                 curr_agent.id, s->goal_id, s->g, s->g, s->h,
+                                 s->f);
+                } else {
+                    reached_goal = true;
+                }
+            }
+            // Otherwise, we proceed the goal id
+            else {
+                spdlog::info(
+                    "Agent {}: Reached goal {}, time: {}, g: {}, h: {}, f: {}",
+                    curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
+                // Move to the next goal
+                std::shared_ptr<Node> new_n = std::make_shared<Node>(
+                    s->goal_id + 1, s->current_point, s->curr_o,
+                    s->interval_index, s->arrival_time_min, s->arrival_time_max,
+                    s->arrival_time_min,
+                    instance_ptr->graph->getHeuristic(
+                        curr_agent.goal_locations, s->current_point, s->curr_o,
+                        s->goal_id + 1),
+                    10, s->prev_action, s->parent, s->bezier_solution);
+                pushToOpen(new_n);
+            }
+        }
+
+        // Reached all goals
+        if (reached_goal) {
             optimal_travel_time = s->g;
             optimal_n = s;
+            spdlog::info(
+                "Agent {}: Found optimal solution with time: {}, g: {}, h: {}, "
+                "f: {}",
+                curr_agent.id, s->g, s->g, s->h, s->f);
             // NOTE: To get optimal solution we should `continue` here. By
             // `break`, we stop the search when the first solution is found.
             // This can speed up the search.
             break;
         }
-        // Expand the node
+        // Not reached all goals. Expand the node
         else {
             // Node has been expanded before. Pop the next reachable interval
             // and do create a movement node (Line 9-10 of Algorithm 2)
@@ -288,8 +343,8 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                         //                            [new_node->current_point]
                         //                            [new_node->curr_o];
                         new_node->h = instance_ptr->graph->getHeuristic(
-                            curr_agent.goal_location, new_node->current_point,
-                            new_node->curr_o);
+                            curr_agent.goal_locations, new_node->current_point,
+                            new_node->curr_o, s->goal_id);
                         new_node->f = new_node->g + new_node->h;
                         tpg_solution->start_t =
                             tpg_solution->local_path.front().arrival_time;
@@ -298,6 +353,7 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                         tpg_solution->type = Action::forward;
                         new_node->bezier_solution = tpg_solution;
                         new_node->parent = s;
+                        new_node->goal_id = s->goal_id;
                         pushToOpen(new_node);
                     }
 
@@ -352,27 +408,28 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
     }
 }
 
-// return true iff we the new node is not dominated by any old node
-bool SIPP::dominanceCheck(const std::shared_ptr<Node>& new_node) {
-    auto ptr = allNodes_table.find(new_node);
-    if (ptr == allNodes_table.end())
-        return true;
-    for (auto& old_node : ptr->second) {
-        if ((old_node->g - new_node->g) <
-            EPS) {  // the new node is dominated by the old node
-            return false;
-        } else  // the old node is dominated by the new node
-        {       // delete the old node
-            useless_nodes.insert(old_node);
-            ptr->second.remove(old_node);
-            count_node_generated--;  // this is because we later will increase
-                                     // num_generated when we insert the new
-                                     // node into lists.
-            return true;
-        }
-    }
-    return true;
-}
+// // return true iff we the new node is not dominated by any old node
+// bool SIPP::dominanceCheck(const std::shared_ptr<Node>& new_node) {
+//     auto ptr = allNodes_table.find(new_node);
+//     if (ptr == allNodes_table.end())
+//         return true;
+//     for (auto& old_node : ptr->second) {
+//         if ((old_node->g - new_node->g) <
+//             EPS) {  // the new node is dominated by the old node
+//             return false;
+//         } else  // the old node is dominated by the new node
+//         {       // delete the old node
+//             useless_nodes.insert(old_node);
+//             ptr->second.remove(old_node);
+//             count_node_generated--;  // this is because we later will
+//             increase
+//                                      // num_generated when we insert the new
+//                                      // node into lists.
+//             return true;
+//         }
+//     }
+//     return true;
+// }
 
 /**
  * @brief Expand the node that has never been expand before
@@ -409,10 +466,11 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             // n_left->h = heuristic_vec[curr_agent.id][n_left->current_point]
             //                          [n_left->curr_o];
             n_left->h = instance_ptr->graph->getHeuristic(
-                curr_agent.goal_location, n_left->current_point,
-                n_left->curr_o);
+                curr_agent.goal_locations, n_left->current_point,
+                n_left->curr_o, n->goal_id);
             n_left->f = n_left->g + n_left->h;
             n_left->parent = n;
+            n_left->goal_id = n->goal_id;
             pushToOpen(n_left);
         }
 
@@ -439,10 +497,11 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             // n_right->h = heuristic_vec[curr_agent.id][n_right->current_point]
             //                           [n_right->curr_o];
             n_right->h = instance_ptr->graph->getHeuristic(
-                curr_agent.goal_location, n_right->current_point,
-                n_right->curr_o);
+                curr_agent.goal_locations, n_right->current_point,
+                n_right->curr_o, n->goal_id);
             n_right->f = n_right->g + n_right->h;
             n_right->parent = n;
+            n_right->goal_id = n->goal_id;
             pushToOpen(n_right);
         }
 
@@ -469,10 +528,11 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             // n_back->h = heuristic_vec[curr_agent.id][n_back->current_point]
             //                          [n_back->curr_o];
             n_back->h = instance_ptr->graph->getHeuristic(
-                curr_agent.goal_location, n_back->current_point,
-                n_back->curr_o);
+                curr_agent.goal_locations, n_back->current_point,
+                n_back->curr_o, n->goal_id);
             n_back->f = n_back->g + n_back->h;
             n_back->parent = n;
+            n_back->goal_id = n->goal_id;
             pushToOpen(n_back);
         }
     }
@@ -730,9 +790,10 @@ void SIPP::GetNextInterval(const std::shared_ptr<IntervalEntry>& prev_interval,
         //                   heuristic_vec[curr_agent.id][next_loc][s->curr_o];
         // new_interval->f = new_interval->t_min +
         //                   heuristic_vec[curr_agent.id][next_loc][s->curr_o];
-        new_interval->f = new_interval->t_min +
-                          instance_ptr->graph->getHeuristic(
-                              curr_agent.goal_location, next_loc, s->curr_o);
+        new_interval->f =
+            new_interval->t_min +
+            instance_ptr->graph->getHeuristic(curr_agent.goal_locations,
+                                              next_loc, s->curr_o, s->goal_id);
         new_interval->location = next_loc;
         new_interval->step = prev_interval->step + 1;
         new_interval->prev_entry = prev_interval;
@@ -762,7 +823,7 @@ void SIPP::getSuccessors(const std::shared_ptr<Node>& s,
     // init_interval->f =
     //     heuristic_vec[curr_agent.id][s->current_point][s->curr_o];
     init_interval->f = instance_ptr->graph->getHeuristic(
-        curr_agent.goal_location, s->current_point, s->curr_o);
+        curr_agent.goal_locations, s->current_point, s->curr_o, s->goal_id);
     init_interval->prev_entry = nullptr;
     init_interval->location = s->current_point;
     init_interval->interval_idx = s->interval_index;

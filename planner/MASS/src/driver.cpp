@@ -12,6 +12,7 @@
 #include "common.h"
 #include "instance.h"
 #include "pbs.h"
+#include "task_assigner.h"
 
 /* Main function */
 int main(int argc, char **argv) {
@@ -24,7 +25,7 @@ int main(int argc, char **argv) {
 
             // params for the input instance and experiment settings
             ("map,m", po::value<string>()->default_value("random-32-32-20.map"), "input file for map")
-            ("agents,a", po::value<string>()->default_value(""), "input file for agents")
+            // ("agents,a", po::value<string>()->default_value(""), "input file for agents")
 
             // ("heuristic,h",
             //  po::value<string>()->default_value("./data/sortation_large/heuristic/sortation_large-random-1.heuristic"),
@@ -33,14 +34,15 @@ int main(int argc, char **argv) {
             ("statistic,c", po::value<string>()->default_value("./output/output.csv"),
              "output file for statistic result")
             ("agentNum,k", po::value<int>()->default_value(1), "number of agents")
-            ("agentIdx", po::value<string>()->default_value(""), "customize the indices of the agents (e.g., \"0,1\")")
+            // ("agentIdx", po::value<string>()->default_value(""), "customize the indices of the agents (e.g., \"0,1\")")
             ("seed,d", po::value<int>()->default_value(0), "random seed")
             ("solver,s", po::value<int>()->default_value(0),
-             "single agent solver for PBS, choose from sipp-ip and bezier")
+             "SPS solver, choose from 0 for BAS, and 1 for BCS")
             ("outputPaths", po::value<string>(), "output file for paths")
             ("partialExpansion,p", po::value<bool>()->default_value(1), "enable partial expansion")
             ("cutoffTime,t", po::value<double>()->default_value(60), "cutoff time (seconds)")
             ("screen", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
+            ("simulation_window", po::value<int>()->default_value(2), "simulation window (in seconds) for the planner")
 
             // params for instance generators
             // ("rows", po::value<int>()->default_value(0), "number of rows")
@@ -71,20 +73,24 @@ int main(int argc, char **argv) {
     ///////////////////////////////////////////////////////////////////////////
     /// load the instance
     //////////////////////////////////////////////////////////////////////
+    int num_agents = vm["agentNum"].as<int>();
+    int screen = vm["screen"].as<int>();
+    int simulation_window = vm["simulation_window"].as<int>();
+    int sps_solver_type = vm["solver"].as<int>();
     std::shared_ptr<Graph> graph =
-        make_shared<Graph>(vm["map"].as<string>(), vm["screen"].as<int>());
+        make_shared<Graph>(vm["map"].as<string>(), screen);
+    std::shared_ptr<TaskAssigner> task_assigner =
+        make_shared<TaskAssigner>(graph, screen, simulation_window, num_agents);
     std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(
-        graph, vm["agents"].as<string>(), vm["agentNum"].as<int>(),
-        vm["agentIdx"].as<string>(), vm["partialExpansion"].as<bool>(),
-        vm["solver"].as<int>(), vm["screen"].as<int>());
+        graph, task_assigner, vm["agentNum"].as<int>(),
+        vm["partialExpansion"].as<bool>(), sps_solver_type, screen);
 
     srand(vm["seed"].as<int>());
 
     //////////////////////////////////////////////////////////////////////
     /// initialize the solver
     //////////////////////////////////////////////////////////////////////
-    PBS pbs(instance_ptr, vm["solver"].as<int>(),
-            vm["cutoffTime"].as<double>());
+    PBS pbs(instance_ptr, sps_solver_type, vm["cutoffTime"].as<double>());
     auto init_start_time = Time::now();
     // pbs.sipp_ptr->getHeuristic(vm["heuristic"].as<std::string>());
     auto init_end_time = Time::now();
@@ -98,7 +104,6 @@ int main(int argc, char **argv) {
     std::chrono::duration<float> global_run_time =
         global_end_time - global_start_time;
     printf("Runtime for MASS is: %f\n", global_run_time.count());
-    string traj_name = vm["agents"].as<string>();
     if (pbs_success) {
         printf("Solution found!\n");
         pbs.updateCost();

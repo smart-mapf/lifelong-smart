@@ -20,7 +20,7 @@ public:
                                                    makespan(parent->makespan), conflicts(parent->conflicts), parent(parent) {}
     PTNode(const vector<Path>&, std::vector<MotionInfo>& solution,
            std::vector<TimedPath>& timed_paths, const std::map<int, std::set<int> >&);
-	void writeToFile(Instance&, const string&);	
+	// void writeToFile(Instance&, const string&);	
 	void calculateCost();
 	void calculateCost(std::shared_ptr<Instance> instance_ptr);
 

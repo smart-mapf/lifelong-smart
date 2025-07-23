@@ -8,6 +8,41 @@ Graph::Graph(const string& map_fname, int screen)
     }
 }
 
+double Graph::getHeuristic(vector<Task> goals, int start_loc, orient start_ori,
+                           int goal_id) const {
+    int goal_loc = goals[goal_id].loc;
+    if (heuristics.find(goal_loc) == heuristics.end()) {
+        spdlog::error("Error: goal_loc = {} not found in heuristics.",
+                      goal_loc);
+        exit(1);
+    }
+    double h = heuristics.at(goal_loc)[start_loc][start_ori];
+    goal_id++;
+    while (goal_id < static_cast<int>(goals.size())) {
+        if (heuristics.find(goals[goal_id].loc) == heuristics.end()) {
+            spdlog::error("Error: goal_loc = {} not found in heuristics.",
+                          goals[goal_id].loc);
+            exit(1);
+        }
+
+        // Goal orientation is given
+        if (goals[goal_id - 1].ori != orient::None) {
+            h += heuristics.at(goals[goal_id].loc)[goals[goal_id - 1].loc]
+                                                  [goals[goal_id - 1].ori];
+        }
+        // Goal orientation is not given, use the minimum over four orientations
+        else {
+            auto curr_hs =
+                heuristics.at(goals[goal_id].loc)[goals[goal_id - 1].loc];
+            double next_h = *std::min_element(curr_hs.begin(), curr_hs.end());
+            h += next_h;
+        }
+
+        goal_id++;
+    }
+    return h;
+}
+
 bool Graph::loadMapFromBench() {
     ifstream myfile(map_fname.c_str());
     if (!myfile.is_open())
@@ -462,8 +497,8 @@ int Graph::randomWalk(int curr, int steps) const {
         list<int> l = this->getNeighbors(curr);
         vector<int> next_locations(l.cbegin(), l.cend());
         auto rng = std::default_random_engine{};
-        std::shuffle(std::begin(next_locations),
-        std::end(next_locations), rng); for (int next : next_locations) {
+        std::shuffle(std::begin(next_locations), std::end(next_locations), rng);
+        for (int next : next_locations) {
             if (this->validMove(curr, next)) {
                 curr = next;
                 break;
@@ -529,10 +564,13 @@ int Graph::getDirection(int from, int to) const {
 void Graph::computeHeuristics() {
     vector<int> h_locations;
     // Add free_location and task locations to h_locations
-    h_locations.insert(h_locations.end(), free_locations.begin(),
-                       free_locations.end());
-    // h_locations.insert(h_locations.end(), warehouse_task_locs.begin(),
-    //                    warehouse_task_locs.end());
+    if (this->warehouse_task_locs.size() == 0) {
+        // If no warehouse task locations, use all free locations
+        h_locations = this->free_locations;
+    } else {
+        // Use only warehouse task locations
+        h_locations = this->warehouse_task_locs;
+    }
     heuristics.clear();
     for (int loc : h_locations) {
         std::vector<std::vector<double>> heuristics_for_loc;

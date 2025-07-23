@@ -31,18 +31,19 @@ class SIPP {
 public:
     explicit SIPP(const std::shared_ptr<Instance>&, double cutoff_time);
     bool run(int agent, ReservationTable& rt, MotionInfo& solution, Path& path, double& solution_cost, TimedPath& timed_path);
-    bool getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node);
+    bool getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node,
+                     int goal_id);
     // void getHeuristic(const std::string& heuristic_file);
     void showSolution(std::shared_ptr<Node>& s);
 
 private:
     void PrintNonzeroRT(ReservationTable& rt) const;
     void Reset();
-    inline int DistHeuristic(int curr_loc)
-    {
-        int h_val = instance_ptr->graph->getManhattanDistance(curr_loc, curr_agent.goal_location);
-        return h_val;
-    }
+    // inline int DistHeuristic(int curr_loc)
+    // {
+    //     int h_val = instance_ptr->graph->getManhattanDistance(curr_loc, curr_agent.goal_location);
+    //     return h_val;
+    // }
     // bool Dijkstra(size_t curr_id);
     void updateResultNodes(std::shared_ptr<Node> end_node, Path& time_interval_path, MotionInfo& solution, TimedPath& timed_path);
 
@@ -57,13 +58,13 @@ private:
     inline void pushToOpen(const std::shared_ptr<Node>& new_node)
     {
         // dominance check here
-        if (dominanceCheck(new_node)){
+         if (closed_set.find(new_node) == closed_set.end()){
             open.push(new_node);
-            allNodes_table[new_node].push_back(new_node);
+            // allNodes_table[new_node].push_back(new_node);
             count_node_generated++;
         }
     }
-    bool dominanceCheck(const std::shared_ptr<Node>& new_node);
+    // bool dominanceCheck(const std::shared_ptr<Node>& new_node);
 
 private:
     // Instance& instance;
@@ -76,7 +77,7 @@ private:
     // define typedef for hash_map
     typedef boost::unordered_map<std::shared_ptr<Node>, list<std::shared_ptr<Node>>,
             NodeHash, NodeEqual> hashtable_t;
-    hashtable_t allNodes_table;
+    // hashtable_t allNodes_table;
 
     // std::vector<std::vector<std::vector<double>>> heuristic_vec;
     std::shared_ptr<FailureCache> failure_cache_ptr;

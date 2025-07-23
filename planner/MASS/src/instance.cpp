@@ -2,12 +2,11 @@
 
 int RANDOM_WALK_STEPS = 100000;
 
-Instance::Instance(shared_ptr<Graph> graph, const string& in_agent_fname,
-                   int in_agents_num, const string& in_agent_indices,
+Instance::Instance(shared_ptr<Graph> graph,
+                   shared_ptr<TaskAssigner> task_assigner, int in_agents_num,
                    bool use_partial_expansion, int used_sps_solver, int screen)
     : graph(graph),
-      agent_fname(in_agent_fname),
-      agent_indices(in_agent_indices),
+      task_assigner(task_assigner),
       num_of_agents(in_agents_num),
       use_pe(use_partial_expansion),
       use_sps_type(used_sps_solver),
@@ -67,6 +66,7 @@ void Instance::generateRandomAgents() {
     vector<bool> starts(this->graph->map_size, false);
     vector<bool> goals(this->graph->map_size, false);
     agents.resize(num_of_agents);
+    int task_id = 0;
 
     // Non-warehouse scenario
     if (this->graph->workstations.size() == 0)  // Generate agents randomly
@@ -85,14 +85,20 @@ void Instance::generateRandomAgents() {
             // update start
             starts[start] = true;
 
-            // find goal
-            int goal = this->graph->randomWalk(start, RANDOM_WALK_STEPS);
-            while (goals[goal])
-                goal = this->graph->randomWalk(goal, 1);
+            // Find goals, 2 for each agent, for testing purpose
+            vector<Task> tasks;
+            for (int i = 0; i < 2; i++) {
+                int goal = this->graph->randomWalk(start, RANDOM_WALK_STEPS);
+                while (goals[goal])
+                    goal = this->graph->randomWalk(goal, 1);
 
-            // update goal
-            goals[goal] = true;
-            agents[k] = Agent(start, goal);
+                // update goal
+                goals[goal] = true;
+                tasks.push_back(Task(task_id, goal, orient::None));
+                task_id++;
+            }
+
+            agents[k] = Agent(start, orient::East, tasks);
             k++;
         }
     } else  // Generate agents for warehouse scenario
@@ -107,13 +113,41 @@ void Instance::generateRandomAgents() {
             }
             starts[start] = true;
 
-            int goal = this->graph->sampleWarehouseTaskLoc();
-            while (goals[goal] || goal == start) {
-                goal = this->graph->sampleWarehouseTaskLoc();
-            }
-            goals[goal] = true;
+            vector<Task> tasks;
+            for (int i = 0; i < 2; i++) {
+                // Choose a random goal from the warehouse task locations
+                int goal = this->graph->sampleWarehouseTaskLoc();
+                while (goals[goal] || goal == start) {
+                    goal = this->graph->sampleWarehouseTaskLoc();
+                }
+                goals[goal] = true;
 
-            agents[k] = Agent(start, goal);
+                // spdlog::info(
+                //     "Agent {}: Start location: {}, Goal location: {}",
+                //     k, start, goal);
+
+                tasks.push_back(Task(task_id, goal, orient::None));
+                task_id++;
+            }
+            agents[k] = Agent(start, orient::East, tasks);
+        }
+
+        // Print goal locations of the agent
+        if (screen > 0) {
+            spdlog::info("MAPF instances:");
+            for (int i = 0; i < num_of_agents; i++) {
+                cout << "Agent " << i << ": Start location: ("
+                     << graph->getCoordinate(agents[i].start_location).first
+                     << ", "
+                     << graph->getCoordinate(agents[i].start_location).second
+                     << ") => ";
+                for (const auto& task : agents[i].goal_locations) {
+                    cout << "("
+                         << graph->getCoordinate(task.loc).first << ", "
+                         << graph->getCoordinate(task.loc).second << ") -> ";
+                }
+                cout << endl;
+            }
         }
 
         // int k = 0;
@@ -271,140 +305,84 @@ void Instance::generateRandomAgents() {
 // }
 
 bool Instance::loadAgents() {
-    using namespace std;
-    using namespace boost;
+    return false;
+    // using namespace std;
+    // using namespace boost;
 
-    string line;
-    ifstream myfile(agent_fname.c_str());
-    if (!myfile.is_open())
-        return false;
+    // string line;
+    // ifstream myfile(agent_fname.c_str());
+    // if (!myfile.is_open())
+    //     return false;
 
-    getline(myfile, line);
-    if (line[0] == 'v')  // Nathan's benchmark
-    {
-        if (num_of_agents == 0) {
-            cerr << "The number of agents should be larger than 0" << endl;
-            exit(-1);
-        }
-        // start_locations.resize(num_of_agents);
-        // goal_locations.resize(num_of_agents);
-        agents.resize(num_of_agents);
+    // getline(myfile, line);
 
-        vector<int> ids(num_of_agents);
-        if (agent_indices != "") {
-            char_separator<char> sep(",");
-            tokenizer<char_separator<char>> chars(agent_indices, sep);
-            int i = 0;
-            for (auto c : chars) {
-                ids[i] = atoi(c.c_str());
-                if (i > 0 && ids[i] <= ids[i - 1]) {
-                    printf("the indices of the agents should be strictly "
-                           "increasing!\n");
-                    exit(-1);  // the indices of the agents should be strictly
-                               // increasing!
-                }
+    // char_separator<char> sep(",");
+    // tokenizer<char_separator<char>> tok(line, sep);
+    // tokenizer<char_separator<char>>::iterator beg = tok.begin();
+    // int tmp = atoi((*beg).c_str());
+    // // start_locations.resize(num_of_agents);
+    // // goal_locations.resize(num_of_agents);
+    // //        printf("Total number of agents: %d\n", num_of_agents);
+    // agents.resize(num_of_agents);
+    // for (int i = 0; i < num_of_agents; i++) {
+    //     getline(myfile, line);
+    //     tokenizer<char_separator<char>> col_tok(line, sep);
+    //     tokenizer<char_separator<char>>::iterator c_beg = col_tok.begin();
+    //     // pair<int, int> curr_pair;
+    //     // read start [row,col] for agent i
+    //     int row = atoi((*c_beg).c_str());
+    //     c_beg++;
+    //     int col = atoi((*c_beg).c_str());
+    //     int start = this->graph->linearizeCoordinate(row, col);
+    //     // start_locations[i] = this->graph->linearizeCoordinate(row, col);
+    //     // read goal [row,col] for agent i
+    //     c_beg++;
+    //     row = atoi((*c_beg).c_str());
+    //     c_beg++;
+    //     col = atoi((*c_beg).c_str());
+    //     int goal = this->graph->linearizeCoordinate(row, col);
+    //     agents[i] = Agent(start, goal);
+    //     agents[i].id = i;
+    // }
 
-                i++;
-            }
-        } else {
-            for (int i = 0; i < num_of_agents; i++)
-                ids[i] = i;
-        }
-        char_separator<char> sep("\t");
-        int count = 0;
-        int i = 0;
-        while (i < num_of_agents) {
-            getline(myfile, line);
-            if (count == ids[i]) {
-                tokenizer<char_separator<char>> tok(line, sep);
-                tokenizer<char_separator<char>>::iterator beg = tok.begin();
-                beg++;  // skip the first number
-                beg++;  // skip the map name
-                beg++;  // skip the columns
-                beg++;  // skip the rows
-                        // read start [row,col] for agent i
-                int col = atoi((*beg).c_str());
-                beg++;
-                int row = atoi((*beg).c_str());
-                int start = this->graph->linearizeCoordinate(row, col);
-                // start_locations[i] = this->graph->linearizeCoordinate(row,
-                // col); read goal [row,col] for agent i
-                beg++;
-                col = atoi((*beg).c_str());
-                beg++;
-                row = atoi((*beg).c_str());
-                int goal = this->graph->linearizeCoordinate(row, col);
-                // goal_locations[i] = this->graph->linearizeCoordinate(row,
-                // col);
-                agents[i] = Agent(start, goal);
-                i++;
-            }
-            count++;
-        }
-    } else  // My benchmark
-    {
-        char_separator<char> sep(",");
-        tokenizer<char_separator<char>> tok(line, sep);
-        tokenizer<char_separator<char>>::iterator beg = tok.begin();
-        int tmp = atoi((*beg).c_str());
-        // start_locations.resize(num_of_agents);
-        // goal_locations.resize(num_of_agents);
-        //        printf("Total number of agents: %d\n", num_of_agents);
-        agents.resize(num_of_agents);
-        for (int i = 0; i < num_of_agents; i++) {
-            getline(myfile, line);
-            tokenizer<char_separator<char>> col_tok(line, sep);
-            tokenizer<char_separator<char>>::iterator c_beg = col_tok.begin();
-            // pair<int, int> curr_pair;
-            // read start [row,col] for agent i
-            int row = atoi((*c_beg).c_str());
-            c_beg++;
-            int col = atoi((*c_beg).c_str());
-            int start = this->graph->linearizeCoordinate(row, col);
-            // start_locations[i] = this->graph->linearizeCoordinate(row, col);
-            // read goal [row,col] for agent i
-            c_beg++;
-            row = atoi((*c_beg).c_str());
-            c_beg++;
-            col = atoi((*c_beg).c_str());
-            int goal = this->graph->linearizeCoordinate(row, col);
-            agents[i] = Agent(start, goal);
-            agents[i].id = i;
-        }
-    }
-    myfile.close();
+    // myfile.close();
     return true;
 }
 
-void Instance::printAgents() const {
-    for (int i = 0; i < num_of_agents; i++) {
-        Agent curr_agent = agents[i];
-        cout << "Agent " << i << " with id: " << curr_agent.id << " : S=("
-             << this->graph->getRowCoordinate(curr_agent.start_location) << ","
-             << this->graph->getColCoordinate(curr_agent.start_location)
-             << ") ; G=("
-             << this->graph->getRowCoordinate(curr_agent.goal_location) << ","
-             << this->graph->getColCoordinate(curr_agent.goal_location) << ")"
-             << endl;
-    }
-}
+// void Instance::printAgents() const {
+//     for (int i = 0; i < num_of_agents; i++) {
+//         Agent curr_agent = agents[i];
+//         cout << "Agent " << i << " with id: " << curr_agent.id << " : S=("
+//              << this->graph->getRowCoordinate(curr_agent.start_location) <<
+//              ","
+//              << this->graph->getColCoordinate(curr_agent.start_location)
+//              << ") ; G=("
+//              << this->graph->getRowCoordinate(curr_agent.goal_location) <<
+//              ","
+//              << this->graph->getColCoordinate(curr_agent.goal_location) <<
+//              ")"
+//              << endl;
+//     }
+// }
 
-void Instance::saveAgents() const {
-    ofstream myfile;
-    myfile.open(agent_fname);
-    if (!myfile.is_open()) {
-        cout << "Fail to save the agents to " << agent_fname << endl;
-        return;
-    }
-    myfile << num_of_agents << endl;
-    for (int i = 0; i < num_of_agents; i++) {
-        Agent curr_agent = agents[i];
-        myfile << this->graph->getRowCoordinate(curr_agent.start_location)
-               << ","
-               << this->graph->getColCoordinate(curr_agent.start_location)
-               << "," << this->graph->getRowCoordinate(curr_agent.goal_location)
-               << "," << this->graph->getColCoordinate(curr_agent.goal_location)
-               << "," << endl;
-    }
-    myfile.close();
-}
+// void Instance::saveAgents() const {
+//     ofstream myfile;
+//     myfile.open(agent_fname);
+//     if (!myfile.is_open()) {
+//         cout << "Fail to save the agents to " << agent_fname << endl;
+//         return;
+//     }
+//     myfile << num_of_agents << endl;
+//     for (int i = 0; i < num_of_agents; i++) {
+//         Agent curr_agent = agents[i];
+//         myfile << this->graph->getRowCoordinate(curr_agent.start_location)
+//                << ","
+//                << this->graph->getColCoordinate(curr_agent.start_location)
+//                << "," <<
+//                this->graph->getRowCoordinate(curr_agent.goal_location)
+//                << "," <<
+//                this->graph->getColCoordinate(curr_agent.goal_location)
+//                << "," << endl;
+//     }
+//     myfile.close();
+// }

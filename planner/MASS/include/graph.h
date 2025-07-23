@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "task.h"
 
 struct Neighbors {
     pair<int, orient> left;
@@ -148,14 +149,8 @@ public:
         return map_size;
     }
 
-    double getHeuristic(int goal_loc, int start_loc, orient start_ori) const {
-        if (heuristics.find(goal_loc) == heuristics.end()) {
-            spdlog::error("Error: goal_loc = {} not found in heuristics.",
-                          goal_loc);
-            exit(1);
-        }
-        return heuristics.at(goal_loc)[start_loc][start_ori];
-    }
+    double getHeuristic(vector<Task> goals, int start_loc, orient start_ori,
+                        int goal_id) const;
 
     int walkCounterClockwise(int from, int to) const {
         assert(validMove(from, to));
@@ -229,5 +224,5 @@ private:
     // Classes that can access private members
     // friend class SingleAgentSolver;
     friend class Instance;
-    // friend class TaskAssigner;
+    friend class TaskAssigner;
 };

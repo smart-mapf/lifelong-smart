@@ -12,36 +12,36 @@ PTNode::PTNode(const vector<Path>& pl,
 }
 
 
-/***
- * Finish this after working the structure
-*/
-void PTNode::writeToFile(Instance& instance, const string& file_name)
-{
-	std::ifstream infile(file_name);
-	bool exist = infile.good();
-	infile.close();
-	if (!exist) {
-		ofstream addHeads(file_name);
-		addHeads << "Num of agents: " << instance.agents.size() << std::endl;
-		addHeads << "Agent id; Start Point;Goal Point;Length; Start time; Control Points; Trajectory" << '\n';
-		addHeads.close();
-	}
+// /***
+//  * Finish this after working the structure
+// */
+// void PTNode::writeToFile(Instance& instance, const string& file_name)
+// {
+// 	std::ifstream infile(file_name);
+// 	bool exist = infile.good();
+// 	infile.close();
+// 	if (!exist) {
+// 		ofstream addHeads(file_name);
+// 		addHeads << "Num of agents: " << instance.agents.size() << std::endl;
+// 		addHeads << "Agent id; Start Point;Goal Point;Length; Start time; Control Points; Trajectory" << '\n';
+// 		addHeads.close();
+// 	}
 
-	ofstream outfile(file_name, std::ios::app);
-	for(int i = 0; i < (signed)plan.size(); ++i){
-		outfile <<  i \
-			<< ";" << instance.agents[i].start_location  \
-			<< ";" << instance.agents[i].goal_location  \
-			<< ";" << instance.agents[i].length \
-			<< ";" << instance.agents[i].earliest_start_time << ";";
-		outfile << "; ";
-		for (auto tmp_node : plan[i]) {
-			outfile << tmp_node.location << ", ";
-		}
-		outfile << '\n';
-	}
-	outfile.close();	
-}
+// 	ofstream outfile(file_name, std::ios::app);
+// 	for(int i = 0; i < (signed)plan.size(); ++i){
+// 		outfile <<  i \
+// 			<< ";" << instance.agents[i].start_location  \
+// 			<< ";" << instance.agents[i].goal_location  \
+// 			<< ";" << instance.agents[i].length \
+// 			<< ";" << instance.agents[i].earliest_start_time << ";";
+// 		outfile << "; ";
+// 		for (auto tmp_node : plan[i]) {
+// 			outfile << tmp_node.location << ", ";
+// 		}
+// 		outfile << '\n';
+// 	}
+// 	outfile.close();	
+// }
 
 /***
  * Generate the priority list for all the agents

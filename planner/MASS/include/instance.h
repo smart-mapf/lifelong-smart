@@ -8,6 +8,8 @@
 
 #include "common.h"
 #include "graph.h"
+#include "task.h"
+#include "task_assigner.h"
 
 using namespace std;
 
@@ -43,10 +45,9 @@ struct Agent {
     int id = -1;
     int start_location = -1;
     orient start_o = orient::East;
-    int goal_location = -1;
-
-    // By default we do not consider orientation at the goal
-    orient end_o = orient::None;
+    // int goal_location = -1;
+    // orient end_o = orient::None;
+    vector<Task> goal_locations;
 
     double v_min = V_MIN;
     double v_max = V_MAX;
@@ -63,9 +64,12 @@ struct Agent {
     Path previous_path;
     std::vector<int> trajectory;
 
-    Agent(int start_loc = -1, int goal_loc = -1) {
-        start_location = start_loc;
-        goal_location = goal_loc;
+    Agent() = default;
+
+    Agent(int start_loc, orient start_ori, vector<Task> goal_locations)
+        : start_location(start_loc),
+          start_o(start_ori),
+          goal_locations(goal_locations) {
     }
 
     /*statistic for result*/
@@ -86,12 +90,12 @@ public:
 
     // graph representation of the map
     shared_ptr<Graph> graph;
+    shared_ptr<TaskAssigner> task_assigner;
 
     Instance() = default;
-    Instance(shared_ptr<Graph> graph, const string& agent_fname,
-             int num_of_agents = 0, const string& agent_indices = "",
-             bool use_partial_expansion = false, int used_sps_solver = 0,
-             int screen = 0);
+    Instance(shared_ptr<Graph> graph, shared_ptr<TaskAssigner> task_assigner,
+             int num_of_agents = 0, bool use_partial_expansion = false,
+             int used_sps_solver = 0, int screen = 0);
 
     void printAgents() const;
 
