@@ -55,7 +55,7 @@ bool SIPP::getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node,
         init_node->prev_action = Action::none;
         init_node->goal_id = goal_id;
         // g is the actual time value to that node
-        init_node->g = 0;
+        init_node->g = max(0.0, instance_ptr->simulation_window);
         // If node is not expanded, h value is the heuristic value. Otherwise,
         // we use the least value in partial interval
         // init_node->h = heuristic_vec[curr_agent.id][init_node->current_point]
@@ -85,49 +85,58 @@ void SIPP::updateResultNodes(std::shared_ptr<Node> res,
     solution.clear();
     time_interval_path.clear();
     timed_path.clear();
-    std::shared_ptr<Node> tmp_s = res;
-    std::shared_ptr<Node> window_node = nullptr;
-    while (tmp_s->parent != nullptr) {
-        solution.push_back(tmp_s->bezier_solution);
-        if (tmp_s->bezier_solution->start_t < WINDOW_SIZE and
-            window_node == nullptr) {
-            window_node = tmp_s;
-        }
-        tmp_s = tmp_s->parent;
-    }
-    std::reverse(solution.begin(), solution.end());
-    assert(not solution.empty());
-    int curr_loc = curr_agent.start_location;
-    orient curr_o = curr_agent.start_o;
-    double curr_time_max = INF;
-    double curr_time_min = curr_agent.earliest_start_time;
-    for (const auto& motion : solution) {
-        assert(motion != nullptr);
-        if (motion->type == Action::forward) {
-            for (auto local_path_entry : motion->local_path) {
-                if (curr_loc != local_path_entry.location) {
-                    time_interval_path.emplace_back(
-                        curr_loc, curr_o, curr_time_min, curr_time_max);
-                    timed_path.emplace_back(
-                        curr_loc, (curr_time_min + curr_time_max) / 2.0);
-                    curr_loc = local_path_entry.location;
-                    curr_time_min = local_path_entry.arrival_time;
-                    curr_time_max = local_path_entry.leaving_time_tail;
-                } else {
-                    curr_time_max = local_path_entry.leaving_time_tail;
-                }
+    if (res->parent == nullptr) {
+        // Only one node. We can only let the agent wait at the start
+        time_interval_path.emplace_back(res->current_point, res->curr_o,
+                                        res->arrival_time_min, INF);
+        timed_path.emplace_back(res->current_point,
+                                (res->arrival_time_min + INF) / 2.0);
+    } else {
+        std::shared_ptr<Node> tmp_s = res;
+        std::shared_ptr<Node> window_node = nullptr;
+        while (tmp_s->parent != nullptr) {
+            solution.push_back(tmp_s->bezier_solution);
+            if (tmp_s->bezier_solution->start_t < WINDOW_SIZE and
+                window_node == nullptr) {
+                window_node = tmp_s;
             }
-        } else {
-            curr_o = motion->local_path.front().o;
-            curr_time_max = motion->local_path.front().leaving_time_tail;
+            tmp_s = tmp_s->parent;
         }
+        std::reverse(solution.begin(), solution.end());
+        assert(not solution.empty());
+        int curr_loc = curr_agent.start_location;
+        orient curr_o = curr_agent.start_o;
+        double curr_time_max = INF;
+        double curr_time_min = curr_agent.earliest_start_time;
+        for (const auto& motion : solution) {
+            assert(motion != nullptr);
+            if (motion->type == Action::forward) {
+                for (auto local_path_entry : motion->local_path) {
+                    if (curr_loc != local_path_entry.location) {
+                        time_interval_path.emplace_back(
+                            curr_loc, curr_o, curr_time_min, curr_time_max);
+                        timed_path.emplace_back(
+                            curr_loc, (curr_time_min + curr_time_max) / 2.0);
+                        curr_loc = local_path_entry.location;
+                        curr_time_min = local_path_entry.arrival_time;
+                        curr_time_max = local_path_entry.leaving_time_tail;
+                    } else {
+                        curr_time_max = local_path_entry.leaving_time_tail;
+                    }
+                }
+            } else {
+                curr_o = motion->local_path.front().o;
+                curr_time_max = motion->local_path.front().leaving_time_tail;
+            }
+        }
+        assert(window_node != nullptr);
+        curr_time_max = INF;
+        time_interval_path.emplace_back(curr_loc, curr_o, curr_time_min,
+                                        curr_time_max);
+        timed_path.emplace_back(curr_loc,
+                                (curr_time_min + curr_time_max) / 2.0);
+        //    showSolution(res);
     }
-    assert(window_node != nullptr);
-    curr_time_max = INF;
-    time_interval_path.emplace_back(curr_loc, curr_o, curr_time_min,
-                                    curr_time_max);
-    timed_path.emplace_back(curr_loc, (curr_time_min + curr_time_max) / 2.0);
-    //    showSolution(res);
 }
 
 void SIPP::showSolution(std::shared_ptr<Node>& s) {
@@ -174,7 +183,7 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
 
     // Start planning
     path.clear();
-    double optimal_travel_time = INF;
+    double optimal_travel_time = INF + 1;
     std::shared_ptr<Node> optimal_n = nullptr;
 
     std::shared_ptr<Node> init_node;
@@ -194,13 +203,29 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         // remove s with the smallest f-value from OPEN
         auto tmp_end_time = Time::now();
         std::chrono::duration<float> tmp_duration = tmp_end_time - start_time;
-        // if (tmp_duration.count() > cutoff_time) {
-        //     printf("Hit cut off time!\n");
-        //     break;
-        // }
+        if (tmp_duration.count() > cutoff_time) {
+            // printf("Hit cut off time!\n");
+            spdlog::info(
+                "Agent {}: Hit cutoff time: {}, current f value: {}, "
+                "optimal travel time: {}",
+                curr_agent.id, cutoff_time, optimal_travel_time,
+                optimal_n ? optimal_n->f : INF);
+            break;
+        }
         std::shared_ptr<Node> s = open.top();
         open.pop();
         curr_goal = curr_agent.goal_locations[s->goal_id];
+
+        // Print content of current node
+        // spdlog::info(
+        //     "Agent {}: Current node ({},{}), goal {}, time: {}, g: {}, h: {}, "
+        //     "f: {}, prev action: {}, interval index: {}, arrival time min: {}, "
+        //     "arrival time max: {}",
+        //     curr_agent.id,
+        //     instance_ptr->graph->getRowCoordinate(s->current_point),
+        //     instance_ptr->graph->getColCoordinate(s->current_point), s->goal_id,
+        //     s->arrival_time_min, s->g, s->h, s->f, s->prev_action,
+        //     s->interval_index, s->arrival_time_min, s->arrival_time_max);
 
         if (closed_set.find(s) == closed_set.end()) {
             closed_set.insert(s);
@@ -209,10 +234,21 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             continue;
         }
 
+        // *****************************
         // Found solution, exit the loop
         if (s->f > optimal_travel_time) {
+            // spdlog::info(
+            //     "Agent {} exiting: Current node ({},{}), goal {}, time: {}, g: "
+            //     "{}, h: "
+            //     "{}, f: {} is worse than the current optimal travel time: {}",
+            //     curr_agent.id,
+            //     instance_ptr->graph->getRowCoordinate(s->current_point),
+            //     instance_ptr->graph->getColCoordinate(s->current_point),
+            //     s->goal_id, s->arrival_time_min, s->g, s->h, s->f,
+            //     optimal_travel_time);
             break;
         }
+        // *****************************
 
         // Found path to the current goal. Increment the goal_id and check if
         // we have reached the last goal.
@@ -222,14 +258,23 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             // For the last goal, we must make sure we can hold it forever (in
             // non-windowed case). Do not increment goal_id if we cannot hold
             // it.
+            // Check if we reached the last goal
             if (s->goal_id + 1 == curr_agent.goal_locations.size()) {
-                if (s->arrival_time_max < INF) {
+                if (instance_ptr->simulation_window <= 0 &&
+                    s->arrival_time_max < INF) {
                     spdlog::info("Agent {}: Reached last goal {}, time: {}, g: "
                                  "{}, h: {}, "
                                  "f: {}, but cannot hold.",
                                  curr_agent.id, s->goal_id, s->g, s->g, s->h,
                                  s->f);
-                } else {
+                }
+                // In windowed case, or we can hold the last goal in
+                // non-windowed case, we reached the goal.
+                else {
+                    spdlog::info(
+                        "Agent {}: Reached last goal {}, time: {}, g: {}, h: "
+                        "{}, f: {}, can hold",
+                        curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
                     reached_goal = true;
                 }
             }
@@ -246,7 +291,8 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                     instance_ptr->graph->getHeuristic(
                         curr_agent.goal_locations, s->current_point, s->curr_o,
                         s->goal_id + 1),
-                    10, s->prev_action, s->parent, s->bezier_solution);
+                    instance_ptr->simulation_window, s->prev_action, s->parent,
+                    s->bezier_solution);
                 pushToOpen(new_n);
             }
         }
@@ -256,16 +302,45 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             optimal_travel_time = s->g;
             optimal_n = s;
             spdlog::info(
-                "Agent {}: Found optimal solution with time: {}, g: {}, h: {}, "
-                "f: {}",
-                curr_agent.id, s->g, s->g, s->h, s->f);
+                "Agent {}: Found optimal solution with: g: {}, h: {}, f: {}",
+                curr_agent.id, s->g, s->h, s->f);
             // NOTE: To get optimal solution we should `continue` here. By
             // `break`, we stop the search when the first solution is found.
             // This can speed up the search.
             break;
         }
-        // Not reached all goals. Expand the node
+
+        // // The current f val is smaller than the current optimal (in windowed
+        // // case), we update the current optimal
+        // if (instance_ptr->simulation_window > 0 && s->arrival_time_max == INF
+        // &&
+        //     s->f < optimal_travel_time) {
+        //     optimal_travel_time = s->f;
+        //     optimal_n = s;
+        //     spdlog::info(
+        //         "Agent {}: Found better solution at ({},{}) with: "
+        //         "{}, g: {}, h: {}, f: {}",
+        //         agentID,
+        //         instance_ptr->graph->getRowCoordinate(s->current_point),
+        //         instance_ptr->graph->getColCoordinate(s->current_point),
+        //         curr_agent.id, s->g, s->h, s->f);
+        // }
+
+        // Not reached all goals. Expand the node if it has not reached the
+        // window, or if there is no window.
+        // if (instance_ptr->simulation_window <= 0) {
         else {
+            // spdlog::info(
+            //     "Agent {}: Expanding node ({},{}), goal {}, time: {}, g: {}, "
+            //     "h: "
+            //     "{}, f: {}, prev action: {}, interval index: {}, arrival time "
+            //     "min: {}, arrival time max: {}",
+            //     curr_agent.id,
+            //     instance_ptr->graph->getRowCoordinate(s->current_point),
+            //     instance_ptr->graph->getColCoordinate(s->current_point),
+            //     s->goal_id, s->arrival_time_min, s->g, s->h, s->f,
+            //     s->prev_action, s->interval_index, s->arrival_time_min,
+            //     s->arrival_time_max);
             // Node has been expanded before. Pop the next reachable interval
             // and do create a movement node (Line 9-10 of Algorithm 2)
             if (s->is_expanded) {
@@ -338,7 +413,11 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                         new_node->arrival_time_max = tmp_min_entry->t_max;
                         // TODO: Change the computation of g, h to weighted sum
                         // of edge weights and travel time.
-                        new_node->g = new_node->arrival_time_min;
+                        if (instance_ptr->simulation_window <= 0)
+                            new_node->g = new_node->arrival_time_min;
+                        else
+                            new_node->g = max(new_node->arrival_time_min,
+                                              instance_ptr->simulation_window);
                         // new_node->h = heuristic_vec[curr_agent.id]
                         //                            [new_node->current_point]
                         //                            [new_node->curr_o];
@@ -380,16 +459,40 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             }
             assert(s->is_expanded);
 
+            // Print partial intervals
+            // spdlog::info(
+            //     "Agent {}: Node ({}, {}) has {} partial intervals after "
+            //     "expansion.",
+            //     curr_agent.id,
+            //     instance_ptr->graph->getRowCoordinate(s->current_point),
+            //     instance_ptr->graph->getColCoordinate(s->current_point),
+            //     s->partial_intervals.size());
+
             // If not all the reachable intervals have been expanded,
             // we need to update the heuristic value and push it back to OPEN.
             if (not s->partial_intervals.empty()) {
                 // update heuristic for s
                 s->h = s->partial_intervals.top()->f;
-                s->f = s->g + s->h;
+
+                // One-shot MASS objective
+                if (instance_ptr->simulation_window <= 0)
+                    s->f = s->g + s->h;
+                // Windowed MASS objective
+                else
+                    s->f = max(s->g, instance_ptr->simulation_window) + s->h;
                 open.push(s);
                 count_node_generated++;
             }
         }
+        // } else {
+        //     spdlog::info(
+        //         "Agent {}: Exceeded the simulation window for ({},{}), "
+        //         "current arrival time: {}, window size: {}",
+        //         curr_agent.id,
+        //         instance_ptr->graph->getRowCoordinate(s->current_point),
+        //         instance_ptr->graph->getColCoordinate(s->current_point),
+        //         s->arrival_time_min, instance_ptr->simulation_window);
+        // }
     }
     auto debug_end_t = Time::now();
     time_s total_runtime_t = debug_end_t - debug_start_t;
@@ -400,8 +503,16 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
     expand_runtime += debug_expand_time;
 
     if (optimal_n == nullptr) {
+        spdlog::info(
+            "Agent {}: No solution found, current optimal travel time: {}",
+            curr_agent.id, optimal_travel_time);
         return false;
     } else {
+        spdlog::info(
+            "Agent {}: Found solution with optimal travel time: {}, g: {}, h: "
+            "{}, f: {}",
+            curr_agent.id, optimal_travel_time, optimal_n->g, optimal_n->h,
+            optimal_n->f);
         solution_cost = optimal_travel_time;
         updateResultNodes(optimal_n, path, solution, timed_path);
         return true;
@@ -423,7 +534,8 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
 //             ptr->second.remove(old_node);
 //             count_node_generated--;  // this is because we later will
 //             increase
-//                                      // num_generated when we insert the new
+//                                      // num_generated when we insert the
+//                                      new
 //                                      // node into lists.
 //             return true;
 //         }
@@ -462,8 +574,13 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_left->arrival_time_min =
                 n->arrival_time_min + curr_agent.rotation_cost;
             n_left->arrival_time_max = n->arrival_time_max;
-            n_left->g = n_left->arrival_time_min;
-            // n_left->h = heuristic_vec[curr_agent.id][n_left->current_point]
+            if (instance_ptr->simulation_window <= 0)
+                n_left->g = n_left->arrival_time_min;
+            else
+                n_left->g = max(n_left->arrival_time_min,
+                                instance_ptr->simulation_window);
+            // n_left->h =
+            // heuristic_vec[curr_agent.id][n_left->current_point]
             //                          [n_left->curr_o];
             n_left->h = instance_ptr->graph->getHeuristic(
                 curr_agent.goal_locations, n_left->current_point,
@@ -493,8 +610,13 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_right->arrival_time_min =
                 n->arrival_time_min + curr_agent.rotation_cost;
             n_right->arrival_time_max = n->arrival_time_max;
-            n_right->g = n_right->arrival_time_min;
-            // n_right->h = heuristic_vec[curr_agent.id][n_right->current_point]
+            if (instance_ptr->simulation_window <= 0)
+                n_right->g = n_right->arrival_time_min;
+            else
+                n_right->g = max(n_right->arrival_time_min,
+                                 instance_ptr->simulation_window);
+            // n_right->h =
+            // heuristic_vec[curr_agent.id][n_right->current_point]
             //                           [n_right->curr_o];
             n_right->h = instance_ptr->graph->getHeuristic(
                 curr_agent.goal_locations, n_right->current_point,
@@ -524,8 +646,13 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_back->arrival_time_min =
                 n->arrival_time_min + curr_agent.turn_back_cost;
             n_back->arrival_time_max = n->arrival_time_max;
-            n_back->g = n_back->arrival_time_min;
-            // n_back->h = heuristic_vec[curr_agent.id][n_back->current_point]
+            if (instance_ptr->simulation_window <= 0)
+                n_back->g = n_back->arrival_time_min;
+            else
+                n_back->g = max(n_back->arrival_time_min,
+                                instance_ptr->simulation_window);
+            // n_back->h =
+            // heuristic_vec[curr_agent.id][n_back->current_point]
             //                          [n_back->curr_o];
             n_back->h = instance_ptr->graph->getHeuristic(
                 curr_agent.goal_locations, n_back->current_point,
@@ -629,12 +756,13 @@ std::vector<std::vector<std::vector<double>>> loadVector(
 //         printf("Start to compute global heuristic!\n");
 //         size_t numCores = std::thread::hardware_concurrency();
 //         numCores = min(5, (int)numCores);
-//         for (size_t i = 0; i < instance_ptr->num_of_agents; i += numCores) {
+//         for (size_t i = 0; i < instance_ptr->num_of_agents; i +=
+//         numCores) {
 //             std::vector<std::thread> threads;
 //             // Pass member function and object reference
 //             for (size_t j = i;
-//                  j < min(instance_ptr->num_of_agents, (int)(i + numCores));
-//                  j++) {
+//                  j < min(instance_ptr->num_of_agents, (int)(i +
+//                  numCores)); j++) {
 //                 threads.emplace_back(&SIPP::Dijkstra, this, j);
 //             }
 //             for (auto& thread : threads) {
@@ -661,9 +789,9 @@ std::vector<std::vector<std::vector<double>>> loadVector(
 //     std::shared_ptr<Node> root_node = std::make_shared<Node>();
 //     root_node->g = 0.0;
 //     root_node->f = 0.0;
-//     root_node->current_point = instance_ptr->agents[curr_id].goal_location;
-//     root_node->curr_o = instance_ptr->agents[curr_id].end_o;
-//     root_node->parent = nullptr;
+//     root_node->current_point =
+//     instance_ptr->agents[curr_id].goal_location; root_node->curr_o =
+//     instance_ptr->agents[curr_id].end_o; root_node->parent = nullptr;
 //     dij_open.push(root_node);
 //     size_t h_count = 0;
 //     while (!dij_open.empty()) {
@@ -675,8 +803,8 @@ std::vector<std::vector<std::vector<double>>> loadVector(
 //                 continue;
 //             } else {
 //                 dij_close_set.erase(close_item_it);
-//                 curr_agent_heuristic[n->current_point][n->curr_o] = n->g * 2;
-//                 dij_close_set.insert(n);
+//                 curr_agent_heuristic[n->current_point][n->curr_o] = n->g
+//                 * 2; dij_close_set.insert(n);
 //             }
 //         } else {
 //             assert(n->current_point < curr_agent_heuristic.size());
@@ -687,7 +815,8 @@ std::vector<std::vector<std::vector<double>>> loadVector(
 //         }
 //         // For all the neighbor location, all need to do this operation
 //         Neighbors neighbors;
-//         instance_ptr->graph->getInverseNeighbors(n->current_point, n->curr_o,
+//         instance_ptr->graph->getInverseNeighbors(n->current_point,
+//         n->curr_o,
 //                                           neighbors);
 //         if (n->parent == nullptr or n->prev_action == Action::forward) {
 //             // Insert two nodes, turn left and turn right
@@ -758,8 +887,8 @@ void SIPP::GetNextInterval(const std::shared_ptr<IntervalEntry>& prev_interval,
         return;
     int next_loc = next_locs[prev_interval->step];
     // Compute t_min as the minimum time to travel to the next location
-    // TODO: Split t_min into time of waiting and time of moving. Then compute
-    // weighted t_min
+    // TODO: Split t_min into time of waiting and time of moving. Then
+    // compute weighted t_min
     double m_time_min = travel_cost[min((int)prev_interval->step, 4)];
     // Compute lower bound as lb + t_min
     double lower_bound = prev_interval->t_min + m_time_min;
@@ -768,8 +897,8 @@ void SIPP::GetNextInterval(const std::shared_ptr<IntervalEntry>& prev_interval,
     for (TimeInterval interval : interval_list) {
         // If lower bound is bigger than t_max of candidate interval, the
         // candidate interval is invalid If t_min of candidate interval is
-        // larger than t_max of the previous interval, no transition exists for
-        // such a case
+        // larger than t_max of the previous interval, no transition exists
+        // for such a case
         if (lower_bound >= interval.t_max or
             prev_interval->t_max <= interval.t_min)
             continue;
@@ -803,11 +932,12 @@ void SIPP::GetNextInterval(const std::shared_ptr<IntervalEntry>& prev_interval,
 }
 
 /**
- * @brief Get the potential intervals that can be obtained from moving forward
+ * @brief Get the potential intervals that can be obtained from moving
+ * forward
  *
  * @param s The node need to be expanded
- * @param to_locs The potential locations that can be reached from the expanded
- * node
+ * @param to_locs The potential locations that can be reached from the
+ * expanded node
  * @param rt The reservation table
  * */
 void SIPP::getSuccessors(const std::shared_ptr<Node>& s,

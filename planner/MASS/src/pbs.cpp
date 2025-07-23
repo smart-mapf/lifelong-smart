@@ -34,7 +34,8 @@ bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id)
 {
     assert(need_replan[agent_id]);
 	ReservationTable rt(instance_ptr->graph->map_size);
-    node.getRTFromP(rt, rtp);
+    node.getRTFromP(rt, rtp, instance_ptr->simulation_window);
+    // Not needed?
     InsertInitLocation(agent_id, *instance_ptr, rt);
     double solution_cost = 0.0;
 	Path path;
@@ -49,7 +50,7 @@ bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id)
     node.solution_cost[agent_id] = solution_cost;
 
 	ReservationTable rtdebug(instance_ptr->graph->map_size);
-	node.getRTFromP(rtdebug, rtp);
+	node.getRTFromP(rtdebug, rtp, instance_ptr->simulation_window);
 	if(!checkValid(rtdebug, path, agent_id)) {
 		std::fstream outputRT("ReservationTable.txt", std::fstream::in |
 					std::fstream::out |
@@ -94,14 +95,14 @@ bool PBS::UpdatePlan(PTNode& node, int index)
     std::set<int> higher_agents;
     for (int agent_id: priority_list){
         if (agent_id == index
-            or node.checkValid(tmp_rt, agent_id) != -1) {
+            or node.checkValid(tmp_rt, agent_id, instance_ptr->simulation_window) != -1) {
             bool success = SolveSingleAgent(node, higher_agents, agent_id);
             if (not success) {
                 return false;
             }
         }
         higher_agents.insert(agent_id);
-        node.insertPathToRT(tmp_rt, agent_id);
+        node.insertPathToRT(tmp_rt, agent_id, instance_ptr->simulation_window);
     }
     return true;
 }
@@ -173,6 +174,7 @@ inline bool PBS::isTerminate(std::shared_ptr<PTNode> curr_n)
         solution_found = true;
 
         if (!curr_n->checkSolution(*instance_ptr)) {
+            spdlog::error("Solution is not valid!");
             exit(-1);
         }
         return true;
@@ -497,9 +499,11 @@ bool PBS::solve(const string& outputFileName)
 
     std::shared_ptr<PTNode> Root;
     if(not initRootNode(Root)) {
-        printf("[Error] Fail to find a initial plan!\n");
+        // printf("[Error] Fail to find a initial plan!\n");
+        spdlog::error("Fail to find a initial plan!");
         return false;
     }
+    spdlog::info("Root cost: {}", root_cost);
     open_list.push(Root);
     while (!open_list.empty() and ((double)(clock() - start) / CLOCKS_PER_SEC) < this->cutoff_runtime)
     {
@@ -662,7 +666,7 @@ bool PBS::checkValid(ReservationTable& rt, Path& path, int agent){
             assert(rt_interval.agent_id != agent);
             if(path_entry.leaving_time_tail - rt_interval.t_min >= EPSILON and
                rt_interval.t_max - path_entry.arrival_time >= EPSILON) {
-                std::cout << "agent " << agent << ": " << path_entry.arrival_time << ' ' <<
+                std::cout << "agent " << agent << ": " << path_entry.arrival_time << ", loc" << path_entry.location << " " <<
                     path_entry.leaving_time_tail <<'\n' << "agent " << rt_interval.agent_id <<
                     ": " << rt_interval.t_min << " " << rt_interval.t_max << '\n';
                 return false;

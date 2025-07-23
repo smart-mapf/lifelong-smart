@@ -19,7 +19,9 @@
 #include <random>
 #include <set>
 #include <tuple>
+#include <climits>
 #include <vector>
+#include <cfloat>
 
 using boost::char_separator;
 using boost::tokenizer;
@@ -57,7 +59,7 @@ using std::vector;
 using json = nlohmann::json;
 
 // Hyper-parameters
-#define INF 10000.0
+#define INF DBL_MAX / 2
 #define EPS 0.0001
 #define CELL_DIS 1.0
 #define TIME_STEP_SIZE 0.05
@@ -218,7 +220,12 @@ struct Node {
           prev_action(prev_act),
           parent(parent),
           bezier_solution(bezier_solution) {
-        f = h + g;
+        // One-shot objective
+        if (win_size <= 0)
+            f = h + g;
+        // Windowed objective
+        else
+            f = max(g, win_size) + h;
     }
     bool is_expanded = false;
     int current_point;

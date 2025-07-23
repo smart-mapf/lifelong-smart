@@ -87,6 +87,7 @@ public:
     int num_of_agents = 0;
     int use_sps_type = 0;  // 0 for Binary, 1 for Bezier
     bool use_pe = false;
+    double simulation_window = 10;  // Simulation (planning) window in seconds
 
     // graph representation of the map
     shared_ptr<Graph> graph;
@@ -95,9 +96,10 @@ public:
     Instance() = default;
     Instance(shared_ptr<Graph> graph, shared_ptr<TaskAssigner> task_assigner,
              int num_of_agents = 0, bool use_partial_expansion = false,
-             int used_sps_solver = 0, int screen = 0);
+             int used_sps_solver = 0, int screen = 0,
+             double simulation_window = 10);
 
-    void printAgents() const;
+    // void printAgents() const;
 
     void GetRawReservationTable();
     // inline bool isObstacle(int loc) const { return my_map[loc]; }
@@ -219,7 +221,7 @@ private:
     // void saveMap() const;
 
     bool loadAgents();
-    void saveAgents() const;
+    // void saveAgents() const;
 
     // void generateConnectedRandomGrid(int rows, int cols, int obstacles); //
     // initialize new [rows x cols] map with random obstacles

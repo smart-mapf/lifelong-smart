@@ -4,13 +4,15 @@ int RANDOM_WALK_STEPS = 100000;
 
 Instance::Instance(shared_ptr<Graph> graph,
                    shared_ptr<TaskAssigner> task_assigner, int in_agents_num,
-                   bool use_partial_expansion, int used_sps_solver, int screen)
+                   bool use_partial_expansion, int used_sps_solver, int screen,
+                   double simulation_window)
     : graph(graph),
       task_assigner(task_assigner),
       num_of_agents(in_agents_num),
       use_pe(use_partial_expansion),
       use_sps_type(used_sps_solver),
-      screen(screen) {
+      screen(screen),
+      simulation_window(simulation_window) {
     // bool succ = loadMap();
     // if (!succ)
     // {
@@ -142,8 +144,7 @@ void Instance::generateRandomAgents() {
                      << graph->getCoordinate(agents[i].start_location).second
                      << ") => ";
                 for (const auto& task : agents[i].goal_locations) {
-                    cout << "("
-                         << graph->getCoordinate(task.loc).first << ", "
+                    cout << "(" << graph->getCoordinate(task.loc).first << ", "
                          << graph->getCoordinate(task.loc).second << ") -> ";
                 }
                 cout << endl;

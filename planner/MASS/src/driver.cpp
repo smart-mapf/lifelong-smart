@@ -40,9 +40,9 @@ int main(int argc, char **argv) {
              "SPS solver, choose from 0 for BAS, and 1 for BCS")
             ("outputPaths", po::value<string>(), "output file for paths")
             ("partialExpansion,p", po::value<bool>()->default_value(1), "enable partial expansion")
-            ("cutoffTime,t", po::value<double>()->default_value(60), "cutoff time (seconds)")
+            ("cutoffTime,t", po::value<double>()->default_value(2), "cutoff time (seconds)")
             ("screen", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
-            ("simulation_window", po::value<int>()->default_value(2), "simulation window (in seconds) for the planner")
+            ("simulation_window", po::value<double>()->default_value(10), "simulation window (in seconds) for the planner")
 
             // params for instance generators
             // ("rows", po::value<int>()->default_value(0), "number of rows")
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     //////////////////////////////////////////////////////////////////////
     int num_agents = vm["agentNum"].as<int>();
     int screen = vm["screen"].as<int>();
-    int simulation_window = vm["simulation_window"].as<int>();
+    double simulation_window = vm["simulation_window"].as<double>();
     int sps_solver_type = vm["solver"].as<int>();
     std::shared_ptr<Graph> graph =
         make_shared<Graph>(vm["map"].as<string>(), screen);
@@ -83,7 +83,8 @@ int main(int argc, char **argv) {
         make_shared<TaskAssigner>(graph, screen, simulation_window, num_agents);
     std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(
         graph, task_assigner, vm["agentNum"].as<int>(),
-        vm["partialExpansion"].as<bool>(), sps_solver_type, screen);
+        vm["partialExpansion"].as<bool>(), sps_solver_type, screen,
+        simulation_window);
 
     srand(vm["seed"].as<int>());
 
