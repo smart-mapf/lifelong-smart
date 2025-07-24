@@ -14,10 +14,11 @@ extern const double EPSILON;
 class PBS
 {
 public:
-    PBS(std::shared_ptr<Instance> instance, int single_agent_solver_name, double cutoff_time);
+    PBS(std::shared_ptr<Instance> instance, int single_agent_solver_name, double cutoff_time, int screen=0);
     bool solve(const string& outputFileName);
     void saveTimedPath(const string & file_name) const;
     void savePath(const string & file_name) const;
+    vector<vector<tuple<int, int, double, int>>> getTimedPath() const;
     bool UpdatePlan(PTNode& node, int);
     void printPath(Path);
     void printRT(ReservationTable);

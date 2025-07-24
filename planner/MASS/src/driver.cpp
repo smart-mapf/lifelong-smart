@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
             //  "width of working stations on both sides, for generating instances")
 
             // params for CBS
-            ("sipp", po::value<bool>()->default_value(false), "using sipp as the single agent solver")
+            // ("sipp", po::value<bool>()->default_value(false), "using sipp as the single agent solver")
 
             // params for rpc
             ("portNum", po::value<int>()->default_value(8080), "port number for the server");
@@ -70,9 +70,12 @@ int main(int argc, char **argv) {
     /// check the correctness and consistence of params
     //////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////////
-    /// load the instance
-    //////////////////////////////////////////////////////////////////////
+    srand(vm["seed"].as<int>());
+
+    // Set up logger
+    auto console_logger = spdlog::default_logger()->clone("Planner");
+    spdlog::set_default_logger(console_logger);
+
     int num_agents = vm["agentNum"].as<int>();
     int screen = vm["screen"].as<int>();
     double simulation_window = vm["simulation_window"].as<double>();
@@ -81,39 +84,116 @@ int main(int argc, char **argv) {
         make_shared<Graph>(vm["map"].as<string>(), screen);
     std::shared_ptr<TaskAssigner> task_assigner =
         make_shared<TaskAssigner>(graph, screen, simulation_window, num_agents);
-    std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(
-        graph, task_assigner, vm["agentNum"].as<int>(),
-        vm["partialExpansion"].as<bool>(), sps_solver_type, screen,
-        simulation_window);
 
-    srand(vm["seed"].as<int>());
+    // Stats
+    int n_mapf_calls = 0;        // number of MAPF calls
+    int n_rule_based_calls = 0;  // number of rule-based calls
 
-    //////////////////////////////////////////////////////////////////////
-    /// initialize the solver
-    //////////////////////////////////////////////////////////////////////
-    PBS pbs(instance_ptr, sps_solver_type, vm["cutoffTime"].as<double>());
-    auto init_start_time = Time::now();
-    // pbs.sipp_ptr->getHeuristic(vm["heuristic"].as<std::string>());
-    auto init_end_time = Time::now();
-    time_s debug_init_d = init_end_time - init_start_time;
-    double debug_init_time = debug_init_d.count();
-    // printf("Finish initialization the heuristic in %f seconds\n",
-    //        debug_init_time);
-    auto global_start_time = Time::now();
-    bool pbs_success = pbs.solve(vm["output"].as<string>());
-    auto global_end_time = Time::now();
-    std::chrono::duration<float> global_run_time =
-        global_end_time - global_start_time;
-    printf("Runtime for MASS is: %f\n", global_run_time.count());
-    if (pbs_success) {
-        printf("Solution found!\n");
-        pbs.updateCost();
-        if (vm.count("outputPaths"))
-            pbs.saveTimedPath(vm["outputPaths"].as<std::string>());
-        pbs.savePath("durationPath.txt");
-    } else {
-        printf("No solution found!\n");
+    // We assume the server is already running at this point.
+    rpc::client client("127.0.0.1", vm["portNum"].as<int>());
+
+    // Wait for the server to initialize
+    int trial = 0;
+    while (!client.call("is_initialized").as<bool>()) {
+        if (screen > 0) {
+            // printf("%d Waiting for server to initialize...\n", trial);
+            trial++;
+        }
     }
-    pbs.saveResults(pbs_success, vm["statistic"].as<string>(),
-                    vm["map"].as<string>());
+
+    while (true) {
+        // Get the current simulation tick
+        bool invoke_planner = client.call("invoke_planner").as<bool>();
+
+        // Skip planning until the simulation step is a multiple of the
+        // simulation window
+        if (!invoke_planner) {
+            continue;
+        }
+
+        string result_message = client.call("get_location").as<string>();
+
+        auto result_json = json::parse(result_message);
+        if (!result_json["initialized"].get<bool>()) {
+            printf("Planner not initialized! Retrying\n");
+            sleep(1);
+            continue;
+        }
+        auto commit_cut =
+            result_json["robots_location"]
+                .get<std::vector<std::tuple<double, double, int>>>();
+        auto new_finished_tasks_id =
+            result_json["new_finished_tasks"].get<std::set<int>>();
+
+        if (screen > 0) {
+            // printf("Agent locations:\n");
+            // for (auto loc : commit_cut) {
+            //     printf("%f %f\n", loc.first, loc.second);
+            // }
+
+            printf("New finished tasks:\n");
+            for (auto finish_task_id : new_finished_tasks_id) {
+                printf("%d,", finish_task_id);
+            }
+            printf("\n");
+        }
+
+        //////////////////////////////////////////////////////////////////////
+        /// load the instance
+        //////////////////////////////////////////////////////////////////////
+        std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(
+            graph, task_assigner, commit_cut, new_finished_tasks_id,
+            vm["partialExpansion"].as<bool>(), sps_solver_type, screen,
+            simulation_window);
+
+        //////////////////////////////////////////////////////////////////////
+        /// initialize the solver
+        //////////////////////////////////////////////////////////////////////
+        PBS pbs(instance_ptr, sps_solver_type, vm["cutoffTime"].as<double>(),
+                screen);
+        auto init_start_time = Time::now();
+        // pbs.sipp_ptr->getHeuristic(vm["heuristic"].as<std::string>());
+        auto init_end_time = Time::now();
+        time_s debug_init_d = init_end_time - init_start_time;
+        double debug_init_time = debug_init_d.count();
+        // printf("Finish initialization the heuristic in %f seconds\n",
+        //        debug_init_time);
+        n_mapf_calls++;
+        auto global_start_time = Time::now();
+        bool pbs_success = pbs.solve(vm["output"].as<string>());
+        auto global_end_time = Time::now();
+        std::chrono::duration<float> global_run_time =
+            global_end_time - global_start_time;
+        // printf("Runtime for MASS is: %f\n", global_run_time.count());
+        spdlog::info("Runtime for MASS is: {} seconds",
+                     global_run_time.count());
+        vector<vector<tuple<int, int, double, int>>> new_mapf_plan;
+        new_mapf_plan.resize(instance_ptr->num_of_agents);
+        if (pbs_success) {
+            // printf("Solution found!\n");
+            spdlog::info("MASS: Solution found!");
+            pbs.updateCost();
+            new_mapf_plan = pbs.getTimedPath();
+            // if (vm.count("outputPaths"))
+            //     pbs.saveTimedPath(vm["outputPaths"].as<std::string>());
+            // pbs.savePath("durationPath.txt");
+        } else {
+            // printf("No solution found!\n");
+            spdlog::warn("MASS: No solution found!");
+        }
+
+        // Send new plan
+        json stats = {{"n_mapf_calls", n_mapf_calls},
+                      {"n_rule_based_calls", n_rule_based_calls}};
+        json new_plan_json = {
+            {"plan", new_mapf_plan},
+            {"congested", false},
+            {"stats", stats.dump()},
+
+        };
+        client.call("add_plan", new_plan_json.dump());
+
+        // pbs.saveResults(pbs_success, vm["statistic"].as<string>(),
+        //                 vm["map"].as<string>());
+    }
 }

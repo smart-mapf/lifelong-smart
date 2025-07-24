@@ -95,13 +95,17 @@ public:
 
     Instance() = default;
     Instance(shared_ptr<Graph> graph, shared_ptr<TaskAssigner> task_assigner,
-             int num_of_agents = 0, bool use_partial_expansion = false,
+             vector<tuple<double, double, int>>& start_locs,
+             set<int> finished_tasks_id, bool use_partial_expansion = false,
              int used_sps_solver = 0, int screen = 0,
              double simulation_window = 10);
 
     // void printAgents() const;
 
     void GetRawReservationTable();
+
+    bool loadAgents(vector<tuple<double, double, int>>& start_locs,
+                    set<int> finished_tasks_id);
     // inline bool isObstacle(int loc) const { return my_map[loc]; }
     // inline bool validMove(int curr, int next) const
     // {
@@ -208,8 +212,8 @@ private:
     // int moves_offset[MOVE_COUNT];
     // vector<bool> my_map;
     // string map_fname;
-    string agent_fname;
-    string agent_indices;
+    // string agent_fname;
+    // string agent_indices;
     ReservationTable raw_rv_tbl;
 
     //   vector<int> start_locations;
@@ -220,7 +224,6 @@ private:
     // void printMap() const;
     // void saveMap() const;
 
-    bool loadAgents();
     // void saveAgents() const;
 
     // void generateConnectedRandomGrid(int rows, int cols, int obstacles); //

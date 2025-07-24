@@ -3,12 +3,13 @@
 int RANDOM_WALK_STEPS = 100000;
 
 Instance::Instance(shared_ptr<Graph> graph,
-                   shared_ptr<TaskAssigner> task_assigner, int in_agents_num,
-                   bool use_partial_expansion, int used_sps_solver, int screen,
-                   double simulation_window)
+                   shared_ptr<TaskAssigner> task_assigner,
+                   vector<tuple<double, double, int>>& start_locs,
+                   set<int> finished_tasks_id, bool use_partial_expansion,
+                   int used_sps_solver, int screen, double simulation_window)
     : graph(graph),
       task_assigner(task_assigner),
-      num_of_agents(in_agents_num),
+      num_of_agents(static_cast<int>(start_locs.size())),
       use_pe(use_partial_expansion),
       use_sps_type(used_sps_solver),
       screen(screen),
@@ -30,19 +31,21 @@ Instance::Instance(shared_ptr<Graph> graph,
     // 	}
     // }
     GetRawReservationTable();
-    bool succ = loadAgents();
+    bool succ = loadAgents(start_locs, finished_tasks_id);
     if (!succ) {
+        spdlog::error("Failed to load agents.");
         if (num_of_agents > 0) {
             generateRandomAgents();
             // saveAgents();
-        } else {
-            cerr << "Agent file " << agent_fname << " not found." << endl;
-            exit(-1);
         }
+        // else {
+        //     cerr << "Agent file " << agent_fname << " not found." << endl;
+        //     exit(-1);
+        // }
     }
-    for (int i = 0; i < num_of_agents; i++) {
-        agents[i].id = i;
-    }
+    // for (int i = 0; i < num_of_agents; i++) {
+    //     agents[i].id = i;
+    // }
 }
 
 void Instance::GetRawReservationTable() {
@@ -304,49 +307,62 @@ void Instance::generateRandomAgents() {
 // 	myfile.close();
 // 	return true;
 // }
+bool Instance::loadAgents(
+    std::vector<std::tuple<double, double, int>>& start_locs,
+    set<int> finished_tasks_id) {
+    if (num_of_agents == 0) {
+        // cerr << "The number of agents should be larger than 0" << endl;
+        spdlog::error("The number of agents should be larger than 0");
+        exit(-1);
+    }
 
-bool Instance::loadAgents() {
-    return false;
-    // using namespace std;
-    // using namespace boost;
+    agents.resize(num_of_agents);
+    vector<int> start_locations(num_of_agents, -1);
 
-    // string line;
-    // ifstream myfile(agent_fname.c_str());
-    // if (!myfile.is_open())
-    //     return false;
+    // Obtain start locations
+    for (int i = 0; i < num_of_agents; i++) {
+        // Start loc and orientation
+        int row = static_cast<int>(std::get<0>(start_locs[i]));
+        int col = static_cast<int>(std::get<1>(start_locs[i]));
+        start_locations[i] = this->graph->linearizeCoordinate(row, col);
+    }
 
-    // getline(myfile, line);
+    // Update goal locations
+    this->task_assigner->updateGoalLocations(start_locations,
+                                             finished_tasks_id);
+    vector<vector<Task>> goal_locations =
+        this->task_assigner->getGoalLocations();
 
-    // char_separator<char> sep(",");
-    // tokenizer<char_separator<char>> tok(line, sep);
-    // tokenizer<char_separator<char>>::iterator beg = tok.begin();
-    // int tmp = atoi((*beg).c_str());
-    // // start_locations.resize(num_of_agents);
-    // // goal_locations.resize(num_of_agents);
-    // //        printf("Total number of agents: %d\n", num_of_agents);
-    // agents.resize(num_of_agents);
-    // for (int i = 0; i < num_of_agents; i++) {
-    //     getline(myfile, line);
-    //     tokenizer<char_separator<char>> col_tok(line, sep);
-    //     tokenizer<char_separator<char>>::iterator c_beg = col_tok.begin();
-    //     // pair<int, int> curr_pair;
-    //     // read start [row,col] for agent i
-    //     int row = atoi((*c_beg).c_str());
-    //     c_beg++;
-    //     int col = atoi((*c_beg).c_str());
-    //     int start = this->graph->linearizeCoordinate(row, col);
-    //     // start_locations[i] = this->graph->linearizeCoordinate(row, col);
-    //     // read goal [row,col] for agent i
-    //     c_beg++;
-    //     row = atoi((*c_beg).c_str());
-    //     c_beg++;
-    //     col = atoi((*c_beg).c_str());
-    //     int goal = this->graph->linearizeCoordinate(row, col);
-    //     agents[i] = Agent(start, goal);
-    //     agents[i].id = i;
-    // }
+    // Print the start and goal locations
+    if (this->screen > 0) {
+        spdlog::info("Start to goal locations:");
+        for (int i = 0; i < num_of_agents; i++) {
+            cout << "Agent " << i << ": ("
+                 << graph->getCoordinate(start_locations[i]).first << ", "
+                 << graph->getCoordinate(start_locations[i]).second << ") => ";
+            for (const auto& task : goal_locations[i]) {
+                cout << "(" << graph->getCoordinate(task.loc).first << ", "
+                     << graph->getCoordinate(task.loc).second << ", "
+                     << graph->types[task.loc] << ", "
+                     << ") -> ";
+            }
+            cout << endl;
+        }
+    }
 
-    // myfile.close();
+    // Construct agents
+    for (int i = 0; i < num_of_agents; i++) {
+        if (goal_locations[i].empty()) {
+            spdlog::error("Agent {} has no goal locations assigned.", i);
+            return false;
+        }
+        int ori = std::get<2>(start_locs[i]);
+        agents[i] =
+            Agent(start_locations[i], this->graph->ORI_SMART_TO_MASS.at(ori),
+                  goal_locations[i]);
+        agents[i].id = i;
+    }
+
     return true;
 }
 

@@ -21,8 +21,7 @@ public:
     Instance() {
     }
     Instance(shared_ptr<Graph> graph, shared_ptr<TaskAssigner> task_assigner,
-             vector<Task> goal_locations, int screen, int task_id,
-             int simulation_window);
+             int screen, int simulation_window);
 
     void setGoalLocations(const vector<Task>& goal_locations) {
         this->goal_locations = goal_locations;

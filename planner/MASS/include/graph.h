@@ -22,6 +22,14 @@ public:
     // distance heuristics, used for reasoning target conflicts
     // boost::unordered_map<int, vector<int>> d_heuristics;
 
+    // Map from the orientation in SMART to the orientation in RHCR.
+    const boost::unordered_map<int, orient> ORI_SMART_TO_MASS = {
+        {0, orient::North},
+        {1, orient::East},
+        {2, orient::South},
+        {3, orient::West},
+    };
+
     Graph() {
     }
 

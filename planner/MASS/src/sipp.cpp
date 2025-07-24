@@ -262,27 +262,27 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             if (s->goal_id + 1 == curr_agent.goal_locations.size()) {
                 if (instance_ptr->simulation_window <= 0 &&
                     s->arrival_time_max < INF) {
-                    spdlog::info("Agent {}: Reached last goal {}, time: {}, g: "
-                                 "{}, h: {}, "
-                                 "f: {}, but cannot hold.",
-                                 curr_agent.id, s->goal_id, s->g, s->g, s->h,
-                                 s->f);
+                    // spdlog::info("Agent {}: Reached last goal {}, time: {}, g: "
+                    //              "{}, h: {}, "
+                    //              "f: {}, but cannot hold.",
+                    //              curr_agent.id, s->goal_id, s->g, s->g, s->h,
+                    //              s->f);
                 }
                 // In windowed case, or we can hold the last goal in
                 // non-windowed case, we reached the goal.
                 else {
-                    spdlog::info(
-                        "Agent {}: Reached last goal {}, time: {}, g: {}, h: "
-                        "{}, f: {}, can hold",
-                        curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
+                    // spdlog::info(
+                    //     "Agent {}: Reached last goal {}, time: {}, g: {}, h: "
+                    //     "{}, f: {}, can hold",
+                    //     curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
                     reached_goal = true;
                 }
             }
             // Otherwise, we proceed the goal id
             else {
-                spdlog::info(
-                    "Agent {}: Reached goal {}, time: {}, g: {}, h: {}, f: {}",
-                    curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
+                // spdlog::info(
+                //     "Agent {}: Reached goal {}, time: {}, g: {}, h: {}, f: {}",
+                //     curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
                 // Move to the next goal
                 std::shared_ptr<Node> new_n = std::make_shared<Node>(
                     s->goal_id + 1, s->current_point, s->curr_o,
@@ -301,9 +301,9 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         if (reached_goal) {
             optimal_travel_time = s->g;
             optimal_n = s;
-            spdlog::info(
-                "Agent {}: Found optimal solution with: g: {}, h: {}, f: {}",
-                curr_agent.id, s->g, s->h, s->f);
+            // spdlog::info(
+            //     "Agent {}: Found optimal solution with: g: {}, h: {}, f: {}",
+            //     curr_agent.id, s->g, s->h, s->f);
             // NOTE: To get optimal solution we should `continue` here. By
             // `break`, we stop the search when the first solution is found.
             // This can speed up the search.
@@ -503,16 +503,16 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
     expand_runtime += debug_expand_time;
 
     if (optimal_n == nullptr) {
-        spdlog::info(
-            "Agent {}: No solution found, current optimal travel time: {}",
-            curr_agent.id, optimal_travel_time);
+        // spdlog::info(
+        //     "Agent {}: No solution found, current optimal travel time: {}",
+        //     curr_agent.id, optimal_travel_time);
         return false;
     } else {
-        spdlog::info(
-            "Agent {}: Found solution with optimal travel time: {}, g: {}, h: "
-            "{}, f: {}",
-            curr_agent.id, optimal_travel_time, optimal_n->g, optimal_n->h,
-            optimal_n->f);
+        // spdlog::info(
+        //     "Agent {}: Found solution with optimal travel time: {}, g: {}, h: "
+        //     "{}, f: {}",
+        //     curr_agent.id, optimal_travel_time, optimal_n->g, optimal_n->h,
+        //     optimal_n->f);
         solution_cost = optimal_travel_time;
         updateResultNodes(optimal_n, path, solution, timed_path);
         return true;

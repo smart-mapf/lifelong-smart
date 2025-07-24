@@ -9,6 +9,7 @@ PROJECT_ROOT = _parent_dir
 SERVER_EXE = "server/build/ADG_server"
 PBS_EXE = "planner/PBS/build/pbs"
 RHCR_EXE = "planner/RHCR/build/lifelong"
+MASS_EXE = "planner/MASS/MASS"
 FOOTBOT_DIFFUSION_CONTROLLER_LIB = "client/build/controllers/footbot_diffusion/libfootbot_diffusion"
 TRAJECTORY_LOOP_FUNCTIONS_LIB = "client/build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions"
 
