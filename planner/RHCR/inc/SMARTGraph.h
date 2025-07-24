@@ -61,6 +61,10 @@ public:
         }
     }
 
+    set<int> get_aisle_entries() const {
+        return this->aisle_entries;
+    }
+
 
 private:
     // Number of valid edges.

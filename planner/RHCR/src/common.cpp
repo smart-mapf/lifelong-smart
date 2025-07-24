@@ -133,3 +133,26 @@ vector<list<tuple<int, int, int, int>>> read_tuple_vec(string fname,
     }
     return res;
 }
+
+int select_min_key_random_tie(const boost::unordered_map<int, int>& m,
+                              int seed) {
+    // Step 1: find minimum value using std::min_element
+    auto min_it = std::min_element(
+        m.begin(), m.end(),
+        [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
+            return a.second < b.second;
+        });
+    int min_val = min_it->second;
+
+    // Step 2: collect all keys with min_val
+    std::vector<int> candidates;
+    for (const auto& kv : m) {
+        if (kv.second == min_val)
+            candidates.push_back(kv.first);
+    }
+
+    // Step 3: break tie randomly
+    std::mt19937 gen(seed);
+    std::uniform_int_distribution<> dist(0, candidates.size() - 1);
+    return candidates[dist(gen)];
+}

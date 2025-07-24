@@ -76,4 +76,7 @@ private:
 
     // Task id -> aisle path
     unordered_map<int, Path> aisle_paths;
+
+    // Number of agents coming to each aisle. Aisle id -> number of agents.
+    unordered_map<int, int> aisle_usage;
 };

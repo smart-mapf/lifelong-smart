@@ -33,6 +33,13 @@ void SMARTSystem::initialize() {
     aisle_rt.k_robust = k_robust;
     aisle_rt.window = INT_MAX;
 
+    // Initialize aisle usage
+    if (this->G.get_grid_type() == SMARTGridType::ONE_BOT_PER_AISLE) {
+        for (const auto &entry : this->G.get_aisle_entries()) {
+            this->aisle_usage[entry] = 0;  // Initialize to 0
+        }
+    }
+
     // std::random_device rd;
     this->gen = mt19937(this->seed);
 
@@ -104,6 +111,13 @@ void SMARTSystem::update_start_locations(
                 if (finished_tasks_id.find(goal_locations[i][j].id) !=
                     finished_tasks_id.end()) {
                     goal_locations[i][j].id = -1;  // reset goal id
+                    if (this->G.get_grid_type() ==
+                            SMARTGridType::ONE_BOT_PER_AISLE &&
+                        this->G.types[goal_locations[i][j].location] ==
+                            "Endpoint") {
+                        this->aisle_usage[this->G.aisle_entry(
+                            goal_locations[i][j].location)] -= 1;
+                    }
                 }
             }
         }
@@ -194,12 +208,29 @@ int SMARTSystem::gen_next_goal(int agent_id, bool repeat_last_goal) {
             next = sample_workstation();
         } else {
             // next = this->sample_end_points();
-            next = G.endpoints[rand() % (int)G.endpoints.size()];
+            if (this->G.get_grid_type() == SMARTGridType::REGULAR)
+                next = G.endpoints[rand() % (int)G.endpoints.size()];
+            else if (this->G.get_grid_type() ==
+                     SMARTGridType::ONE_BOT_PER_AISLE) {
+                // Sample an endpoint from the aisle with the smallest number
+                // of aisle_usage, break ties randomly
+                int min_aisle_id = select_min_key_random_tie(
+                    this->aisle_usage, this->seed);
+                // Sample an endpoint from the aisle with the smallest usage
+                auto aisle = this->G.get_aisle(min_aisle_id);
+                int idx = rand() % (int)aisle.size();
+                auto it = aisle.begin();
+                std::advance(it, idx);
+                next = *it;
+            }
             this->next_goal_type[agent_id] = "w";
         }
     } else {
-        std::cout << "error! next goal type is not w or e, but "
-                  << this->next_goal_type[agent_id] << std::endl;
+        // std::cout << "error! next goal type is not w or e, but "
+        //           << this->next_goal_type[agent_id] << std::endl;
+        spdlog::error(
+            "SMARTSystem::gen_next_goal: next goal type is not w or e, but {}",
+            this->next_goal_type[agent_id]);
         exit(1);
     }
 
@@ -279,6 +310,14 @@ void SMARTSystem::update_goal_locations() {
                     // next = make_tuple(
                     //     this->gen_next_goal(k, true), 0, 0);
                     next = Task(this->gen_next_goal(k, true), -1, 0, 0);
+                }
+                if (this->G.get_grid_type() ==
+                        SMARTGridType::ONE_BOT_PER_AISLE &&
+                    G.types[next.location] == "Endpoint") {
+                    // If the next goal is an endpoint, increment the aisle
+                    // usage for the aisle that contains this endpoint
+                    int aisle_id = this->G.aisle_entry(next.location);
+                    this->aisle_usage[aisle_id] += 1;
                 }
             } else {
                 std::cout << "ERROR in update_goal_function()" << std::endl;
