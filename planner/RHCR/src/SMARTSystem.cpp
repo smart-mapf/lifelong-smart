@@ -208,21 +208,21 @@ int SMARTSystem::gen_next_goal(int agent_id, bool repeat_last_goal) {
             next = sample_workstation();
         } else {
             // next = this->sample_end_points();
-            if (this->G.get_grid_type() == SMARTGridType::REGULAR)
-                next = G.endpoints[rand() % (int)G.endpoints.size()];
-            else if (this->G.get_grid_type() ==
-                     SMARTGridType::ONE_BOT_PER_AISLE) {
-                // Sample an endpoint from the aisle with the smallest number
-                // of aisle_usage, break ties randomly
-                int min_aisle_id = select_min_key_random_tie(
-                    this->aisle_usage, this->seed);
-                // Sample an endpoint from the aisle with the smallest usage
-                auto aisle = this->G.get_aisle(min_aisle_id);
-                int idx = rand() % (int)aisle.size();
-                auto it = aisle.begin();
-                std::advance(it, idx);
-                next = *it;
-            }
+            // if (this->G.get_grid_type() == SMARTGridType::REGULAR)
+            next = G.endpoints[rand() % (int)G.endpoints.size()];
+            // else if (this->G.get_grid_type() ==
+            //          SMARTGridType::ONE_BOT_PER_AISLE) {
+            //     // Sample an endpoint from the aisle with the smallest number
+            //     // of aisle_usage, break ties randomly
+            //     int min_aisle_id = select_min_key_random_tie(
+            //         this->aisle_usage, this->seed);
+            //     // Sample an endpoint from the aisle with the smallest usage
+            //     auto aisle = this->G.get_aisle(min_aisle_id);
+            //     int idx = rand() % (int)aisle.size();
+            //     auto it = aisle.begin();
+            //     std::advance(it, idx);
+            //     next = *it;
+            // }
             this->next_goal_type[agent_id] = "w";
         }
     } else {
