@@ -172,6 +172,7 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         goal_id++;
         if (goal_id >= curr_agent.goal_locations.size())
             break;
+        curr_goal = curr_agent.goal_locations[goal_id];
     }
 
     if (goal_id >= curr_agent.goal_locations.size()) {
@@ -205,11 +206,10 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         std::chrono::duration<float> tmp_duration = tmp_end_time - start_time;
         if (tmp_duration.count() > cutoff_time) {
             // printf("Hit cut off time!\n");
-            spdlog::info(
-                "Agent {}: Hit cutoff time: {}, current f value: {}, "
-                "optimal travel time: {}",
-                curr_agent.id, cutoff_time, optimal_travel_time,
-                optimal_n ? optimal_n->f : INF);
+            spdlog::info("Agent {}: Hit cutoff time: {}, current f value: {}, "
+                         "optimal travel time: {}",
+                         curr_agent.id, cutoff_time, optimal_travel_time,
+                         optimal_n ? optimal_n->f : INF);
             break;
         }
         std::shared_ptr<Node> s = open.top();
@@ -218,14 +218,14 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
 
         // Print content of current node
         // spdlog::info(
-        //     "Agent {}: Current node ({},{}), goal {}, time: {}, g: {}, h: {}, "
-        //     "f: {}, prev action: {}, interval index: {}, arrival time min: {}, "
-        //     "arrival time max: {}",
-        //     curr_agent.id,
+        //     "Agent {}: Current node ({},{}), goal {}, time: {}, g: {}, h: {},
+        //     " "f: {}, prev action: {}, interval index: {}, arrival time min:
+        //     {}, " "arrival time max: {}", curr_agent.id,
         //     instance_ptr->graph->getRowCoordinate(s->current_point),
-        //     instance_ptr->graph->getColCoordinate(s->current_point), s->goal_id,
-        //     s->arrival_time_min, s->g, s->h, s->f, s->prev_action,
-        //     s->interval_index, s->arrival_time_min, s->arrival_time_max);
+        //     instance_ptr->graph->getColCoordinate(s->current_point),
+        //     s->goal_id, s->arrival_time_min, s->g, s->h, s->f,
+        //     s->prev_action, s->interval_index, s->arrival_time_min,
+        //     s->arrival_time_max);
 
         if (closed_set.find(s) == closed_set.end()) {
             closed_set.insert(s);
@@ -238,10 +238,11 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         // Found solution, exit the loop
         if (s->f > optimal_travel_time) {
             // spdlog::info(
-            //     "Agent {} exiting: Current node ({},{}), goal {}, time: {}, g: "
+            //     "Agent {} exiting: Current node ({},{}), goal {}, time: {},
+            //     g: "
             //     "{}, h: "
-            //     "{}, f: {} is worse than the current optimal travel time: {}",
-            //     curr_agent.id,
+            //     "{}, f: {} is worse than the current optimal travel time:
+            //     {}", curr_agent.id,
             //     instance_ptr->graph->getRowCoordinate(s->current_point),
             //     instance_ptr->graph->getColCoordinate(s->current_point),
             //     s->goal_id, s->arrival_time_min, s->g, s->h, s->f,
@@ -258,31 +259,26 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             // For the last goal, we must make sure we can hold it forever (in
             // non-windowed case). Do not increment goal_id if we cannot hold
             // it.
-            // Check if we reached the last goal
+            // Check if we reached the last goal, and there is no target
+            // conflicts. We need to check target conflict in both windowed and
+            // non-windowed cases.
             if (s->goal_id + 1 == curr_agent.goal_locations.size()) {
-                if (instance_ptr->simulation_window <= 0 &&
-                    s->arrival_time_max < INF) {
-                    // spdlog::info("Agent {}: Reached last goal {}, time: {}, g: "
+                if (s->arrival_time_max < INF) {
+                    // spdlog::info("Agent {}: Reached last goal {}, time: {},
+                    // g: "
                     //              "{}, h: {}, "
                     //              "f: {}, but cannot hold.",
                     //              curr_agent.id, s->goal_id, s->g, s->g, s->h,
                     //              s->f);
-                }
-                // In windowed case, or we can hold the last goal in
-                // non-windowed case, we reached the goal.
-                else {
-                    // spdlog::info(
-                    //     "Agent {}: Reached last goal {}, time: {}, g: {}, h: "
-                    //     "{}, f: {}, can hold",
-                    //     curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
+                } else {
                     reached_goal = true;
                 }
             }
             // Otherwise, we proceed the goal id
             else {
                 // spdlog::info(
-                //     "Agent {}: Reached goal {}, time: {}, g: {}, h: {}, f: {}",
-                //     curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
+                //     "Agent {}: Reached goal {}, time: {}, g: {}, h: {}, f:
+                //     {}", curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
                 // Move to the next goal
                 std::shared_ptr<Node> new_n = std::make_shared<Node>(
                     s->goal_id + 1, s->current_point, s->curr_o,
@@ -331,11 +327,10 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         // if (instance_ptr->simulation_window <= 0) {
         else {
             // spdlog::info(
-            //     "Agent {}: Expanding node ({},{}), goal {}, time: {}, g: {}, "
-            //     "h: "
-            //     "{}, f: {}, prev action: {}, interval index: {}, arrival time "
-            //     "min: {}, arrival time max: {}",
-            //     curr_agent.id,
+            //     "Agent {}: Expanding node ({},{}), goal {}, time: {}, g: {},
+            //     " "h: "
+            //     "{}, f: {}, prev action: {}, interval index: {}, arrival time
+            //     " "min: {}, arrival time max: {}", curr_agent.id,
             //     instance_ptr->graph->getRowCoordinate(s->current_point),
             //     instance_ptr->graph->getColCoordinate(s->current_point),
             //     s->goal_id, s->arrival_time_min, s->g, s->h, s->f,
@@ -509,7 +504,8 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         return false;
     } else {
         // spdlog::info(
-        //     "Agent {}: Found solution with optimal travel time: {}, g: {}, h: "
+        //     "Agent {}: Found solution with optimal travel time: {}, g: {}, h:
+        //     "
         //     "{}, f: {}",
         //     curr_agent.id, optimal_travel_time, optimal_n->g, optimal_n->h,
         //     optimal_n->f);
