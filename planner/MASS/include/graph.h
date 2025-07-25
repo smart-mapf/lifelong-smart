@@ -1,6 +1,8 @@
 #pragma once
 #include "common.h"
 #include "task.h"
+#include <mutex>
+#include <thread>
 
 struct Neighbors {
     pair<int, orient> left;
@@ -102,7 +104,7 @@ public:
 
     void computeHeuristics();
     vector<double> computeHeuristicsOneLoc(int root_location);
-    std::vector<std::vector<double>> BackDijkstra(int root_location);
+    bool BackDijkstra(int root_location);
 
     // nodes from and to are neighbors
     double getWeight(int from, int to) const;
@@ -209,6 +211,9 @@ private:
     vector<int> warehouse_task_locs;  // workstations + endpoints
     vector<int>
         empty_locations;  // locations that are not obstacles or task_loc
+
+    // Mutex for thread safety when computing heuristics
+    std::mutex heuristic_mutex;
 
     // Direction of movement
     // 0: right, 1: up, 2: left, 3: down
