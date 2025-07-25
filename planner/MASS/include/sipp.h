@@ -101,7 +101,4 @@ public:
     size_t count_motion_solver = 0;
     int hit_count_ = 0;
     int debug_rt_location_ = 0;
-
-private:
-    std::mutex mutex;
 };

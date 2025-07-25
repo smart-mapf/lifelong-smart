@@ -572,19 +572,23 @@ void Graph::computeHeuristics() {
         h_locations = this->warehouse_task_locs;
     }
     heuristics.clear();
-    for (int loc : h_locations) {
-        std::vector<std::vector<double>> heuristics_for_loc;
-        heuristics_for_loc = BackDijkstra(loc);
-        this->heuristics[loc] = heuristics_for_loc;
+    size_t num_proc = std::thread::hardware_concurrency();
+    num_proc = min(2, (int)num_proc);
+    for (size_t i = 0; i < h_locations.size(); i += num_proc) {
+        std::vector<std::thread> threads;
+        size_t end_j = min(i + num_proc, h_locations.size());
+        for (size_t j = i; j < end_j; j++) {
+            int loc = h_locations[j];
+            threads.emplace_back(&Graph::BackDijkstra, this, loc);
+        }
+        // std::vector<std::vector<double>> heuristics_for_loc;
+        // heuristics_for_loc = BackDijkstra(loc);
+        // this->heuristics[loc] = heuristics_for_loc;
+        for (auto& t : threads) {
+            t.join();
+        }
     }
 }
-
-// vector<double> Graph::computeHeuristicsOneLoc(int root_location) {
-//     vector<double> h(num_of_rows * num_of_cols, WEIGHT_MAX);
-//     h[root_location] = 0;
-
-//     return h;
-// }
 
 /**
  * @brief Help function, get the heuristic values
@@ -592,7 +596,7 @@ void Graph::computeHeuristics() {
  * @param start_loc The start location of the agent
  * @return Bool value determine if the search success
  */
-std::vector<std::vector<double>> Graph::BackDijkstra(int root_location) {
+bool Graph::BackDijkstra(int root_location) {
     std::vector<std::vector<double>> curr_heuristic(
         this->map_size, std::vector<double>(NUM_ORIENT));
     std::priority_queue<std::shared_ptr<Node>,
@@ -690,5 +694,9 @@ std::vector<std::vector<double>> Graph::BackDijkstra(int root_location) {
         }
     }
 
-    return curr_heuristic;
+    std::lock_guard<std::mutex> lock(heuristic_mutex);
+    heuristics[root_location] = curr_heuristic;
+
+    // return curr_heuristic;
+    return true;
 }
