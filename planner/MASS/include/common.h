@@ -72,8 +72,8 @@ using json = nlohmann::json;
 #define V_MIN 0.0
 #define V_MAX 2.0
 #define A_MAX 0.5
-#define ROTATE_COST 1.0
-#define TURN_BACK_COST 1.8
+#define ROTATE_COST 2.0
+#define TURN_BACK_COST 3.6
 
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::duration<float> time_s;

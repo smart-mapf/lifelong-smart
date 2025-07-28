@@ -1,8 +1,9 @@
 #pragma once
-#include "common.h"
-#include "task.h"
 #include <mutex>
 #include <thread>
+
+#include "common.h"
+#include "task.h"
 
 struct Neighbors {
     pair<int, orient> left;
@@ -20,6 +21,9 @@ public:
 
     // heuristics for guidance graph, low level search optimize this.
     boost::unordered_map<int, vector<vector<double>>> heuristics;
+
+    // heuristics that does not consider dynamics
+    boost::unordered_map<int, vector<double>> d_heuristics;
 
     // distance heuristics, used for reasoning target conflicts
     // boost::unordered_map<int, vector<int>> d_heuristics;
@@ -103,7 +107,7 @@ public:
     // void printMap() const;
 
     void computeHeuristics();
-    vector<double> computeHeuristicsOneLoc(int root_location);
+    vector<double> computeHeuristicsOneLocPebbleMotion(int root_location);
     bool BackDijkstra(int root_location);
 
     // nodes from and to are neighbors
@@ -161,6 +165,8 @@ public:
 
     double getHeuristic(vector<Task> goals, int start_loc, orient start_ori,
                         int goal_id) const;
+    double getHeuristicOneGoalPebbleMotion(int goal_loc, int start_loc,
+                                           orient start_ori) const;
 
     int walkCounterClockwise(int from, int to) const {
         assert(validMove(from, to));
@@ -216,7 +222,7 @@ private:
     std::mutex heuristic_mutex;
 
     // Direction of movement
-    // 0: right, 1: up, 2: left, 3: down
+    // 0: North, 1: East, 2: South, 3: West
     int move[4];
 
     bool loadMap();

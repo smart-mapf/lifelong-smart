@@ -12,6 +12,7 @@
 #include "common.h"
 #include "instance.h"
 #include "pbs.h"
+#include "pibt.h"
 #include "task_assigner.h"
 
 /* Main function */
@@ -70,7 +71,8 @@ int main(int argc, char **argv) {
     /// check the correctness and consistence of params
     //////////////////////////////////////////////////////////////////////
 
-    srand(vm["seed"].as<int>());
+    int seed = vm["seed"].as<int>();
+    srand(seed);
 
     // Set up logger
     auto console_logger = spdlog::default_logger()->clone("Planner");
@@ -84,6 +86,10 @@ int main(int argc, char **argv) {
         make_shared<Graph>(vm["map"].as<string>(), screen);
     std::shared_ptr<TaskAssigner> task_assigner =
         make_shared<TaskAssigner>(graph, screen, simulation_window, num_agents);
+
+    // Backup solver
+    int simulation_window_ts = static_cast<int>(simulation_window * V_MAX);
+    PIBT pibt(graph, simulation_window_ts, screen, seed, num_agents);
 
     // Stats
     int n_mapf_calls = 0;        // number of MAPF calls
@@ -161,6 +167,7 @@ int main(int argc, char **argv) {
         n_mapf_calls++;
         auto global_start_time = Time::now();
         bool pbs_success = pbs.solve(vm["output"].as<string>());
+        // bool pbs_success = false;
         auto global_end_time = Time::now();
         std::chrono::duration<float> global_run_time =
             global_end_time - global_start_time;
@@ -179,7 +186,11 @@ int main(int argc, char **argv) {
             // pbs.savePath("durationPath.txt");
         } else {
             // printf("No solution found!\n");
-            spdlog::warn("MASS: No solution found!");
+            spdlog::warn("MASS: No solution found, invoking PIBT!");
+            pibt.run(instance_ptr->getStartLocations(),
+                     instance_ptr->task_assigner->getGoalLocations());
+            n_rule_based_calls++;
+            new_mapf_plan = pibt.getPaths();
         }
 
         // Send new plan

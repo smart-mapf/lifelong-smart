@@ -141,7 +141,7 @@ void printRT(ReservationTable rt){
 	for(int i = 0; i < (signed) rt.size(); ++i){
 		std::cout<<"cp" << i << "\t";
 		for(auto ittemp = rt[i].begin(); ittemp != rt[i].end(); ++ittemp){
-			std::cout<< ittemp->t_min << "\t" <<ittemp->t_max << "\t" << ittemp->agent_id << "\t";
+			std::cout << "t_min=" << ittemp->t_min << "\t" << "tmax=" <<ittemp->t_max << "\t" << "agent id=" << ittemp->agent_id << "\t";
 		}
 		std::cout<<"\n";
 	}
@@ -193,6 +193,7 @@ bool PTNode::checkSolution(Instance& instance){
             return false;
         }
     }
+    // printRT(rt_table);
     return true;
 }
 

@@ -42,7 +42,7 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
 
     // Generate new goals based on last goal types
     for (int i = 0; i < num_of_agents; i++) {
-        spdlog::info("Agent {}: Last goal type: {}", i, last_goal_types[i]);
+        // spdlog::info("Agent {}: Last goal type: {}", i, last_goal_types[i]);
         // Minimal time it takes for the robot to reach the available goals
         int min_time = 0;
         int prev_loc = start_locations[i];
@@ -51,7 +51,7 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
                 this->graph->getManhattanDistance(prev_loc, task.loc) / V_MAX;
             prev_loc = task.loc;
         }
-        spdlog::info("Agent {}: Minimal time to reach goals: {}", i, min_time);
+        // spdlog::info("Agent {}: Minimal time to reach goals: {}", i, min_time);
         while (min_time < this->simulation_window * 1.5) {
             if (last_goal_types[i] == "Workstation") {
                 // If the last goal was a workstation, sample an endpoint

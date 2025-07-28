@@ -10,6 +10,7 @@
 #include "graph.h"
 #include "task.h"
 #include "task_assigner.h"
+#include "states.h"
 
 using namespace std;
 
@@ -203,6 +204,15 @@ public:
         return num_of_agents;
     }
     void GetAgents(std::vector<Agent>& agents_list);
+
+    vector<State> getStartLocations() const {
+        vector<State> starts;
+        for (const auto& agent : agents) {
+            starts.push_back(State(agent.start_location, 0, agent.start_o));
+        }
+        return starts;
+    };
+
     // int GetNumOfVertices() {return map_size;};
     void GetReservationTable(ReservationTable& rt) {
         rt = raw_rv_tbl;

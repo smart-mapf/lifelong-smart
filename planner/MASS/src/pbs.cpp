@@ -36,7 +36,7 @@ bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id) {
     ReservationTable rt(instance_ptr->graph->map_size);
     node.getRTFromP(rt, rtp, instance_ptr->simulation_window);
     // Not needed?
-    InsertInitLocation(agent_id, *instance_ptr, rt);
+    // InsertInitLocation(agent_id, *instance_ptr, rt);
     double solution_cost = 0.0;
     Path path;
     bool sipp_success =
@@ -424,10 +424,11 @@ bool PBS::generateChild(int child_id, std::shared_ptr<PTNode> parent, int low,
                 if (lower_agents.count(a2) >
                     0)  // has a collision with a lower priority agent
                 {
-                    if (screen > 1)
-                        cout << "\t" << a2
-                             << " needs to be replanned due to collisions with "
-                             << a << endl;
+                    // if (screen > 1)
+                    //     cout << "\t" << a2
+                    //          << " needs to be replanned due to collisions
+                    //          with "
+                    //          << a << endl;
                     to_replan.emplace(topological_orders[a2], a2);
                     lookup_table[a2] = true;
                 }
@@ -557,16 +558,25 @@ vector<vector<tuple<int, int, double, int>>> PBS::getTimedPath() const {
         // output << "Agent " << i << ":";
         vector<tuple<int, int, double, int>> agent_path;
         int goal_id = 0;
-        // if (screen > 0)
-        //     cout << "Agent " << i << ": ";
-        for (const auto& state : solution_node->plan[i]) {
+        // for (const auto& state : solution_node->plan[i]) {
+        for (int j = 0; j < solution_node->plan[i].size(); j++) {
+            auto state = solution_node->plan[i][j];
             if (state.arrival_time >= instance_ptr->simulation_window) {
                 // If the agent arrives after the simulation window, we do not
                 // record it
                 continue;
             }
             int loc = state.location;
-            double t = state.arrival_time;
+            double t;
+            // Not the last state, take the next arrival time minus the max
+            // time it takes to move as the actual start time of the action
+            // from current state to the next state
+            if (j < solution_node->plan[i].size() - 1)
+                t = solution_node->plan[i][j + 1].arrival_time - (1 / V_MAX);
+            // Last state, take the arrival time of the current state as the
+            // start time of the action
+            else
+                t = state.arrival_time;
             int task_id = -1;
             // Reached a goal
             auto curr_goals = instance_ptr->agents[i].goal_locations;
@@ -578,19 +588,6 @@ vector<vector<tuple<int, int, double, int>>> PBS::getTimedPath() const {
             agent_path.push_back(make_tuple(
                 instance_ptr->graph->getRowCoordinate(loc),
                 instance_ptr->graph->getColCoordinate(loc), t, task_id));
-
-            // if (screen > 0) {
-            //     std::cout << "(" <<
-            //     instance_ptr->graph->getRowCoordinate(loc)
-            //               << "," <<
-            //               instance_ptr->graph->getColCoordinate(loc)
-            //               << "," << task_id << ")->";
-            //     if (task_id >= 0) {
-            //         std::cout << "End of task " << task_id << " at time " <<
-            //         t
-            //                   << " ";
-            //     }
-            // }
         }
 
         if (agent_path.empty()) {
@@ -604,9 +601,6 @@ vector<vector<tuple<int, int, double, int>>> PBS::getTimedPath() const {
                            0.0, -1));
         }
 
-        // if (screen > 0) {
-        //     std::cout << std::endl;
-        // }
         timed_path.push_back(agent_path);
     }
 
@@ -702,8 +696,9 @@ void PBS::printRT(ReservationTable rt) {
     for (int i = 0; i < (signed)rt.size(); ++i) {
         std::cout << "cp" << i << "\t";
         for (auto ittemp = rt[i].begin(); ittemp != rt[i].end(); ++ittemp) {
-            std::cout << ittemp->t_min << "\t" << ittemp->t_max << "\t#"
-                      << ittemp->agent_id << "#\t";
+            std::cout << "t_min=" << ittemp->t_min << "\t"
+                      << "t_max=" << ittemp->t_max << "\t#"
+                      << "agent id = " << ittemp->agent_id << "#\t";
         }
         std::cout << "\n";
     }
@@ -752,9 +747,15 @@ bool PBS::checkValid(ReservationTable& rt, Path& path, int agent) {
             if (path_entry.leaving_time_tail - rt_interval.t_min >= EPSILON and
                 rt_interval.t_max - path_entry.arrival_time >= EPSILON) {
                 std::cout << "agent " << agent << ": "
-                          << path_entry.arrival_time << ", loc"
-                          << path_entry.location << " "
-                          << path_entry.leaving_time_tail << '\n'
+                          << " loc = ("
+                          << instance_ptr->graph->getRowCoordinate(
+                                 path_entry.location)
+                          << ", "
+                          << instance_ptr->graph->getColCoordinate(
+                                 path_entry.location)
+                          << "), arrival = " << path_entry.arrival_time << ", "
+                          << ", leave = " << path_entry.leaving_time_tail
+                          << '\n'
                           << "agent " << rt_interval.agent_id << ": "
                           << rt_interval.t_min << " " << rt_interval.t_max
                           << '\n';
