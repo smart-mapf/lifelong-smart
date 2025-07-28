@@ -71,7 +71,7 @@ using json = nlohmann::json;
 #define CONTROL_POINTS_NUM 30
 #define V_MIN 0.0
 #define V_MAX 2.0
-#define A_MAX 0.5
+#define A_MAX 2.0
 #define ROTATE_COST 2.0
 #define TURN_BACK_COST 3.6
 
