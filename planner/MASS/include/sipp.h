@@ -30,15 +30,15 @@ class SIPP {
 
 public:
     explicit SIPP(const std::shared_ptr<Instance>&, double cutoff_time);
-    bool run(int agent, ReservationTable& rt, MotionInfo& solution, Path& path, double& solution_cost, TimedPath& timed_path);
+    bool run(int agent, ReservationTable& rt, MotionInfo& solution, Path& path, double& solution_cost, TimedPath& timed_path, bool log=false);
     bool getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node,
                      int goal_id);
     // void getHeuristic(const std::string& heuristic_file);
     void showSolution(std::shared_ptr<Node>& s);
+    void Reset();
 
 private:
     void PrintNonzeroRT(ReservationTable& rt) const;
-    void Reset();
     // inline int DistHeuristic(int curr_loc)
     // {
     //     int h_val = instance_ptr->graph->getManhattanDistance(curr_loc, curr_agent.goal_location);
@@ -83,6 +83,8 @@ private:
     std::shared_ptr<FailureCache> failure_cache_ptr;
     std::shared_ptr<SuccessCache> success_cache_ptr;
     double cutoff_time = 20.0;
+
+    bool log = false;  // log the planning process, for debugging purposes
 
 public:
     // statistic

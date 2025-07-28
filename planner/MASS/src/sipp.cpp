@@ -30,7 +30,9 @@ bool SIPP::getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node,
     std::vector<TimeInterval> safe_intervals;
     findFreeIntervals(rt[curr_agent.start_location], safe_intervals);
     if (safe_intervals.empty()) {
-        printf("Empty safe initial safe intervals!\n");
+        // printf("Empty safe initial safe intervals!\n");
+        spdlog::error("Empty safe initial safe intervals for agent {}!",
+                      curr_agent.id);
         return false;
     } else {
         TimeInterval init_safe_interval;
@@ -55,7 +57,8 @@ bool SIPP::getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node,
         init_node->prev_action = Action::none;
         init_node->goal_id = goal_id;
         // g is the actual time value to that node
-        init_node->g = max(0.0, instance_ptr->simulation_window);
+        // init_node->g = max(0.0, instance_ptr->simulation_window);
+        init_node->g = 0.0;
         // If node is not expanded, h value is the heuristic value. Otherwise,
         // we use the least value in partial interval
         // init_node->h = heuristic_vec[curr_agent.id][init_node->current_point]
@@ -155,7 +158,10 @@ void SIPP::showSolution(std::shared_ptr<Node>& s) {
 }
 
 bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
-               Path& path, double& solution_cost, TimedPath& timed_path) {
+               Path& path, double& solution_cost, TimedPath& timed_path,
+               bool log) {
+    this->log = log;
+    this->instance_ptr->graph->log = log;
     // Init process
     Reset();
     auto debug_start_t = Time::now();
@@ -163,6 +169,22 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
     curr_agent = instance_ptr->agents[agentID];
     int goal_id = 0;
     Task curr_goal = curr_agent.goal_locations[goal_id];
+
+    if (log) {
+        // Print all goal locations
+        cout << "Start to Goals: ";
+        cout << "("
+             << instance_ptr->graph->getRowCoordinate(curr_agent.start_location)
+             << ","
+             << instance_ptr->graph->getColCoordinate(curr_agent.start_location)
+             << ", " << curr_agent.start_o << ") -> ";
+        for (const auto& goal : curr_agent.goal_locations) {
+            cout << "(" << instance_ptr->graph->getRowCoordinate(goal.loc)
+                 << "," << instance_ptr->graph->getColCoordinate(goal.loc)
+                 << ") -> ";
+        }
+        cout << endl;
+    }
 
     // Skip the goals if they are the same as the start location
     while (goal_id < curr_agent.goal_locations.size() &&
@@ -179,6 +201,9 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         solution.clear();
         path.clear();
         solution_cost = 0.0;
+        if (log)
+            spdlog::info("Agent {}: No goals left, returning empty solution.",
+                         curr_agent.id);
         return false;
     }
 
@@ -191,6 +216,9 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
     if (!getInitNode(rt, init_node, goal_id)) {
         path.clear();
         PrintNonzeroRT(rt);
+        if (log)
+            spdlog::error("Agent {}: Fail to get initial node for SIPP!",
+                          curr_agent.id);
         return false;
     }
     open.push(init_node);
@@ -206,10 +234,8 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         std::chrono::duration<float> tmp_duration = tmp_end_time - start_time;
         if (tmp_duration.count() > cutoff_time) {
             // printf("Hit cut off time!\n");
-            spdlog::info("Agent {}: Hit cutoff time: {}, current f value: {}, "
-                         "optimal travel time: {}",
-                         curr_agent.id, cutoff_time, optimal_travel_time,
-                         optimal_n ? optimal_n->f : INF);
+            spdlog::info("Agent {}: Hit cutoff time: {}", curr_agent.id,
+                         cutoff_time);
             break;
         }
         std::shared_ptr<Node> s = open.top();
@@ -217,15 +243,19 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         curr_goal = curr_agent.goal_locations[s->goal_id];
 
         // Print content of current node
-        // spdlog::info(
-        //     "Agent {}: Current node ({},{}), goal {}, time: {}, g: {}, h: {},
-        //     " "f: {}, prev action: {}, interval index: {}, arrival time min:
-        //     {}, " "arrival time max: {}", curr_agent.id,
-        //     instance_ptr->graph->getRowCoordinate(s->current_point),
-        //     instance_ptr->graph->getColCoordinate(s->current_point),
-        //     s->goal_id, s->arrival_time_min, s->g, s->h, s->f,
-        //     s->prev_action, s->interval_index, s->arrival_time_min,
-        //     s->arrival_time_max);
+        if (log) {
+            spdlog::info(
+                "Agent {}: Current node ({},{},{}), goal {}, time: {}, g: {}, "
+                "h: "
+                "{}, f: {}, prev action: {}, interval index: {}, arrival time "
+                "min: {}, arrival time max: {}",
+                curr_agent.id,
+                instance_ptr->graph->getRowCoordinate(s->current_point),
+                instance_ptr->graph->getColCoordinate(s->current_point),
+                s->curr_o, s->goal_id, s->arrival_time_min, s->g, s->h, s->f,
+                s->prev_action, s->interval_index, s->arrival_time_min,
+                s->arrival_time_max);
+        }
 
         if (closed_set.find(s) == closed_set.end()) {
             closed_set.insert(s);
@@ -237,16 +267,18 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         // *****************************
         // Found solution, exit the loop
         if (s->f > optimal_travel_time) {
-            // spdlog::info(
-            //     "Agent {} exiting: Current node ({},{}), goal {}, time: {},
-            //     g: "
-            //     "{}, h: "
-            //     "{}, f: {} is worse than the current optimal travel time:
-            //     {}", curr_agent.id,
-            //     instance_ptr->graph->getRowCoordinate(s->current_point),
-            //     instance_ptr->graph->getColCoordinate(s->current_point),
-            //     s->goal_id, s->arrival_time_min, s->g, s->h, s->f,
-            //     optimal_travel_time);
+            if (log) {
+                spdlog::info(
+                    "Agent {} exiting: Current node ({},{},{}), goal {}, time: "
+                    "{}, g : {}, h: {}, f: {} is worse than the current "
+                    "optimal travel time: {} ",
+                    curr_agent.id,
+                    instance_ptr->graph->getRowCoordinate(s->current_point),
+                    instance_ptr->graph->getColCoordinate(s->current_point),
+                    s->curr_o, s->goal_id, s->arrival_time_min, s->g, s->h,
+                    s->f, optimal_travel_time);
+            }
+
             break;
         }
         // *****************************
@@ -264,12 +296,12 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             // non-windowed cases.
             if (s->goal_id + 1 == curr_agent.goal_locations.size()) {
                 if (s->arrival_time_max < INF) {
-                    // spdlog::info("Agent {}: Reached last goal {}, time: {},
-                    // g: "
-                    //              "{}, h: {}, "
-                    //              "f: {}, but cannot hold.",
-                    //              curr_agent.id, s->goal_id, s->g, s->g, s->h,
-                    //              s->f);
+                    if (log) {
+                        spdlog::info("Agent {}: Reached last goal {}, time: "
+                                     "{},g: {}, h: {}, f: {}, but cannot hold.",
+                                     curr_agent.id, s->goal_id, s->g, s->g,
+                                     s->h, s->f);
+                    }
                 } else {
                     reached_goal = true;
                 }
@@ -297,9 +329,12 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
         if (reached_goal) {
             optimal_travel_time = s->g;
             optimal_n = s;
-            // spdlog::info(
-            //     "Agent {}: Found optimal solution with: g: {}, h: {}, f: {}",
-            //     curr_agent.id, s->g, s->h, s->f);
+            if (log) {
+                spdlog::info("Agent {}: Found optimal solution with: g: {}, h: "
+                             "{}, f: {}",
+                             curr_agent.id, s->g, s->h, s->f);
+            }
+
             // NOTE: To get optimal solution we should `continue` here. By
             // `break`, we stop the search when the first solution is found.
             // This can speed up the search.
@@ -408,11 +443,11 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                         new_node->arrival_time_max = tmp_min_entry->t_max;
                         // TODO: Change the computation of g, h to weighted sum
                         // of edge weights and travel time.
-                        if (instance_ptr->simulation_window <= 0)
-                            new_node->g = new_node->arrival_time_min;
-                        else
-                            new_node->g = max(new_node->arrival_time_min,
-                                              instance_ptr->simulation_window);
+                        // if (instance_ptr->simulation_window <= 0)
+                        new_node->g = new_node->arrival_time_min;
+                        // else
+                        //     new_node->g = max(new_node->arrival_time_min,
+                        //                       instance_ptr->simulation_window);
                         // new_node->h = heuristic_vec[curr_agent.id]
                         //                            [new_node->current_point]
                         //                            [new_node->curr_o];
@@ -428,6 +463,26 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                         new_node->bezier_solution = tpg_solution;
                         new_node->parent = s;
                         new_node->goal_id = s->goal_id;
+                        if (log)
+                        {
+                            spdlog::info(
+                                "Agent {}: Created new node ({},{},{}), "
+                                "goal {}, time: {}, g: {}, h: {}, f: {}, "
+                                "prev action: {}, interval index: {}, "
+                                "arrival time min: {}, arrival time max: {}",
+                                curr_agent.id,
+                                instance_ptr->graph->getRowCoordinate(
+                                    new_node->current_point),
+                                instance_ptr->graph->getColCoordinate(
+                                    new_node->current_point),
+                                new_node->curr_o, new_node->goal_id,
+                                new_node->arrival_time_min, new_node->g,
+                                new_node->h, new_node->f,
+                                new_node->prev_action,
+                                new_node->interval_index,
+                                new_node->arrival_time_min,
+                                new_node->arrival_time_max);
+                        }
                         pushToOpen(new_node);
                     }
 
@@ -470,11 +525,11 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                 s->h = s->partial_intervals.top()->f;
 
                 // One-shot MASS objective
-                if (instance_ptr->simulation_window <= 0)
-                    s->f = s->g + s->h;
-                // Windowed MASS objective
-                else
-                    s->f = max(s->g, instance_ptr->simulation_window) + s->h;
+                // if (instance_ptr->simulation_window <= 0)
+                s->f = s->g + s->h;
+                // // Windowed MASS objective
+                // else
+                //     s->f = max(s->g, instance_ptr->simulation_window) + s->h;
                 open.push(s);
                 count_node_generated++;
             }
@@ -498,17 +553,18 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
     expand_runtime += debug_expand_time;
 
     if (optimal_n == nullptr) {
-        // spdlog::info(
-        //     "Agent {}: No solution found, current optimal travel time: {}",
-        //     curr_agent.id, optimal_travel_time);
+        if (log)
+            spdlog::info(
+                "Agent {}: No solution found, current optimal travel time: {}",
+                curr_agent.id, optimal_travel_time);
         return false;
     } else {
-        // spdlog::info(
-        //     "Agent {}: Found solution with optimal travel time: {}, g: {}, h:
-        //     "
-        //     "{}, f: {}",
-        //     curr_agent.id, optimal_travel_time, optimal_n->g, optimal_n->h,
-        //     optimal_n->f);
+        if (log)
+            spdlog::info("Agent {}: Found solution with optimal travel time: "
+                         "{}, g: {}, h:"
+                         "{}, f: {}",
+                         curr_agent.id, optimal_travel_time, optimal_n->g,
+                         optimal_n->h, optimal_n->f);
         solution_cost = optimal_travel_time;
         updateResultNodes(optimal_n, path, solution, timed_path);
         return true;
@@ -549,6 +605,41 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
     Neighbors neighbors;
     instance_ptr->graph->getNeighbors(n->current_point, n->curr_o, neighbors);
     // Previous action is forward. Do rotation expansion here.
+    if (log) {
+        spdlog::info(
+            "Expanding node ({},{},{}), goal {}, time: {}, g: {}, h: {}, "
+            "f: {}, prev action: {}, interval index: {}, arrival time "
+            "min: {}, arrival time max: {}",
+            instance_ptr->graph->getRowCoordinate(n->current_point),
+            instance_ptr->graph->getColCoordinate(n->current_point), n->curr_o,
+            n->goal_id, n->arrival_time_min, n->g, n->h, n->f, n->prev_action,
+            n->interval_index, n->arrival_time_min, n->arrival_time_max);
+
+        // Print neighbors
+        spdlog::info("Neighbors:");
+        spdlog::info(
+            "Left: ({},{}, {})",
+            instance_ptr->graph->getRowCoordinate(neighbors.left.first),
+            instance_ptr->graph->getColCoordinate(neighbors.left.first),
+            neighbors.left.second);
+        spdlog::info(
+            "Right: ({},{}, {})",
+            instance_ptr->graph->getRowCoordinate(neighbors.right.first),
+            instance_ptr->graph->getColCoordinate(neighbors.right.first),
+            neighbors.right.second);
+        spdlog::info(
+            "Back: ({},{}, {})",
+            instance_ptr->graph->getRowCoordinate(neighbors.back.first),
+            instance_ptr->graph->getColCoordinate(neighbors.back.first),
+            neighbors.back.second);
+        spdlog::info("Forward:");
+        for (const auto& forward : neighbors.forward_locs) {
+            cout << "(" << instance_ptr->graph->getRowCoordinate(forward)
+                 << ", " << instance_ptr->graph->getColCoordinate(forward)
+                 << "),  ";
+        }
+        cout << endl;
+    }
     if (n->parent == nullptr or n->prev_action == Action::forward) {
         // Insert three nodes, turn left, turn right, and turn back
         if ((n->arrival_time_min + curr_agent.rotation_cost) <
@@ -570,11 +661,11 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_left->arrival_time_min =
                 n->arrival_time_min + curr_agent.rotation_cost;
             n_left->arrival_time_max = n->arrival_time_max;
-            if (instance_ptr->simulation_window <= 0)
-                n_left->g = n_left->arrival_time_min;
-            else
-                n_left->g = max(n_left->arrival_time_min,
-                                instance_ptr->simulation_window);
+            // if (instance_ptr->simulation_window <= 0)
+            n_left->g = n_left->arrival_time_min;
+            // else
+            //     n_left->g = max(n_left->arrival_time_min,
+            //                     instance_ptr->simulation_window);
             // n_left->h =
             // heuristic_vec[curr_agent.id][n_left->current_point]
             //                          [n_left->curr_o];
@@ -585,6 +676,23 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_left->parent = n;
             n_left->goal_id = n->goal_id;
             pushToOpen(n_left);
+            // Print g and h values
+            if (log) {
+                spdlog::info(
+                    "Agent {}: Created left turn node ({},{},{}), goal {}, "
+                    "time: {}, g: {}, h: {}, f: {}, prev action: {}, "
+                    "interval index: {}, arrival time min: {}, arrival time "
+                    "max: {}",
+                    curr_agent.id,
+                    instance_ptr->graph->getRowCoordinate(
+                        n_left->current_point),
+                    instance_ptr->graph->getColCoordinate(
+                        n_left->current_point),
+                    n_left->curr_o, n_left->goal_id, n_left->arrival_time_min,
+                    n_left->g, n_left->h, n_left->f, n_left->prev_action,
+                    n_left->interval_index, n_left->arrival_time_min,
+                    n_left->arrival_time_max);
+            }
         }
 
         if ((n->arrival_time_min + curr_agent.rotation_cost) <
@@ -606,11 +714,11 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_right->arrival_time_min =
                 n->arrival_time_min + curr_agent.rotation_cost;
             n_right->arrival_time_max = n->arrival_time_max;
-            if (instance_ptr->simulation_window <= 0)
-                n_right->g = n_right->arrival_time_min;
-            else
-                n_right->g = max(n_right->arrival_time_min,
-                                 instance_ptr->simulation_window);
+            // if (instance_ptr->simulation_window <= 0)
+            n_right->g = n_right->arrival_time_min;
+            // else
+            //     n_right->g = max(n_right->arrival_time_min,
+            //                      instance_ptr->simulation_window);
             // n_right->h =
             // heuristic_vec[curr_agent.id][n_right->current_point]
             //                           [n_right->curr_o];
@@ -621,6 +729,23 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_right->parent = n;
             n_right->goal_id = n->goal_id;
             pushToOpen(n_right);
+
+            if (log) {
+                spdlog::info(
+                    "Agent {}: Created right turn node ({},{},{}), goal {}, "
+                    "time: {}, g: {}, h: {}, f: {}, prev action: {}, "
+                    "interval index: {}, arrival time min: {}, arrival time "
+                    "max: {}",
+                    curr_agent.id,
+                    instance_ptr->graph->getRowCoordinate(
+                        n_right->current_point),
+                    instance_ptr->graph->getColCoordinate(
+                        n_right->current_point),
+                    n_right->curr_o, n_right->goal_id,
+                    n_right->arrival_time_min, n_right->g, n_right->h,
+                    n_right->f, n_right->prev_action, n_right->interval_index,
+                    n_right->arrival_time_min, n_right->arrival_time_max);
+            }
         }
 
         if ((n->arrival_time_min + curr_agent.turn_back_cost) <
@@ -642,11 +767,11 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_back->arrival_time_min =
                 n->arrival_time_min + curr_agent.turn_back_cost;
             n_back->arrival_time_max = n->arrival_time_max;
-            if (instance_ptr->simulation_window <= 0)
-                n_back->g = n_back->arrival_time_min;
-            else
-                n_back->g = max(n_back->arrival_time_min,
-                                instance_ptr->simulation_window);
+            // if (instance_ptr->simulation_window <= 0)
+            n_back->g = n_back->arrival_time_min;
+            // else
+            //     n_back->g = max(n_back->arrival_time_min,
+            //                     instance_ptr->simulation_window);
             // n_back->h =
             // heuristic_vec[curr_agent.id][n_back->current_point]
             //                          [n_back->curr_o];
@@ -657,6 +782,23 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_back->parent = n;
             n_back->goal_id = n->goal_id;
             pushToOpen(n_back);
+
+            if (log) {
+                spdlog::info(
+                    "Agent {}: Created back turn node ({},{},{}), goal {}, "
+                    "time: {}, g: {}, h: {}, f: {}, prev action: {}, "
+                    "interval index: {}, arrival time min: {}, arrival time "
+                    "max: {}",
+                    curr_agent.id,
+                    instance_ptr->graph->getRowCoordinate(
+                        n_back->current_point),
+                    instance_ptr->graph->getColCoordinate(
+                        n_back->current_point),
+                    n_back->curr_o, n_back->goal_id, n_back->arrival_time_min,
+                    n_back->g, n_back->h, n_back->f, n_back->prev_action,
+                    n_back->interval_index, n_back->arrival_time_min,
+                    n_back->arrival_time_max);
+            }
         }
     }
 

@@ -172,25 +172,33 @@ int main(int argc, char **argv) {
         std::chrono::duration<float> global_run_time =
             global_end_time - global_start_time;
         // printf("Runtime for MASS is: %f\n", global_run_time.count());
-        spdlog::info("Runtime for MASS is: {} seconds",
-                     global_run_time.count());
+        if (screen > 0) {
+            spdlog::info("Runtime for MASS is: {} seconds",
+                         global_run_time.count());
+        }
         vector<vector<tuple<int, int, double, int>>> new_mapf_plan;
         new_mapf_plan.resize(instance_ptr->num_of_agents);
         if (pbs_success) {
             // printf("Solution found!\n");
-            spdlog::info("MASS: Solution found!");
+            if (screen > 0) {
+                spdlog::info("MASS: Solution found!");
+            }
             pbs.updateCost();
             new_mapf_plan = pbs.getTimedPath();
+            pbs.clear();
             // if (vm.count("outputPaths"))
             //     pbs.saveTimedPath(vm["outputPaths"].as<std::string>());
             // pbs.savePath("durationPath.txt");
         } else {
             // printf("No solution found!\n");
-            spdlog::warn("MASS: No solution found, invoking PIBT!");
+            if (screen > 0) {
+                spdlog::warn("MASS: No solution found, invoking PIBT!");
+            }
             pibt.run(instance_ptr->getStartLocations(),
                      instance_ptr->task_assigner->getGoalLocations());
             n_rule_based_calls++;
             new_mapf_plan = pibt.getPaths();
+            pibt.clear();
         }
 
         // Send new plan

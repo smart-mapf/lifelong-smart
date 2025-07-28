@@ -31,7 +31,26 @@ PBS::PBS(std::shared_ptr<Instance> user_instance_ptr,
     std::fill(agents_arrived.begin(), agents_arrived.end(), false);
 }
 
-bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id) {
+void PBS::clear()
+{
+    priority_graph.clear();
+    ordered_agents.clear();
+    need_replan.clear();
+    agents_arrived.clear();
+    sipp_ptr->Reset();
+    sipp_ptr = nullptr;
+    instance_ptr = nullptr;
+    runtime = 0;
+    runtime_generate_child = 0;
+    runtime_build_CT = 0;
+    runtime_build_CAT = 0;
+    runtime_path_finding = 0;
+    runtime_detect_conflicts = 0;
+    runtime_preprocessing = 0;
+    num_HL_expanded = 0;
+}
+
+bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id, bool log) {
     assert(need_replan[agent_id]);
     ReservationTable rt(instance_ptr->graph->map_size);
     node.getRTFromP(rt, rtp, instance_ptr->simulation_window);
@@ -41,7 +60,7 @@ bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id) {
     Path path;
     bool sipp_success =
         sipp_ptr->run(agent_id, rt, node.motion_solution[agent_id], path,
-                      solution_cost, node.all_agents_timed_path[agent_id]);
+                      solution_cost, node.all_agents_timed_path[agent_id], log);
     if (!sipp_success) {
         return false;
     }
@@ -125,6 +144,9 @@ bool PBS::initRootNode(std::shared_ptr<PTNode>& root_node) {
             continue;
         }
         if (!UpdatePlan(*root_node, i)) {
+            spdlog::error("Fail to find a initial plan for agent {}!", i);
+            // set<int> high_agts;
+            // SolveSingleAgent(*root_node, high_agts, i, true);
             return false;
         }
     }
@@ -475,9 +497,10 @@ bool PBS::solve(const string& outputFileName) {
     if (not initRootNode(Root)) {
         // printf("[Error] Fail to find a initial plan!\n");
         spdlog::error("Fail to find a initial plan!");
+        // exit(-1);
         return false;
     }
-    spdlog::info("Root cost: {}", root_cost);
+    // spdlog::info("Root cost: {}", root_cost);
     open_list.push(Root);
     while (!open_list.empty() and ((double)(clock() - start) / CLOCKS_PER_SEC) <
                                       this->cutoff_runtime) {

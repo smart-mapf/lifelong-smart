@@ -429,18 +429,18 @@ void Graph::getNeighbors(
 
 void Graph::getInverseNeighbors(int curr, orient direct,
                                 Neighbors& neighbor) const {
-    int left = direct - 1;
-    if (left < 0) {
-        left += NUM_ORIENT;
-    }
-    auto left_o = static_cast<orient>(left);
-    neighbor.left = std::pair<int, orient>(curr, left_o);
-    int right = direct + 1;
-    if (right >= NUM_ORIENT) {
-        right -= NUM_ORIENT;
+    int right = direct - 1;
+    if (right < 0) {
+        right += NUM_ORIENT;
     }
     auto right_o = static_cast<orient>(right);
     neighbor.right = std::pair<int, orient>(curr, right_o);
+    int left = direct + 1;
+    if (left >= NUM_ORIENT) {
+        left -= NUM_ORIENT;
+    }
+    auto left_o = static_cast<orient>(left);
+    neighbor.left = std::pair<int, orient>(curr, left_o);
     int back = direct + 2;
     if (back >= NUM_ORIENT) {
         back -= NUM_ORIENT;
@@ -626,7 +626,7 @@ void Graph::computeHeuristics() {
  */
 bool Graph::BackDijkstra(int root_location) {
     std::vector<std::vector<double>> curr_heuristic(
-        this->map_size, std::vector<double>(NUM_ORIENT));
+        this->map_size, std::vector<double>(NUM_ORIENT, WEIGHT_MAX));
     std::priority_queue<std::shared_ptr<Node>,
                         std::vector<std::shared_ptr<Node>>, NodeCompare>
         dij_open;
@@ -663,13 +663,13 @@ bool Graph::BackDijkstra(int root_location) {
                 continue;
             } else {
                 dij_close_set.erase(close_item_it);
-                curr_heuristic[n->current_point][n->curr_o] = n->g * 2;
+                curr_heuristic[n->current_point][n->curr_o] = min(curr_heuristic[n->current_point][n->curr_o], n->g);
                 dij_close_set.insert(n);
             }
         } else {
             assert(n->current_point < curr_heuristic.size());
             assert(n->curr_o < NUM_ORIENT);
-            curr_heuristic[n->current_point][n->curr_o] = n->g * 2;
+            curr_heuristic[n->current_point][n->curr_o] = min(curr_heuristic[n->current_point][n->curr_o], n->g);
             h_count++;
             dij_close_set.insert(n);
         }

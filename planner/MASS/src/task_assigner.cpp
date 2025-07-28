@@ -3,7 +3,7 @@
 void TaskAssigner::updateGoalLocations(vector<int> start_locations,
                                        set<int> finished_tasks_id) {
     // First goal, randomly choose from all free locations
-    spdlog::info("Update goal locations for {} agents", num_of_agents);
+    // spdlog::info("Update goal locations for {} agents", num_of_agents);
     vector<string> last_goal_types(num_of_agents);
     if (goal_locations.empty()) {
         goal_locations.resize(num_of_agents);

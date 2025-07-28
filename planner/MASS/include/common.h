@@ -221,11 +221,11 @@ struct Node {
           parent(parent),
           bezier_solution(bezier_solution) {
         // One-shot objective
-        if (win_size <= 0)
+        // if (win_size <= 0)
             f = h + g;
-        // Windowed objective
-        else
-            f = max(g, win_size) + h;
+        // // Windowed objective
+        // else
+        //     f = max(g, win_size) + h;
     }
     bool is_expanded = false;
     int current_point;

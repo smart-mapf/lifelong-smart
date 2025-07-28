@@ -18,6 +18,7 @@ public:
     int num_of_rows;
     int map_size;
     int screen = 0;
+    bool log = false;
 
     // heuristics for guidance graph, low level search optimize this.
     boost::unordered_map<int, vector<vector<double>>> heuristics;

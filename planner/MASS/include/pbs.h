@@ -23,7 +23,7 @@ public:
     void printPath(Path);
     void printRT(ReservationTable);
     void printPriority(std::map<int, std::set<int> >);
-    bool SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id);
+    bool SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id, bool log = false);
     bool checkValid(ReservationTable& rt, Path& path, int agent);
     void saveResults(int all_agents_solved, const string& fileName, const string& instanceName) const;
     std::string getSolverName() const
@@ -32,6 +32,7 @@ public:
     }
     void printValidRT(ReservationTable rt);
     void updateCost();
+    void clear();
 
 private:
     bool initRootNode(std::shared_ptr<PTNode>& root_node);
