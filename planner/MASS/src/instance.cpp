@@ -382,24 +382,26 @@ bool Instance::loadAgents(
 //     }
 // }
 
-// void Instance::saveAgents() const {
-//     ofstream myfile;
-//     myfile.open(agent_fname);
-//     if (!myfile.is_open()) {
-//         cout << "Fail to save the agents to " << agent_fname << endl;
-//         return;
-//     }
-//     myfile << num_of_agents << endl;
-//     for (int i = 0; i < num_of_agents; i++) {
-//         Agent curr_agent = agents[i];
-//         myfile << this->graph->getRowCoordinate(curr_agent.start_location)
-//                << ","
-//                << this->graph->getColCoordinate(curr_agent.start_location)
-//                << "," <<
-//                this->graph->getRowCoordinate(curr_agent.goal_location)
-//                << "," <<
-//                this->graph->getColCoordinate(curr_agent.goal_location)
-//                << "," << endl;
-//     }
-//     myfile.close();
-// }
+void Instance::saveAgents(string filename) const {
+    ofstream myfile(filename);
+    spdlog::info("Saving agents to {}", filename);
+    if (!myfile.is_open()) {
+        // cout << "Fail to save the agents to " << filename << endl;
+        spdlog::error("Fail to save the agents to {}", filename);
+        return;
+    }
+    myfile << num_of_agents << endl;
+
+    for (int i = 0; i < num_of_agents; i++) {
+        Agent curr_agent = agents[i];
+        // Write the start location and orientation as the first entry of each
+        // agent
+        myfile << curr_agent.start_location << ","
+               << static_cast<int>(curr_agent.start_o) << ";";
+        for (const auto& task : curr_agent.goal_locations) {
+            myfile << task.loc << "," << static_cast<int>(task.ori) << ";";
+        }
+        myfile << endl;
+    }
+    myfile.close();
+}

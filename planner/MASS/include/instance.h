@@ -218,6 +218,8 @@ public:
         rt = raw_rv_tbl;
     };
 
+    void saveAgents(string filename) const;
+
 private:
     // int moves_offset[MOVE_COUNT];
     // vector<bool> my_map;
@@ -234,7 +236,6 @@ private:
     // void printMap() const;
     // void saveMap() const;
 
-    // void saveAgents() const;
 
     // void generateConnectedRandomGrid(int rows, int cols, int obstacles); //
     // initialize new [rows x cols] map with random obstacles

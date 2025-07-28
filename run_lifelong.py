@@ -346,6 +346,7 @@ def run_lifelong_argos(
                 f"--screen={screen}",
                 f"--simulation_window={sim_window_tick / ticks_per_second}",
                 f"--cutoffTime={cutoffTime}",
+                f"--saveInstance={False}",
             ]
         run_simulator(
             args=(server_command, client_command, planner_command),

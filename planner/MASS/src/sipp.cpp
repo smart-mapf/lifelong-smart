@@ -374,6 +374,14 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             // Node has been expanded before. Pop the next reachable interval
             // and do create a movement node (Line 9-10 of Algorithm 2)
             if (s->is_expanded) {
+                if (log) {
+                    spdlog::info(
+                        "Agent {}: Node ({},{},{}) was expanded before.",
+                        curr_agent.id,
+                        instance_ptr->graph->getRowCoordinate(s->current_point),
+                        instance_ptr->graph->getColCoordinate(s->current_point),
+                        s->curr_o);
+                }
                 count_node_re_expand++;
                 auto debug_expand_start_t = Time::now();
                 while (not s->partial_intervals.empty()) {
@@ -387,6 +395,19 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                     while (prev_entry != nullptr) {
                         forward_intervals.push_front(prev_entry);
                         prev_entry = prev_entry->prev_entry;
+                    }
+
+                    if (log) {
+                        spdlog::info("Agent {}: Expanding node ({},{},{}) with "
+                                     "interval: loc={},t_min={},t_max={}",
+                                     curr_agent.id,
+                                     instance_ptr->graph->getRowCoordinate(
+                                         s->current_point),
+                                     instance_ptr->graph->getColCoordinate(
+                                         s->current_point),
+                                     s->curr_o, tmp_min_entry->location,
+                                     tmp_min_entry->t_min,
+                                     tmp_min_entry->t_max);
                     }
 
                     bool success;
@@ -463,8 +484,7 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                         new_node->bezier_solution = tpg_solution;
                         new_node->parent = s;
                         new_node->goal_id = s->goal_id;
-                        if (log)
-                        {
+                        if (log) {
                             spdlog::info(
                                 "Agent {}: Created new node ({},{},{}), "
                                 "goal {}, time: {}, g: {}, h: {}, f: {}, "
@@ -477,13 +497,15 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                                     new_node->current_point),
                                 new_node->curr_o, new_node->goal_id,
                                 new_node->arrival_time_min, new_node->g,
-                                new_node->h, new_node->f,
-                                new_node->prev_action,
+                                new_node->h, new_node->f, new_node->prev_action,
                                 new_node->interval_index,
                                 new_node->arrival_time_min,
                                 new_node->arrival_time_max);
                         }
                         pushToOpen(new_node);
+                    } else {
+                        if (log)
+                            spdlog::info("speed profile is not found");
                     }
 
                     // If we are using partial expansion, we can stop creating
@@ -510,13 +532,15 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             assert(s->is_expanded);
 
             // Print partial intervals
-            // spdlog::info(
-            //     "Agent {}: Node ({}, {}) has {} partial intervals after "
-            //     "expansion.",
-            //     curr_agent.id,
-            //     instance_ptr->graph->getRowCoordinate(s->current_point),
-            //     instance_ptr->graph->getColCoordinate(s->current_point),
-            //     s->partial_intervals.size());
+            if (log) {
+                spdlog::info(
+                    "Agent {}: Node ({},{},{}) has {} partial intervals after "
+                    "expansion.",
+                    curr_agent.id,
+                    instance_ptr->graph->getRowCoordinate(s->current_point),
+                    instance_ptr->graph->getColCoordinate(s->current_point),
+                    s->curr_o, s->partial_intervals.size());
+            }
 
             // If not all the reachable intervals have been expanded,
             // we need to update the heuristic value and push it back to OPEN.
@@ -1065,6 +1089,13 @@ void SIPP::GetNextInterval(const std::shared_ptr<IntervalEntry>& prev_interval,
         new_interval->step = prev_interval->step + 1;
         new_interval->prev_entry = prev_interval;
         GetNextInterval(new_interval, new_interval_list, next_locs, rt, s);
+        if (log) {
+            spdlog::info(
+                "Agent {}: Found new interval with step {}, location {}, "
+                "t_min {}, t_max {}, f {}",
+                curr_agent.id, new_interval->step, new_interval->location,
+                new_interval->t_min, new_interval->t_max, new_interval->f);
+        }
         new_interval_list.push(new_interval);
     }
 }

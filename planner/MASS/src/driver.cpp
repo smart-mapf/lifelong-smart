@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
             ("cutoffTime,t", po::value<double>()->default_value(2), "cutoff time (seconds)")
             ("screen", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
             ("simulation_window", po::value<double>()->default_value(10), "simulation window (in seconds) for the planner")
+            ("saveInstance", po::value<bool>()->default_value(false), "save the instance to a file")
 
             // params for instance generators
             // ("rows", po::value<int>()->default_value(0), "number of rows")
@@ -107,6 +108,8 @@ int main(int argc, char **argv) {
         }
     }
 
+    boost::filesystem::path instance_dir = "save_instance";
+
     while (true) {
         // Get the current simulation tick
         bool invoke_planner = client.call("invoke_planner").as<bool>();
@@ -151,6 +154,18 @@ int main(int argc, char **argv) {
             graph, task_assigner, commit_cut, new_finished_tasks_id,
             vm["partialExpansion"].as<bool>(), sps_solver_type, screen,
             simulation_window);
+
+        // Record the MAPF instance (start and goal locations)
+        if (vm["saveInstance"].as<bool>()) {
+            if (!boost::filesystem::exists(instance_dir)) {
+                boost::filesystem::create_directory(instance_dir);
+            }
+            string instance_file =
+                (instance_dir /
+                 ("instance" + std::to_string(n_mapf_calls) + ".csv"))
+                    .string();
+            instance_ptr->saveAgents(instance_file);
+        }
 
         //////////////////////////////////////////////////////////////////////
         /// initialize the solver

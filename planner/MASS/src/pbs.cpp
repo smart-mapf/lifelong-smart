@@ -31,8 +31,7 @@ PBS::PBS(std::shared_ptr<Instance> user_instance_ptr,
     std::fill(agents_arrived.begin(), agents_arrived.end(), false);
 }
 
-void PBS::clear()
-{
+void PBS::clear() {
     priority_graph.clear();
     ordered_agents.clear();
     need_replan.clear();
@@ -50,12 +49,15 @@ void PBS::clear()
     num_HL_expanded = 0;
 }
 
-bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id, bool log) {
+bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id,
+                           bool log) {
     assert(need_replan[agent_id]);
     ReservationTable rt(instance_ptr->graph->map_size);
     node.getRTFromP(rt, rtp, instance_ptr->simulation_window);
     // Not needed?
     // InsertInitLocation(agent_id, *instance_ptr, rt);
+    if (log)
+        printRT(rt);
     double solution_cost = 0.0;
     Path path;
     bool sipp_success =
@@ -406,6 +408,11 @@ bool PBS::generateChild(int child_id, std::shared_ptr<PTNode> parent, int low,
             cout << endl;
         }
         if (!SolveSingleAgent(*node, higher_agents, a)) {
+            // Debug: run again with logging turned on
+            spdlog::warn(
+                "Fail to find a path for agent {}! Replanning with logging.",
+                a);
+            SolveSingleAgent(*node, higher_agents, a, true);
             if (child_id == 0)
                 parent->children.first = nullptr;
             else
@@ -500,7 +507,8 @@ bool PBS::solve(const string& outputFileName) {
         // exit(-1);
         return false;
     }
-    // spdlog::info("Root cost: {}", root_cost);
+    if (screen > 2)
+        spdlog::info("Root generated with cost: {}", root_cost);
     open_list.push(Root);
     while (!open_list.empty() and ((double)(clock() - start) / CLOCKS_PER_SEC) <
                                       this->cutoff_runtime) {
@@ -717,7 +725,8 @@ void PBS::printRT(ReservationTable rt) {
     std::cout << "\n\n_________________________________printing "
                  "ReservationTable PBS_________________________\n";
     for (int i = 0; i < (signed)rt.size(); ++i) {
-        std::cout << "cp" << i << "\t";
+        std::cout << "loc (" << instance_ptr->graph->getRowCoordinate(i) << ", "
+                  << instance_ptr->graph->getColCoordinate(i) << ")\t";
         for (auto ittemp = rt[i].begin(); ittemp != rt[i].end(); ++ittemp) {
             std::cout << "t_min=" << ittemp->t_min << "\t"
                       << "t_max=" << ittemp->t_max << "\t#"
