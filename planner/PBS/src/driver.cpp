@@ -61,8 +61,8 @@ int main(int argc, char** argv) {
     spdlog::set_default_logger(console_logger);
 
     ///////////////////////////////////////////////////////////////////////////
-    int prev_last_task_id = 0;  // last task id from the previous iteration
-    vector<Task> prev_goal_locs;
+    // int prev_last_task_id = 0;  // last task id from the previous iteration
+    // vector<Task> prev_goal_locs;
     set<int> finished_tasks_id;
     int screen = vm["screen"].as<int>();
     int simulation_window = vm["simulation_window"].as<int>();
@@ -142,8 +142,7 @@ int main(int argc, char** argv) {
             printf("\n");
         }
 
-        Instance instance(graph, task_assigner, prev_goal_locs, screen,
-                          prev_last_task_id, simulation_window);
+        Instance instance(graph, task_assigner, screen, simulation_window);
         instance.loadAgents(commit_cut, new_finished_tasks_id);
         PBS pbs(instance, vm["sipp"].as<bool>(), screen);
         // run
@@ -188,8 +187,8 @@ int main(int argc, char** argv) {
 
         // instance.printMap();
         // Update task id for the next iteration
-        prev_last_task_id = instance.getTaskId();
-        prev_goal_locs = instance.getGoalTasks();
+        // prev_last_task_id = instance.getTaskId();
+        // prev_goal_locs = instance.getGoalTasks();
         // sleep(0.5);
     }
 

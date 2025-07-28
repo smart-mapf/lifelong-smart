@@ -10,7 +10,7 @@ import datetime
 
 from typing import List, Tuple
 from lifelong_mapf_argos.ArgosConfig import (SERVER_EXE, PBS_EXE, RHCR_EXE,
-                                             CONTAINER_PROJECT_ROOT,
+                                             MASS_EXE, CONTAINER_PROJECT_ROOT,
                                              PROJECT_ROOT, setup_logging)
 from lifelong_mapf_argos.ArgosConfig.ToArgos import (obstacles, parse_map_file,
                                                      create_Argos)
@@ -125,7 +125,7 @@ def run_lifelong_argos(
     task: str = "",
     cutoffTime: int = 1,
     id: bool = False,
-    solver: str = "PBS", # ["PBS", "PIBT"]
+    solver: str = "PBS",  # ["PBS", "PIBT"]
     single_agent_solver: str = "SIPP",
     backup_solver: str = "PIBT",  # ["PIBT", "LRA"]
     lazyP: bool = False,
@@ -241,7 +241,8 @@ def run_lifelong_argos(
         (sim_window_tick / ticks_per_second) * (velocity / 100)).astype(int)
     if planner in ["RHCR"]:
         plan_window_ts = np.max([plan_window_ts, planning_window])
-    logger.info(f"Planning window in timesteps: {plan_window_ts}")
+        logger.info(
+            f"{planner}: Planning window in timesteps: {plan_window_ts}")
     # plan_window_ts = int(np.ceil(1.5 * look_ahead_dist * (velocity / 100)))
 
     # Path to the executables
@@ -249,10 +250,12 @@ def run_lifelong_argos(
         server_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / SERVER_EXE
         pbs_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / PBS_EXE
         rhcr_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / RHCR_EXE
+        mass_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / MASS_EXE
     else:
         server_path = pathlib.Path(PROJECT_ROOT) / SERVER_EXE
         pbs_path = pathlib.Path(PROJECT_ROOT) / PBS_EXE
         rhcr_path = pathlib.Path(PROJECT_ROOT) / RHCR_EXE
+        mass_path = pathlib.Path(PROJECT_ROOT) / MASS_EXE
 
     try:
         # print("Running simulator ...")
@@ -333,6 +336,17 @@ def run_lifelong_argos(
             ]
             if task != "":
                 planner_command.append(f"--task={task}")
+        elif planner == "MASS":
+            planner_command = [
+                mass_path,
+                f"--map={map_filepath}",
+                f"--agentNum={num_agents}",
+                f"--portNum={port_num}",
+                f"--seed={seed}",
+                f"--screen={screen}",
+                f"--simulation_window={sim_window_tick / ticks_per_second}",
+                f"--cutoffTime={cutoffTime}",
+            ]
         run_simulator(
             args=(server_command, client_command, planner_command),
             timeout=10 * sim_duration / ticks_per_second,

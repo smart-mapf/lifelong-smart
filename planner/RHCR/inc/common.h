@@ -73,3 +73,6 @@ namespace std{
 vector<list<int>> read_int_vec(string fname, int team_size);
 vector<list<tuple<int, int, int, int>>> read_tuple_vec(
     string fname, int team_size);
+
+int select_min_key_random_tie(const boost::unordered_map<int, int>& m,
+                              int seed);

@@ -56,6 +56,8 @@ private:
     vector<list<Task>> tasks;
     bool load_tasks();
 
+    bool validateSolution() const;
+
     // Used for workstation sampling
     discrete_distribution<int> workstation_dist;
     discrete_distribution<int> end_points_dist;
@@ -74,4 +76,7 @@ private:
 
     // Task id -> aisle path
     unordered_map<int, Path> aisle_paths;
+
+    // Number of agents coming to each aisle. Aisle id -> number of agents.
+    unordered_map<int, int> aisle_usage;
 };

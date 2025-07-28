@@ -12,36 +12,36 @@ PTNode::PTNode(const vector<Path>& pl,
 }
 
 
-/***
- * Finish this after working the structure
-*/
-void PTNode::writeToFile(Instance& instance, const string& file_name)
-{
-	std::ifstream infile(file_name);
-	bool exist = infile.good();
-	infile.close();
-	if (!exist) {
-		ofstream addHeads(file_name);
-		addHeads << "Num of agents: " << instance.agents.size() << std::endl;
-		addHeads << "Agent id; Start Point;Goal Point;Length; Start time; Control Points; Trajectory" << '\n';
-		addHeads.close();
-	}
+// /***
+//  * Finish this after working the structure
+// */
+// void PTNode::writeToFile(Instance& instance, const string& file_name)
+// {
+// 	std::ifstream infile(file_name);
+// 	bool exist = infile.good();
+// 	infile.close();
+// 	if (!exist) {
+// 		ofstream addHeads(file_name);
+// 		addHeads << "Num of agents: " << instance.agents.size() << std::endl;
+// 		addHeads << "Agent id; Start Point;Goal Point;Length; Start time; Control Points; Trajectory" << '\n';
+// 		addHeads.close();
+// 	}
 
-	ofstream outfile(file_name, std::ios::app);
-	for(int i = 0; i < (signed)plan.size(); ++i){
-		outfile <<  i \
-			<< ";" << instance.agents[i].start_location  \
-			<< ";" << instance.agents[i].goal_location  \
-			<< ";" << instance.agents[i].length \
-			<< ";" << instance.agents[i].earliest_start_time << ";";
-		outfile << "; ";
-		for (auto tmp_node : plan[i]) {
-			outfile << tmp_node.location << ", ";
-		}
-		outfile << '\n';
-	}
-	outfile.close();	
-}
+// 	ofstream outfile(file_name, std::ios::app);
+// 	for(int i = 0; i < (signed)plan.size(); ++i){
+// 		outfile <<  i \
+// 			<< ";" << instance.agents[i].start_location  \
+// 			<< ";" << instance.agents[i].goal_location  \
+// 			<< ";" << instance.agents[i].length \
+// 			<< ";" << instance.agents[i].earliest_start_time << ";";
+// 		outfile << "; ";
+// 		for (auto tmp_node : plan[i]) {
+// 			outfile << tmp_node.location << ", ";
+// 		}
+// 		outfile << '\n';
+// 	}
+// 	outfile.close();	
+// }
 
 /***
  * Generate the priority list for all the agents
@@ -141,7 +141,7 @@ void printRT(ReservationTable rt){
 	for(int i = 0; i < (signed) rt.size(); ++i){
 		std::cout<<"cp" << i << "\t";
 		for(auto ittemp = rt[i].begin(); ittemp != rt[i].end(); ++ittemp){
-			std::cout<< ittemp->t_min << "\t" <<ittemp->t_max << "\t" << ittemp->agent_id << "\t";
+			std::cout << "t_min=" << ittemp->t_min << "\t" << "tmax=" <<ittemp->t_max << "\t" << "agent id=" << ittemp->agent_id << "\t";
 		}
 		std::cout<<"\n";
 	}
@@ -160,12 +160,19 @@ void PTNode::printPlan(){
 	std::cout<<"_____________________________________________________________________________________\n\n";
 }
 
-int PTNode::checkValid(ReservationTable& rt, int agent_id){
+int PTNode::checkValid(ReservationTable& rt, int agent_id,
+                       int simulation_window) {
     for (auto& path_entry: plan[agent_id]) {
         for (auto& rt_interval: rt[path_entry.location]) {
             if (rt_interval.agent_id == agent_id) continue;
+            if (simulation_window > 0 &&
+                path_entry.arrival_time >= simulation_window)
+                continue;
             if(path_entry.leaving_time_tail - rt_interval.t_min >= EPSILON and
                rt_interval.t_max - path_entry.arrival_time >= EPSILON) {
+                spdlog::error("Agent {} at loc {}: {} - {}, Agent {}: {} - {}",
+                          agent_id, path_entry.location, path_entry.arrival_time, path_entry.leaving_time_tail,
+                          rt_interval.agent_id, rt_interval.t_min, rt_interval.t_max);
                 return rt_interval.agent_id;
             }
         }
@@ -178,13 +185,15 @@ bool PTNode::checkSolution(Instance& instance){
     ReservationTable rt_table(instance.graph->map_size);
     std::set<int> s;
     for(int i = 0; i < (signed) plan.size();++i) s.insert(i);
-    getRTFromP(rt_table, s);
+    getRTFromP(rt_table, s, instance.simulation_window);
     for (size_t agent_id = 0; agent_id < plan.size(); agent_id++) {
-        int conflict_id = checkValid(rt_table, agent_id);
+        int conflict_id = checkValid(rt_table, agent_id,
+                                     instance.simulation_window);
         if (conflict_id != -1) {
             return false;
         }
     }
+    // printRT(rt_table);
     return true;
 }
 
@@ -193,9 +202,10 @@ std::pair<int, int> PTNode::getFirstCollision(Instance& instance){
 	ReservationTable rt_table(instance.graph->map_size);
 	std::set<int> s;
 	for(int i = 0; i < (signed) plan.size();++i) s.insert(i);
-	getRTFromP(rt_table, s);
+	getRTFromP(rt_table, s, instance.simulation_window);
     for (size_t agent_id = 0; agent_id < plan.size(); agent_id++) {
-        int conflict_id = checkValid(rt_table, agent_id);
+        int conflict_id = checkValid(rt_table, agent_id,
+                                     instance.simulation_window);
         if (conflict_id != -1) {
             result = std::pair<int, int>(agent_id, conflict_id);
             return result;
@@ -237,20 +247,24 @@ void PTNode::getRTP(std::set<int> &p, int index){
  * @param p The agent with higher priority
  * @param[out] rt The reservation table
 */
-void PTNode::getRTFromP(ReservationTable& rt, std::set<int>& p){
+void PTNode::getRTFromP(ReservationTable& rt, std::set<int>& p,
+                        int simulation_window){
 	for(int agent_id: p){
-        insertPathToRT(rt, agent_id);
+        insertPathToRT(rt, agent_id, simulation_window);
 	}
 }
 
-void PTNode::insertPathToRT(ReservationTable& rt, int agent_id)
+void PTNode::insertPathToRT(ReservationTable& rt, int agent_id,
+                            int simulation_window)
 {
     for(auto it2 = plan[agent_id].begin(); it2 != plan[agent_id].end(); ++it2){
         TimeInterval newTI;
 
         newTI.t_max = it2->leaving_time_tail;
         newTI.t_min = it2->arrival_time;
-        newTI.agent_id = agent_id;
-        rt[it2->location].push_back(newTI);
+        if (simulation_window <= 0 || newTI.t_min < simulation_window) {
+            newTI.agent_id = agent_id;
+            rt[it2->location].push_back(newTI);
+        }
     }
 }

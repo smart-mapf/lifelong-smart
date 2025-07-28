@@ -1,5 +1,9 @@
 #pragma once
+#include <mutex>
+#include <thread>
+
 #include "common.h"
+#include "task.h"
 
 struct Neighbors {
     pair<int, orient> left;
@@ -14,12 +18,24 @@ public:
     int num_of_rows;
     int map_size;
     int screen = 0;
+    bool log = false;
 
     // heuristics for guidance graph, low level search optimize this.
     boost::unordered_map<int, vector<vector<double>>> heuristics;
 
+    // heuristics that does not consider dynamics
+    boost::unordered_map<int, vector<double>> d_heuristics;
+
     // distance heuristics, used for reasoning target conflicts
     // boost::unordered_map<int, vector<int>> d_heuristics;
+
+    // Map from the orientation in SMART to the orientation in RHCR.
+    const boost::unordered_map<int, orient> ORI_SMART_TO_MASS = {
+        {0, orient::North},
+        {1, orient::East},
+        {2, orient::South},
+        {3, orient::West},
+    };
 
     Graph() {
     }
@@ -92,8 +108,8 @@ public:
     // void printMap() const;
 
     void computeHeuristics();
-    vector<double> computeHeuristicsOneLoc(int root_location);
-    std::vector<std::vector<double>> BackDijkstra(int root_location);
+    vector<double> computeHeuristicsOneLocPebbleMotion(int root_location);
+    bool BackDijkstra(int root_location);
 
     // nodes from and to are neighbors
     double getWeight(int from, int to) const;
@@ -148,14 +164,10 @@ public:
         return map_size;
     }
 
-    double getHeuristic(int goal_loc, int start_loc, orient start_ori) const {
-        if (heuristics.find(goal_loc) == heuristics.end()) {
-            spdlog::error("Error: goal_loc = {} not found in heuristics.",
-                          goal_loc);
-            exit(1);
-        }
-        return heuristics.at(goal_loc)[start_loc][start_ori];
-    }
+    double getHeuristic(vector<Task> goals, int start_loc, orient start_ori,
+                        int goal_id) const;
+    double getHeuristicOneGoalPebbleMotion(int goal_loc, int start_loc,
+                                           orient start_ori) const;
 
     int walkCounterClockwise(int from, int to) const {
         assert(validMove(from, to));
@@ -207,8 +219,11 @@ private:
     vector<int>
         empty_locations;  // locations that are not obstacles or task_loc
 
+    // Mutex for thread safety when computing heuristics
+    std::mutex heuristic_mutex;
+
     // Direction of movement
-    // 0: right, 1: up, 2: left, 3: down
+    // 0: North, 1: East, 2: South, 3: West
     int move[4];
 
     bool loadMap();
@@ -229,5 +244,5 @@ private:
     // Classes that can access private members
     // friend class SingleAgentSolver;
     friend class Instance;
-    // friend class TaskAssigner;
+    friend class TaskAssigner;
 };

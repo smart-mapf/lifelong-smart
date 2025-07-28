@@ -8,6 +8,56 @@ Graph::Graph(const string& map_fname, int screen)
     }
 }
 
+double Graph::getHeuristic(vector<Task> goals, int start_loc, orient start_ori,
+                           int goal_id) const {
+    int goal_loc = goals[goal_id].loc;
+    if (heuristics.find(goal_loc) == heuristics.end()) {
+        spdlog::error("Error: goal_loc = {} not found in heuristics.",
+                      goal_loc);
+        exit(1);
+    }
+    double h = heuristics.at(goal_loc)[start_loc][start_ori];
+    goal_id++;
+    while (goal_id < static_cast<int>(goals.size())) {
+        if (heuristics.find(goals[goal_id].loc) == heuristics.end()) {
+            spdlog::error("Error: goal_loc = {} not found in heuristics.",
+                          goals[goal_id].loc);
+            exit(1);
+        }
+
+        // Goal orientation is given
+        if (goals[goal_id - 1].ori != orient::None) {
+            h += heuristics.at(goals[goal_id].loc)[goals[goal_id - 1].loc]
+                                                  [goals[goal_id - 1].ori];
+        }
+        // Goal orientation is not given, use the minimum over four orientations
+        else {
+            auto curr_hs =
+                heuristics.at(goals[goal_id].loc)[goals[goal_id - 1].loc];
+            double next_h = *std::min_element(curr_hs.begin(), curr_hs.end());
+            h += next_h;
+        }
+
+        goal_id++;
+    }
+    return h;
+}
+
+double Graph::getHeuristicOneGoalPebbleMotion(int goal_loc, int start_loc,
+                                              orient start_ori) const {
+    if (d_heuristics.find(goal_loc) == d_heuristics.end()) {
+        spdlog::error("Error: goal_loc = {} not found in d_heuristics.",
+                      goal_loc);
+        exit(1);
+    }
+    if (start_ori != orient::None)
+        throw std::runtime_error(
+            "Orientation is not supported in getHeuristicOneGoalPebbleMotion");
+    else {
+        return d_heuristics.at(goal_loc)[start_loc];
+    }
+}
+
 bool Graph::loadMapFromBench() {
     ifstream myfile(map_fname.c_str());
     if (!myfile.is_open())
@@ -328,6 +378,8 @@ bool Graph::loadMap() {
     }
     return true;
 }
+
+// Get neighbors of the current location, assuming pebble motion
 list<int> Graph::getNeighbors(int curr) const {
     list<int> neighbors;
     // int candidates[4] = {curr + 1, curr - 1, curr + num_of_cols,
@@ -377,18 +429,18 @@ void Graph::getNeighbors(
 
 void Graph::getInverseNeighbors(int curr, orient direct,
                                 Neighbors& neighbor) const {
-    int left = direct - 1;
-    if (left < 0) {
-        left += NUM_ORIENT;
-    }
-    auto left_o = static_cast<orient>(left);
-    neighbor.left = std::pair<int, orient>(curr, left_o);
-    int right = direct + 1;
-    if (right >= NUM_ORIENT) {
-        right -= NUM_ORIENT;
+    int right = direct - 1;
+    if (right < 0) {
+        right += NUM_ORIENT;
     }
     auto right_o = static_cast<orient>(right);
     neighbor.right = std::pair<int, orient>(curr, right_o);
+    int left = direct + 1;
+    if (left >= NUM_ORIENT) {
+        left -= NUM_ORIENT;
+    }
+    auto left_o = static_cast<orient>(left);
+    neighbor.left = std::pair<int, orient>(curr, left_o);
     int back = direct + 2;
     if (back >= NUM_ORIENT) {
         back -= NUM_ORIENT;
@@ -406,6 +458,7 @@ void Graph::getInverseNeighbors(int curr, orient direct,
     }
 }
 
+// Get neighbors used by sipp, considering rotation.
 void Graph::getNeighbors(int curr, orient direct, Neighbors& neighbor) const {
     int left = direct - 1;
     if (left < 0) {
@@ -462,8 +515,8 @@ int Graph::randomWalk(int curr, int steps) const {
         list<int> l = this->getNeighbors(curr);
         vector<int> next_locations(l.cbegin(), l.cend());
         auto rng = std::default_random_engine{};
-        std::shuffle(std::begin(next_locations),
-        std::end(next_locations), rng); for (int next : next_locations) {
+        std::shuffle(std::begin(next_locations), std::end(next_locations), rng);
+        for (int next : next_locations) {
             if (this->validMove(curr, next)) {
                 curr = next;
                 break;
@@ -529,24 +582,41 @@ int Graph::getDirection(int from, int to) const {
 void Graph::computeHeuristics() {
     vector<int> h_locations;
     // Add free_location and task locations to h_locations
-    h_locations.insert(h_locations.end(), free_locations.begin(),
-                       free_locations.end());
-    // h_locations.insert(h_locations.end(), warehouse_task_locs.begin(),
-    //                    warehouse_task_locs.end());
+    if (this->warehouse_task_locs.size() == 0) {
+        // If no warehouse task locations, use all free locations
+        h_locations = this->free_locations;
+    } else {
+        // Use only warehouse task locations
+        h_locations = this->warehouse_task_locs;
+    }
+
+    // Compute the heuristics that consider dynamic model. Used by MASS
     heuristics.clear();
+    size_t num_proc = std::thread::hardware_concurrency();
+    num_proc = min(2, (int)num_proc);
+    for (size_t i = 0; i < h_locations.size(); i += num_proc) {
+        std::vector<std::thread> threads;
+        size_t end_j = min(i + num_proc, h_locations.size());
+        for (size_t j = i; j < end_j; j++) {
+            int loc = h_locations[j];
+            threads.emplace_back(&Graph::BackDijkstra, this, loc);
+        }
+        // std::vector<std::vector<double>> heuristics_for_loc;
+        // heuristics_for_loc = BackDijkstra(loc);
+        // this->heuristics[loc] = heuristics_for_loc;
+        for (auto& t : threads) {
+            t.join();
+        }
+    }
+
+    // Compute the heuristics that consider pebble motion model. Used by PIBT
     for (int loc : h_locations) {
-        std::vector<std::vector<double>> heuristics_for_loc;
-        heuristics_for_loc = BackDijkstra(loc);
-        this->heuristics[loc] = heuristics_for_loc;
+        // Compute heuristics for each free location
+        vector<double> d_heuristics_for_loc;
+        d_heuristics_for_loc = computeHeuristicsOneLocPebbleMotion(loc);
+        this->d_heuristics[loc] = d_heuristics_for_loc;
     }
 }
-
-// vector<double> Graph::computeHeuristicsOneLoc(int root_location) {
-//     vector<double> h(num_of_rows * num_of_cols, WEIGHT_MAX);
-//     h[root_location] = 0;
-
-//     return h;
-// }
 
 /**
  * @brief Help function, get the heuristic values
@@ -554,9 +624,9 @@ void Graph::computeHeuristics() {
  * @param start_loc The start location of the agent
  * @return Bool value determine if the search success
  */
-std::vector<std::vector<double>> Graph::BackDijkstra(int root_location) {
+bool Graph::BackDijkstra(int root_location) {
     std::vector<std::vector<double>> curr_heuristic(
-        this->map_size, std::vector<double>(NUM_ORIENT));
+        this->map_size, std::vector<double>(NUM_ORIENT, WEIGHT_MAX));
     std::priority_queue<std::shared_ptr<Node>,
                         std::vector<std::shared_ptr<Node>>, NodeCompare>
         dij_open;
@@ -593,13 +663,13 @@ std::vector<std::vector<double>> Graph::BackDijkstra(int root_location) {
                 continue;
             } else {
                 dij_close_set.erase(close_item_it);
-                curr_heuristic[n->current_point][n->curr_o] = n->g * 2;
+                curr_heuristic[n->current_point][n->curr_o] = min(curr_heuristic[n->current_point][n->curr_o], n->g);
                 dij_close_set.insert(n);
             }
         } else {
             assert(n->current_point < curr_heuristic.size());
             assert(n->curr_o < NUM_ORIENT);
-            curr_heuristic[n->current_point][n->curr_o] = n->g * 2;
+            curr_heuristic[n->current_point][n->curr_o] = min(curr_heuristic[n->current_point][n->curr_o], n->g);
             h_count++;
             dij_close_set.insert(n);
         }
@@ -652,5 +722,101 @@ std::vector<std::vector<double>> Graph::BackDijkstra(int root_location) {
         }
     }
 
-    return curr_heuristic;
+    std::lock_guard<std::mutex> lock(heuristic_mutex);
+    heuristics[root_location] = curr_heuristic;
+
+    // return curr_heuristic;
+    return true;
+}
+
+// Compute backward dijkstra heuristics from a single location, assuming pebble
+// motion
+vector<double> Graph::computeHeuristicsOneLocPebbleMotion(int root_location) {
+    struct Node {
+        int location;
+        double value;  // g-value (cost from root to this node)
+        int duration;  // path duration.
+
+        Node() = default;
+        Node(int location, double value, int duration)
+            : location(location), value(value), duration(duration) {
+        }
+        // the following is used to comapre nodes in the OPEN list
+        struct compare_node {
+            // returns true if n1 > n2 (note -- this gives us *min*-heap).
+            bool operator()(const Node* n1, const Node* n2) const {
+                return n1->value >= n2->value;
+            }
+        };  // used by OPEN (heap) to compare nodes (top of the heap has min
+            // f-val, and then highest g-val)
+
+        struct EqNode {
+            bool operator()(const Node* n1, const Node* n2) const {
+                return (n1 == n2) || (n1 && n2 && n1->location == n2->location);
+            }
+        };
+
+        // The following is used to generate the hash value of a node
+        struct Hasher {
+            std::size_t operator()(const Node* n) const {
+                return std::hash<int>()(n->location);
+            }
+        };
+
+        fibonacci_heap<Node*, compare<Node::compare_node>>::handle_type
+            open_handle;
+    };
+
+    vector<double> curr_heuristics;
+
+    curr_heuristics.resize(this->map_size, DBL_MAX);
+
+    // std::cout << "start computing h for loc = "<< root_location <<std::endl;
+    fibonacci_heap<Node*, compare<Node::compare_node>> heap;
+    unordered_set<Node*, Node::Hasher, Node::EqNode> nodes;
+
+    Node* root = new Node(root_location, 0, 0);
+    root->open_handle = heap.push(root);  // add root to heap
+    nodes.insert(root);                   // add root to hash_table (nodes)
+
+    while (!heap.empty()) {
+        Node* curr = heap.top();
+        heap.pop();
+        for (auto next_state : this->getNeighbors(curr->location)) {
+            double curr_weight = this->getWeight(next_state, curr->location);
+            double next_g_val;
+            int next_duration;
+
+            next_g_val = curr->value + curr_weight;
+            next_duration = curr->duration + 1;  // increment duration by 1
+
+            Node* next = new Node(next_state, next_g_val, next_duration);
+            auto it = nodes.find(next);
+            if (it == nodes.end()) {  // add the newly generated node to heap
+                                      // and hash table
+                next->open_handle = heap.push(next);
+                nodes.insert(next);
+            } else {  // update existing node's g_val if needed (only in the
+                      // heap)
+                delete (next);  // not needed anymore -- we already generated it
+                                // before
+                Node* existing_next = *it;
+                if (existing_next->value > next_g_val) {
+                    existing_next->value = next_g_val;
+                    heap.increase(existing_next->open_handle);
+                }
+            }
+        }
+    }
+    // iterate over all nodes and populate the distances
+    for (auto it = nodes.begin(); it != nodes.end(); it++) {
+        Node* s = *it;
+        curr_heuristics[s->location] =
+            std::min(s->value, curr_heuristics[s->location]);
+        delete (s);
+    }
+    nodes.clear();
+    heap.clear();
+
+    return curr_heuristics;
 }

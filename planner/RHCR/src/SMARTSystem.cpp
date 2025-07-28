@@ -33,6 +33,13 @@ void SMARTSystem::initialize() {
     aisle_rt.k_robust = k_robust;
     aisle_rt.window = INT_MAX;
 
+    // Initialize aisle usage
+    if (this->G.get_grid_type() == SMARTGridType::ONE_BOT_PER_AISLE) {
+        for (const auto &entry : this->G.get_aisle_entries()) {
+            this->aisle_usage[entry] = 0;  // Initialize to 0
+        }
+    }
+
     // std::random_device rd;
     this->gen = mt19937(this->seed);
 
@@ -104,6 +111,13 @@ void SMARTSystem::update_start_locations(
                 if (finished_tasks_id.find(goal_locations[i][j].id) !=
                     finished_tasks_id.end()) {
                     goal_locations[i][j].id = -1;  // reset goal id
+                    if (this->G.get_grid_type() ==
+                            SMARTGridType::ONE_BOT_PER_AISLE &&
+                        this->G.types[goal_locations[i][j].location] ==
+                            "Endpoint") {
+                        this->aisle_usage[this->G.aisle_entry(
+                            goal_locations[i][j].location)] -= 1;
+                    }
                 }
             }
         }
@@ -194,12 +208,29 @@ int SMARTSystem::gen_next_goal(int agent_id, bool repeat_last_goal) {
             next = sample_workstation();
         } else {
             // next = this->sample_end_points();
+            // if (this->G.get_grid_type() == SMARTGridType::REGULAR)
             next = G.endpoints[rand() % (int)G.endpoints.size()];
+            // else if (this->G.get_grid_type() ==
+            //          SMARTGridType::ONE_BOT_PER_AISLE) {
+            //     // Sample an endpoint from the aisle with the smallest number
+            //     // of aisle_usage, break ties randomly
+            //     int min_aisle_id = select_min_key_random_tie(
+            //         this->aisle_usage, this->seed);
+            //     // Sample an endpoint from the aisle with the smallest usage
+            //     auto aisle = this->G.get_aisle(min_aisle_id);
+            //     int idx = rand() % (int)aisle.size();
+            //     auto it = aisle.begin();
+            //     std::advance(it, idx);
+            //     next = *it;
+            // }
             this->next_goal_type[agent_id] = "w";
         }
     } else {
-        std::cout << "error! next goal type is not w or e, but "
-                  << this->next_goal_type[agent_id] << std::endl;
+        // std::cout << "error! next goal type is not w or e, but "
+        //           << this->next_goal_type[agent_id] << std::endl;
+        spdlog::error(
+            "SMARTSystem::gen_next_goal: next goal type is not w or e, but {}",
+            this->next_goal_type[agent_id]);
         exit(1);
     }
 
@@ -279,6 +310,14 @@ void SMARTSystem::update_goal_locations() {
                     // next = make_tuple(
                     //     this->gen_next_goal(k, true), 0, 0);
                     next = Task(this->gen_next_goal(k, true), -1, 0, 0);
+                }
+                if (this->G.get_grid_type() ==
+                        SMARTGridType::ONE_BOT_PER_AISLE &&
+                    G.types[next.location] == "Endpoint") {
+                    // If the next goal is an endpoint, increment the aisle
+                    // usage for the aisle that contains this endpoint
+                    int aisle_id = this->G.aisle_entry(next.location);
+                    this->aisle_usage[aisle_id] += 1;
                 }
             } else {
                 std::cout << "ERROR in update_goal_function()" << std::endl;
@@ -1090,6 +1129,17 @@ void SMARTSystem::solve() {
 
     this->solve_helper(lra, pibt, real_goal_locations);
 
+    if (screen > 0) {
+        if (!this->validateSolution()) {
+            spdlog::error(
+                "Solution is NOT valid after solving the MAPF instance.");
+            throw std::runtime_error(
+                "Solution is NOT valid after solving the MAPF instance.");
+        } else {
+            spdlog::info("Solution is valid after solving the MAPF instance.");
+        }
+    }
+
     // Print path found by the solver
     if (screen > 0) {
         spdlog::info("Raw Path found by the solver:");
@@ -1267,6 +1317,18 @@ void SMARTSystem::solve() {
                 }
             }
         }
+        if (screen > 0) {
+            // For collision between all agents
+            if (!this->validateSolution()) {
+                spdlog::error("Solution is not valid after populating aisle "
+                              "paths for ONE_BOT_PER_AISLE");
+                throw std::runtime_error(
+                    "Solution is not valid after populating aisle paths");
+            } else {
+                spdlog::info("Solution is valid after populating aisle paths "
+                             "for ONE_BOT_PER_AISLE");
+            }
+        }
     }
 }
 
@@ -1325,4 +1387,59 @@ Path SMARTSystem::get_aisle_path(State start, const vector<Task> &tasks,
         throw std::runtime_error("No path found in get_aisle_path");
     }
     return path;
+}
+
+bool SMARTSystem::validateSolution() const {
+    // Check whether the paths are feasible.
+    double soc = 0;
+    for (int a1 = 0; a1 < num_of_drives; a1++) {
+        for (int a2 = a1 + 1; a2 < num_of_drives; a2++) {
+            size_t min_path_length = this->simulation_window;
+            for (size_t timestep = 0; timestep < min_path_length; timestep++) {
+                int loc1 = this->solver.solution[a1][timestep].location;
+                int loc2 = this->solver.solution[a2][timestep].location;
+                if (loc1 == loc2) {
+                    cout << "Agents " << a1 << " and " << a2 << " collides at "
+                         << loc1 << " at timestep " << timestep << endl;
+                    return false;
+                } else if (timestep < min_path_length - 1 &&
+                           loc1 == this->solver.solution[a2][timestep + 1]
+                                       .location &&
+                           loc2 == this->solver.solution[a1][timestep + 1]
+                                       .location) {
+                    cout << "Agents " << a1 << " and " << a2 << " collides at ("
+                         << loc1 << "-->" << loc2 << ") at timestep "
+                         << timestep << endl;
+                    return false;
+                }
+            }
+
+            // Don't need target conflict as the agents will disappear at goal.
+            // if (this->solver.solution[a1]->size() !=
+            // this->solver.solution[a2]->size())
+            // {
+            // 	int a1_ = this->solver.solution[a1]->size() <
+            // this->solver.solution[a2]->size() ? a1 : a2; 	int a2_ =
+            // this->solver.solution[a1]->size() <
+            // this->solver.solution[a2]->size() ? a2 : a1; 	int loc1 =
+            // this->solver.solution[a1_]->back().location; 	for (size_t
+            // timestep = min_path_length; timestep <
+            // this->solver.solution[a2_]->size(); timestep++)
+            // 	{
+            // 		int loc2 =
+            // this->solver.solution[a2_][timestep).location; 		if (loc1
+            // == loc2)
+            // 		{
+            // 			cout << "Agents " << a1 << " and " << a2 << "
+            // collides at
+            // "
+            // << loc1 << " at timestep " << timestep << endl;
+            // return false; // It's at least a semi conflict
+            // 		}
+            // 	}
+            // }
+        }
+    }
+
+    return true;
 }

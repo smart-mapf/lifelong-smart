@@ -8,6 +8,9 @@
 
 #include "common.h"
 #include "graph.h"
+#include "task.h"
+#include "task_assigner.h"
+#include "states.h"
 
 using namespace std;
 
@@ -43,10 +46,9 @@ struct Agent {
     int id = -1;
     int start_location = -1;
     orient start_o = orient::East;
-    int goal_location = -1;
-
-    // By default we do not consider orientation at the goal
-    orient end_o = orient::None;
+    // int goal_location = -1;
+    // orient end_o = orient::None;
+    vector<Task> goal_locations;
 
     double v_min = V_MIN;
     double v_max = V_MAX;
@@ -63,9 +65,12 @@ struct Agent {
     Path previous_path;
     std::vector<int> trajectory;
 
-    Agent(int start_loc = -1, int goal_loc = -1) {
-        start_location = start_loc;
-        goal_location = goal_loc;
+    Agent() = default;
+
+    Agent(int start_loc, orient start_ori, vector<Task> goal_locations)
+        : start_location(start_loc),
+          start_o(start_ori),
+          goal_locations(goal_locations) {
     }
 
     /*statistic for result*/
@@ -83,19 +88,25 @@ public:
     int num_of_agents = 0;
     int use_sps_type = 0;  // 0 for Binary, 1 for Bezier
     bool use_pe = false;
+    double simulation_window = 10;  // Simulation (planning) window in seconds
 
     // graph representation of the map
     shared_ptr<Graph> graph;
+    shared_ptr<TaskAssigner> task_assigner;
 
     Instance() = default;
-    Instance(shared_ptr<Graph> graph, const string& agent_fname,
-             int num_of_agents = 0, const string& agent_indices = "",
-             bool use_partial_expansion = false, int used_sps_solver = 0,
-             int screen = 0);
+    Instance(shared_ptr<Graph> graph, shared_ptr<TaskAssigner> task_assigner,
+             vector<tuple<double, double, int>>& start_locs,
+             set<int> finished_tasks_id, bool use_partial_expansion = false,
+             int used_sps_solver = 0, int screen = 0,
+             double simulation_window = 10);
 
-    void printAgents() const;
+    // void printAgents() const;
 
     void GetRawReservationTable();
+
+    bool loadAgents(vector<tuple<double, double, int>>& start_locs,
+                    set<int> finished_tasks_id);
     // inline bool isObstacle(int loc) const { return my_map[loc]; }
     // inline bool validMove(int curr, int next) const
     // {
@@ -193,6 +204,15 @@ public:
         return num_of_agents;
     }
     void GetAgents(std::vector<Agent>& agents_list);
+
+    vector<State> getStartLocations() const {
+        vector<State> starts;
+        for (const auto& agent : agents) {
+            starts.push_back(State(agent.start_location, 0, agent.start_o));
+        }
+        return starts;
+    };
+
     // int GetNumOfVertices() {return map_size;};
     void GetReservationTable(ReservationTable& rt) {
         rt = raw_rv_tbl;
@@ -202,8 +222,8 @@ private:
     // int moves_offset[MOVE_COUNT];
     // vector<bool> my_map;
     // string map_fname;
-    string agent_fname;
-    string agent_indices;
+    // string agent_fname;
+    // string agent_indices;
     ReservationTable raw_rv_tbl;
 
     //   vector<int> start_locations;
@@ -214,8 +234,7 @@ private:
     // void printMap() const;
     // void saveMap() const;
 
-    bool loadAgents();
-    void saveAgents() const;
+    // void saveAgents() const;
 
     // void generateConnectedRandomGrid(int rows, int cols, int obstacles); //
     // initialize new [rows x cols] map with random obstacles

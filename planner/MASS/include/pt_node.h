@@ -20,7 +20,7 @@ public:
                                                    makespan(parent->makespan), conflicts(parent->conflicts), parent(parent) {}
     PTNode(const vector<Path>&, std::vector<MotionInfo>& solution,
            std::vector<TimedPath>& timed_paths, const std::map<int, std::set<int> >&);
-	void writeToFile(Instance&, const string&);	
+	// void writeToFile(Instance&, const string&);	
 	void calculateCost();
 	void calculateCost(std::shared_ptr<Instance> instance_ptr);
 
@@ -28,11 +28,12 @@ public:
 	std::list<int> topologicalSort(int);
     std::pair<int, int> getFirstCollision(Instance&);
 	void getRTP(std::set<int>&, int);
-	void getRTFromP(ReservationTable&, std::set<int>&);
-    void insertPathToRT(ReservationTable& rt, int agent_id);
+	void getRTFromP(ReservationTable&, std::set<int>&, int simulation_window);
+    void insertPathToRT(ReservationTable& rt, int agent_id,
+                        int simulation_window);
 	void printPriorityMap();
 	void printPlan();
-    int checkValid(ReservationTable &rt, int agent_id);
+    int checkValid(ReservationTable &rt, int agent_id, int simulation_window);
     bool CheckCollision(int agent_first, int agent_second);
     bool checkSolution(Instance& instance);
     void printConflicts();
