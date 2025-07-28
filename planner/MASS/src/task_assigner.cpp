@@ -47,12 +47,14 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
         int min_time = 0;
         int prev_loc = start_locations[i];
         for (const auto& task : goal_locations[i]) {
-            min_time +=
-                this->graph->getManhattanDistance(prev_loc, task.loc) / V_MAX;
+            min_time += this->graph->getHeuristicOneGoalPebbleMotion(
+                            task.loc, prev_loc, orient::None) /
+                        V_MAX;
             prev_loc = task.loc;
         }
-        // spdlog::info("Agent {}: Minimal time to reach goals: {}", i, min_time);
-        while (min_time < this->simulation_window * 1.5) {
+        // spdlog::info("Agent {}: Minimal time to reach goals: {}", i,
+        // min_time);
+        while (min_time < this->simulation_window) {
             if (last_goal_types[i] == "Workstation") {
                 // If the last goal was a workstation, sample an endpoint
                 int new_goal = this->graph->sampleEndpoint();
@@ -73,7 +75,9 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
                 }
             }
             min_time +=
-                this->graph->getManhattanDistance(prev_loc, goal_locations[i].back().loc) / V_MAX;
+                this->graph->getHeuristicOneGoalPebbleMotion(
+                    goal_locations[i].back().loc, prev_loc, orient::None) /
+                V_MAX;
             prev_loc = goal_locations[i].back().loc;
         }
     }
