@@ -112,8 +112,11 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
     if (this->screen > 0) {
         // printf("Finish building ADG graph!\n");
         spdlog::info("Finish building ADG graph!");
+        if (this->screen > 1) {
+            showGraph();
+        }
     }
-    // showGraph();
+
     // if (hasCycle()) {
     //     std::cout << "Cycle detected!" << std::endl;
     //     std::string input;
@@ -752,7 +755,7 @@ void ADG::showGraph() {
                           << tmp_in_edge->valid << ";";
             }
             std::cout << std::endl;
-            j++;
+            // j++;
         }
         printf("\n");
         // }

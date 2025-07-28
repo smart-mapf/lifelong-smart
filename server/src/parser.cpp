@@ -26,7 +26,7 @@ void PlanParser::showSteps(const std::vector<std::vector<Step>>& raw_steps) {
         printf("Step of agent: %lu\n", i);
         for (const auto& tmp_step : raw_steps[i]) {
             std::cout << "(" << tmp_step.x << ", " << tmp_step.y << "), "
-                      << tmp_step.orientation << ", " << tmp_step.time
+                      << tmp_step.orientation << ", time: " << tmp_step.time
                       << ", task_id: " << tmp_step.task_id << std::endl;
         }
         printf("\n");
@@ -45,9 +45,9 @@ void PlanParser::showActions(const std::vector<std::vector<Action>>& plans) {
                       << action.orientation << ", '" << action.type << "', {"
                       << action.start.first << ", " << action.start.second
                       << "}, {" << action.goal.first << ", "
-                      << action.goal.second
-                      << "}, "
-                      //   << "nodeid = " << graph[i].size() + j << ", "
+                      << action.goal.second << "}, "
+                      << "t = " << action.time << ", "
+                      << "nodeid = " << action.nodeID << ", "
                       << "taskid = " << action.task_id << "}," << std::endl;
         }
         printf("\n");
@@ -65,13 +65,15 @@ void PlanParser::AgentPathToSteps(const vector<Point>& points,
         showPoints(agentId, points);
 
     // int currentOrientation = 0; // Assume initial orientation is West.
-    double currentTime = 0;
+    // double currentTime = 0;
     for (size_t i = 0; i < points.size(); ++i) {
+        double currentTime = points[i].time;  // Use the time from the point.
         if (i == 0) {
             // Record the initial position and orientation.
             steps.push_back(Step(points[i].x, points[i].y, currentOrientation,
                                  currentTime, points[i].task_id));
         } else {
+            double prevTime = points[i - 1].time;
             // Determine the necessary orientation for the next move.
             int neededOrientation = getOrientation(
                 points[i - 1].x, points[i - 1].y, points[i].x, points[i].y);
@@ -85,19 +87,19 @@ void PlanParser::AgentPathToSteps(const vector<Point>& points,
                     // we need to add a step to turn around.
                     int mid_ori = (currentOrientation + 1) % 4;
                     steps.push_back(Step(points[i - 1].x, points[i - 1].y,
-                                         mid_ori, currentTime));
+                                         mid_ori, prevTime));
                     steps.push_back(Step(points[i - 1].x, points[i - 1].y,
-                                         neededOrientation, currentTime));
+                                         neededOrientation, prevTime));
                 } else {
                     steps.push_back(Step(points[i - 1].x, points[i - 1].y,
-                                         neededOrientation, currentTime));
+                                         neededOrientation, prevTime));
                 }
 
                 currentOrientation = neededOrientation;
             }
-            // Move to the next position, increment time only here.
+            // Move to the next position
             steps.push_back(Step(points[i].x, points[i].y, currentOrientation,
-                                 ++currentTime, points[i].task_id));
+                                 currentTime, points[i].task_id));
         }
     }
 }
@@ -230,7 +232,7 @@ std::vector<std::vector<Action>> PlanParser::StepsToActions(
                     goalAction.type = 'S';  // Station
                     goalAction.task_id = raw_steps[i][j].task_id;
                     goalAction.nodeID = node_id;
-                    goalAction.time += 1;
+                    // goalAction.time += 1;
                     node_id++;
                     processedActions.push_back(goalAction);
                 }
