@@ -278,6 +278,10 @@ void Graph::setDefaultEdgeWeights() {
 }
 
 void Graph::update_map_weights(std::vector<double>& new_weights) {
+    if (new_weights.size() != 7 * this->size()) {
+        spdlog::error("Error: new_weights size should be {} but is {}",
+                      7 * this->size(), new_weights.size());
+    }
     // Read in weights
     // G_json["weights_matrix"] of length rows * cols * 7, where each entry
     // contains the weights of `right`, `down`, `left`, `up`, `wait`, `CR`, and
@@ -786,7 +790,7 @@ vector<double> Graph::computeHeuristicsOneLocPebbleMotion(int root_location) {
         Node* curr = heap.top();
         heap.pop();
         for (auto next_state : this->getNeighbors(curr->location)) {
-            double curr_weight = this->getWeight(next_state, curr->location);
+            double curr_weight = this->getWeight(curr->location, next_state);
             double next_g_val;
             int next_duration;
 
