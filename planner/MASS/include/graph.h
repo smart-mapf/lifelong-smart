@@ -49,9 +49,16 @@ public:
     }
     // bool validMove(int curr, int next) const;
     inline bool validMove(int curr, int next) const {
+        // Out of map
         if (next < 0 || next >= map_size)
             return false;
+
+        // Neighbor is an obstacle
         if (my_map[next])
+            return false;
+
+        // Edge is not traversable
+        if (this->getWeight(curr, next) >= WEIGHT_MAX)
             return false;
         return getManhattanDistance(curr, next) < 2;
     }
