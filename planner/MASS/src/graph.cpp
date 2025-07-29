@@ -387,11 +387,20 @@ bool Graph::loadMap() {
 // Get neighbors of the current location, assuming pebble motion
 list<int> Graph::getNeighbors(int curr) const {
     list<int> neighbors;
-    // int candidates[4] = {curr + 1, curr - 1, curr + num_of_cols,
-    //                      curr - num_of_cols};
     for (int d : this->move) {
         int next = curr + d;
         if (validMove(curr, next))
+            neighbors.emplace_back(next);
+    }
+    return neighbors;
+}
+
+// Get inverse neighbors of the current location, assuming pebble motion
+list<int> Graph::getInverseNeighborsPebbleMotion(int curr) const {
+    list<int> neighbors;
+    for (int d : this->move) {
+        int next = curr - d;
+        if (InvValidMove(curr, next))
             neighbors.emplace_back(next);
     }
     return neighbors;
@@ -456,7 +465,7 @@ void Graph::getInverseNeighbors(int curr, orient direct,
     // int candidates[4] = {-num_of_cols, 1, num_of_cols, -1};
     // int next = curr - candidates[direct];
     int next = curr - this->move[direct];
-    while (validMove(curr, next)) {
+    while (InvValidMove(curr, next)) {
         neighbor.forward_locs.push_back(next);
         curr = next;
         next = next - this->move[direct];
@@ -615,6 +624,7 @@ void Graph::computeHeuristics() {
     }
 
     // Compute the heuristics that consider pebble motion model. Used by PIBT
+    spdlog::info("Computing heuristics for pebble motion...");
     for (int loc : h_locations) {
         // Compute heuristics for each free location
         vector<double> d_heuristics_for_loc;
@@ -789,8 +799,9 @@ vector<double> Graph::computeHeuristicsOneLocPebbleMotion(int root_location) {
     while (!heap.empty()) {
         Node* curr = heap.top();
         heap.pop();
-        for (auto next_state : this->getNeighbors(curr->location)) {
-            double curr_weight = this->getWeight(curr->location, next_state);
+        for (auto next_state :
+             this->getInverseNeighborsPebbleMotion(curr->location)) {
+            double curr_weight = this->getWeight(next_state, curr->location);
             double next_g_val;
             int next_duration;
 

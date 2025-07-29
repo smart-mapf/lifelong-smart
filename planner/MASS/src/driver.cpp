@@ -85,15 +85,16 @@ int main(int argc, char **argv) {
     int num_agents = vm["agentNum"].as<int>();
     int screen = vm["screen"].as<int>();
     double simulation_window = vm["simulation_window"].as<double>();
+    int simulation_window_ts =
+        static_cast<int>(simulation_window * bot_motion->V_MAX);
+    spdlog::info("Simulation window in time steps: {}", simulation_window_ts);
     int sps_solver_type = vm["solver"].as<int>();
     std::shared_ptr<Graph> graph =
         make_shared<Graph>(vm["map"].as<string>(), screen, bot_motion);
     std::shared_ptr<TaskAssigner> task_assigner = make_shared<TaskAssigner>(
-        graph, bot_motion, screen, simulation_window, num_agents);
+        graph, bot_motion, screen, simulation_window_ts, num_agents);
 
     // Backup solver
-    int simulation_window_ts =
-        static_cast<int>(simulation_window * bot_motion->V_MAX);
     PIBT pibt(graph, simulation_window_ts, screen, seed, num_agents);
 
     // Stats
@@ -203,7 +204,7 @@ int main(int argc, char **argv) {
                              global_run_time.count());
             }
 
-            if (!pbs_success) {
+            if (!pbs_success && global_run_time.count() < cutoff_time) {
                 if (screen > 0) {
                     spdlog::warn("MASS: No solution found, retrying with "
                                  "relaxed motion constraints.");
@@ -218,7 +219,7 @@ int main(int argc, char **argv) {
 
                 // Recompute heuristic
                 graph->computeHeuristics();
-            } else {
+            } else if (pbs_success) {
                 if (screen > 0) {
                     spdlog::info("MASS: Solution found!");
                 }

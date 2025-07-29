@@ -257,6 +257,25 @@ bool PIBT::run(const vector<State> &starts,
             cout << "#################" << endl;
         }
     }
+
+    // // Check solution
+    // if (screen > 0) {
+    //     for (int i = 0; i < num_agents; i++) {
+    //         for (int t = 1; t < this->simulation_window + 1; t++) {
+    //             if (solution[i][t].location == -1) {
+    //                 // If the location is -1, append wait action at the end
+    //                 // solution[i][t] = solution[i][t - 1].wait();
+    //                 spdlog::error(
+    //                     "PIBT: Agent {} has no solution at timestep {}. "
+    //                     "Last location: {}, last orientation: {}",
+    //                     i, t, solution[i][t - 1].location,
+    //                     solution[i][t - 1].orientation);
+    //                 exit(1);
+    //             }
+    //         }
+    //     }
+    // }
+
     if (screen > 0)
         print_results();
     return true;

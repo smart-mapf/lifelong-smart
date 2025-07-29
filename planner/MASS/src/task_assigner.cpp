@@ -55,7 +55,7 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
             //     graph->getColCoordinate(prev_loc),
             //     graph->getRowCoordinate(task.loc),
             //     graph->getColCoordinate(task.loc), h);
-            min_time += h / bot_motion->V_MAX;
+            min_time += h;
             prev_loc = task.loc;
         }
         // spdlog::info("Agent {}: Minimal time to reach goals: {}", i,
@@ -80,10 +80,8 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
                     last_goal_types[i] = "Workstation";
                 }
             }
-            min_time +=
-                this->graph->getHeuristicOneGoalPebbleMotion(
-                    goal_locations[i].back().loc, prev_loc, orient::None) /
-                bot_motion->V_MAX;
+            min_time += this->graph->getHeuristicOneGoalPebbleMotion(
+                goal_locations[i].back().loc, prev_loc, orient::None);
             prev_loc = goal_locations[i].back().loc;
         }
     }

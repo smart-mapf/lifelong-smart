@@ -48,6 +48,7 @@ public:
         return my_map[loc];
     }
     // bool validMove(int curr, int next) const;
+    // Check the movement from curr to next
     inline bool validMove(int curr, int next) const {
         // Out of map
         if (next < 0 || next >= map_size)
@@ -62,7 +63,23 @@ public:
             return false;
         return getManhattanDistance(curr, next) < 2;
     }
+    // Check the movement from next to curr
+    inline bool InvValidMove(int curr, int next) const {
+        // Out of map
+        if (next < 0 || next >= map_size)
+            return false;
+
+        // Neighbor is an obstacle
+        if (my_map[next])
+            return false;
+
+        // Edge is not traversable
+        if (this->getWeight(next, curr) >= WEIGHT_MAX)
+            return false;
+        return getManhattanDistance(curr, next) < 2;
+    }
     list<int> getNeighbors(int curr) const;
+    list<int> getInverseNeighborsPebbleMotion(int curr) const;
     void getNeighbors(
         int curr, orient curr_o,
         std::vector<std::tuple<int, orient, double>>& neighbors) const;
