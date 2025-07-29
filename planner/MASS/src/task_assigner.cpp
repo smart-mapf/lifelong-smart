@@ -44,12 +44,18 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
     for (int i = 0; i < num_of_agents; i++) {
         // spdlog::info("Agent {}: Last goal type: {}", i, last_goal_types[i]);
         // Minimal time it takes for the robot to reach the available goals
-        int min_time = 0;
+        double min_time = 0.0;
         int prev_loc = start_locations[i];
         for (const auto& task : goal_locations[i]) {
-            min_time += this->graph->getHeuristicOneGoalPebbleMotion(
-                            task.loc, prev_loc, orient::None) /
-                        bot_motion->V_MAX;
+            double h = this->graph->getHeuristicOneGoalPebbleMotion(
+                task.loc, prev_loc, orient::None);
+            // spdlog::info(
+            //     "Agent {}: Prev loc ({},{}) to task location: ({},{}), h: {}",
+            //     i, graph->getRowCoordinate(prev_loc),
+            //     graph->getColCoordinate(prev_loc),
+            //     graph->getRowCoordinate(task.loc),
+            //     graph->getColCoordinate(task.loc), h);
+            min_time += h / bot_motion->V_MAX;
             prev_loc = task.loc;
         }
         // spdlog::info("Agent {}: Minimal time to reach goals: {}", i,
