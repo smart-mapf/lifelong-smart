@@ -29,7 +29,8 @@
 class SIPP {
 
 public:
-    explicit SIPP(const std::shared_ptr<Instance>&, double cutoff_time);
+    explicit SIPP(const std::shared_ptr<Instance>&, double cutoff_time,
+                  shared_ptr<RobotMotion> bot_motion);
     bool run(int agent, ReservationTable& rt, MotionInfo& solution, Path& path, double& solution_cost, TimedPath& timed_path, bool log=false);
     bool getInitNode(ReservationTable& rt, std::shared_ptr<Node>& init_node,
                      int goal_id);
@@ -83,6 +84,8 @@ private:
     std::shared_ptr<FailureCache> failure_cache_ptr;
     std::shared_ptr<SuccessCache> success_cache_ptr;
     double cutoff_time = 20.0;
+
+    shared_ptr<RobotMotion> bot_motion;  // Robot motion model
 
     bool log = false;  // log the planning process, for debugging purposes
 

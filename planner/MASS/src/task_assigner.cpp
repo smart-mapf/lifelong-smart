@@ -49,7 +49,7 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
         for (const auto& task : goal_locations[i]) {
             min_time += this->graph->getHeuristicOneGoalPebbleMotion(
                             task.loc, prev_loc, orient::None) /
-                        V_MAX;
+                        bot_motion->V_MAX;
             prev_loc = task.loc;
         }
         // spdlog::info("Agent {}: Minimal time to reach goals: {}", i,
@@ -77,7 +77,7 @@ void TaskAssigner::updateGoalLocations(vector<int> start_locations,
             min_time +=
                 this->graph->getHeuristicOneGoalPebbleMotion(
                     goal_locations[i].back().loc, prev_loc, orient::None) /
-                V_MAX;
+                bot_motion->V_MAX;
             prev_loc = goal_locations[i].back().loc;
         }
     }

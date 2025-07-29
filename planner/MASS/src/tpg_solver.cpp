@@ -13,7 +13,7 @@ TPG_Solver::TPG_Solver(Agent& sipp_curr_agent, std::deque<std::shared_ptr<Interv
         } else {
             tmp_interval->t_max = INF;
         }
-        if ((tmp_interval->t_max - tmp_interval->t_min) < (2*curr_agent.length + CELL_DIS)/curr_agent.v_max) {
+        if ((tmp_interval->t_max - tmp_interval->t_min) < (2*curr_agent.length + CELL_DIS)/curr_agent.bot_motion->V_MAX) {
             interval_too_small = true;
         }
         // set it to nullptr, since we don't use this entry in tpg
@@ -29,10 +29,10 @@ bool TPG_Solver::SolveBezier(
         std::vector<double>& solution_control_points,
         Path& result_path)
 {
-    double a_min = curr_agent.a_min;
-    double a_max = curr_agent.a_max;
-    double v_min = curr_agent.v_min;
-    double v_max = curr_agent.v_max;
+    double a_min = curr_agent.bot_motion->A_MAX * -1.0;
+    double a_max = curr_agent.bot_motion->A_MAX;
+    double v_min = curr_agent.bot_motion->V_MIN;
+    double v_max = curr_agent.bot_motion->V_MAX;
     double t_length = T_optimal;
     int traj_size = (int) result_nodes.size();
 
@@ -190,10 +190,10 @@ bool TPG_Solver::SolveSlackBezier(
         Path& result_path,
         double& slack_var)
 {
-    double a_min = curr_agent.a_min;
-    double a_max = curr_agent.a_max;
-    double v_min = curr_agent.v_min;
-    double v_max = curr_agent.v_max;
+    double a_min = curr_agent.bot_motion->A_MAX * -1.0;
+    double a_max = curr_agent.bot_motion->A_MAX;
+    double v_min = curr_agent.bot_motion->V_MIN;
+    double v_max = curr_agent.bot_motion->V_MAX;
     int traj_size = result_nodes.size();
     double t_length = T;
     BernsteinPolynomial bern_poly(n_points, t_length);

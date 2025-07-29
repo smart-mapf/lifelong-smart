@@ -4,11 +4,13 @@ int RANDOM_WALK_STEPS = 100000;
 
 Instance::Instance(shared_ptr<Graph> graph,
                    shared_ptr<TaskAssigner> task_assigner,
+                   shared_ptr<RobotMotion> bot_motion,
                    vector<tuple<double, double, int>>& start_locs,
                    set<int> finished_tasks_id, bool use_partial_expansion,
                    int used_sps_solver, int screen, double simulation_window)
     : graph(graph),
       task_assigner(task_assigner),
+      bot_motion(bot_motion),
       num_of_agents(static_cast<int>(start_locs.size())),
       use_pe(use_partial_expansion),
       use_sps_type(used_sps_solver),
@@ -103,7 +105,7 @@ void Instance::generateRandomAgents() {
                 task_id++;
             }
 
-            agents[k] = Agent(start, orient::East, tasks);
+            agents[k] = Agent(start, orient::East, tasks, bot_motion);
             k++;
         }
     } else  // Generate agents for warehouse scenario
@@ -134,7 +136,7 @@ void Instance::generateRandomAgents() {
                 tasks.push_back(Task(task_id, goal, orient::None));
                 task_id++;
             }
-            agents[k] = Agent(start, orient::East, tasks);
+            agents[k] = Agent(start, orient::East, tasks, bot_motion);
         }
 
         // Print goal locations of the agent
@@ -337,9 +339,11 @@ bool Instance::loadAgents(
     if (this->screen > 0) {
         spdlog::info("Start to goal locations:");
         for (int i = 0; i < num_of_agents; i++) {
+            int ori = std::get<2>(start_locs[i]);
             cout << "Agent " << i << ": ("
                  << graph->getCoordinate(start_locations[i]).first << ", "
-                 << graph->getCoordinate(start_locations[i]).second << ") => ";
+                 << graph->getCoordinate(start_locations[i]).second << ", "
+                 << this->graph->ORI_SMART_TO_MASS.at(ori) << ") => ";
             for (const auto& task : goal_locations[i]) {
                 cout << "(" << graph->getCoordinate(task.loc).first << ", "
                      << graph->getCoordinate(task.loc).second << ", "
@@ -359,7 +363,7 @@ bool Instance::loadAgents(
         int ori = std::get<2>(start_locs[i]);
         agents[i] =
             Agent(start_locations[i], this->graph->ORI_SMART_TO_MASS.at(ori),
-                  goal_locations[i]);
+                  goal_locations[i], bot_motion);
         agents[i].id = i;
     }
 

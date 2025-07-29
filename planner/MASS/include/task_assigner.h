@@ -1,13 +1,14 @@
 #pragma once
-#include "task.h"
 #include "common.h"
 #include "graph.h"
+#include "task.h"
 
 class TaskAssigner {
 public:
-    TaskAssigner(shared_ptr<Graph> graph, int screen, int simulation_window,
-                 int num_of_agents)
+    TaskAssigner(shared_ptr<Graph> graph, shared_ptr<RobotMotion> bot_motion,
+                 int screen, int simulation_window, int num_of_agents)
         : graph(graph),
+          bot_motion(bot_motion),
           screen(screen),
           simulation_window(simulation_window),
           num_of_agents(num_of_agents) {
@@ -22,12 +23,12 @@ public:
         return goal_locations;
     }
 
-
 private:
     vector<vector<Task>> goal_locations;  // goal locations for the agents
-    shared_ptr<Graph> graph;      // graph representation of the map
-    int simulation_window = 0;    // simulation window for the planner
-    int screen = 0;               // screen output level
+    shared_ptr<Graph> graph;              // graph representation of the map
+    shared_ptr<RobotMotion> bot_motion;   // robot motion model
+    int simulation_window = 0;            // simulation window for the planner
+    int screen = 0;                       // screen output level
 
     int num_of_agents;
     int task_id;

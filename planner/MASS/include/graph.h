@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "common.h"
+#include "motion.h"
 #include "task.h"
 
 struct Neighbors {
@@ -40,7 +41,8 @@ public:
     Graph() {
     }
 
-    Graph(const string& map_fname, int screen);
+    Graph(const string& map_fname, int screen,
+          const std::shared_ptr<RobotMotion> bot_motion);
 
     inline bool isObstacle(int loc) const {
         return my_map[loc];
@@ -221,6 +223,8 @@ private:
 
     // Mutex for thread safety when computing heuristics
     std::mutex heuristic_mutex;
+
+    std::shared_ptr<RobotMotion> bot_motion;  // Robot motion configuration
 
     // Direction of movement
     // 0: North, 1: East, 2: South, 3: West

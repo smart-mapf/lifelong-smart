@@ -10,8 +10,9 @@
  * @param instance the pointer of instance that is derived from the input files
  */
 PBS::PBS(std::shared_ptr<Instance> user_instance_ptr,
-         int single_agent_solver_name, double cutoff_time, int screen)
-    : screen(screen) {
+         int single_agent_solver_name, double cutoff_time,
+         shared_ptr<RobotMotion> bot_motion, int screen)
+    : screen(screen), bot_motion(bot_motion) {
     instance_ptr = user_instance_ptr;
     if (single_agent_solver_name == 0) {
         single_agent_solver = "BAS";
@@ -21,7 +22,8 @@ PBS::PBS(std::shared_ptr<Instance> user_instance_ptr,
         std::cerr << "Invalid single agent solver!\n";
         exit(-1);
     }
-    sipp_ptr = std::make_shared<SIPP>(user_instance_ptr, cutoff_time / 10);
+    sipp_ptr =
+        std::make_shared<SIPP>(user_instance_ptr, cutoff_time / 10, bot_motion);
     num_of_agents = (int)instance_ptr->agents.size();
     cutoff_runtime = cutoff_time;
     this->time_limit = cutoff_time;
@@ -409,10 +411,13 @@ bool PBS::generateChild(int child_id, std::shared_ptr<PTNode> parent, int low,
         }
         if (!SolveSingleAgent(*node, higher_agents, a)) {
             // Debug: run again with logging turned on
-            spdlog::warn(
-                "Fail to find a path for agent {}! Replanning with logging.",
-                a);
-            SolveSingleAgent(*node, higher_agents, a, true);
+            if (screen > 2) {
+                spdlog::warn("Fail to find a path for agent {}! Replanning "
+                             "with logging.",
+                             a);
+                SolveSingleAgent(*node, higher_agents, a, true);
+            }
+
             if (child_id == 0)
                 parent->children.first = nullptr;
             else
@@ -498,6 +503,13 @@ bool PBS::solve(const string& outputFileName) {
     //     cout << name << ": ";
     // }
     // set timer
+    // Print motion model
+    if (screen > 1) {
+        spdlog::info("Motion model: V_MIN: {}, V_MAX: {}, A_MAX: {}, "
+                     "ROTATE_COST: {}, TURN_BACK_COST: {}",
+                     bot_motion->V_MIN, bot_motion->V_MAX, bot_motion->A_MAX,
+                     bot_motion->ROTATE_COST, bot_motion->TURN_BACK_COST);
+    }
     auto start = clock();
 
     std::shared_ptr<PTNode> Root;
@@ -603,7 +615,8 @@ vector<vector<tuple<int, int, double, int>>> PBS::getTimedPath() const {
             // time it takes to move as the actual start time of the action
             // from current state to the next state
             if (j < solution_node->plan[i].size() - 1)
-                t = solution_node->plan[i][j + 1].arrival_time - (1 / V_MAX);
+                t = solution_node->plan[i][j + 1].arrival_time -
+                    (1 / bot_motion->V_MAX);
             // Last state, take the arrival time of the current state as the
             // start time of the action
             else

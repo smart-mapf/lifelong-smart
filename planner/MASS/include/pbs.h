@@ -14,7 +14,7 @@ extern const double EPSILON;
 class PBS
 {
 public:
-    PBS(std::shared_ptr<Instance> instance, int single_agent_solver_name, double cutoff_time, int screen=0);
+    PBS(std::shared_ptr<Instance> instance, int single_agent_solver_name, double cutoff_time, shared_ptr<RobotMotion> bot_motion, int screen=0);
     bool solve(const string& outputFileName);
     void saveTimedPath(const string & file_name) const;
     void savePath(const string & file_name) const;
@@ -66,6 +66,7 @@ private:
     list<int> ordered_agents;
     std::vector<bool> need_replan;
     std::vector<bool> agents_arrived;
+    shared_ptr<RobotMotion> bot_motion;
 
 
 /////////////////////////////////////////////////////////////////////////////////////

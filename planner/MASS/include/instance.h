@@ -8,9 +8,9 @@
 
 #include "common.h"
 #include "graph.h"
+#include "states.h"
 #include "task.h"
 #include "task_assigner.h"
-#include "states.h"
 
 using namespace std;
 
@@ -50,13 +50,15 @@ struct Agent {
     // orient end_o = orient::None;
     vector<Task> goal_locations;
 
-    double v_min = V_MIN;
-    double v_max = V_MAX;
-    double a_min = -0.5;
-    double a_max = 0.5;
-    double length = 0.4;  // radius of the robot
-    double rotation_cost = ROTATE_COST;
-    double turn_back_cost = TURN_BACK_COST;
+    // These default values are set to match the default values in RobotMotion.
+    // double v_min = DEFAULT_V_MIN;
+    // double v_max = DEFAULT_V_MAX;
+    // double a_min = DEFAULT_A_MAX * -1.0;  // negative acceleration
+    // double a_max = DEFAULT_A_MAX;         // positive acceleration
+    // double rotation_cost = DEFAULT_ROTATE_COST;
+    // double turn_back_cost = DEFAULT_TURN_BACK_COST;
+    shared_ptr<RobotMotion> bot_motion;
+    double length = DEFAULT_LENGTH;  // radius of the robot
 
     /*For time window*/
     bool is_solved = false;
@@ -67,10 +69,19 @@ struct Agent {
 
     Agent() = default;
 
-    Agent(int start_loc, orient start_ori, vector<Task> goal_locations)
+    Agent(int start_loc, orient start_ori, vector<Task> goal_locations,
+          std::shared_ptr<RobotMotion> bot_motion)
         : start_location(start_loc),
           start_o(start_ori),
-          goal_locations(goal_locations) {
+          goal_locations(goal_locations),
+          bot_motion(bot_motion)
+    //   v_min(bot_motion->V_MIN),
+    //   v_max(bot_motion->V_MAX),
+    //   a_min(-bot_motion->A_MAX),
+    //   a_max(bot_motion->A_MAX),
+    //   rotation_cost(bot_motion->ROTATE_COST),
+    //   turn_back_cost(bot_motion->TURN_BACK_COST)
+    {
     }
 
     /*statistic for result*/
@@ -96,6 +107,7 @@ public:
 
     Instance() = default;
     Instance(shared_ptr<Graph> graph, shared_ptr<TaskAssigner> task_assigner,
+             shared_ptr<RobotMotion> bot_motion,
              vector<tuple<double, double, int>>& start_locs,
              set<int> finished_tasks_id, bool use_partial_expansion = false,
              int used_sps_solver = 0, int screen = 0,
@@ -227,6 +239,7 @@ private:
     // string agent_fname;
     // string agent_indices;
     ReservationTable raw_rv_tbl;
+    shared_ptr<RobotMotion> bot_motion;
 
     //   vector<int> start_locations;
     //   vector<int> goal_locations;
@@ -235,7 +248,6 @@ private:
     // bool loadMap();
     // void printMap() const;
     // void saveMap() const;
-
 
     // void generateConnectedRandomGrid(int rows, int cols, int obstacles); //
     // initialize new [rows x cols] map with random obstacles

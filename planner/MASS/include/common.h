@@ -69,28 +69,28 @@ using json = nlohmann::json;
 
 #define NUM_ORIENT 4
 #define CONTROL_POINTS_NUM 30
-#define V_MIN 0.0
-#define V_MAX 2.0
-#define A_MAX 2.0
-#define ROTATE_COST 2.0
-#define TURN_BACK_COST 3.6
+// #define V_MIN 0.0
+// #define V_MAX 2.0
+// #define A_MAX 2.0
+// #define ROTATE_COST 2.0
+// #define TURN_BACK_COST 3.6
 
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::duration<float> time_s;
 
-// Calculates the time to accelerate from zero to max_speed or vice versa.
-inline double timeToMaxSpeed() {
-    return V_MAX / A_MAX;
-}
+// // Calculates the time to accelerate from zero to max_speed or vice versa.
+// inline double timeToMaxSpeed() {
+//     return V_MAX / A_MAX;
+// }
 
-// Calculates the distance covered during acceleration or deceleration from zero
-// to max_speed or vice versa.
-inline int distanceDuringAcceleration() {
-    double time = timeToMaxSpeed();
-    // Using equation: s = ut + 0.5 * a * t^2 (where u is initial speed, which
-    // is 0 here)
-    return (int)(0.5 * A_MAX * time * time);
-}
+// // Calculates the distance covered during acceleration or deceleration from zero
+// // to max_speed or vice versa.
+// inline int distanceDuringAcceleration() {
+//     double time = timeToMaxSpeed();
+//     // Using equation: s = ut + 0.5 * a * t^2 (where u is initial speed, which
+//     // is 0 here)
+//     return (int)(0.5 * A_MAX * time * time);
+// }
 
 enum orient { North = 0, East = 1, South = 2, West = 3, None = 4 };
 
@@ -101,17 +101,17 @@ const double travel_cost[] = {0.60, 1.45, 0.8, 0.60, 0.5};
 const double arr_cell_cost[] = {2.8284, 4.0000, 4.8990, 5.6569,
                                 6.3246, 6.9282, 7.4833, 8.0000};
 
-inline double arrLowerBound(size_t step) {
-    double total_t;
-    size_t length = step + 2;
-    if (step > 2 * distanceDuringAcceleration()) {
-        total_t = 2 * timeToMaxSpeed() +
-                  ((length - 2 * distanceDuringAcceleration() - 1) / V_MAX);
-    } else {
-        total_t = 2 * sqrt((length - 1) / A_MAX);
-    }
-    return total_t;
-}
+// inline double arrLowerBound(size_t step) {
+//     double total_t;
+//     size_t length = step + 2;
+//     if (step > 2 * distanceDuringAcceleration()) {
+//         total_t = 2 * timeToMaxSpeed() +
+//                   ((length - 2 * distanceDuringAcceleration() - 1) / V_MAX);
+//     } else {
+//         total_t = 2 * sqrt((length - 1) / A_MAX);
+//     }
+//     return total_t;
+// }
 /**
  * @brief This structure is used to manage the time intervals
  * during the partial node expansion.

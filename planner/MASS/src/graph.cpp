@@ -1,7 +1,8 @@
 #include "graph.h"
 
-Graph::Graph(const string& map_fname, int screen)
-    : map_fname(map_fname), screen(screen) {
+Graph::Graph(const string& map_fname, int screen,
+             const std::shared_ptr<RobotMotion> bot_motion)
+    : map_fname(map_fname), screen(screen), bot_motion(bot_motion) {
     if (!loadMap()) {
         cerr << "Failed to load map from " << map_fname << endl;
         exit(-1);
@@ -408,23 +409,23 @@ void Graph::getNeighbors(
         left += NUM_ORIENT;
     }
     auto left_o = static_cast<orient>(left);
-    neighbors.emplace_back(curr, left_o, ROTATE_COST);
+    neighbors.emplace_back(curr, left_o, bot_motion->ROTATE_COST);
     int right = curr_o + 1;
     if (right >= NUM_ORIENT) {
         right -= NUM_ORIENT;
     }
     auto right_o = static_cast<orient>(right);
-    neighbors.emplace_back(curr, right_o, ROTATE_COST);
+    neighbors.emplace_back(curr, right_o, bot_motion->ROTATE_COST);
     int back = curr_o + 2;
     if (back >= NUM_ORIENT) {
         back -= NUM_ORIENT;
     }
     auto back_o = static_cast<orient>(back);
-    neighbors.emplace_back(curr, back_o, TURN_BACK_COST);
+    neighbors.emplace_back(curr, back_o, bot_motion->TURN_BACK_COST);
     // int candidates[4] = {num_of_cols, -1, -num_of_cols, 1};
     int next = curr - this->move[curr_o];
     if (validMove(curr, next))
-        neighbors.emplace_back(next, curr_o, CELL_DIS / V_MAX);
+        neighbors.emplace_back(next, curr_o, CELL_DIS / bot_motion->V_MAX);
 }
 
 void Graph::getInverseNeighbors(int curr, orient direct,
@@ -663,13 +664,15 @@ bool Graph::BackDijkstra(int root_location) {
                 continue;
             } else {
                 dij_close_set.erase(close_item_it);
-                curr_heuristic[n->current_point][n->curr_o] = min(curr_heuristic[n->current_point][n->curr_o], n->g);
+                curr_heuristic[n->current_point][n->curr_o] =
+                    min(curr_heuristic[n->current_point][n->curr_o], n->g);
                 dij_close_set.insert(n);
             }
         } else {
             assert(n->current_point < curr_heuristic.size());
             assert(n->curr_o < NUM_ORIENT);
-            curr_heuristic[n->current_point][n->curr_o] = min(curr_heuristic[n->current_point][n->curr_o], n->g);
+            curr_heuristic[n->current_point][n->curr_o] =
+                min(curr_heuristic[n->current_point][n->curr_o], n->g);
             h_count++;
             dij_close_set.insert(n);
         }
@@ -683,7 +686,7 @@ bool Graph::BackDijkstra(int root_location) {
             n_left->prev_action = Action::turnLeft;
             n_left->current_point = n->current_point;
             n_left->curr_o = neighbors.left.second;
-            n_left->g = n->g + ROTATE_COST;
+            n_left->g = n->g + bot_motion->ROTATE_COST;
             n_left->f = n_left->g;
             n_left->parent = n;
             dij_open.push(n_left);
@@ -693,7 +696,7 @@ bool Graph::BackDijkstra(int root_location) {
             n_right->prev_action = Action::turnRight;
             n_right->current_point = n->current_point;
             n_right->curr_o = neighbors.right.second;
-            n_right->g = n->g + ROTATE_COST;
+            n_right->g = n->g + bot_motion->ROTATE_COST;
             n_right->f = n_right->g;
             n_right->parent = n;
             dij_open.push(n_right);
@@ -703,7 +706,7 @@ bool Graph::BackDijkstra(int root_location) {
             n_back->prev_action = Action::turnBack;
             n_back->current_point = n->current_point;
             n_back->curr_o = neighbors.back.second;
-            n_back->g = n->g + TURN_BACK_COST;
+            n_back->g = n->g + bot_motion->TURN_BACK_COST;
             n_back->f = n_back->g;
             n_back->parent = n;
             dij_open.push(n_back);
@@ -715,7 +718,7 @@ bool Graph::BackDijkstra(int root_location) {
             n_back->prev_action = Action::forward;
             n_back->current_point = neighbors.forward_locs[i];
             n_back->curr_o = n->curr_o;
-            n_back->g = n->g + arrLowerBound(i);
+            n_back->g = n->g + bot_motion->arrLowerBound(i);
             n_back->f = n_back->g;
             n_back->parent = n;
             dij_open.push(n_back);

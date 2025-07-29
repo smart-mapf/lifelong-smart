@@ -11,6 +11,7 @@
 
 #include "common.h"
 #include "instance.h"
+#include "motion.h"
 #include "pbs.h"
 #include "pibt.h"
 #include "task_assigner.h"
@@ -79,17 +80,20 @@ int main(int argc, char **argv) {
     auto console_logger = spdlog::default_logger()->clone("Planner");
     spdlog::set_default_logger(console_logger);
 
+    // Set up parameters
+    std::shared_ptr<RobotMotion> bot_motion = make_shared<RobotMotion>();
     int num_agents = vm["agentNum"].as<int>();
     int screen = vm["screen"].as<int>();
     double simulation_window = vm["simulation_window"].as<double>();
     int sps_solver_type = vm["solver"].as<int>();
     std::shared_ptr<Graph> graph =
-        make_shared<Graph>(vm["map"].as<string>(), screen);
-    std::shared_ptr<TaskAssigner> task_assigner =
-        make_shared<TaskAssigner>(graph, screen, simulation_window, num_agents);
+        make_shared<Graph>(vm["map"].as<string>(), screen, bot_motion);
+    std::shared_ptr<TaskAssigner> task_assigner = make_shared<TaskAssigner>(
+        graph, bot_motion, screen, simulation_window, num_agents);
 
     // Backup solver
-    int simulation_window_ts = static_cast<int>(simulation_window * V_MAX);
+    int simulation_window_ts =
+        static_cast<int>(simulation_window * bot_motion->V_MAX);
     PIBT pibt(graph, simulation_window_ts, screen, seed, num_agents);
 
     // Stats
@@ -151,7 +155,7 @@ int main(int argc, char **argv) {
         /// load the instance
         //////////////////////////////////////////////////////////////////////
         std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(
-            graph, task_assigner, commit_cut, new_finished_tasks_id,
+            graph, task_assigner, bot_motion, commit_cut, new_finished_tasks_id,
             vm["partialExpansion"].as<bool>(), sps_solver_type, screen,
             simulation_window);
 
@@ -167,44 +171,87 @@ int main(int argc, char **argv) {
             instance_ptr->saveAgents(instance_file);
         }
 
+        // The final plan
+        vector<vector<tuple<int, int, double, int>>> new_mapf_plan;
+        new_mapf_plan.resize(instance_ptr->num_of_agents);
+
         //////////////////////////////////////////////////////////////////////
         /// initialize the solver
         //////////////////////////////////////////////////////////////////////
-        PBS pbs(instance_ptr, sps_solver_type, vm["cutoffTime"].as<double>(),
-                screen);
-        auto init_start_time = Time::now();
-        // pbs.sipp_ptr->getHeuristic(vm["heuristic"].as<std::string>());
-        auto init_end_time = Time::now();
-        time_s debug_init_d = init_end_time - init_start_time;
-        double debug_init_time = debug_init_d.count();
-        // printf("Finish initialization the heuristic in %f seconds\n",
-        //        debug_init_time);
-        n_mapf_calls++;
+        // Attempt to solve using PBS
+        bool pbs_retried = false;
+        double multiplier = 1.0;
+        double delta_multi = 2.0;
+        double cutoff_time = vm["cutoffTime"].as<double>();
+        double pbs_success = false;
         auto global_start_time = Time::now();
-        bool pbs_success = pbs.solve(vm["output"].as<string>());
-        // bool pbs_success = false;
-        auto global_end_time = Time::now();
         std::chrono::duration<float> global_run_time =
-            global_end_time - global_start_time;
-        // printf("Runtime for MASS is: %f\n", global_run_time.count());
-        if (screen > 0) {
-            spdlog::info("Runtime for MASS is: {} seconds",
-                         global_run_time.count());
-        }
-        vector<vector<tuple<int, int, double, int>>> new_mapf_plan;
-        new_mapf_plan.resize(instance_ptr->num_of_agents);
-        if (pbs_success) {
-            // printf("Solution found!\n");
+            Time::now() - global_start_time;
+        // Run PBS until a solution is found or out of time
+        while (!pbs_success && global_run_time.count() < cutoff_time) {
+            double curr_cutoff_time = cutoff_time - global_run_time.count();
+            PBS pbs(instance_ptr, sps_solver_type, curr_cutoff_time, bot_motion,
+                    screen);
+            n_mapf_calls++;
+            pbs_success = pbs.solve(vm["output"].as<string>());
+            // bool pbs_success = false;
+            auto global_end_time = Time::now();
+            global_run_time = global_end_time - global_start_time;
+            // printf("Runtime for MASS is: %f\n", global_run_time.count());
             if (screen > 0) {
-                spdlog::info("MASS: Solution found!");
+                spdlog::info("Runtime for MASS is: {} seconds",
+                             global_run_time.count());
             }
-            pbs.updateCost();
-            new_mapf_plan = pbs.getTimedPath();
-            pbs.clear();
+
+            if (!pbs_success) {
+                if (screen > 0) {
+                    spdlog::warn("MASS: No solution found, retrying with "
+                                 "relaxed motion constraints.");
+                }
+                // Relax motion constraints and try again
+                pbs_retried = true;
+                // bot_motion->A_MAX *= delta_multi;
+                bot_motion->ROTATE_COST /= delta_multi;
+                bot_motion->TURN_BACK_COST /= delta_multi;
+                // Remember the multiplier
+                multiplier *= delta_multi;
+
+                // Recompute heuristic
+                graph->computeHeuristics();
+            } else {
+                if (screen > 0) {
+                    spdlog::info("MASS: Solution found!");
+                }
+                pbs.updateCost();
+                new_mapf_plan = pbs.getTimedPath();
+                pbs.clear();
+            }
+        }
+
+        // Reset motion model to original values
+        if (pbs_retried) {
+            // bot_motion->A_MAX /= multiplier;
+            bot_motion->ROTATE_COST *= multiplier;
+            bot_motion->TURN_BACK_COST *= multiplier;
+            if (screen > 0) {
+                spdlog::info(
+                    "MASS: Resetting motion model to original values.");
+            }
+            graph->computeHeuristics();
+        }
+
+        if (!pbs_success) {
+            // printf("Solution found!\n");
+            // if (screen > 0) {
+            //     spdlog::info("MASS: Solution found!");
+            // }
+            // pbs.updateCost();
+            // new_mapf_plan = pbs.getTimedPath();
+            // pbs.clear();
             // if (vm.count("outputPaths"))
             //     pbs.saveTimedPath(vm["outputPaths"].as<std::string>());
             // pbs.savePath("durationPath.txt");
-        } else {
+
             // printf("No solution found!\n");
             if (screen > 0) {
                 spdlog::warn("MASS: No solution found, invoking PIBT!");

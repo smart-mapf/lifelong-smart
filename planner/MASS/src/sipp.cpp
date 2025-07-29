@@ -2,8 +2,9 @@
 
 using namespace std;
 
-SIPP::SIPP(const std::shared_ptr<Instance>& instance, double cutoff_time)
-    : instance_ptr(instance), cutoff_time(cutoff_time) {
+SIPP::SIPP(const std::shared_ptr<Instance>& instance, double cutoff_time,
+           shared_ptr<RobotMotion> bot_motion)
+    : instance_ptr(instance), cutoff_time(cutoff_time), bot_motion(bot_motion) {
     failure_cache_ptr = std::make_shared<FailureCache>();
     success_cache_ptr = std::make_shared<SuccessCache>();
     // heuristic_vec.resize(instance_ptr->agents.size());
@@ -439,7 +440,7 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                     // Using BAS solver
                     else {
                         CRISE_Solver crise_solver(curr_agent, forward_intervals,
-                                                  s->curr_o);
+                                                  s->curr_o, bot_motion);
                         time_s debug_retrieve_d =
                             debug_bcp_start_t - debug_expand_start_t;
                         debug_retrieve_time += debug_retrieve_d.count();
@@ -666,12 +667,12 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
     }
     if (n->parent == nullptr or n->prev_action == Action::forward) {
         // Insert three nodes, turn left, turn right, and turn back
-        if ((n->arrival_time_min + curr_agent.rotation_cost) <
+        if ((n->arrival_time_min + bot_motion->ROTATE_COST) <
             n->arrival_time_max) {
             std::shared_ptr<Node> n_left = std::make_shared<Node>();
             std::shared_ptr<MotionNode> motion = std::make_shared<MotionNode>();
             motion->start_t = n->arrival_time_min;
-            motion->end_t = n->arrival_time_min + curr_agent.rotation_cost;
+            motion->end_t = n->arrival_time_min + bot_motion->ROTATE_COST;
             motion->local_path.emplace_back(n->current_point,
                                             neighbors.left.second,
                                             motion->start_t, motion->end_t);
@@ -683,7 +684,7 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_left->curr_o = neighbors.left.second;
             n_left->interval_index = n->interval_index;
             n_left->arrival_time_min =
-                n->arrival_time_min + curr_agent.rotation_cost;
+                n->arrival_time_min + bot_motion->ROTATE_COST;
             n_left->arrival_time_max = n->arrival_time_max;
             // if (instance_ptr->simulation_window <= 0)
             n_left->g = n_left->arrival_time_min;
@@ -719,12 +720,12 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             }
         }
 
-        if ((n->arrival_time_min + curr_agent.rotation_cost) <
+        if ((n->arrival_time_min + bot_motion->ROTATE_COST) <
             n->arrival_time_max) {
             std::shared_ptr<Node> n_right = std::make_shared<Node>();
             std::shared_ptr<MotionNode> motion = std::make_shared<MotionNode>();
             motion->start_t = n->arrival_time_min;
-            motion->end_t = n->arrival_time_min + curr_agent.rotation_cost;
+            motion->end_t = n->arrival_time_min + bot_motion->ROTATE_COST;
             motion->type = Action::turnRight;
             motion->local_path.emplace_back(n->current_point,
                                             neighbors.right.second,
@@ -736,7 +737,7 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_right->curr_o = neighbors.right.second;
             n_right->interval_index = n->interval_index;
             n_right->arrival_time_min =
-                n->arrival_time_min + curr_agent.rotation_cost;
+                n->arrival_time_min + bot_motion->ROTATE_COST;
             n_right->arrival_time_max = n->arrival_time_max;
             // if (instance_ptr->simulation_window <= 0)
             n_right->g = n_right->arrival_time_min;
@@ -772,12 +773,12 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             }
         }
 
-        if ((n->arrival_time_min + curr_agent.turn_back_cost) <
+        if ((n->arrival_time_min + bot_motion->TURN_BACK_COST) <
             n->arrival_time_max) {
             std::shared_ptr<Node> n_back = std::make_shared<Node>();
             std::shared_ptr<MotionNode> motion = std::make_shared<MotionNode>();
             motion->start_t = n->arrival_time_min;
-            motion->end_t = n->arrival_time_min + curr_agent.turn_back_cost;
+            motion->end_t = n->arrival_time_min + bot_motion->TURN_BACK_COST;
             motion->type = Action::turnBack;
             motion->local_path.emplace_back(n->current_point,
                                             neighbors.back.second,
@@ -789,7 +790,7 @@ void SIPP::nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt) {
             n_back->curr_o = neighbors.back.second;
             n_back->interval_index = n->interval_index;
             n_back->arrival_time_min =
-                n->arrival_time_min + curr_agent.turn_back_cost;
+                n->arrival_time_min + bot_motion->TURN_BACK_COST;
             n_back->arrival_time_max = n->arrival_time_max;
             // if (instance_ptr->simulation_window <= 0)
             n_back->g = n_back->arrival_time_min;
@@ -987,7 +988,7 @@ std::vector<std::vector<std::vector<double>>> loadVector(
 //             n_left->prev_action = Action::turnLeft;
 //             n_left->current_point = n->current_point;
 //             n_left->curr_o = neighbors.left.second;
-//             n_left->g = n->g + curr_agent.rotation_cost;
+//             n_left->g = n->g + bot_motion->ROTATE_COST;
 //             n_left->f = n_left->g;
 //             n_left->parent = n;
 //             dij_open.push(n_left);
@@ -997,7 +998,7 @@ std::vector<std::vector<std::vector<double>>> loadVector(
 //             n_right->prev_action = Action::turnRight;
 //             n_right->current_point = n->current_point;
 //             n_right->curr_o = neighbors.right.second;
-//             n_right->g = n->g + curr_agent.rotation_cost;
+//             n_right->g = n->g + bot_motion->ROTATE_COST;
 //             n_right->f = n_right->g;
 //             n_right->parent = n;
 //             dij_open.push(n_right);
@@ -1007,7 +1008,7 @@ std::vector<std::vector<std::vector<double>>> loadVector(
 //             n_back->prev_action = Action::turnBack;
 //             n_back->current_point = n->current_point;
 //             n_back->curr_o = neighbors.back.second;
-//             n_back->g = n->g + curr_agent.turn_back_cost;
+//             n_back->g = n->g + bot_motion->TURN_BACK_COST;
 //             n_back->f = n_back->g;
 //             n_back->parent = n;
 //             dij_open.push(n_back);
