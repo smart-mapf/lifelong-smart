@@ -309,10 +309,15 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             }
             // Otherwise, we proceed the goal id
             else {
-                // spdlog::info(
-                //     "Agent {}: Reached goal {}, time: {}, g: {}, h: {}, f:
-                //     {}", curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
+                if (log) {
+                    spdlog::info(
+                        "Agent {}: Reached goal {}, time: {}, g: {}, h: {}, f: "
+                        "{}",
+                        curr_agent.id, s->goal_id, s->g, s->g, s->h, s->f);
+                }
                 // Move to the next goal
+                // We set the parent action as none so that both movement and
+                // rotation expansions are considered
                 std::shared_ptr<Node> new_n = std::make_shared<Node>(
                     s->goal_id + 1, s->current_point, s->curr_o,
                     s->interval_index, s->arrival_time_min, s->arrival_time_max,
@@ -320,7 +325,7 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
                     instance_ptr->graph->getHeuristic(
                         curr_agent.goal_locations, s->current_point, s->curr_o,
                         s->goal_id + 1),
-                    instance_ptr->simulation_window, s->prev_action, s->parent,
+                    instance_ptr->simulation_window, Action::none, s->parent,
                     s->bezier_solution);
                 pushToOpen(new_n);
             }

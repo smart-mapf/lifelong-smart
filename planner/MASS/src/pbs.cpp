@@ -149,8 +149,12 @@ bool PBS::initRootNode(std::shared_ptr<PTNode>& root_node) {
         }
         if (!UpdatePlan(*root_node, i)) {
             spdlog::error("Fail to find a initial plan for agent {}!", i);
-            // set<int> high_agts;
-            // SolveSingleAgent(*root_node, high_agts, i, true);
+            if (screen > 2)
+            {
+                set<int> high_agts;
+                SolveSingleAgent(*root_node, high_agts, i, true);
+                // exit(-1);
+            }
             return false;
         }
     }
