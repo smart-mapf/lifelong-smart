@@ -34,13 +34,22 @@ PBS::PBS(std::shared_ptr<Instance> user_instance_ptr,
 }
 
 void PBS::clear() {
+    while (open_list.size() > 0) {
+        open_list.pop();
+    }
+    for (auto& node : allNodes_table) {
+        node->children.first.reset();
+        node->children.second.reset();
+        node->parent.reset();
+    }
+    allNodes_table.clear();
     priority_graph.clear();
     ordered_agents.clear();
     need_replan.clear();
     agents_arrived.clear();
     sipp_ptr->Reset();
-    sipp_ptr = nullptr;
-    instance_ptr = nullptr;
+    // sipp_ptr = nullptr;
+    // instance_ptr = nullptr;
     runtime = 0;
     runtime_generate_child = 0;
     runtime_build_CT = 0;
@@ -49,6 +58,14 @@ void PBS::clear() {
     runtime_detect_conflicts = 0;
     runtime_preprocessing = 0;
     num_HL_expanded = 0;
+}
+
+PBS::~PBS() {
+    clear();
+    sipp_ptr.reset();
+    instance_ptr.reset();
+    sipp_ptr = nullptr;
+    instance_ptr = nullptr;
 }
 
 bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id,
@@ -149,8 +166,7 @@ bool PBS::initRootNode(std::shared_ptr<PTNode>& root_node) {
         }
         if (!UpdatePlan(*root_node, i)) {
             spdlog::error("Fail to find a initial plan for agent {}!", i);
-            if (screen > 2)
-            {
+            if (screen > 2) {
                 set<int> high_agts;
                 SolveSingleAgent(*root_node, high_agts, i, true);
                 // exit(-1);
@@ -164,7 +180,8 @@ bool PBS::initRootNode(std::shared_ptr<PTNode>& root_node) {
     for (int a1 = 0; a1 < num_of_agents; a1++) {
         for (int a2 = a1 + 1; a2 < num_of_agents; a2++) {
             if (root_node->CheckCollision(a1, a2)) {
-                root_node->conflicts.emplace_back(new Conflict(a1, a2));
+                root_node->conflicts.emplace_back(
+                    make_shared<Conflict>(a1, a2));
             }
         }
     }
@@ -232,6 +249,7 @@ shared_ptr<Conflict> PBS::chooseConflict(const PTNode& node) {
 inline void PBS::pushNode(const std::shared_ptr<PTNode>& node) {
     // update handles
     open_list.push(node);
+    allNodes_table.push_back(node);
 }
 
 void PBS::pushNodes(const std::shared_ptr<PTNode>& n1,
@@ -458,7 +476,7 @@ bool PBS::generateChild(int child_id, std::shared_ptr<PTNode> parent, int low,
                 continue;
             auto t = clock();
             if (node->CheckCollision(a, a2)) {
-                node->conflicts.emplace_back(new Conflict(a, a2));
+                node->conflicts.emplace_back(make_shared<Conflict>(a, a2));
                 if (lower_agents.count(a2) >
                     0)  // has a collision with a lower priority agent
                 {
@@ -526,6 +544,7 @@ bool PBS::solve(const string& outputFileName) {
     if (screen > 2)
         spdlog::info("Root generated with cost: {}", root_cost);
     open_list.push(Root);
+    allNodes_table.push_back(Root);
     while (!open_list.empty() and ((double)(clock() - start) / CLOCKS_PER_SEC) <
                                       this->cutoff_runtime) {
         auto curr = selectNode();

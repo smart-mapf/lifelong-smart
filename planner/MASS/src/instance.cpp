@@ -50,6 +50,14 @@ Instance::Instance(shared_ptr<Graph> graph,
     // }
 }
 
+Instance::~Instance() {
+    // Destructor to clean up resources if needed
+    // graph = nullptr;
+    // task_assigner = nullptr;
+    // bot_motion = nullptr;
+    // agents.clear();
+}
+
 void Instance::GetRawReservationTable() {
     raw_rv_tbl.resize(this->graph->map_size);
     TimeInterval blocked_interval;

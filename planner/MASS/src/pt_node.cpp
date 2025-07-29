@@ -11,6 +11,20 @@ PTNode::PTNode(const vector<Path>& pl,
     solution_cost.resize(solution.size(), 0);
 }
 
+PTNode::~PTNode()
+{
+    // Clear the conflicts list
+    for (auto& conflict : conflicts) {
+        conflict.reset();
+    }
+    conflicts.clear();
+    // Clear the children nodes
+    children.first.reset();
+    children.second.reset();
+    parent.reset();
+    motion_solution.clear();
+}
+
 
 // /***
 //  * Finish this after working the structure

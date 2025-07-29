@@ -739,6 +739,8 @@ bool Graph::BackDijkstra(int root_location) {
         }
     }
 
+    dij_close_set.clear();
+
     std::lock_guard<std::mutex> lock(heuristic_mutex);
     heuristics[root_location] = curr_heuristic;
 

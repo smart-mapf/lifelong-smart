@@ -18,6 +18,7 @@ public:
                  std::deque<std::shared_ptr<IntervalEntry>>& sipp_result_nodes,
                  orient& curr_o, shared_ptr<RobotMotion> bot_motion);
     bool solve(shared_ptr<MotionNode>& solution);
+    ~CRISE_Solver();
 
 private:
     std::vector<double> accTimes(int length) {

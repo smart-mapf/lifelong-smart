@@ -37,6 +37,7 @@ public:
     // void getHeuristic(const std::string& heuristic_file);
     void showSolution(std::shared_ptr<Node>& s);
     void Reset();
+    ~SIPP();
 
 private:
     void PrintNonzeroRT(ReservationTable& rt) const;
@@ -59,13 +60,14 @@ private:
     inline void pushToOpen(const std::shared_ptr<Node>& new_node)
     {
         // dominance check here
-         if (closed_set.find(new_node) == closed_set.end()){
+        //  if (closed_set.find(new_node) == closed_set.end()){
+        if (dominanceCheck(new_node)) {
             open.push(new_node);
-            // allNodes_table[new_node].push_back(new_node);
+            allNodes_table[new_node].push_back(new_node);
             count_node_generated++;
         }
     }
-    // bool dominanceCheck(const std::shared_ptr<Node>& new_node);
+    bool dominanceCheck(const std::shared_ptr<Node>& new_node);
 
 private:
     // Instance& instance;
@@ -78,7 +80,7 @@ private:
     // define typedef for hash_map
     typedef boost::unordered_map<std::shared_ptr<Node>, list<std::shared_ptr<Node>>,
             NodeHash, NodeEqual> hashtable_t;
-    // hashtable_t allNodes_table;
+    hashtable_t allNodes_table;
 
     // std::vector<std::vector<std::vector<double>>> heuristic_vec;
     std::shared_ptr<FailureCache> failure_cache_ptr;

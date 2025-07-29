@@ -112,6 +112,7 @@ public:
              set<int> finished_tasks_id, bool use_partial_expansion = false,
              int used_sps_solver = 0, int screen = 0,
              double simulation_window = 10);
+    ~Instance();
 
     // void printAgents() const;
 

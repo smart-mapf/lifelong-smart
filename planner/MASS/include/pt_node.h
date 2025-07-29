@@ -18,6 +18,7 @@ public:
     PTNode(const std::shared_ptr<PTNode>& parent): plan(parent->plan), motion_solution(parent->motion_solution), all_agents_timed_path(parent->all_agents_timed_path),
                                                    solution_cost(parent->solution_cost), cost(parent->cost), depth(parent->depth+1),
                                                    makespan(parent->makespan), conflicts(parent->conflicts), parent(parent) {}
+    ~PTNode();
     PTNode(const vector<Path>&, std::vector<MotionInfo>& solution,
            std::vector<TimedPath>& timed_paths, const std::map<int, std::set<int> >&);
 	// void writeToFile(Instance&, const string&);	

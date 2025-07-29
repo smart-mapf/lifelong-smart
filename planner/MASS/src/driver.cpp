@@ -189,7 +189,9 @@ int main(int argc, char **argv) {
         std::chrono::duration<float> global_run_time =
             Time::now() - global_start_time;
         // Run PBS until a solution is found or out of time
-        while (!pbs_success && global_run_time.count() < cutoff_time) {
+        int max_iter = 5;
+        while (!pbs_success && global_run_time.count() < cutoff_time &&
+               max_iter-- > 0) {
             double curr_cutoff_time = cutoff_time - global_run_time.count();
             PBS pbs(instance_ptr, sps_solver_type, curr_cutoff_time, bot_motion,
                     screen);
@@ -225,8 +227,8 @@ int main(int argc, char **argv) {
                 }
                 pbs.updateCost();
                 new_mapf_plan = pbs.getTimedPath();
-                pbs.clear();
             }
+            pbs.clear();
         }
 
         // Reset motion model to original values
@@ -263,6 +265,8 @@ int main(int argc, char **argv) {
             new_mapf_plan = pibt.getPaths();
             pibt.clear();
         }
+
+        instance_ptr = nullptr;  // Clear the instance
 
         // Send new plan
         json stats = {{"n_mapf_calls", n_mapf_calls},

@@ -10,6 +10,12 @@ SIPP::SIPP(const std::shared_ptr<Instance>& instance, double cutoff_time,
     // heuristic_vec.resize(instance_ptr->agents.size());
 }
 
+SIPP::~SIPP() {
+    Reset();
+    failure_cache_ptr.reset();
+    success_cache_ptr.reset();
+}
+
 void SIPP::PrintNonzeroRT(ReservationTable& rt) const {
     for (unsigned int i = 0; i < rt.size(); i++) {
         if (!rt[i].empty()) {
@@ -79,7 +85,7 @@ void SIPP::Reset() {
     std::priority_queue<std::shared_ptr<Node>,
                         std::vector<std::shared_ptr<Node>>, NodeCompare>()
         .swap(open);
-    // allNodes_table.clear();
+    allNodes_table.clear();
     useless_nodes.clear();
 }
 
@@ -601,29 +607,29 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
     }
 }
 
-// // return true iff we the new node is not dominated by any old node
-// bool SIPP::dominanceCheck(const std::shared_ptr<Node>& new_node) {
-//     auto ptr = allNodes_table.find(new_node);
-//     if (ptr == allNodes_table.end())
-//         return true;
-//     for (auto& old_node : ptr->second) {
-//         if ((old_node->g - new_node->g) <
-//             EPS) {  // the new node is dominated by the old node
-//             return false;
-//         } else  // the old node is dominated by the new node
-//         {       // delete the old node
-//             useless_nodes.insert(old_node);
-//             ptr->second.remove(old_node);
-//             count_node_generated--;  // this is because we later will
-//             increase
-//                                      // num_generated when we insert the
-//                                      new
-//                                      // node into lists.
-//             return true;
-//         }
-//     }
-//     return true;
-// }
+// return true iff we the new node is not dominated by any old node
+bool SIPP::dominanceCheck(const std::shared_ptr<Node>& new_node) {
+    auto ptr = allNodes_table.find(new_node);
+    if (ptr == allNodes_table.end())
+        return true;
+    for (auto& old_node : ptr->second) {
+        // the new node is dominated by the old node
+        if ((old_node->g - new_node->g) < EPS) {
+            return false;
+        }
+        // the old node is dominated by the new node
+        // delete the old node
+        else {
+            useless_nodes.insert(old_node);
+            ptr->second.remove(old_node);
+            // this is because we later will increase num_generated when we
+            // insert the new node into lists.
+            count_node_generated--;
+            return true;
+        }
+    }
+    return true;
+}
 
 /**
  * @brief Expand the node that has never been expand before

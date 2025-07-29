@@ -15,6 +15,7 @@ class PBS
 {
 public:
     PBS(std::shared_ptr<Instance> instance, int single_agent_solver_name, double cutoff_time, shared_ptr<RobotMotion> bot_motion, int screen=0);
+    ~PBS();
     bool solve(const string& outputFileName);
     void saveTimedPath(const string & file_name) const;
     void savePath(const string & file_name) const;
@@ -62,6 +63,7 @@ private:
     double time_limit;
     int screen=0;
     std::stack<std::shared_ptr<PTNode>> open_list;
+    list<std::shared_ptr<PTNode>> allNodes_table;
     vector<vector<bool>> priority_graph;
     list<int> ordered_agents;
     std::vector<bool> need_replan;

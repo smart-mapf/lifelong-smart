@@ -28,6 +28,13 @@ CRISE_Solver::CRISE_Solver(
     }
 }
 
+CRISE_Solver::~CRISE_Solver() {
+    // Destructor to clean up resources if needed
+    result_nodes.clear();
+    // curr_agent.goal_locations.clear();
+    // curr_agent.bot_motion = nullptr;
+}
+
 /**
  *
  * @param step The step of entries on the path
