@@ -59,11 +59,12 @@ private:
     void nodeExpansion(const std::shared_ptr<Node>& n, ReservationTable& rt);
     inline void pushToOpen(const std::shared_ptr<Node>& new_node)
     {
+        // allNodes_table.push_back(new_node);
         // dominance check here
-        //  if (closed_set.find(new_node) == closed_set.end()){
-        if (dominanceCheck(new_node)) {
+         if (closed_set.find(new_node) == closed_set.end()){
+        // if (dominanceCheck(new_node)) {
             open.push(new_node);
-            allNodes_table[new_node].push_back(new_node);
+            // allNodes_table[new_node].push_back(new_node);
             count_node_generated++;
         }
     }
@@ -81,6 +82,7 @@ private:
     typedef boost::unordered_map<std::shared_ptr<Node>, list<std::shared_ptr<Node>>,
             NodeHash, NodeEqual> hashtable_t;
     hashtable_t allNodes_table;
+    // list<std::shared_ptr<Node>> allNodes_table;  // all nodes generated in the search
 
     // std::vector<std::vector<std::vector<double>>> heuristic_vec;
     std::shared_ptr<FailureCache> failure_cache_ptr;

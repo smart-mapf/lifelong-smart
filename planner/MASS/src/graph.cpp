@@ -656,7 +656,7 @@ bool Graph::BackDijkstra(int root_location) {
         root_node->f = 0.0;
         root_node->current_point = root_location;
         root_node->curr_o = orient(ori);
-        root_node->parent = nullptr;
+        // root_node->parent = nullptr;
         dij_open.push(root_node);
     }
 
@@ -732,7 +732,9 @@ bool Graph::BackDijkstra(int root_location) {
             n_back->prev_action = Action::forward;
             n_back->current_point = neighbors.forward_locs[i];
             n_back->curr_o = n->curr_o;
-            n_back->g = n->g + bot_motion->arrLowerBound(i);
+            int step = this->getManhattanDistance(
+                n->current_point, neighbors.forward_locs[i]);
+            n_back->g = n->g + bot_motion->arrLowerBound(step);
             n_back->f = n_back->g;
             n_back->parent = n;
             dij_open.push(n_back);

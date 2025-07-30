@@ -40,14 +40,27 @@ public:
         return (int)(0.5 * A_MAX * time * time);
     }
 
+    // inline double arrLowerBound(size_t step) {
+    //     double total_t;
+    //     size_t length = step + 2;
+    //     if (step > 2 * distanceDuringAcceleration()) {
+    //         total_t = 2 * timeToMaxSpeed() +
+    //                   ((length - 2 * distanceDuringAcceleration() - 1) /
+    //                   V_MAX);
+    //     } else {
+    //         total_t = 2 * sqrt((length - 1) / A_MAX);
+    //     }
+    //     return total_t;
+    // }
+
     inline double arrLowerBound(size_t step) {
         double total_t;
-        size_t length = step + 2;
+        // size_t length = step + 2;
         if (step > 2 * distanceDuringAcceleration()) {
             total_t = 2 * timeToMaxSpeed() +
-                      ((length - 2 * distanceDuringAcceleration() - 1) / V_MAX);
+                      ((step - 2 * distanceDuringAcceleration()) / V_MAX);
         } else {
-            total_t = 2 * sqrt((length - 1) / A_MAX);
+            total_t = 2 * sqrt((step) / A_MAX);
         }
         return total_t;
     }

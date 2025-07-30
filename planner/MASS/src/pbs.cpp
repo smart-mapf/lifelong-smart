@@ -82,6 +82,7 @@ bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id,
     bool sipp_success =
         sipp_ptr->run(agent_id, rt, node.motion_solution[agent_id], path,
                       solution_cost, node.all_agents_timed_path[agent_id], log);
+    sipp_ptr->Reset();
     if (!sipp_success) {
         return false;
     }

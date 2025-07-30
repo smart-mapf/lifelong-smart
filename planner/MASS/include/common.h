@@ -9,7 +9,9 @@
 #include <boost/tokenizer.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
+#include <cfloat>
 #include <chrono>
+#include <climits>
 #include <ctime>
 #include <fstream>
 #include <iomanip>   // std::setprecision
@@ -19,9 +21,7 @@
 #include <random>
 #include <set>
 #include <tuple>
-#include <climits>
 #include <vector>
-#include <cfloat>
 
 using boost::char_separator;
 using boost::tokenizer;
@@ -83,11 +83,13 @@ typedef std::chrono::duration<float> time_s;
 //     return V_MAX / A_MAX;
 // }
 
-// // Calculates the distance covered during acceleration or deceleration from zero
+// // Calculates the distance covered during acceleration or deceleration from
+// zero
 // // to max_speed or vice versa.
 // inline int distanceDuringAcceleration() {
 //     double time = timeToMaxSpeed();
-//     // Using equation: s = ut + 0.5 * a * t^2 (where u is initial speed, which
+//     // Using equation: s = ut + 0.5 * a * t^2 (where u is initial speed,
+//     which
 //     // is 0 here)
 //     return (int)(0.5 * A_MAX * time * time);
 // }
@@ -96,10 +98,10 @@ enum orient { North = 0, East = 1, South = 2, West = 3, None = 4 };
 
 enum Action { turnLeft, turnRight, turnBack, forward, none, wait };
 
-const double travel_cost[] = {0.60, 1.45, 0.8, 0.60, 0.5};
+// const double travel_cost[] = {0.60, 1.45, 0.8, 0.60, 0.5};
 
-const double arr_cell_cost[] = {2.8284, 4.0000, 4.8990, 5.6569,
-                                6.3246, 6.9282, 7.4833, 8.0000};
+// const double arr_cell_cost[] = {2.8284, 4.0000, 4.8990, 5.6569,
+//                                 6.3246, 6.9282, 7.4833, 8.0000};
 
 // inline double arrLowerBound(size_t step) {
 //     double total_t;
@@ -221,11 +223,11 @@ struct Node {
           parent(parent),
           bezier_solution(bezier_solution) {
         // One-shot objective
-        // if (win_size <= 0)
+        if (win_size <= 0)
             f = h + g;
-        // // Windowed objective
-        // else
-        //     f = max(g, win_size) + h;
+        // Windowed objective
+        else
+            f = max(g, win_size) + h;
     }
     bool is_expanded = false;
     int current_point;
@@ -244,6 +246,8 @@ struct Node {
     std::shared_ptr<MotionNode> bezier_solution = nullptr;
     std::shared_ptr<Node> parent = nullptr;
     IntervalQueue partial_intervals;
+
+    bool estimated = false;  // whether the f val is estimated
 };
 
 class NodeCompare {
@@ -276,8 +280,12 @@ struct NodeHash {
         size_t hashB = std::hash<int>()(key->curr_o);
         size_t hashC = std::hash<int>()(key->interval_index);
         size_t hashD = std::hash<int>()(key->goal_id);
+        size_t hashE = std::hash<int>()(key->estimated);
 
-        size_t combined = (hashA << 8) + (hashC << 2) + hashB + hashD;
+        // size_t combined = (hashA << 8) + (hashC << 2) + hashB + hashD +
+        //                   hashE;
+        size_t combined =
+            hashA ^ (hashB << 1) ^ (hashC << 2) ^ (hashD << 3) ^ (hashE << 4);
         return combined;
     }
 };
