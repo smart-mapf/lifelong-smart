@@ -372,6 +372,7 @@ bool SIPP::run(int agentID, ReservationTable& rt, MotionInfo& solution,
             // Check if we reached the last goal, and there is no target
             // conflicts. We need to check target conflict in both windowed and
             // non-windowed cases.
+            // TODO: the last goal shall be different
             if (s->goal_id + 1 == curr_agent.goal_locations.size()) {
                 if (s->arrival_time_max < INF) {
                     if (log) {
