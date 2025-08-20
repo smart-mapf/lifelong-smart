@@ -101,8 +101,8 @@ if [ "$target" == "mass" ]; then
 fi
 
 if [ "$target" == "all" ]; then
-    compile_mass
     compile_rpclib
+    compile_mass
     compile_client
     compile_server
     compile_pbs
