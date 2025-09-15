@@ -1,23 +1,21 @@
 #include "ADG.h"
 
-#include <cmath>
-
 ADG::ADG(int num_robots, int screen, int look_ahead_dist)
     : num_robots(num_robots), screen(screen), look_ahead_dist(look_ahead_dist) {
-    //    std::vector<ADGNode> graph;
+    //    vector<ADGNode> graph;
     // look_ahead_dist = 5;
-    std::map<int, int> lastActionIndexByRobot;
+    map<int, int> lastActionIndexByRobot;
     finished_node_idx.resize(num_robots, -1);
     enqueue_nodes_idx.resize(num_robots);
     init_locs.resize(num_robots);
 }
 
-void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
+void ADG::addMAPFPlan(const vector<vector<Action>>& plans) {
     if (graph.empty()) {
         graph.resize(num_robots);
         get_initial_plan = true;
     }
-    std::vector<int> graph_offset(num_robots, -1);
+    vector<int> graph_offset(num_robots, -1);
     for (int i = 0; i < num_robots; i++) {
         graph_offset[i] = static_cast<int>(graph[i].size());
     }
@@ -44,7 +42,7 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
                      prev_idx < graph_offset[robot_id]; prev_idx++) {
                     if (graph[robot_id][prev_idx].action.start ==
                         plans[i][j].goal) {
-                        std::shared_ptr<Edge> tmp_edge = std::make_shared<Edge>(
+                        shared_ptr<Edge> tmp_edge = make_shared<Edge>(
                             robot_id, i, prev_idx, j + graph_offset[i]);
                         graph[i][j + graph_offset[i]].incomeEdges.push_back(
                             tmp_edge);
@@ -74,7 +72,7 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
             } else if (plans[i][j].type == 'S' or plans[i][j].type == 'P') {
                 consecutive_move = false;
             } else {
-                std::cerr << "Invalid type!\n" << std::endl;
+                cerr << "Invalid type!\n" << endl;
                 consecutive_move = false;
             }
             for (int k = i + 1; k < plans.size(); k++) {
@@ -84,7 +82,7 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
                     //        plans[k][l].time);
                     if (plans[i][j].start == plans[k][l].goal &&
                         plans[i][j].time <= plans[k][l].time) {
-                        std::shared_ptr<Edge> tmp_edge = std::make_shared<Edge>(
+                        shared_ptr<Edge> tmp_edge = make_shared<Edge>(
                             i, k, j + graph_offset[i], l + graph_offset[k]);
                         graph[i][j + graph_offset[i]].outEdges.push_back(
                             tmp_edge);
@@ -93,7 +91,7 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
                         found_conflict = true;
                     } else if (plans[k][l].start == plans[i][j].goal &&
                                plans[k][l].time <= plans[i][j].time) {
-                        std::shared_ptr<Edge> tmp_edge = std::make_shared<Edge>(
+                        shared_ptr<Edge> tmp_edge = make_shared<Edge>(
                             k, i, l + graph_offset[k], j + graph_offset[i]);
                         graph[i][j + graph_offset[i]].incomeEdges.push_back(
                             tmp_edge);
@@ -118,9 +116,9 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
     }
 
     // if (hasCycle()) {
-    //     std::cout << "Cycle detected!" << std::endl;
-    //     std::string input;
-    //     std::getline(std::cin, input);
+    //     cout << "Cycle detected!" << endl;
+    //     string input;
+    //     getline(cin, input);
     //     exit(-1);
     // }
 }
@@ -128,8 +126,8 @@ void ADG::addMAPFPlan(const std::vector<std::vector<Action>>& plans) {
 // Check if the given coordinate ends with .0. If it does, it is a added stop
 // in the middle of the grids.
 bool isAddStop(double x) {
-    double frac = std::min(x - std::floor(x), std::ceil(x) - x);
-    if (std::fabs(frac) < EPS) {
+    double frac = min(x - floor(x), ceil(x) - x);
+    if (fabs(frac) < EPS) {
         // it ends with .0
         return false;
     }
@@ -139,10 +137,10 @@ bool isAddStop(double x) {
 // [first commited action, last commited action + 1)
 // If first commited action == last commited action + 1, no action is commited
 bool ADG::fixInconsistentIncomingEdge(
-    std::vector<std::pair<int, int>>& commited_actions) {
-    std::vector<bool> commit_cut_state(num_robots, false);
-    while (not std::all_of(commit_cut_state.begin(), commit_cut_state.end(),
-                           [](bool v) { return v; })) {
+    vector<pair<int, int>>& commited_actions) {
+    vector<bool> commit_cut_state(num_robots, false);
+    while (not all_of(commit_cut_state.begin(), commit_cut_state.end(),
+                      [](bool v) { return v; })) {
         for (int agent_id = 0; agent_id < num_robots; agent_id++) {
             if (not commit_cut_state[agent_id]) {
                 if (commited_actions[agent_id].first !=
@@ -183,9 +181,9 @@ bool ADG::fixInconsistentIncomingEdge(
     return true;
 }
 
-std::vector<robotState> ADG::computeCommitCut() {
+vector<robotState> ADG::computeCommitCut() {
     if (not initialized) {
-        // std::cout << "computeCommitCut::Not initialized!" << std::endl;
+        // cout << "computeCommitCut::Not initialized!" << endl;
         spdlog::warn("ADG::computeCommitCut: Not initialized!");
         return {};
     }
@@ -198,11 +196,11 @@ std::vector<robotState> ADG::computeCommitCut() {
         return curr_commit;
     }
 
-    std::vector<std::pair<int, int>> commited_actions(num_robots);
+    vector<pair<int, int>> commited_actions(num_robots);
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
         // set all enqueue actions as commited
-        commited_actions[agent_id] = std::make_pair(
-            finished_node_idx[agent_id] + 1, finished_node_idx[agent_id] + 1);
+        commited_actions[agent_id] = make_pair(finished_node_idx[agent_id] + 1,
+                                               finished_node_idx[agent_id] + 1);
 
         // We first find the first node idx that is not enqueued. All enqueued
         // actions must be commited.
@@ -217,33 +215,32 @@ std::vector<robotState> ADG::computeCommitCut() {
         int num_commit_actions = commited_actions[agent_id].second -
                                  commited_actions[agent_id].first;
         if (num_commit_actions < this->look_ahead_dist) {
-            commited_actions[agent_id].second = std::min(
-                (int)graph[agent_id].size(),
-                commited_actions[agent_id].first + this->look_ahead_dist);
+            commited_actions[agent_id].second =
+                min((int)graph[agent_id].size(),
+                    commited_actions[agent_id].first + this->look_ahead_dist);
         }
     }
     fixInconsistentIncomingEdge(commited_actions);
 #ifdef DEBUG
-    std::cout << "commited actions after fix: " << std::endl;
+    cout << "commited actions after fix: " << endl;
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        std::cout << "Agent " << agent_id << ": "
-                  << commited_actions[agent_id].first << " -> "
-                  << commited_actions[agent_id].second << std::endl;
+        cout << "Agent " << agent_id << ": " << commited_actions[agent_id].first
+             << " -> " << commited_actions[agent_id].second << endl;
     }
 #endif
-    std::unordered_map<std::pair<double, double>, std::vector<int>, pair_hash>
+    unordered_map<pair<double, double>, vector<int>, pair_hash>
         duplicate_starts;
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
         if (this->screen > 1) {
             spdlog::info("Agent {}: {} -> {}", agent_id,
                          commited_actions[agent_id].first,
                          commited_actions[agent_id].second);
-            // std::cout << "Agent " << agent_id << ": "
+            // cout << "Agent " << agent_id << ": "
             //           << commited_actions[agent_id].first << " -> "
-            //           << commited_actions[agent_id].second << std::endl;
+            //           << commited_actions[agent_id].second << endl;
         }
 
-        std::pair<double, double> tmp_loc;
+        pair<double, double> tmp_loc;
         if (graph[agent_id].empty()) {
             tmp_loc = init_locs[agent_id].position;
         } else {
@@ -255,21 +252,21 @@ std::vector<robotState> ADG::computeCommitCut() {
                 "Duplicate start location found! Agent {}. Duplicate start "
                 "location: {}, {}",
                 agent_id, tmp_loc.first, tmp_loc.second);
-            // std::cerr << "Duplicate start location found! Agent " << agent_id
+            // cerr << "Duplicate start location found! Agent " << agent_id
             //           << ". Duplicate start location: " << tmp_loc.first <<
             //           ", "
-            //           << tmp_loc.second << std::endl;
+            //           << tmp_loc.second << endl;
             graph[agent_id].back().showNode();
             string skip_info;
-            // std::cerr << "Duplicate agent: " << std::endl;
+            // cerr << "Duplicate agent: " << endl;
             spdlog::warn("Duplicate agent: ");
             for (int dup_agent_id : duplicate_starts[tmp_loc]) {
-                // std::cerr << dup_agent_id << ": ";
+                // cerr << dup_agent_id << ": ";
                 spdlog::warn("{}: ", dup_agent_id);
                 graph[dup_agent_id].back().showNode();
             }
-            // std::cerr << "Continue? y/n" << std::endl;
-            // std::cin >> skip_info;
+            // cerr << "Continue? y/n" << endl;
+            // cin >> skip_info;
         }
         duplicate_starts[tmp_loc].push_back(agent_id);
     }
@@ -281,8 +278,8 @@ std::vector<robotState> ADG::computeCommitCut() {
                commited_actions[agent_id].second);
         // when remove nodes not commited, also remove the type-2 edges
 #ifdef DEBUG
-        std::cout << "Clean commited actions for agent " << agent_id
-                  << ", total actions: " << graph[agent_id].size() << std::endl;
+        cout << "Clean commited actions for agent " << agent_id
+             << ", total actions: " << graph[agent_id].size() << endl;
 #endif
         if (graph[agent_id].empty()) {
             curr_commit.emplace_back(init_locs[agent_id].position, 0);
@@ -294,20 +291,20 @@ std::vector<robotState> ADG::computeCommitCut() {
             for (auto& tmp_in_edge : graph[agent_id][node_idx].incomeEdges) {
                 // auto& vec =
                 // graph[tmp_in_edge->from_agent_id][tmp_in_edge->from_node_id].outEdges;
-                // vec.erase(std::remove(vec.begin(), vec.end(), tmp_in_edge),
+                // vec.erase(remove(vec.begin(), vec.end(), tmp_in_edge),
                 // vec.end());
                 tmp_in_edge->valid = false;
             }
         }
-        // std::cout << "Clean commited actions for agent " << agent_id << ".
+        // cout << "Clean commited actions for agent " << agent_id << ".
         // total graph size: "
         //     << graph[agent_id].size() << ",remove start from: " <<
-        //     commited_actions[agent_id].second << std::endl;
+        //     commited_actions[agent_id].second << endl;
         graph[agent_id].erase(
             graph[agent_id].begin() + commited_actions[agent_id].second,
             graph[agent_id].end());
-        // std::cout << "Remove rest of actions for agent " << agent_id <<
-        // std::endl;
+        // cout << "Remove rest of actions for agent " << agent_id <<
+        // endl;
 
         ADGNode last_node = graph[agent_id].back();
         auto action = last_node.action;
@@ -315,26 +312,26 @@ std::vector<robotState> ADG::computeCommitCut() {
         curr_commit.emplace_back(
             last_node.action.goal,
             static_cast<int>(last_node.action.orientation));
-        // std::cout << "Loop end for agent " << agent_id << ": " << std::endl;
-        // std::cout << "curr size of commited is: " << curr_commit.size() << ":
-        // graph size: " << graph.size() << std::endl; std::cout << "        {"
+        // cout << "Loop end for agent " << agent_id << ": " << endl;
+        // cout << "curr size of commited is: " << curr_commit.size() << ":
+        // graph size: " << graph.size() << endl; cout << "        {"
         // << action.robot_id << ", " << action.time << ", "
-        //   << std::fixed << std::setprecision(1) << action.orientation << ",
+        //   << fixed << setprecision(1) << action.orientation << ",
         //   '"
         //   << action.type << "', {" << action.start.first << ", " <<
         //   action.start.second << "}, {"
         //   << action.goal.first << ", " << action.goal.second << "}, " <<
-        //   action.nodeID  << "}," << std::endl;
+        //   action.nodeID  << "}," << endl;
     }
 #ifdef DEBUG
-    std::cout << "Find commit Cut " << std::endl;
+    cout << "Find commit Cut " << endl;
 #endif
     // printProgress();
     if (this->screen > 0) {
         spdlog::info("Commit cut number: {}, total number of robots: {}",
                      curr_commit.size(), num_robots);
-        // std::cout << "Commit cut number: " << curr_commit.size()
-        //           << ", total number of robots: " << num_robots << std::endl;
+        // cout << "Commit cut number: " << curr_commit.size()
+        //           << ", total number of robots: " << num_robots << endl;
     }
 
     return curr_commit;
@@ -348,28 +345,28 @@ void printEdge() {
     //     plans[k][l].start.first, plans[k][l].start.second,
     //     plans[k][l].goal.first, plans[k][l].goal.second);
 
-    // std::cout << "Type 2 edge detected: From Node " << plans[i][j].nodeID <<
-    // " to Node " << plans[k][l].nodeID << std::endl; std::cout << "i, j, k,
-    // l:" << i << ", " << j << ", " << k << ", " << l << std::endl; std::cout
+    // cout << "Type 2 edge detected: From Node " << plans[i][j].nodeID <<
+    // " to Node " << plans[k][l].nodeID << endl; cout << "i, j, k,
+    // l:" << i << ", " << j << ", " << k << ", " << l << endl; cout
     // << "plan 1 start: " << plans[i][j].start.first << " , " <<
-    // plans[i][j].start.second << std::endl; std::cout << "plan 1 end: " <<
-    // plans[i][j].goal.first << " , " << plans[i][j].goal.second << std::endl;
-    // std::cout << "plan 2 start: " << plans[k][l].start.first << " , " <<
-    // plans[k][l].start.second << std::endl; std::cout << "plan 2 end: " <<
-    // plans[k][l].goal.first << " , " << plans[k][l].goal.second << std::endl;
+    // plans[i][j].start.second << endl; cout << "plan 1 end: " <<
+    // plans[i][j].goal.first << " , " << plans[i][j].goal.second << endl;
+    // cout << "plan 2 start: " << plans[k][l].start.first << " , " <<
+    // plans[k][l].start.second << endl; cout << "plan 2 end: " <<
+    // plans[k][l].goal.first << " , " << plans[k][l].goal.second << endl;
 }
 
-// std::pair<std::map<int, std::string>, std::map<std::string, int>>
+// pair<map<int, string>, map<string, int>>
 // ADG::createRobotIDToStartIndexMaps() {
-//     // std::map<int, std::string> robotIDToStartIndex;
-//     // std::map<std::string, int> startIndexToRobotID;
+//     // map<int, string> robotIDToStartIndex;
+//     // map<string, int> startIndexToRobotID;
 
 //     for (int robot_id = 0; robot_id < num_robots; robot_id++) {
 //         auto start = graph[robot_id][0].action.start;
-//         std::ostringstream oss;
+//         ostringstream oss;
 //         oss << static_cast<int>(start.first) << "_"
 //             << static_cast<int>(start.second);
-//         std::string startStr = oss.str();
+//         string startStr = oss.str();
 
 //         robotIDToStartIndex[robot_id] = startStr;
 //         startIndexToRobotID[startStr] = robot_id;
@@ -378,10 +375,10 @@ void printEdge() {
 //     return {robotIDToStartIndex, startIndexToRobotID};
 // }
 
-bool ADG::createRobotIDToStartIndexMaps(std::string& robot_id_str,
+bool ADG::createRobotIDToStartIndexMaps(string& robot_id_str,
                                         tuple<int, int> init_loc) {
-    // std::map<int, std::string> robotIDToStartIndex;
-    // std::map<std::string, int> startIndexToRobotID;
+    // map<int, string> robotIDToStartIndex;
+    // map<string, int> startIndexToRobotID;
     if (startIndexToRobotID.find(robot_id_str) != startIndexToRobotID.end()) {
         return false;
     }
@@ -390,9 +387,9 @@ bool ADG::createRobotIDToStartIndexMaps(std::string& robot_id_str,
     robotIDToStartIndex[robot_id] = robot_id_str;
     startIndexToRobotID[robot_id_str] = robot_id;
 
-    // init_locs.emplace_back(std::get<0>(init_loc), std::get<1>(init_loc));
-    init_locs[robot_id] = robotState(static_cast<int>(std::get<0>(init_loc)),
-                                     static_cast<int>(std::get<1>(init_loc)));
+    // init_locs.emplace_back(get<0>(init_loc), get<1>(init_loc));
+    init_locs[robot_id] = robotState(static_cast<int>(get<0>(init_loc)),
+                                     static_cast<int>(get<1>(init_loc)));
     this->n_robot_init++;
 
     if (this->n_robot_init == num_robots) {
@@ -407,13 +404,13 @@ bool ADG::createRobotIDToStartIndexMaps(std::string& robot_id_str,
     // startIndexToRobotID[robot_id_str] = robot_id;
 
     // size_t pos = robot_id_str.find('_');
-    // if (pos == std::string::npos) {
-    //     std::cerr << "Invalid robot locations!" << std::endl;
+    // if (pos == string::npos) {
+    //     cerr << "Invalid robot locations!" << endl;
     //     exit(-1);
     // }
 
-    // int x = std::stoi(robot_id_str.substr(0, pos));
-    // int y = std::stoi(robot_id_str.substr(pos + 1));
+    // int x = stoi(robot_id_str.substr(0, pos));
+    // int y = stoi(robot_id_str.substr(pos + 1));
     // init_locs.emplace_back(x, y);
 
     // if (init_locs.size() == num_robots) {
@@ -436,7 +433,7 @@ void inline updateADGNode(ADGNode& tmp_node) {
 }
 
 // Function to find the first node associated with a given robot_id
-bool ADG::getAvailableNodes(int robot_id, std::vector<int>& available_nodes) {
+bool ADG::getAvailableNodes(int robot_id, vector<int>& available_nodes) {
     auto& curr_agent_plan = graph[robot_id];
     int latest_finished_idx = finished_node_idx[robot_id];
     // Indicating no node is finished yet
@@ -464,13 +461,13 @@ bool ADG::getAvailableNodes(int robot_id, std::vector<int>& available_nodes) {
 bool ADG::updateFinishedNode(int robot_id, int node_id) {
     int latest_finished_idx = finished_node_idx[robot_id];
     if (node_id <= latest_finished_idx) {
-        // std::cerr << "Reconfirming nodes!" << std::endl;
+        // cerr << "Reconfirming nodes!" << endl;
         spdlog::warn("ADG::updateFinishedNode: Reconfirming nodes!");
         return true;
     } else {
         if (not enqueue_nodes_idx[robot_id].empty() and
             node_id > enqueue_nodes_idx[robot_id].back()) {
-            // std::cerr << "Confirm for nodes never enqueue!" << std::endl;
+            // cerr << "Confirm for nodes never enqueue!" << endl;
             spdlog::warn("ADG::updateFinishedNode: Confirm for nodes never "
                          "enqueue!");
             return false;
@@ -513,7 +510,7 @@ bool ADG::isTaskNode(int robot_id, int node_id) {
     return false;
 }
 
-// void ADG::setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes) {
+// void ADG::setEnqueueNodes(int robot_id, vector<int>& enqueue_nodes) {
 //     auto& curr_enqueue = enqueue_nodes_idx[robot_id];
 //     if (curr_enqueue.empty()) {
 //         curr_enqueue.insert(curr_enqueue.end(), enqueue_nodes.begin(),
@@ -541,11 +538,11 @@ void ADG::findConstraining(int robot_id) {
         }
 
         if (curr_agent_plan[i].has_valid_in_edge) {
-            std::cout << "Constraining idx: " << i << ";";
+            cout << "Constraining idx: " << i << ";";
             for (auto tmp_edge : curr_agent_plan[i].incomeEdges) {
                 if (tmp_edge->valid) {
-                    std::cout << " Constraint Agent " << tmp_edge->from_agent_id
-                              << " at node " << tmp_edge->from_node_id << ";";
+                    cout << " Constraint Agent " << tmp_edge->from_agent_id
+                         << " at node " << tmp_edge->from_node_id << ";";
                 }
             }
             break;
@@ -554,37 +551,35 @@ void ADG::findConstraining(int robot_id) {
 }
 
 void ADG::printActions(
-    const std::vector<std::tuple<std::string, int, double, std::string,
-                                 std::pair<double, double>,
-                                 std::pair<double, double>>>& actions) {
+    const vector<tuple<string, int, double, string, pair<double, double>,
+                       pair<double, double>>>& actions) {
     for (const auto& action : actions) {
-        std::string robot_id = std::get<0>(action);
-        int time = std::get<1>(action);
-        double orientation = std::get<2>(action);
-        std::string type = std::get<3>(action);
-        auto start = std::get<4>(action);
-        auto goal = std::get<5>(action);
+        string robot_id = get<0>(action);
+        int time = get<1>(action);
+        double orientation = get<2>(action);
+        string type = get<3>(action);
+        auto start = get<4>(action);
+        auto goal = get<5>(action);
 
-        std::cout << "Robot ID: " << robot_id << ", nodeID: " << time
-                  << ", Orientation: " << orientation << ", Type: " << type
-                  << ", Start: (" << start.first << ", " << start.second << ")"
-                  << ", Goal: (" << goal.first << ", " << goal.second << ")"
-                  << std::endl;
+        cout << "Robot ID: " << robot_id << ", nodeID: " << time
+             << ", Orientation: " << orientation << ", Type: " << type
+             << ", Start: (" << start.first << ", " << start.second << ")"
+             << ", Goal: (" << goal.first << ", " << goal.second << ")" << endl;
     }
 }
 
 SIM_PLAN ADG::getPlan(int agent_id) {
     SIM_PLAN sim_plan;
-    std::vector<int> enque_acts;
+    vector<int> enque_acts;
     getAvailableNodes(agent_id, enque_acts);
     // TODO@jingtian: rethink logic here if we have data loss
     for (int enque_id : enque_acts) {
         const Action& action = graph[agent_id][enque_id].action;
-        // std::pair<int, int> intStart = action.start;
-        // std::pair<int, int> intEnd = action.goal;
-        // std::pair<double, double> doubleStart =
+        // pair<int, int> intStart = action.start;
+        // pair<int, int> intEnd = action.goal;
+        // pair<double, double> doubleStart =
         // {static_cast<double>(intStart.first),
-        // static_cast<double>(intStart.second)}; std::pair<double, double>
+        // static_cast<double>(intStart.second)}; pair<double, double>
         // doubleEnd = {static_cast<double>(intEnd.first),
         // static_cast<double>(intEnd.second)};
         int task_id;
@@ -594,12 +589,12 @@ SIM_PLAN ADG::getPlan(int agent_id) {
             task_id = action.task_ptr->id;
         }
         sim_plan.emplace_back(robotIDToStartIndex[action.robot_id], enque_id,
-                              action.orientation, std::string(1, action.type),
+                              action.orientation, string(1, action.type),
                               action.start, action.goal, task_id);
         enqueue_nodes_idx[agent_id].push_back(enque_id);
     }
-    // std::cout << "For agent " << agent_id << ", enqueue size is: " <<
-    // enqueue_nodes_idx[agent_id].size() << std::endl;
+    // cout << "For agent " << agent_id << ", enqueue size is: " <<
+    // enqueue_nodes_idx[agent_id].size() << endl;
     return sim_plan;
 }
 
@@ -624,7 +619,7 @@ set<int> ADG::updateFinishedTasks() {
             //      << graph[agent_id][j].action.start.second << ") -> ("
             //      << graph[agent_id][j].action.goal.first << ", "
             //      << graph[agent_id][j].action.goal.second << ")"
-            //      << ", Task ID: " << curr_task << std::endl;
+            //      << ", Task ID: " << curr_task << endl;
             if (this->finished_tasks_.find(curr_task) !=
                 this->finished_tasks_.end()) {
                 break;
@@ -668,7 +663,7 @@ set<int> ADG::updateFinishedTasks() {
 //             //      << graph[agent_id][j].action.start.second << ") -> ("
 //             //      << graph[agent_id][j].action.goal.first << ", "
 //             //      << graph[agent_id][j].action.goal.second << ")"
-//             //      << ", Task ID: " << curr_task << std::endl;
+//             //      << ", Task ID: " << curr_task << endl;
 //             if (curr_task >= 0) {
 //                 n_finished_tasks++;
 //             }
@@ -735,26 +730,25 @@ void ADG::showGraph() {
         for (int j = finished_node_idx[i] + 1; j < graph[i].size(); j++) {
             auto& action_node = graph[i][j];
             auto action = action_node.action;
-            std::cout << "        {" << action.robot_id << ", " << action.time
-                      << ", " << std::fixed << std::setprecision(1)
-                      << action.orientation << ", '" << action.type << "', "
-                      << action.task_id << " , {" << action.start.first << ", "
-                      << action.start.second << "}, {" << action.goal.first
-                      << ", " << action.goal.second << "}, " << action.nodeID
-                      << "}. Node idx: " << action_node.node_id
-                      << ", idx in graph is:" << j << ", Out edges: ";
+            cout << "        {" << action.robot_id << ", " << action.time
+                 << ", " << fixed << setprecision(1) << action.orientation
+                 << ", '" << action.type << "', " << action.task_id << " , {"
+                 << action.start.first << ", " << action.start.second << "}, {"
+                 << action.goal.first << ", " << action.goal.second << "}, "
+                 << action.nodeID << "}. Node idx: " << action_node.node_id
+                 << ", idx in graph is:" << j << ", Out edges: ";
             for (auto& tmp_out_edge : action_node.outEdges) {
-                std::cout << "agent " << tmp_out_edge->to_agent_id << ", node "
-                          << tmp_out_edge->to_node_id << ", status "
-                          << tmp_out_edge->valid << ";";
+                cout << "agent " << tmp_out_edge->to_agent_id << ", node "
+                     << tmp_out_edge->to_node_id << ", status "
+                     << tmp_out_edge->valid << ";";
             }
-            std::cout << "\tIn edges: ";
+            cout << "\tIn edges: ";
             for (auto& tmp_in_edge : action_node.incomeEdges) {
-                std::cout << "agent " << tmp_in_edge->from_agent_id << ", node "
-                          << tmp_in_edge->from_node_id << ", status "
-                          << tmp_in_edge->valid << ";";
+                cout << "agent " << tmp_in_edge->from_agent_id << ", node "
+                     << tmp_in_edge->from_node_id << ", status "
+                     << tmp_in_edge->valid << ";";
             }
-            std::cout << std::endl;
+            cout << endl;
             // j++;
         }
         printf("\n");
@@ -763,11 +757,11 @@ void ADG::showGraph() {
 }
 
 bool ADG::dfs(int agent_id, int node_id,
-              std::unordered_map<int, std::unordered_set<int>>& visited,
-              std::unordered_map<int, std::unordered_set<int>>& recStack,
-              const std::vector<std::vector<ADGNode>>& graph,
-              std::unordered_map<loopNode, loopNode, NodeHash>& parent,
-              std::vector<loopNode>& cycle_path) {
+              unordered_map<int, unordered_set<int>>& visited,
+              unordered_map<int, unordered_set<int>>& recStack,
+              const vector<vector<ADGNode>>& graph,
+              unordered_map<loopNode, loopNode, NodeHash>& parent,
+              vector<loopNode>& cycle_path) {
     visited[agent_id].insert(node_id);
     recStack[agent_id].insert(node_id);
 
@@ -794,7 +788,7 @@ bool ADG::dfs(int agent_id, int node_id,
                 current = parent[current];
             }
             cycle_path.push_back({next_agent, next_node});  // close the loop
-            std::reverse(cycle_path.begin(), cycle_path.end());
+            reverse(cycle_path.begin(), cycle_path.end());
             return true;
         }
     }
@@ -804,10 +798,10 @@ bool ADG::dfs(int agent_id, int node_id,
 }
 
 bool ADG::hasCycle() {
-    std::unordered_map<int, std::unordered_set<int>> visited;
-    std::unordered_map<int, std::unordered_set<int>> recStack;
-    std::unordered_map<loopNode, loopNode, NodeHash> parent;
-    std::vector<loopNode> cycle_path;
+    unordered_map<int, unordered_set<int>> visited;
+    unordered_map<int, unordered_set<int>> recStack;
+    unordered_map<loopNode, loopNode, NodeHash> parent;
+    vector<loopNode> cycle_path;
 
     for (int agent_id = 0; agent_id < graph.size(); ++agent_id) {
         for (const auto& node : graph[agent_id]) {
@@ -815,34 +809,33 @@ bool ADG::hasCycle() {
                 if (dfs(agent_id, node.node_id, visited, recStack, graph,
                         parent, cycle_path)) {
                     // Print the cycle path
-                    std::cout << "Cycle detected:\n";
+                    cout << "Cycle detected:\n";
                     for (const auto& [aid, nid] : cycle_path) {
-                        std::cout << "(Agent " << aid << ", Node " << nid
-                                  << ") -> ";
+                        cout << "(Agent " << aid << ", Node " << nid << ") -> ";
                     }
-                    std::cout << "(back to start)\n";
+                    cout << "(back to start)\n";
                     return true;
                 }
             }
         }
     }
 
-    std::cout << "No cycle detected.\n";
+    cout << "No cycle detected.\n";
     return false;
 }
 
 void ADG::printProgress() {
     //        exit(0);
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        std::cout << "Agent " << agent_id
-                  << ", ID: " << robotIDToStartIndex[agent_id]
-                  << " with plan size " << graph[agent_id].size() << ": ";
+        cout << "Agent " << agent_id
+             << ", ID: " << robotIDToStartIndex[agent_id] << " with plan size "
+             << graph[agent_id].size() << ": ";
         findConstraining(agent_id);
         for (int i = 0; i <= finished_node_idx[agent_id]; i++) {
-            std::cout << "#";
+            cout << "#";
         }
         for (auto elem : enqueue_nodes_idx[agent_id]) {
-            std::cout << '0';
+            cout << '0';
         }
         int unstart;
         if (enqueue_nodes_idx[agent_id].empty()) {
@@ -851,13 +844,13 @@ void ADG::printProgress() {
             unstart = enqueue_nodes_idx[agent_id].back();
         }
         for (int i = unstart + 1; i < graph[agent_id].size(); i++) {
-            std::cout << "*";
+            cout << "*";
         }
-        std::cout << std::endl;
+        cout << endl;
     }
-    // std::cerr << "Robot ID of 13 is: " << robotIDToStartIndex[13] <<
-    // std::endl;
-    std::cout << std::endl;
+    // cerr << "Robot ID of 13 is: " << robotIDToStartIndex[13] <<
+    // endl;
+    cout << endl;
 }
 
 int ADG::getNumUnfinishedActions(int agent_id) {

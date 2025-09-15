@@ -1,24 +1,10 @@
 #pragma once
 
-#include <cassert>
-#include <iomanip>
-#include <iostream>
-#include <map>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <string>
-#include <unordered_set>
-#include <vector>
-
-#include "json.hpp"
+#include "common.h"
 #include "parser.h"
 
-using json = nlohmann::json;
-
-typedef std::vector<
-    std::tuple<std::string, int, double, std::string, std::pair<double, double>,
-               std::pair<double, double>, int>>
+typedef vector<tuple<string, int, double, string, pair<double, double>,
+                     pair<double, double>, int>>
     SIM_PLAN;
 
 struct Edge {
@@ -42,37 +28,36 @@ struct ADG_STATS {
     int rotateActionCount = 0;
     int consecutiveMoveSequences = 0;
     int totalNodes = 0;
-    std::set<std::pair<int, int>> conflict_pairs;
+    set<pair<int, int>> conflict_pairs;
 };
 
 struct ADGNode {
     Action action;
-    //    std::vector<int> dependencies; // Indices of dependent actions
-    //    (outgoing edges) std::vector<int> incomingType2Edges; // Indices of
+    //    vector<int> dependencies; // Indices of dependent actions
+    //    (outgoing edges) vector<int> incomingType2Edges; // Indices of
     //    incoming edges
 
     int node_id;
-    std::vector<std::shared_ptr<Edge>> incomeEdges;
-    std::vector<std::shared_ptr<Edge>> outEdges;
+    vector<shared_ptr<Edge>> incomeEdges;
+    vector<shared_ptr<Edge>> outEdges;
     bool has_valid_in_edge = true;
     void showNode() const {
-        std::cout << "        {" << action.robot_id << ", " << action.time
-                  << ", " << std::fixed << std::setprecision(1)
-                  << action.orientation << ", '" << action.type << "', {"
-                  << action.start.first << ", " << action.start.second << "}, {"
-                  << action.goal.first << ", " << action.goal.second << "}, "
-                  << action.nodeID << "}," << std::endl;
+        cout << "        {" << action.robot_id << ", " << action.time << ", "
+             << fixed << setprecision(1) << action.orientation << ", '"
+             << action.type << "', {" << action.start.first << ", "
+             << action.start.second << "}, {" << action.goal.first << ", "
+             << action.goal.second << "}, " << action.nodeID << "}," << endl;
     }
 };
 
 struct robotState {
-    std::pair<double, double> position;
+    pair<double, double> position;
     int orient = 0;
     robotState() : position(-1, -1), orient(-1) {
     }
     robotState(double x, double y) : position(x, y) {
     }
-    robotState(std::pair<double, double> pos, int theta)
+    robotState(pair<double, double> pos, int theta)
         : position(pos), orient(theta) {
     }
 };
@@ -88,26 +73,26 @@ public:
         return total_nodes_cnt;
     }
 
-    // std::pair<std::map<int, std::string>, std::map<std::string, int>>
+    // pair<map<int, string>, map<string, int>>
     // createRobotIDToStartIndexMaps();
-    bool createRobotIDToStartIndexMaps(std::string& robot_id_str,
+    bool createRobotIDToStartIndexMaps(string& robot_id_str,
                                        tuple<int, int> init_loc);
-    bool getAvailableNodes(int robot_id, std::vector<int>& available_nodes);
+    bool getAvailableNodes(int robot_id, vector<int>& available_nodes);
     bool updateFinishedNode(int robot_id, int node_id);
     json getADGStats();
     // int countFinishedTasks();
-    // void setEnqueueNodes(int robot_id, std::vector<int>& enqueue_nodes);
-    std::vector<robotState> computeCommitCut();
-    void addMAPFPlan(const std::vector<std::vector<Action>>& plans);
+    // void setEnqueueNodes(int robot_id, vector<int>& enqueue_nodes);
+    vector<robotState> computeCommitCut();
+    void addMAPFPlan(const vector<vector<Action>>& plans);
     SIM_PLAN getPlan(int agent_id);
-    std::pair<double, double> getRobotPosition(int agent_id) {
+    pair<double, double> getRobotPosition(int agent_id) {
         return robot_states[agent_id].position;
     }
     bool isTaskNode(int robot_id, int node_id);
 
-    std::pair<double, double> getActionGoal(int agent_id, int node_id) {
-        return std::make_pair(graph[agent_id][node_id].action.goal.first,
-                              graph[agent_id][node_id].action.goal.second);
+    pair<double, double> getActionGoal(int agent_id, int node_id) {
+        return make_pair(graph[agent_id][node_id].action.goal.first,
+                         graph[agent_id][node_id].action.goal.second);
     }
 
     bool isLastActUnfinishedTransfer(int agent_id) {
@@ -124,7 +109,7 @@ public:
 
     Location getLastLoc(int agent_id) {
         if (graph[agent_id].empty()) {
-            std::cerr << "[ERROR]: Empty graph." << std::endl;
+            cerr << "[ERROR]: Empty graph." << endl;
             return init_locs[agent_id].position;
         } else {
             return graph[agent_id].back().action.goal;
@@ -162,54 +147,51 @@ public:
 
 private:
     void printActions(
-        const std::vector<std::tuple<std::string, int, double, std::string,
-                                     std::pair<double, double>,
-                                     std::pair<double, double>>>& actions);
+        const vector<tuple<string, int, double, string, pair<double, double>,
+                           pair<double, double>>>& actions);
     void findConstraining(int robot_id);
-    bool fixInconsistentIncomingEdge(
-        std::vector<std::pair<int, int>>& commited_actions);
+    bool fixInconsistentIncomingEdge(vector<pair<int, int>>& commited_actions);
     // Helper DFS function
-    using loopNode = std::pair<int, int>;
+    using loopNode = pair<int, int>;
     struct NodeHash {
-        std::size_t operator()(const loopNode& n) const noexcept {
-            return std::hash<int>()(n.first) ^
-                   (std::hash<int>()(n.second) << 1);
+        size_t operator()(const loopNode& n) const noexcept {
+            return hash<int>()(n.first) ^ (hash<int>()(n.second) << 1);
         }
     };
     bool dfs(int agent_id, int node_id,
-             std::unordered_map<int, std::unordered_set<int>>& visited,
-             std::unordered_map<int, std::unordered_set<int>>& recStack,
-             const std::vector<std::vector<ADGNode>>& graph,
-             std::unordered_map<loopNode, loopNode, NodeHash>& parent,
-             std::vector<loopNode>& cycle_path);
+             unordered_map<int, unordered_set<int>>& visited,
+             unordered_map<int, unordered_set<int>>& recStack,
+             const vector<vector<ADGNode>>& graph,
+             unordered_map<loopNode, loopNode, NodeHash>& parent,
+             vector<loopNode>& cycle_path);
 
     bool hasCycle();
 
 public:
-    std::vector<int> finished_node_idx;
-    std::vector<std::deque<int>> enqueue_nodes_idx;
+    vector<int> finished_node_idx;
+    vector<deque<int>> enqueue_nodes_idx;
     ADG_STATS adg_stats;
     bool initialized = false;
     bool get_initial_plan = false;
-    std::map<int, std::string> robotIDToStartIndex;
-    std::map<std::string, int> startIndexToRobotID;
-    std::vector<robotState> curr_commit;
+    map<int, string> robotIDToStartIndex;
+    map<string, int> startIndexToRobotID;
+    vector<robotState> curr_commit;
     int screen;
     double avg_n_rotation = 0;
     set<int> backup_tasks;
 
 private:
-    std::vector<std::vector<ADGNode>> graph;
-    std::unordered_set<int> finished_tasks_;
+    vector<vector<ADGNode>> graph;
+    unordered_set<int> finished_tasks_;
     int n_finished_tasks = 0;
     int n_finished_backup_tasks = 0;
-    // std::vector<std::pair<double, double>> commitCut;
+    // vector<pair<double, double>> commitCut;
 
     int num_robots = 0;
     int total_nodes_cnt = 0;
     int look_ahead_dist = 0;
     int n_robot_init = 0;
 
-    std::vector<robotState> init_locs;
-    std::vector<robotState> robot_states;
+    vector<robotState> init_locs;
+    vector<robotState> robot_states;
 };

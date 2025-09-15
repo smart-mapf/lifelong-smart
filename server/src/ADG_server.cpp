@@ -1,25 +1,23 @@
 #include "ADG_server.h"
 
-// std::vector<std::chrono::steady_clock::time_point>
+// vector<chrono::steady_clock::time_point>
 //     startTimers;  // Start times for each robot
-std::shared_ptr<ADG_Server> server_ptr = nullptr;
+shared_ptr<ADG_Server> server_ptr = nullptr;
 // =======================
 
-ADG_Server::ADG_Server(int num_robots, std::string target_output_filename,
-                       bool save_stats, int screen, int port,
-                       int total_sim_step_tick, int ticks_per_second,
-                       int look_ahead_dist, int look_ahead_tick,
-                       int sim_window_tick, int seed)
-    : output_filename(target_output_filename),
-      save_stats(save_stats),
-      screen(screen),
-      port(port),
-      total_sim_step_tick(total_sim_step_tick),
-      ticks_per_second(ticks_per_second),
-      sim_window_tick(sim_window_tick),
-      look_ahead_tick(look_ahead_tick),
-      seed(seed) {
-    adg = std::make_shared<ADG>(num_robots, screen, look_ahead_dist);
+ADG_Server::ADG_Server(boost::program_options::variables_map vm)
+    : output_filename(vm["output_file"].as<string>()),
+      save_stats(vm["save_stats"].as<bool>()),
+      screen(vm["screen"].as<int>()),
+      port(vm["port_number"].as<int>()),
+      total_sim_step_tick(vm["total_sim_step_tick"].as<int>()),
+      ticks_per_second(vm["ticks_per_second"].as<int>()),
+      sim_window_tick(vm["sim_window_tick"].as<int>()),
+      look_ahead_tick(vm["look_ahead_tick"].as<int>()),
+      seed(vm["seed"].as<int>()),
+      planner_invoke_policy(vm["planner_invoke_policy"].as<string>()) {
+    adg = make_shared<ADG>(vm["num_robots"].as<int>(), screen,
+                           vm["look_ahead_dist"].as<int>());
 
     numRobots = adg->numRobots();
     // agent_finish_time.resize(numRobots, -1);
@@ -40,7 +38,7 @@ void ADG_Server::saveStats() {
         return;
     }
 
-    // std::ifstream infile(output_filename);
+    // ifstream infile(output_filename);
     // bool exist = infile.good();
     // infile.close();
     // if (!exist) {
@@ -48,7 +46,7 @@ void ADG_Server::saveStats() {
     //     addHeads << "Num of agent,Num of Finished Tasks" << endl;
     //     addHeads.close();
     // }
-    // ofstream stats(output_filename, std::ios::app);
+    // ofstream stats(output_filename, ios::app);
     // stats << numRobots << "," << this->adg->getNumFinishedTasks() << endl;
     // stats.close();
 
@@ -100,30 +98,30 @@ void ADG_Server::saveStats() {
     }
 
     // Write the statistics to the output file
-    std::ofstream stats(output_filename);
+    ofstream stats(output_filename);
     stats << result.dump(4);  // Pretty print with 4 spaces
 
-    // std::cout << "Statistics written to " << output_filename << std::endl;
+    // cout << "Statistics written to " << output_filename << endl;
     spdlog::info("Statistics written to {}", output_filename);
 }
 
 int ADG_Server::getCurrSimStep() {
     // Return the minimum tick count among all robots
-    return *std::min_element(tick_per_robot.begin(), tick_per_robot.end());
+    return *min_element(tick_per_robot.begin(), tick_per_robot.end());
 }
 
 // Each robot can requests to freeze the simulation if it does not have enough
 // actions
-void freezeSimulationIfNecessary(std::string RobotID) {
-    std::lock_guard<std::mutex> guard(globalMutex);
+void freezeSimulationIfNecessary(string RobotID) {
+    lock_guard<mutex> guard(globalMutex);
 
     int robot_id = server_ptr->adg->startIndexToRobotID[RobotID];
     // Logic 1: freeze the simulation if at least one robot has no actions
     // if (server_ptr->adg->getNumUnfinishedActions(robot_id) <= 0) {
     //     server_ptr->freeze_simulation = true;
     //     if (server_ptr->screen > 0) {
-    //         std::cout << "Robot " << robot_id
-    //                   << " requests to freeze the simulation!" << std::endl;
+    //         cout << "Robot " << robot_id
+    //                   << " requests to freeze the simulation!" << endl;
     //     }
     // }
 
@@ -146,10 +144,10 @@ void freezeSimulationIfNecessary(std::string RobotID) {
             spdlog::info(
                 "Robot {} requests to freeze the simulation at the first tick!",
                 robot_id);
-            // std::cout << "Robot " << robot_id
+            // cout << "Robot " << robot_id
             //           << " requests to freeze the simulation at the first
             //           tick!"
-            //           << std::endl;
+            //           << endl;
         }
     } else if (sim_step - server_ptr->prev_invoke_planner_tick >=
                    server_ptr->look_ahead_tick &&
@@ -161,35 +159,35 @@ void freezeSimulationIfNecessary(std::string RobotID) {
                 "Robot {} requests to freeze the simulation at sim step {} "
                 "due to planner not return in time (synchronize)!",
                 robot_id, sim_step);
-            // std::cout << "Robot " << robot_id
+            // cout << "Robot " << robot_id
             //           << " requests to freeze the simulation at sim step "
             //           << sim_step
             //           << " due to simulation time exceeding the window tick!"
-            //           << std::endl;
+            //           << endl;
         }
     }
 }
 
 // Return the simulation freeze status
 bool isSimulationFrozen() {
-    std::lock_guard<std::mutex> guard(globalMutex);
+    lock_guard<mutex> guard(globalMutex);
     return server_ptr->freeze_simulation;
 }
 
 string getRobotsLocation() {
-    std::lock_guard<std::mutex> guard(globalMutex);
+    lock_guard<mutex> guard(globalMutex);
 
     // Return message as a JSON string
     json result_message = {};
 
     if (server_ptr->screen > 0) {
         spdlog::info("Get robot location query received!");
-        // std::cout << "Get robot location query received!" << std::endl;
+        // cout << "Get robot location query received!" << endl;
     }
 
     server_ptr->curr_robot_states = server_ptr->adg->computeCommitCut();
 
-    std::vector<std::tuple<double, double, int>> robots_location;
+    vector<tuple<double, double, int>> robots_location;
     if (server_ptr->curr_robot_states.empty()) {
         result_message["robots_location"] = {};
         result_message["new_finished_tasks"] = {};
@@ -211,7 +209,7 @@ string getRobotsLocation() {
 
     set<int> new_finished_tasks = server_ptr->adg->updateFinishedTasks();
 
-    server_ptr->tasks_finished_per_sec.push_back(std::make_tuple(
+    server_ptr->tasks_finished_per_sec.push_back(make_tuple(
         new_finished_tasks.size(),
         server_ptr->getCurrSimStep() / server_ptr->ticks_per_second));
 
@@ -228,13 +226,12 @@ string getRobotsLocation() {
 // Raw plan --> points --> Steps --> Actions
 void addNewPlan(string& new_plan_json_str) {
     // x, y and time
-    std::lock_guard<std::mutex> guard(globalMutex);
+    lock_guard<mutex> guard(globalMutex);
 
     json new_plan_json = json::parse(new_plan_json_str);
 
-    auto new_plan =
-        new_plan_json["plan"]
-            .get<std::vector<std::vector<std::tuple<int, int, double, int>>>>();
+    auto new_plan = new_plan_json["plan"]
+                        .get<vector<vector<tuple<int, int, double, int>>>>();
 
     bool congested = new_plan_json["congested"].get<bool>();
 
@@ -245,7 +242,7 @@ void addNewPlan(string& new_plan_json_str) {
 
     // update backup tasks, if available
     if (new_plan_json.contains("backup_tasks")) {
-        auto backup_tasks = new_plan_json["backup_tasks"].get<std::set<int>>();
+        auto backup_tasks = new_plan_json["backup_tasks"].get<set<int>>();
         server_ptr->adg->backup_tasks = backup_tasks;
     }
 
@@ -255,21 +252,21 @@ void addNewPlan(string& new_plan_json_str) {
         // the clients (robots) are closed. So we set a flag to let the robots
         // know the simulation should be stopped and the robots will call
         // closeServer.
-        // std::cout << "Congested simulation detected, stopping the
+        // cout << "Congested simulation detected, stopping the
         // simulation!"
-        //           << std::endl;
+        //           << endl;
         spdlog::info("Congested simulation detected, stopping the simulation!");
         server_ptr->congested_sim = true;
     }
 
-    std::vector<std::vector<Step>> steps;
+    vector<vector<Step>> steps;
     assert(new_plan.size() == server_ptr->numRobots);
     for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
-        std::vector<Point> points;
-        std::vector<Step> curr_steps;
+        vector<Point> points;
+        vector<Step> curr_steps;
         for (auto& step : new_plan[agent_id]) {
-            points.emplace_back(Point(std::get<0>(step), std::get<1>(step),
-                                      std::get<2>(step), std::get<3>(step)));
+            points.emplace_back(
+                Point(get<0>(step), get<1>(step), get<2>(step), get<3>(step)));
         }
 
         // Convert points to steps, which adds rotational states to the plan
@@ -282,12 +279,11 @@ void addNewPlan(string& new_plan_json_str) {
 
     // Convert steps to actions, each two consecutive steps will be transformed
     // to at most two actions.
-    std::vector<std::vector<Action>> actions;
+    vector<vector<Action>> actions;
     actions =
         server_ptr->parser.StepsToActions(steps, server_ptr->flipped_coord);
 #ifdef DEBUG
-    std::cout << "Finish action process, plan size: " << actions.size()
-              << std::endl;
+    cout << "Finish action process, plan size: " << actions.size() << endl;
 #endif
 
     server_ptr->adg->addMAPFPlan(actions);
@@ -296,8 +292,8 @@ void addNewPlan(string& new_plan_json_str) {
     if (server_ptr->freeze_simulation) {
         server_ptr->freeze_simulation = false;
         if (server_ptr->screen > 0) {
-            // std::cout << "Simulation is de-frozen after adding a new plan!"
-            //           << std::endl;
+            // cout << "Simulation is de-frozen after adding a new plan!"
+            //           << endl;
             spdlog::info("Simulation is de-frozen after adding a new plan!");
         }
     }
@@ -306,15 +302,14 @@ void addNewPlan(string& new_plan_json_str) {
     server_ptr->planner_running = false;
 
 #ifdef DEBUG
-    std::cout << "Finish add plan" << std::endl;
+    cout << "Finish add plan" << endl;
 #endif
 }
 
-std::string actionFinished(std::string& robot_id_str, int node_ID) {
-    std::lock_guard<std::mutex> guard(globalMutex);
+string actionFinished(string& robot_id_str, int node_ID) {
+    lock_guard<mutex> guard(globalMutex);
     if (not server_ptr->adg->initialized) {
-        std::cerr << "ADG_Server::ADG_Server: server_ptr is not initialized"
-                  << std::endl;
+        cerr << "ADG_Server::ADG_Server: server_ptr is not initialized" << endl;
         exit(-1);
         return "None";
     }
@@ -324,20 +319,19 @@ std::string actionFinished(std::string& robot_id_str, int node_ID) {
     return "None";
 }
 
-void init(std::string RobotID, tuple<int, int> init_loc) {
-    std::lock_guard<std::mutex> guard(globalMutex);
+void init(string RobotID, tuple<int, int> init_loc) {
+    lock_guard<mutex> guard(globalMutex);
     server_ptr->adg->createRobotIDToStartIndexMaps(RobotID, init_loc);
 }
 
 bool isInitialized() {
-    std::lock_guard<std::mutex> guard(globalMutex);
+    lock_guard<mutex> guard(globalMutex);
     return server_ptr->adg->initialized;
 }
 
-inline void insertNewGoal(
-    int agent_id, std::pair<int, int> tmp_loc,
-    std::vector<std::vector<std::tuple<int, int, double>>>& new_goals,
-    double goal_orient = -1) {
+inline void insertNewGoal(int agent_id, pair<int, int> tmp_loc,
+                          vector<vector<tuple<int, int, double>>>& new_goals,
+                          double goal_orient = -1) {
     int tmp_x = tmp_loc.first;
     int tmp_y = tmp_loc.second;
     new_goals[agent_id].emplace_back(tmp_x, tmp_y, goal_orient);
@@ -345,8 +339,8 @@ inline void insertNewGoal(
 
 // void updateStats(double total_wait_time, int capacity) {
 //     if (server_ptr->screen > 0) {
-//         std::cout << "update the stats with: " << total_wait_time
-//                   << ", and capacity: " << capacity << std::endl;
+//         cout << "update the stats with: " << total_wait_time
+//                   << ", and capacity: " << capacity << endl;
 //     }
 
 //     server_ptr->total_wait_time = total_wait_time;
@@ -355,18 +349,18 @@ inline void insertNewGoal(
 
 void closeServer(rpc::server& srv) {
     spdlog::info("Closing server at port {}", server_ptr->port);
-    // std::lock_guard<std::mutex> guard(globalMutex);
-    // std::cout <<
+    // lock_guard<mutex> guard(globalMutex);
+    // cout <<
     // "############################################################"
-    //           << std::endl;
-    // std::cout << "Closing server at port " << server_ptr->port << std::endl;
-    // std::cout << "Sim count " << server_ptr->tick_per_robot[0] << std::endl;
-    // std::cout << "Num of finished tasks: "
-    //           << server_ptr->adg->getNumFinishedTasks() << std::endl;
+    //           << endl;
+    // cout << "Closing server at port " << server_ptr->port << endl;
+    // cout << "Sim count " << server_ptr->tick_per_robot[0] << endl;
+    // cout << "Num of finished tasks: "
+    //           << server_ptr->adg->getNumFinishedTasks() << endl;
 
-    auto end = std::chrono::steady_clock::now();
-    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
-        end - server_ptr->start_time);
+    auto end = chrono::steady_clock::now();
+    auto elapsed_seconds =
+        chrono::duration_cast<chrono::seconds>(end - server_ptr->start_time);
     server_ptr->overall_runtime = elapsed_seconds.count();
     spdlog::info("Simulation count: {}", server_ptr->tick_per_robot[0]);
     // spdlog::info("Number of actual finished tasks: {}",
@@ -381,19 +375,18 @@ void closeServer(rpc::server& srv) {
                  server_ptr->overall_runtime);
 
     server_ptr->saveStats();
-    // std::cout <<
+    // cout <<
     // "############################################################"
-    //           << std::endl;
+    //           << endl;
     srv.close_sessions();
     srv.stop();
     spdlog::info("Server closed successfully.");
 }
 
-std::vector<
-    std::tuple<std::string, int, double, std::string, std::pair<double, double>,
-               std::pair<double, double>, int>>
-update(std::string RobotID) {
-    std::lock_guard<std::mutex> guard(globalMutex);
+vector<tuple<string, int, double, string, pair<double, double>,
+             pair<double, double>, int>>
+update(string RobotID) {
+    lock_guard<mutex> guard(globalMutex);
     if (not server_ptr->adg->initialized or
         not server_ptr->adg->get_initial_plan) {
         return {};
@@ -409,7 +402,7 @@ update(std::string RobotID) {
     return server_ptr->adg->getPlan(Robot_ID);
 }
 
-// void updateSimFinishTime(std::string& robot_id_str, int sim_step) {
+// void updateSimFinishTime(string& robot_id_str, int sim_step) {
 //     int robot_id = server_ptr->adg->startIndexToRobotID[robot_id_str];
 //     if (server_ptr->agent_finish_sim_step[robot_id] < 0) {
 //         server_ptr->agent_finish_sim_step[robot_id] = sim_step;
@@ -418,7 +411,7 @@ update(std::string RobotID) {
 // }
 
 bool simStatus() {
-    std::lock_guard<std::mutex> guard(globalMutex);
+    lock_guard<mutex> guard(globalMutex);
     // Check if the simulation is congested
     if (server_ptr->congested_sim) {
         return true;  // If the simulation is congested, we stop the simulation
@@ -429,8 +422,8 @@ bool simStatus() {
 }
 
 // Return end_sim: true if all robots have finished their simulation steps
-bool updateSimStep(std::string RobotID) {
-    std::lock_guard<std::mutex> guard(globalMutex);
+bool updateSimStep(string RobotID) {
+    lock_guard<mutex> guard(globalMutex);
 
     if (server_ptr->congested_sim) {
         return true;  // If the simulation is congested, we stop the simulation
@@ -455,19 +448,19 @@ bool updateSimStep(std::string RobotID) {
 // We stop the simulation if it is congested or if the updated tick is greater
 // than or equal to the total simulation step tick.
 // tuple<int, bool> updateSimStep() {
-//     std::lock_guard<std::mutex> guard(globalMutex);
+//     lock_guard<mutex> guard(globalMutex);
 //     server_ptr->time_step_tick++;
 
 //     bool end_sim =
 //         server_ptr->time_step_tick >= server_ptr->total_sim_step_tick ||
 //         server_ptr->congested_sim;
-//     return std::make_tuple(server_ptr->time_step_tick, end_sim);
+//     return make_tuple(server_ptr->time_step_tick, end_sim);
 // }
 
 // Invoke planner when the number of actions left for a robot is less than a
 // threshold.
 bool invokePlanner() {
-    std::lock_guard<std::mutex> guard(globalMutex);
+    lock_guard<mutex> guard(globalMutex);
 
     // Should take the min of the ticks of all the robots
     int sim_step = server_ptr->getCurrSimStep();
@@ -495,7 +488,7 @@ bool invokePlanner() {
 
     // First invoke, start record runtime
     if (invoke && sim_step == 0) {
-        server_ptr->start_time = std::chrono::steady_clock::now();
+        server_ptr->start_time = chrono::steady_clock::now();
         spdlog::info("Start time recorded at sim step 0.");
     }
     // ########## END OLD logic ##########
@@ -516,22 +509,22 @@ bool invokePlanner() {
 
     // Print the unfinished actions for each robot
     if (server_ptr->screen > 0) {
-        // cout << "#####################" << std::endl;
+        // cout << "#####################" << endl;
         // cout << "Checking if planner should be invoked at sim step: "
-        //      << sim_step << ", invoke: " << invoke << std::endl;
+        //      << sim_step << ", invoke: " << invoke << endl;
         // spdlog::info("Checking if planner should be invoked at sim step: {},
         // "
         //              "invoke: {}",
         //              sim_step, invoke);
-        // std::cout << "Unfinished actions for each robot at sim step "
-        //           << sim_step << ":" << std::endl;
+        // cout << "Unfinished actions for each robot at sim step "
+        //           << sim_step << ":" << endl;
         // for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++)
         // {
-        //     std::cout << "Robot " << agent_id << " has "
+        //     cout << "Robot " << agent_id << " has "
         //               << server_ptr->adg->getNumUnfinishedActions(agent_id)
-        //               << " unfinished actions." << std::endl;
+        //               << " unfinished actions." << endl;
         // }
-        // cout << "#####################" << std::endl;
+        // cout << "#####################" << endl;
     }
 
     if (invoke) {
@@ -540,28 +533,28 @@ bool invokePlanner() {
         if (server_ptr->screen > 0) {
             spdlog::info("Invoke planner at sim step: {}, invoke: {}", sim_step,
                          invoke);
-            // std::cout << "Invoke planner at sim step: " << sim_step
-            //           << std::endl;
+            // cout << "Invoke planner at sim step: " << sim_step
+            //           << endl;
             // for (int k = 0; k < server_ptr->numRobots; k++) {
-            //     std::cout << "Robot " << k << " has "
+            //     cout << "Robot " << k << " has "
             //               <<
             //               server_ptr->adg->getNumUnfinishedActions(k)
-            //               << " unfinished actions." << std::endl;
+            //               << " unfinished actions." << endl;
             // }
             // if (invoke_by >= 0) {
-            //     std::cout << "Invoke planner by robot " << invoke_by << "
+            //     cout << "Invoke planner by robot " << invoke_by << "
             //     with "
             //               <<
             //               server_ptr->adg->getNumUnfinishedActions(invoke_by)
-            //               << " unfinished actions." << std::endl;
+            //               << " unfinished actions." << endl;
             // }
         }
     }
     return invoke;
 }
 
-int getNumUnfinishedActions(std::string RobotID) {
-    std::lock_guard<std::mutex> guard(globalMutex);
+int getNumUnfinishedActions(string RobotID) {
+    lock_guard<mutex> guard(globalMutex);
     int Robot_ID = server_ptr->adg->startIndexToRobotID[RobotID];
     return server_ptr->adg->getNumUnfinishedActions(Robot_ID);
 }
@@ -579,6 +572,7 @@ int main(int argc, char** argv) {
             ("output_file,o", po::value<string>()->default_value("stats.json"), "output statistic filename")
             ("save_stats,s", po::value<bool>()->default_value(false), "write to files some detailed statistics")
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
+            ("planner_invoke_policy", po::value<string>()->default_value("default"), "planner invoke policy: default or rhcre")
             ("sim_window_tick,w", po::value<int>()->default_value(50), "invoke planner every sim_window_tick (default: 50)")
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
             ("ticks_per_second,f", po::value<int>()->default_value(10), "ticks per second for the simulation (default: 10)")
@@ -595,18 +589,13 @@ int main(int argc, char** argv) {
         return 1;
     }
     po::notify(vm);
-    std::string filename = "none";
+    string filename = "none";
     int port_number = vm["port_number"].as<int>();
 
     int seed = vm["seed"].as<int>();
     srand(seed);
 
-    server_ptr = std::make_shared<ADG_Server>(
-        vm["num_robots"].as<int>(), vm["output_file"].as<std::string>(),
-        vm["save_stats"].as<bool>(), vm["screen"].as<int>(), port_number,
-        vm["total_sim_step_tick"].as<int>(), vm["ticks_per_second"].as<int>(),
-        vm["look_ahead_dist"].as<int>(), vm["look_ahead_tick"].as<int>(),
-        vm["sim_window_tick"].as<int>(), seed);
+    server_ptr = make_shared<ADG_Server>(vm);
 
     // Set up logger
     auto console_logger = spdlog::default_logger()->clone("ADG_Server");

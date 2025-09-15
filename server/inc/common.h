@@ -1,12 +1,24 @@
 #pragma once
+#include <cassert>
 #include <cmath>
 #include <fstream>
-#include <iomanip>  // For setting precision in double formatting
+#include <functional>
+#include <iomanip>
 #include <iostream>
+#include <map>
+#include <mutex>
+#include <numeric>
+#include <queue>
 #include <regex>
+#include <set>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+#include <tuple>
+#include <unordered_set>
 #include <vector>
+
+#include "json.hpp"
 #include "spdlog/spdlog.h"
 
 #define MAX_LOADS 1
@@ -17,6 +29,7 @@
 // #define DEBUG
 
 using namespace std;
+using json = nlohmann::json;
 
 const double EPS = 1e-8;
 const int INF = numeric_limits<int>::max();
