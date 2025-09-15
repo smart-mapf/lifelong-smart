@@ -11,44 +11,43 @@ int PlanParser::getOrientation(int x1, int y1, int x2, int y2) {
 
 void PlanParser::showPoints(int agentId,
                             const vector<Point>& points) {  // Print points
-    std::cout << "Points of Agent " << agentId << std::endl;
+    cout << "Points of Agent " << agentId << endl;
     for (const auto& point : points) {
-        std::cout << "(" << point.x << ", " << point.y << "), "
-                  << "time: " << point.time << ", task_id: " << point.task_id
-                  << std::endl;
+        cout << "(" << point.x << ", " << point.y << "), "
+             << "time: " << point.time << ", task_id: " << point.task_id
+             << endl;
     }
 }
 
-void PlanParser::showSteps(const std::vector<std::vector<Step>>& raw_steps) {
+void PlanParser::showSteps(const vector<vector<Step>>& raw_steps) {
     // Print steps
-    std::cout << "Raw Steps" << std::endl;
+    cout << "Raw Steps" << endl;
     for (size_t i = 0; i < raw_steps.size(); i++) {
         printf("Step of agent: %lu\n", i);
         for (const auto& tmp_step : raw_steps[i]) {
-            std::cout << "(" << tmp_step.x << ", " << tmp_step.y << "), "
-                      << tmp_step.orientation << ", time: " << tmp_step.time
-                      << ", task_id: " << tmp_step.task_id << std::endl;
+            cout << "(" << tmp_step.x << ", " << tmp_step.y << "), "
+                 << tmp_step.orientation << ", time: " << tmp_step.time
+                 << ", task_id: " << tmp_step.task_id << endl;
         }
         printf("\n");
     }
 }
 
-void PlanParser::showActions(const std::vector<std::vector<Action>>& plans) {
+void PlanParser::showActions(const vector<vector<Action>>& plans) {
     // Print actions
-    std::cout << "Processed Actions" << std::endl;
+    cout << "Processed Actions" << endl;
     for (size_t i = 0; i < plans.size(); i++) {
         printf("Action of agent: %lu\n", i);
         for (int j = 0; j < plans[i].size(); j++) {
             auto& action = plans[i][j];
-            std::cout << "        {" << action.robot_id << ", " << action.time
-                      << ", " << std::fixed << std::setprecision(1)
-                      << action.orientation << ", '" << action.type << "', {"
-                      << action.start.first << ", " << action.start.second
-                      << "}, {" << action.goal.first << ", "
-                      << action.goal.second << "}, "
-                      << "t = " << action.time << ", "
-                      << "nodeid = " << action.nodeID << ", "
-                      << "taskid = " << action.task_id << "}," << std::endl;
+            cout << "        {" << action.robot_id << ", " << action.time
+                 << ", " << fixed << setprecision(1) << action.orientation
+                 << ", '" << action.type << "', {" << action.start.first << ", "
+                 << action.start.second << "}, {" << action.goal.first << ", "
+                 << action.goal.second << "}, "
+                 << "t = " << action.time << ", "
+                 << "nodeid = " << action.nodeID << ", "
+                 << "taskid = " << action.task_id << "}," << endl;
         }
         printf("\n");
     }
@@ -104,15 +103,15 @@ void PlanParser::AgentPathToSteps(const vector<Point>& points,
     }
 }
 
-std::vector<std::vector<Action>> PlanParser::StepsToActions(
-    const std::vector<std::vector<Step>>& raw_steps, bool flipped_coord) {
+vector<vector<Action>> PlanParser::StepsToActions(
+    const vector<vector<Step>>& raw_steps, bool flipped_coord) {
     if (this->screen > 1)
         showSteps(raw_steps);
 
-    std::vector<std::vector<Action>> plans;
+    vector<vector<Action>> plans;
     int node_id = 0;
     for (size_t i = 0; i < raw_steps.size(); ++i) {
-        std::vector<Action> processedActions;
+        vector<Action> processedActions;
 
         if (raw_steps[i].empty()) {
             // If there are no steps for this agent, skip to the next one.
@@ -165,7 +164,7 @@ std::vector<std::vector<Action>> PlanParser::StepsToActions(
                 //      << "), curr: (" << curr_step_x << ", " << curr_step_y
                 //      << ")"
                 //      << " with taks id " << raw_steps[i][j].task_id
-                //      << std::endl;
+                //      << endl;
                 Action processedAction;
                 processedAction.robot_id = (int)i;
                 // @jingtian Note: change action start time, to be consistent
@@ -208,7 +207,7 @@ std::vector<std::vector<Action>> PlanParser::StepsToActions(
                                raw_steps[i][j].orientation) {
                     continue;
                 } else {
-                    std::cerr << "Invalid case exiting ..." << std::endl;
+                    cerr << "Invalid case exiting ..." << endl;
                     exit(-1);
                 }
 
@@ -227,7 +226,7 @@ std::vector<std::vector<Action>> PlanParser::StepsToActions(
                 if (raw_steps[i][j].task_id >= 0) {
                     // cout << "Adding goal action for agent " << i
                     //      << ", task_id: " << raw_steps[i][j].task_id
-                    //      << std::endl;
+                    //      << endl;
                     Action goalAction(accesoray_action);
                     goalAction.type = 'S';  // Station
                     goalAction.task_id = raw_steps[i][j].task_id;
