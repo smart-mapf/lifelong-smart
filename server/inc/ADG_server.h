@@ -22,6 +22,20 @@ public:
     void saveStats();
     int getCurrSimStep();
 
+    // Return true if the planner has never been invoked
+    bool plannerNeverInvoked() {
+        return prev_invoke_planner_tick < 0;
+    }
+    // Return true if the simulation has finished
+    bool simulationFinished() {
+        return getCurrSimStep() >= this->total_sim_step_tick;
+    }
+    // Return true if at least `ticks` simulation ticks have elapsed since last
+    // planner invocation
+    bool simTickElapsedFromLastInvoke(int ticks) {
+        return getCurrSimStep() - this->prev_invoke_planner_tick >= ticks;
+    }
+
     std::shared_ptr<ADG> adg;
     bool flipped_coord = true;
     int screen = 0;
@@ -48,7 +62,7 @@ public:
 
     // Planner invoke policy.
     // 1. default: invoke planner every sim_window_tick
-    // 2. rhcre: invoke planner when the number of actions left for a robot
+    // 2. no_action: invoke planner when the number of actions left for a robot
     //    is less than look_ahead_dist, and at least sim_window_tick has passed
     //    since last invocation.
     string planner_invoke_policy = "default";

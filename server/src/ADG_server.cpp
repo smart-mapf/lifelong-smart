@@ -14,23 +14,19 @@ ADG_Server::ADG_Server(boost::program_options::variables_map vm)
       ticks_per_second(vm["ticks_per_second"].as<int>()),
       sim_window_tick(vm["sim_window_tick"].as<int>()),
       look_ahead_tick(vm["look_ahead_tick"].as<int>()),
+      // Hacky way to make sure the simulation is frozen at the beginning
+      prev_invoke_planner_tick(-look_ahead_tick),
       seed(vm["seed"].as<int>()),
-      planner_invoke_policy(vm["planner_invoke_policy"].as<string>()) {
-    adg = make_shared<ADG>(vm["num_robots"].as<int>(), screen,
-                           vm["look_ahead_dist"].as<int>());
-
-    numRobots = adg->numRobots();
-    // agent_finish_time.resize(numRobots, -1);
-    // agents_finish.resize(numRobots, false);
-    // agent_finish_sim_step.resize(numRobots, -1);
-    tick_per_robot.resize(numRobots, 0);
-
-    // Hacky way to make sure the planner is only invoked once at sim_step 0
-    this->prev_invoke_planner_tick = -look_ahead_tick;
-
-    this->parser = PlanParser(screen);
-
-    // startTimers.resize(numRobots);
+      planner_invoke_policy(vm["planner_invoke_policy"].as<string>()),
+      adg(make_shared<ADG>(vm["num_robots"].as<int>(), screen,
+                           vm["look_ahead_dist"].as<int>())),
+      numRobots(adg->numRobots()),
+      parser(PlanParser(screen)),
+      tick_per_robot(vector<int>(numRobots, 0)) {
+    spdlog::info("Invoke policy: {}", planner_invoke_policy);
+    spdlog::info("Look ahead tick: {}", look_ahead_tick);
+    spdlog::info("Look ahead dist: {}", adg->getLookAheadDist());
+    spdlog::info("Simulation window tick: {}", sim_window_tick);
 }
 
 void ADG_Server::saveStats() {
@@ -110,8 +106,6 @@ int ADG_Server::getCurrSimStep() {
     return *min_element(tick_per_robot.begin(), tick_per_robot.end());
 }
 
-// Each robot can requests to freeze the simulation if it does not have enough
-// actions
 void freezeSimulationIfNecessary(string RobotID) {
     lock_guard<mutex> guard(globalMutex);
 
@@ -136,9 +130,7 @@ void freezeSimulationIfNecessary(string RobotID) {
     //              "prev_invoke_planner_tick: {}, sim_window_tick: {}",
     //              sim_step, server_ptr->prev_invoke_planner_tick,
     //              server_ptr->sim_window_tick);
-    if (sim_step == 0 &&
-        server_ptr->prev_invoke_planner_tick == -server_ptr->look_ahead_tick &&
-        sim_step < server_ptr->total_sim_step_tick) {
+    if (sim_step == 0 && server_ptr->plannerNeverInvoked()) {
         server_ptr->freeze_simulation = true;
         if (server_ptr->screen > 0) {
             spdlog::info(
@@ -149,10 +141,10 @@ void freezeSimulationIfNecessary(string RobotID) {
             //           tick!"
             //           << endl;
         }
-    } else if (sim_step - server_ptr->prev_invoke_planner_tick >=
-                   server_ptr->look_ahead_tick &&
+    } else if (server_ptr->simTickElapsedFromLastInvoke(
+                   server_ptr->look_ahead_tick) &&
                server_ptr->planner_running &&
-               sim_step <= server_ptr->total_sim_step_tick) {
+               !server_ptr->simulationFinished()) {
         server_ptr->freeze_simulation = true;
         if (server_ptr->screen > 0) {
             spdlog::info(
@@ -464,48 +456,57 @@ bool invokePlanner() {
 
     // Should take the min of the ticks of all the robots
     int sim_step = server_ptr->getCurrSimStep();
-    // int sim_step = server_ptr->time_step_tick;
+    bool invoke = false;
+    int invoke_by = -1;
 
-    // We don't want to invoke the planner at the same tick more than once,
-    // unless the simulation if frozon, in which case some agent has no
-    // actions left, so we need to replan.
-    // if (server_ptr->prev_invoke_planner_tick == sim_step &&
-    //     !server_ptr->freeze_simulation) {
-    //     return false;  // No need to invoke planner at this tick
-    // }
+    // Default: invoke planner every sim_window_tick
+    if (server_ptr->planner_invoke_policy == "default") {
+        invoke = (sim_step == 0 || server_ptr->simTickElapsedFromLastInvoke(
+                                       server_ptr->sim_window_tick)) &&
+                 !server_ptr->simulationFinished() &&
+                 sim_step != server_ptr->prev_invoke_planner_tick;
+    }
+    // No action: invoke planner when the number of actions left for a robot
+    // is less than look_ahead_dist, and at least sim_window_tick has passed
+    // since last invocation.
+    else if (server_ptr->planner_invoke_policy == "no_action") {
+        for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
+            if (server_ptr->adg->getNumUnfinishedActions(agent_id) <=
+                server_ptr->adg->getLookAheadDist()) {
+                invoke = true;
+                invoke_by = agent_id;
+                break;
+            }
+        }
 
-    // ########## OLD logic: invoke planner every sim_window_tick ##########
-    // bool invoke = sim_step % server_ptr->sim_window_tick == 0 &&
-    //               sim_step < server_ptr->total_sim_step_tick;
-    bool invoke =
-        (sim_step == 0 || sim_step - server_ptr->prev_invoke_planner_tick >=
-                              server_ptr->sim_window_tick) &&
-        sim_step < server_ptr->total_sim_step_tick &&
-        sim_step != server_ptr->prev_invoke_planner_tick;
-    // bool invoke = sim_step - server_ptr->prev_invoke_planner_tick >=
-    //                   server_ptr->sim_window_tick &&
-    //               sim_step < server_ptr->total_sim_step_tick;
+        // Ensure we have not reached the total simulation step tick
+        invoke &= !server_ptr->simulationFinished();
+
+        // Ensure at least sim_window_tick has passed since last invocation
+        if (invoke && !server_ptr->plannerNeverInvoked() &&
+            !server_ptr->simTickElapsedFromLastInvoke(
+                server_ptr->sim_window_tick)) {
+            if (server_ptr->screen > 1) {
+                spdlog::info(
+                    "Timestep {}: Attempt to invoke by {}, but skipped to "
+                    "ensure {} has passed since last invocation at {}.",
+                    sim_step, invoke_by, server_ptr->sim_window_tick,
+                    server_ptr->prev_invoke_planner_tick);
+            }
+            invoke = false;
+            invoke_by = -1;
+        }
+    } else {
+        spdlog::error("Unknown planner invoke policy: {}",
+                      server_ptr->planner_invoke_policy);
+        exit(-1);
+    }
 
     // First invoke, start record runtime
     if (invoke && sim_step == 0) {
         server_ptr->start_time = chrono::steady_clock::now();
         spdlog::info("Start time recorded at sim step 0.");
     }
-    // ########## END OLD logic ##########
-
-    // RHCRE logic: invoke planner when the number of actions left for a
-    // robot is less than look_ahead_dist.
-    // bool invoke = false;
-    // int invoke_by = -1;
-    // for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
-    //     if (server_ptr->adg->getNumUnfinishedActions(agent_id) <=
-    //         server_ptr->adg->getLookAheadDist()) {
-    //         invoke = true;
-    //         invoke_by = agent_id;
-    //         break;
-    //     }
-    // }
-    // End RHCRE logic
 
     // Print the unfinished actions for each robot
     if (server_ptr->screen > 0) {
@@ -531,23 +532,13 @@ bool invokePlanner() {
         server_ptr->prev_invoke_planner_tick = sim_step;
         server_ptr->planner_running = true;
         if (server_ptr->screen > 0) {
-            spdlog::info("Invoke planner at sim step: {}, invoke: {}", sim_step,
-                         invoke);
-            // cout << "Invoke planner at sim step: " << sim_step
-            //           << endl;
-            // for (int k = 0; k < server_ptr->numRobots; k++) {
-            //     cout << "Robot " << k << " has "
-            //               <<
-            //               server_ptr->adg->getNumUnfinishedActions(k)
-            //               << " unfinished actions." << endl;
-            // }
-            // if (invoke_by >= 0) {
-            //     cout << "Invoke planner by robot " << invoke_by << "
-            //     with "
-            //               <<
-            //               server_ptr->adg->getNumUnfinishedActions(invoke_by)
-            //               << " unfinished actions." << endl;
-            // }
+            spdlog::info("Invoke planner at sim step: {}", sim_step);
+            if (invoke_by >= 0) {
+                spdlog::info(
+                    "Invoked by robot {} with {} unfinished actions.",
+                    invoke_by,
+                    server_ptr->adg->getNumUnfinishedActions(invoke_by));
+            }
         }
     }
     return invoke;
@@ -572,7 +563,7 @@ int main(int argc, char** argv) {
             ("output_file,o", po::value<string>()->default_value("stats.json"), "output statistic filename")
             ("save_stats,s", po::value<bool>()->default_value(false), "write to files some detailed statistics")
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
-            ("planner_invoke_policy", po::value<string>()->default_value("default"), "planner invoke policy: default or rhcre")
+            ("planner_invoke_policy", po::value<string>()->default_value("default"), "planner invoke policy: default or no_action")
             ("sim_window_tick,w", po::value<int>()->default_value(50), "invoke planner every sim_window_tick (default: 50)")
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
             ("ticks_per_second,f", po::value<int>()->default_value(10), "ticks per second for the simulation (default: 10)")

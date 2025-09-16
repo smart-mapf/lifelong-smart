@@ -102,7 +102,7 @@ def run_simulator(args, timeout: float = None, output_log: str = None):
 
 def run_lifelong_argos(
     map_filepath: str = "maps/kiva_large_w_mode.json",
-    num_agents: int = 50,
+    num_agents: int = 100,
     headless: bool = False,
     argos_config_filepath: str = "output.argos",
     stats_name: str = "stats.json",
@@ -147,6 +147,7 @@ def run_lifelong_argos(
     left_w_weight: float = 1.0,
     right_w_weight: float = 1.0,
     grid_type: str = "regular",
+    planner_invoke_policy: str = "default",
 ):
     """Function to run the lifelong SMART simulator with the given parameters.
 
@@ -275,6 +276,7 @@ def run_lifelong_argos(
             f"--look_ahead_tick={look_ahead_tick}",
             f"--seed={seed}",
             f"--sim_window_tick={sim_window_tick}",
+            f"--planner_invoke_policy={planner_invoke_policy}",
         ]
         client_command = [
             "argos3",
