@@ -72,8 +72,9 @@ public:
     // Start time of the simulation
     string output_filename;
     chrono::steady_clock::time_point start_time;
-    double overall_runtime = 0.0;  // Overall runtime of the simulation
-    string planner_stats = "{}";   // Store planner stats in JSON format
+    double overall_runtime = 0.0;      // Overall runtime of the simulation
+    vector<int> planner_invoke_ticks;  // Sim ticks when planner is invoked
+    string planner_stats = "{}";       // Store planner stats in JSON format
 
 private:
     bool save_stats = false;

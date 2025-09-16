@@ -59,7 +59,9 @@ void ADG_Server::saveStats() {
                    {"success", true},
                    {"cpu_runtime", this->overall_runtime},
                    {"congested", this->congested_sim},
-                   {"tasks_finished_timestep", this->tasks_finished_per_sec}};
+                   {"tasks_finished_timestep", this->tasks_finished_per_sec},
+                   {"planner_invoke_ticks", this->planner_invoke_ticks},
+                   {"n_planner_invokes", this->planner_invoke_ticks.size()}};
 
     // Unwrap and add planner stats to results
     json planner_stats_json = json::parse(this->planner_stats);
@@ -73,25 +75,40 @@ void ADG_Server::saveStats() {
         result[key] = value;
     }
 
-    if (result.contains("n_rule_based_calls")) {
-        spdlog::info("Number of rule-based calls: {}",
-                     result["n_rule_based_calls"].get<int>());
+    // Print some key statistics to console
+    vector<string> key_stats = {
+        "n_rule_based_calls",
+        "mean_avg_rotation",
+        "mean_avg_move",
+        "avg_total_actions",
+        "n_planner_invokes",
+    };
+
+    for (const auto& stat : key_stats) {
+        if (result.contains(stat)) {
+            spdlog::info("{}: {}", stat, result[stat].dump());
+        }
     }
 
-    if (result.contains("mean_avg_rotation")) {
-        spdlog::info("Mean average rotation per robot: {}",
-                     result["mean_avg_rotation"].get<double>());
-    }
+    // if (result.contains("n_rule_based_calls")) {
+    //     spdlog::info("Number of rule-based calls: {}",
+    //                  result["n_rule_based_calls"].get<int>());
+    // }
 
-    if (result.contains("mean_avg_move")) {
-        spdlog::info("Mean average move per robot: {}",
-                     result["mean_avg_move"].get<double>());
-    }
+    // if (result.contains("mean_avg_rotation")) {
+    //     spdlog::info("Mean average rotation per robot: {}",
+    //                  result["mean_avg_rotation"].get<double>());
+    // }
 
-    if (result.contains("avg_total_actions")) {
-        spdlog::info("Total actions per robot: {}",
-                     result["avg_total_actions"].get<int>());
-    }
+    // if (result.contains("mean_avg_move")) {
+    //     spdlog::info("Mean average move per robot: {}",
+    //                  result["mean_avg_move"].get<double>());
+    // }
+
+    // if (result.contains("avg_total_actions")) {
+    //     spdlog::info("Total actions per robot: {}",
+    //                  result["avg_total_actions"].get<int>());
+    // }
 
     // Write the statistics to the output file
     ofstream stats(output_filename);
@@ -482,15 +499,15 @@ bool invokePlanner() {
         // Ensure we have not reached the total simulation step tick
         invoke &= !server_ptr->simulationFinished();
 
-        // Ensure at least sim_window_tick has passed since last invocation
+        // Ensure at least look_ahead_tick has passed since last invocation
         if (invoke && !server_ptr->plannerNeverInvoked() &&
             !server_ptr->simTickElapsedFromLastInvoke(
-                server_ptr->sim_window_tick)) {
+                server_ptr->look_ahead_tick)) {
             if (server_ptr->screen > 1) {
                 spdlog::info(
                     "Timestep {}: Attempt to invoke by {}, but skipped to "
                     "ensure {} has passed since last invocation at {}.",
-                    sim_step, invoke_by, server_ptr->sim_window_tick,
+                    sim_step, invoke_by, server_ptr->look_ahead_tick,
                     server_ptr->prev_invoke_planner_tick);
             }
             invoke = false;
@@ -531,6 +548,7 @@ bool invokePlanner() {
     if (invoke) {
         server_ptr->prev_invoke_planner_tick = sim_step;
         server_ptr->planner_running = true;
+        server_ptr->planner_invoke_ticks.push_back(sim_step);
         if (server_ptr->screen > 0) {
             spdlog::info("Invoke planner at sim step: {}", sim_step);
             if (invoke_by >= 0) {

@@ -114,8 +114,8 @@ def run_lifelong_argos(
     sim_window_tick: int = 20,
     ticks_per_second: int = 10,
     velocity: float = 200.0,
-    look_ahead_dist: int = 10,
-    planner: str = "RHCR",  # ["PBS", "RHCR"]
+    # look_ahead_dist: int = 10,
+    planner: str = "RHCR",  # ["PBS", "RHCR", "MASS"]
     container: bool = False,
     seed: int = 42,
     screen: int = 0,
@@ -174,8 +174,6 @@ def run_lifelong_argos(
             simulation second
         velocity (float, optional): velocity of the robots in cm/s. Defaults to
             200.0 cm/s.
-        look_ahead_dist (int, optional): look ahead distance for the planner to
-            obtain robot goal location.
         planner (str, optional): planner to use. Defaults to "RHCR".
         container (bool, optional): whether to run in a container. Defaults to
             False.
