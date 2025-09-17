@@ -73,14 +73,11 @@ public:
         return total_nodes_cnt;
     }
 
-    // pair<map<int, string>, map<string, int>>
-    // createRobotIDToStartIndexMaps();
     bool createRobotIDToStartIndexMaps(string& robot_id_str,
                                        tuple<int, int> init_loc);
     bool getAvailableNodes(int robot_id, vector<int>& available_nodes);
     bool updateFinishedNode(int robot_id, int node_id);
     json getADGStats();
-    // int countFinishedTasks();
     // void setEnqueueNodes(int robot_id, vector<int>& enqueue_nodes);
     vector<robotState> computeCommitCut();
     void addMAPFPlan(const vector<vector<Action>>& plans);

@@ -90,26 +90,6 @@ void ADG_Server::saveStats() {
         }
     }
 
-    // if (result.contains("n_rule_based_calls")) {
-    //     spdlog::info("Number of rule-based calls: {}",
-    //                  result["n_rule_based_calls"].get<int>());
-    // }
-
-    // if (result.contains("mean_avg_rotation")) {
-    //     spdlog::info("Mean average rotation per robot: {}",
-    //                  result["mean_avg_rotation"].get<double>());
-    // }
-
-    // if (result.contains("mean_avg_move")) {
-    //     spdlog::info("Mean average move per robot: {}",
-    //                  result["mean_avg_move"].get<double>());
-    // }
-
-    // if (result.contains("avg_total_actions")) {
-    //     spdlog::info("Total actions per robot: {}",
-    //                  result["avg_total_actions"].get<int>());
-    // }
-
     // Write the statistics to the output file
     ofstream stats(output_filename);
     stats << result.dump(4);  // Pretty print with 4 spaces
