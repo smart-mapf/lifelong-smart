@@ -74,8 +74,16 @@ void PlanParser::AgentPathToSteps(const vector<Point>& points,
         } else {
             double prevTime = points[i - 1].time;
             // Determine the necessary orientation for the next move.
-            int neededOrientation = getOrientation(
-                points[i - 1].x, points[i - 1].y, points[i].x, points[i].y);
+            int neededOrientation;
+            if (points[i].x == points[i - 1].x &&
+                points[i].y == points[i - 1].y) {
+                neededOrientation = currentOrientation;
+            } else {
+                neededOrientation = getOrientation(
+                    points[i - 1].x, points[i - 1].y, points[i].x, points[i].y);
+            }
+            // int neededOrientation = getOrientation(
+            //     points[i - 1].x, points[i - 1].y, points[i].x, points[i].y);
             if (neededOrientation != currentOrientation) {
                 // Change orientation without advancing time by adding an
                 // additional step on the previous timestep with the needed
