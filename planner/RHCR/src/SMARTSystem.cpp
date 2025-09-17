@@ -810,7 +810,8 @@ SMARTSystem::convert_path_to_smart() {
                                           this->G.getColCoordinate(s.location),
                                           static_cast<double>(t), task_id);
             if (screen > 0) {
-                std::cout << "(" << this->G.getRowCoordinate(s.location) << ","
+                std::cout << "(" << "t=" << s.timestep << ","
+                          << this->G.getRowCoordinate(s.location) << ","
                           << this->G.getColCoordinate(s.location) << ","
                           << s.orientation << "," << task_id << ")->";
                 if (task_id >= 0) {
@@ -1146,10 +1147,11 @@ void SMARTSystem::solve() {
         for (int k = 0; k < num_of_drives; k++) {
             std::cout << "Agent " << k << ": ";
             for (const auto &state : this->solver.solution[k]) {
-                std::cout << "(" << this->G.getRowCoordinate(state.location)
-                          << "," << this->G.getColCoordinate(state.location)
-                          << "," << state.timestep << ","
-                          << state.is_tasking_wait << ") -> ";
+                std::cout << "(" << "t=" << state.timestep << ","
+                          << this->G.getRowCoordinate(state.location) << ","
+                          << this->G.getColCoordinate(state.location) << ","
+                          << state.orientation << "," << state.is_tasking_wait
+                          << ") -> ";
             }
             std::cout << std::endl;
         }

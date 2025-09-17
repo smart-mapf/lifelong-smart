@@ -1120,7 +1120,8 @@ void BasicSystem::print_mapf_instance(vector<State> &starts_,
         cout << "Agent " << i << ": ";
         int start_x = G.getRowCoordinate(starts_[i].location);
         int start_y = G.getColCoordinate(starts_[i].location);
-        cout << "(" << start_x << ", " << start_y << ", t = "
+        cout << "(" << start_x << ", " << start_y << ", "
+             << starts_[i].orientation << ", t = "
              << starts_[i].timestep << ") => ";
         for (const auto &goal : goals_[i]) {
             int goal_x = G.getRowCoordinate(goal.location);
