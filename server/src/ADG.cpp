@@ -641,37 +641,6 @@ set<int> ADG::updateFinishedTasks() {
     return new_finished_tasks;
 }
 
-// int ADG::countFinishedTasks() {
-//     if (graph.empty()) {
-//         return 0;
-//     }
-//     // finish_tasks.clear();
-//     // finish_tasks.resize(num_robots);
-//     int n_finished_tasks = 0;
-//     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-//         for (int j = finished_node_idx[agent_id]; j >= 0; j--) {
-//             // Current ADGNode has a non-negative task_id, then we finish a
-//             // task.
-//             // Note: this function is invoked after ComputeCommitCut, which
-//             // removed actions that are to be replaced by future plans.
-//             int curr_task = graph[agent_id][j].action.task_id;
-//             // cout << "Agent " << agent_id << ", Node "
-//             //      << graph[agent_id][j].node_id
-//             //      << ", Action: " << graph[agent_id][j].action.type << " at
-//             ("
-//             //      << graph[agent_id][j].action.start.first << ", "
-//             //      << graph[agent_id][j].action.start.second << ") -> ("
-//             //      << graph[agent_id][j].action.goal.first << ", "
-//             //      << graph[agent_id][j].action.goal.second << ")"
-//             //      << ", Task ID: " << curr_task << endl;
-//             if (curr_task >= 0) {
-//                 n_finished_tasks++;
-//             }
-//         }
-//     }
-//     return n_finished_tasks;
-// }
-
 json ADG::getADGStats() {
     json result;
     if (graph.empty()) {
@@ -679,15 +648,18 @@ json ADG::getADGStats() {
     }
     double total_rotation = 0.0;
     double total_move = 0.0;
-    // int n_finished_tasks = 0;
+
+    // Path of the robots. Each element is a list of (x, y, orientation,
+    // task_id)
+    vector<vector<tuple<double, double, double, int>>> robot_paths(num_robots);
+    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+        // 0 indicates the initial orientation of North
+        robot_paths[agent_id].push_back({init_locs[agent_id].position.second,
+                                         init_locs[agent_id].position.first,
+                                         0.0, -1});
+    }
     for (int agent_id = 0; agent_id < num_robots; agent_id++) {
         for (int j = 0; j < finished_node_idx[agent_id]; j++) {
-            // Current ADGNode has a non-negative task_id, then we finish a
-            // task.
-            if (graph[agent_id][j].action.task_id >= 0) {
-                // n_finished_tasks++;
-            }
-
             // Count the number of different actions
             if (graph[agent_id][j].action.type == 'T') {
                 if (j > 0) {
@@ -713,12 +685,19 @@ json ADG::getADGStats() {
             } else if (graph[agent_id][j].action.type == 'M') {
                 total_move++;
             }
+
+            // Record the agents path
+            auto action = graph[agent_id][j].action;
+            robot_paths[agent_id].push_back(
+                {action.goal.second, action.goal.first, action.orientation,
+                 action.task_id});
         }
     }
     int total_actions = total_rotation + total_move;
     result["mean_avg_rotation"] = total_rotation / num_robots;
     result["mean_avg_move"] = total_move / num_robots;
     result["avg_total_actions"] = total_actions / num_robots;
+    result["robot_paths"] = robot_paths;
     return result;
 }
 
@@ -788,7 +767,7 @@ bool ADG::dfs(int agent_id, int node_id,
                 current = parent[current];
             }
             cycle_path.push_back({next_agent, next_node});  // close the loop
-            reverse(cycle_path.begin(), cycle_path.end());
+            std::reverse(cycle_path.begin(), cycle_path.end());
             return true;
         }
     }
