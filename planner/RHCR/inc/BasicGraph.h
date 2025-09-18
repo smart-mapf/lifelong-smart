@@ -43,8 +43,11 @@ public:
         return this->cols * row_idx + col_idx;
     }
 
-	vector<double> compute_heuristics(int root_location); // compute distances from all lacations to the root location
+    // compute distances from all lacations to the root location
+	vector<double> compute_heuristics(int root_location);
+    vector<double> compute_pebble_motion_heuristics(int root_location);
     double get_heuristic(int goal_loc, int start_loc, int start_ori = -1) const;
+    double get_pebble_motion_heuristic(int goal_loc, int start_loc) const;
 	bool load_heuristics_table(std::ifstream& myfile);
 	void save_heuristics_table(string fname);
     bool _save_heuristics_table;
@@ -86,6 +89,7 @@ public:
 
 protected:
     unordered_map<int, vector<double>> heuristics;
+    unordered_map<int, vector<double>> pebble_motion_heuristics;
 
     // Type of the SMART grid.
     SMARTGridType grid_type = SMARTGridType::REGULAR;

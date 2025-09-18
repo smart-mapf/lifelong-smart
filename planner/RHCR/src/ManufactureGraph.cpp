@@ -352,6 +352,8 @@ void ManufactureGrid::preprocessing(bool consider_rotation, std::string log_dir)
 			for (auto endpoint : this->endpoints[p])
 			{
 				this->heuristics[endpoint] = compute_heuristics(endpoint);
+                this->pebble_motion_heuristics[endpoint] =
+                    compute_pebble_motion_heuristics(endpoint);
 			}
 		}
 		cout << table_save_path << endl;

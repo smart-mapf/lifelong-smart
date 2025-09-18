@@ -127,7 +127,8 @@ bool PIBT::run(const vector<State> &starts,
             // deeper in the aisles
             int loc_a = solution[a][t - 1].location;
             int loc_b = solution[b][t - 1].location;
-            // if (this->G.get_grid_type() == SMARTGridType::ONE_BOT_PER_AISLE &&
+            // if (this->G.get_grid_type() == SMARTGridType::ONE_BOT_PER_AISLE
+            // &&
             //     this->G.getColCoordinate(loc_a) ==
             //         this->G.getColCoordinate(loc_b)) {
             //     {
@@ -140,7 +141,8 @@ bool PIBT::run(const vector<State> &starts,
             //                        this->G.getColCoordinate(loc_b);
             //         }
             //         else {
-            //             // if the types are different, we prioritize the agent
+            //             // if the types are different, we prioritize the
+            //             agent
             //             // in the workstation or endpoint
             //             return this->G.types[loc_a] == "Workstation" ||
             //                    this->G.types[loc_a] == "Endpoint";
@@ -152,12 +154,10 @@ bool PIBT::run(const vector<State> &starts,
             // If one of the agents has no goals, do not compare
             if (this->goals_mem[a].empty() || this->goals_mem[b].empty())
                 return false;
-            double dist_a = this->G.get_heuristic(
-                this->goals_mem[a][0].location, solution[a][t - 1].location,
-                solution[a][t - 1].orientation);
-            double dist_b = this->G.get_heuristic(
-                this->goals_mem[b][0].location, solution[b][t - 1].location,
-                solution[b][t - 1].orientation);
+            double dist_a = this->G.get_pebble_motion_heuristic(
+                this->goals_mem[a][0].location, solution[a][t - 1].location);
+            double dist_b = this->G.get_pebble_motion_heuristic(
+                this->goals_mem[b][0].location, solution[b][t - 1].location);
             // Prefer the agent with smaller distance to its goal
             if (dist_a != dist_b)
                 return dist_a < dist_b;
@@ -316,10 +316,10 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     //     double move_cost2 =
     //         this->G.get_weight(start_state.location, n2.location);
     //     double h1 =
-    //         this->G.get_heuristic(goal.location, n1.location,
+    //         this->G.get_pebble_motion_heuristic(goal.location, n1.location,
     //         n1.orientation);
     //     double h2 =
-    //         this->G.get_heuristic(goal.location, n2.location,
+    //         this->G.get_pebble_motion_heuristic(goal.location, n2.location,
     //         n2.orientation);
     //     double cost1 = move_cost1 + rot_cost1 + h1;
     //     double cost2 = move_cost2 + rot_cost2 + h2;
@@ -357,7 +357,7 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     //              << this->G.get_weight(start_state.location,
     //                                    next_state.location)
     //              << ", heuristic: "
-    //              << this->G.get_heuristic(goal.location,
+    //              << this->G.get_pebble_motion_heuristic(goal.location,
     //              next_state.location,
     //                                       next_state.orientation)
     //              << ")" << endl;
@@ -373,9 +373,9 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
         double cost1 = this->G.get_weight(start_state.location, n1.location);
         double cost2 = this->G.get_weight(start_state.location, n2.location);
         double h1 =
-            this->G.get_heuristic(goal.location, n1.location, n1.orientation);
+            this->G.get_pebble_motion_heuristic(goal.location, n1.location);
         double h2 =
-            this->G.get_heuristic(goal.location, n2.location, n2.orientation);
+            this->G.get_pebble_motion_heuristic(goal.location, n2.location);
         if (cost1 + h1 != cost2 + h2)
             return (cost1 + h1) < (cost2 + h2);
         // Tie breaking. Prefer the next state that is currently not
@@ -403,7 +403,8 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     //          << this->G.get_weight(start_state.location,
     //          next_state.location)
     //          << ", heuristic: "
-    //          << this->G.get_heuristic(goal.location, next_state.location,
+    //          << this->G.get_pebble_motion_heuristic(goal.location,
+    //          next_state.location,
     //                                   next_state.orientation)
     //          << ")" << endl;
     // }

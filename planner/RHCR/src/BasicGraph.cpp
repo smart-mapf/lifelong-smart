@@ -357,6 +357,87 @@ std::vector<double> BasicGraph::compute_heuristics(int root_location)
 }
 
 
+vector<double> BasicGraph::compute_pebble_motion_heuristics(int root_location)
+{
+    // While not considering rotation, the pebble motion heuristic is the same
+    // as the normal heuristic.
+    if (!this->consider_rotation)
+        return vector<double>(this->heuristics[root_location]);
+
+    // std::cout << "start computing h for loc = "<< root_location <<std::endl;
+    std::vector<double> res(this->size(), DBL_MAX);
+
+	fibonacci_heap< StateTimeAStarNode*, compare<StateTimeAStarNode::compare_node> > heap;
+    unordered_set< StateTimeAStarNode*, StateTimeAStarNode::Hasher, StateTimeAStarNode::EqNode> nodes;
+
+    State root_state(root_location);
+    StateTimeAStarNode* root = new StateTimeAStarNode(root_state, 0, 0, nullptr, 0);
+    root->open_handle = heap.push(root);  // add root to heap
+    nodes.insert(root);       // add root to hash_table (nodes)
+
+	while (!heap.empty())
+    {
+        StateTimeAStarNode* curr = heap.top();
+		heap.pop();
+		for (auto next_state : get_reverse_neighbors(curr->state))
+		{
+            double curr_weight = get_weight(next_state.location,
+                                            curr->state.location);
+            double next_g_val = curr->g_val + curr_weight;
+            // Not considering rotation, only moving
+            StateTimeAStarNode* next = new StateTimeAStarNode(next_state, next_g_val, 0, nullptr, 0);
+			auto it = nodes.find(next);
+			if (it == nodes.end())
+			{  // add the newly generated node to heap and hash table
+				next->open_handle = heap.push(next);
+				nodes.insert(next);
+			}
+			else
+			{  // update existing node's g_val if needed (only in the heap)
+				delete(next);  // not needed anymore -- we already generated it before
+                StateTimeAStarNode* existing_next = *it;
+				if (existing_next->g_val > next_g_val)
+				{
+					existing_next->g_val = next_g_val;
+					heap.increase(existing_next->open_handle);
+				}
+			}
+		}
+	}
+	// iterate over all nodes and populate the distances
+	for (auto it = nodes.begin(); it != nodes.end(); it++)
+	{
+        StateTimeAStarNode* s = *it;
+        int idx = s->state.location;
+        res[idx] = std::min(s->g_val, res[idx]);
+		delete (s);
+	}
+	nodes.clear();
+	heap.clear();
+    return res;
+}
+
+
+double BasicGraph::get_pebble_motion_heuristic(int goal_loc,
+                                               int start_loc) const {
+    if (this->pebble_motion_heuristics.find(goal_loc) ==
+        this->pebble_motion_heuristics.end()) {
+        spdlog::error("get_pebble_motion_heuristic: error goal_loc ={}, not "
+                      "find in G.pebble_motion_h",
+                      goal_loc);
+        exit(1);
+    }
+    if (this->pebble_motion_heuristics.at(goal_loc).size() <= start_loc) {
+        spdlog::error(
+            "get_pebble_motion_heuristic: error curr loc ={}, larger than {}",
+            start_loc, this->pebble_motion_heuristics.at(goal_loc).size());
+        exit(1);
+    }
+
+    return this->pebble_motion_heuristics.at(goal_loc)[start_loc];
+}
+
+
 int BasicGraph::get_Manhattan_distance(int loc1, int loc2) const
 {
     return abs(loc1 / cols - loc2 / cols) + abs(loc1 % cols - loc2 % cols);

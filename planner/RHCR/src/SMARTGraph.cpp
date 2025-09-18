@@ -569,16 +569,22 @@ void SMARTGrid::preprocessing(bool consider_rotation, std::string log_dir) {
     if (!succ) {
         for (auto endpoint : this->endpoints) {
             this->heuristics[endpoint] = compute_heuristics(endpoint);
+            this->pebble_motion_heuristics[endpoint] =
+                compute_pebble_motion_heuristics(endpoint);
         }
 
         // Under w mode, home location is endpoints but need additional
         // heuristics to workstations
         for (auto workstation : this->workstations) {
             this->heuristics[workstation] = compute_heuristics(workstation);
+            this->pebble_motion_heuristics[workstation] =
+                compute_pebble_motion_heuristics(workstation);
         }
 
         for (auto aisle_id : this->aisle_entries) {
             this->heuristics[aisle_id] = compute_heuristics(aisle_id);
+            this->pebble_motion_heuristics[aisle_id] =
+                compute_pebble_motion_heuristics(aisle_id);
         }
 
         // cout << table_save_path << endl;

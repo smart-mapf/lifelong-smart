@@ -509,11 +509,15 @@ void GreyOrangeGrid::preprocessing(bool consider_rotation,
         // Heuristics to endpoints
         for (auto endpoint : this->endpoints) {
             this->heuristics[endpoint] = compute_heuristics(endpoint);
+            this->pebble_motion_heuristics[endpoint] =
+                compute_pebble_motion_heuristics(endpoint);
         }
 
         // Heuristics to workstations
         for (auto workstation : this->workstations) {
             this->heuristics[workstation] = compute_heuristics(workstation);
+            this->pebble_motion_heuristics[workstation] =
+                compute_pebble_motion_heuristics(workstation);
         }
 
         // Heuristics to parking locations
@@ -522,6 +526,8 @@ void GreyOrangeGrid::preprocessing(bool consider_rotation,
                 this->heuristics.end()) {
                 this->heuristics[parking_location] =
                     compute_heuristics(parking_location);
+                this->pebble_motion_heuristics[parking_location] =
+                    compute_pebble_motion_heuristics(parking_location);
             }
         }
 
@@ -532,6 +538,8 @@ void GreyOrangeGrid::preprocessing(bool consider_rotation,
                     this->heuristics.end()) {
                     this->heuristics[queue_location] =
                         compute_heuristics(queue_location);
+                    this->pebble_motion_heuristics[queue_location] =
+                        compute_pebble_motion_heuristics(queue_location);
                 }
             }
         }

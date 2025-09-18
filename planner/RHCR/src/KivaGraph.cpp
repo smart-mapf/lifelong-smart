@@ -605,12 +605,16 @@ void KivaGrid::preprocessing(bool consider_rotation, std::string log_dir) {
     if (!succ) {
         for (auto endpoint : this->endpoints) {
             this->heuristics[endpoint] = compute_heuristics(endpoint);
+            this->pebble_motion_heuristics[endpoint] =
+                compute_pebble_motion_heuristics(endpoint);
         }
 
         // Under r mode, agent home location is separated from endpoints
         if (this->r_mode) {
             for (auto home : this->agent_home_locations) {
                 this->heuristics[home] = compute_heuristics(home);
+                this->pebble_motion_heuristics[home] =
+                    compute_pebble_motion_heuristics(home);
             }
         }
         // Under w mode, home location is endpoints but need additional
@@ -618,6 +622,8 @@ void KivaGrid::preprocessing(bool consider_rotation, std::string log_dir) {
         else if (this->w_mode) {
             for (auto workstation : this->workstations) {
                 this->heuristics[workstation] = compute_heuristics(workstation);
+                this->pebble_motion_heuristics[workstation] =
+                    compute_pebble_motion_heuristics(workstation);
             }
         }
         cout << table_save_path << endl;
