@@ -77,11 +77,8 @@ void ADG_Server::saveStats() {
 
     // Print some key statistics to console
     vector<string> key_stats = {
-        "n_rule_based_calls",
-        "mean_avg_rotation",
-        "mean_avg_move",
-        "avg_total_actions",
-        "n_planner_invokes",
+        "n_rule_based_calls", "mean_avg_rotation", "mean_avg_move",
+        "avg_total_actions",  "n_planner_invokes",
     };
 
     for (const auto& stat : key_stats) {
@@ -446,8 +443,6 @@ bool updateSimStep(string RobotID) {
 //     return make_tuple(server_ptr->time_step_tick, end_sim);
 // }
 
-// Invoke planner when the number of actions left for a robot is less than a
-// threshold.
 bool invokePlanner() {
     lock_guard<mutex> guard(globalMutex);
 
@@ -464,7 +459,7 @@ bool invokePlanner() {
                  sim_step != server_ptr->prev_invoke_planner_tick;
     }
     // No action: invoke planner when the number of actions left for a robot
-    // is less than look_ahead_dist, and at least sim_window_tick has passed
+    // is less than look_ahead_dist, and at least 1 has passed
     // since last invocation.
     else if (server_ptr->planner_invoke_policy == "no_action") {
         for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
@@ -479,15 +474,14 @@ bool invokePlanner() {
         // Ensure we have not reached the total simulation step tick
         invoke &= !server_ptr->simulationFinished();
 
-        // Ensure at least look_ahead_tick has passed since last invocation
+        // Ensure at least 1 has passed since last invocation
         if (invoke && !server_ptr->plannerNeverInvoked() &&
-            !server_ptr->simTickElapsedFromLastInvoke(
-                server_ptr->look_ahead_tick)) {
+            !server_ptr->simTickElapsedFromLastInvoke(1)) {
             if (server_ptr->screen > 1) {
                 spdlog::info(
                     "Timestep {}: Attempt to invoke by {}, but skipped to "
                     "ensure {} has passed since last invocation at {}.",
-                    sim_step, invoke_by, server_ptr->look_ahead_tick,
+                    sim_step, invoke_by, 1,
                     server_ptr->prev_invoke_planner_tick);
             }
             invoke = false;
