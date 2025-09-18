@@ -1,10 +1,5 @@
 ﻿#include "KivaSystem.h"
-#include "SortingSystem.h"
-#include "OnlineSystem.h"
-#include "BeeSystem.h"
 #include "ID.h"
-#include "ManufactureSystem.h"
-#include "GreyOrangeSystem.h"
 #include "SMARTSystem.h"
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -273,90 +268,6 @@ int main(int argc, char** argv)
 		cout << "Overall runtime: " << runtime << " seconds." << endl;
 		return 0;
 	}
-    else if (vm["scenario"].as<string>() == "GREYORANGE")
-	{
-		GreyOrangeGrid G;
-		G.screen = vm["screen"].as<int>();
-        G.hold_endpoints = vm["hold_endpoints"].as<bool>();
-	    G.useDummyPaths = vm["dummy_paths"].as<bool>();
-        G._save_heuristics_table = vm["save_heuristics_table"].as<bool>();
-        G.rotation_time = vm["rotation_time"].as<int>();
-        std::ifstream i(vm["map"].as<std::string>());
-        json map_json;
-        i >> map_json;
-		if (!G.load_map_from_jsonstr(map_json.dump(4)))
-        {
-            return -1;
-        }
-		MAPFSolver* solver = set_solver(G, vm);
-        solver->consider_task_wait = true;
-        string agents_file = vm["agents"].as<string>();
-        string task_file = vm["task"].as<string>();
-		GreyOrangeSystem system(G, *solver, task_file, agents_file);
-		set_parameters(system, vm);
-        system.start_time = start_time;
-		G.preprocessing(system.consider_rotation, "map");
-		system.simulate(vm["simulation_time"].as<int>());
-        double runtime = (double)(clock() - start_time)/ CLOCKS_PER_SEC;
-		cout << "Overall runtime: " << runtime << " seconds." << endl;
-		return 0;
-	}
-    else if (vm["scenario"].as<string>() == "MANUFACTURE")
-    {
-        ManufactureGrid G;
-        G.screen = vm["screen"].as<int>();
-        if (vm["hold_endpoints"].as<bool>() || vm["dummy_paths"].as<bool>())
-        {
-            std::cerr << "Hold endpoints and dummy paths are not supported for manufacturing scenario" << endl;
-            exit(-1);
-        }
-        G._save_heuristics_table = vm["save_heuristics_table"].as<bool>();
-        G.n_station_types = vm["n_station_types"].as<int>();
-        G.station_wait_time = vm["station_wait_times"].as<vector<int>>();
-        G.rotation_time = vm["rotation_time"].as<int>();
-        assert(G.station_wait_time.size() == G.n_station_types);
-        if (!G.load_map(vm["map"].as<std::string>()))
-        {
-            return -1;
-        }
-        MAPFSolver* solver = set_solver(G, vm);
-        solver->consider_task_wait = true;
-		ManufactureSystem system(G, *solver);
-		set_parameters(system, vm);
-        system.start_time = start_time;
-		G.preprocessing(system.consider_rotation, "map");
-		system.simulate(vm["simulation_time"].as<int>());
-        double runtime = (double)(clock() - start_time)/ CLOCKS_PER_SEC;
-		cout << "Overall runtime: " << runtime << " seconds." << endl;
-		return 0;
-    }
-	// else if (vm["scenario"].as<string>() == "SORTING")
-	// {
-	// 	SortingGrid G;
-	// 	G.screen = vm["screen"].as<int>();
-    //     G.hold_endpoints = vm["hold_endpoints"].as<bool>();
-	//     G.useDummyPaths = vm["dummy_paths"].as<bool>();
-    //     G._save_heuristics_table = vm["save_heuristics_table"].as<bool>();
-    //     std::ifstream i(vm["map"].as<std::string>());
-    //     json map_json;
-    //     i >> map_json;
-	// 	if (!G.load_map_from_jsonstr(
-    //             map_json.dump(4),
-    //             vm["left_w_weight"].as<double>(),
-    //             vm["right_w_weight"].as<double>()))
-    //     {
-    //         return -1;
-    //     }
-	// 	MAPFSolver* solver = set_solver(G, vm);
-	// 	SortingSystem system(G, *solver);
-	// 	set_parameters(system, vm);
-    //     system.start_time = start_time;
-	// 	G.preprocessing(system.consider_rotation, "map");
-	// 	system.simulate(vm["simulation_time"].as<int>());
-    //     double runtime = (double)(clock() - start_time)/ CLOCKS_PER_SEC;
-	// 	cout << "Overall runtime: " << runtime << " seconds." << endl;
-	// 	return 0;
-	// }
     else if (vm["scenario"].as<string>() == "SMART")
 	{
 		SMARTGrid G;
@@ -392,66 +303,6 @@ int main(int argc, char** argv)
         double runtime = (double)(clock() - start_time)/ CLOCKS_PER_SEC;
 		cout << "Overall runtime: " << runtime << " seconds." << endl;
 		return 0;
-	}
-	else if (vm["scenario"].as<string>() == "ONLINE")
-	{
-		OnlineGrid G;
-		G.screen = vm["screen"].as<int>();
-		if (!G.load_map(vm["map"].as<std::string>()))
-			return -1;
-		MAPFSolver* solver = set_solver(G, vm);
-		OnlineSystem system(G, *solver);
-		assert(!system.hold_endpoints);
-		assert(!system.useDummyPaths);
-		set_parameters(system, vm);
-        system.start_time = start_time;
-		G.preprocessing(system.consider_rotation, "");
-		system.simulate(vm["simulation_time"].as<int>());
-		return 0;
-	}
-	else if (vm["scenario"].as<string>() == "BEE")
-	{
-		BeeGraph G;
-		G.screen = vm["screen"].as<int>();
-		if (!G.load_map(vm["map"].as<std::string>()))
-			return -1;
-		MAPFSolver* solver = set_solver(G, vm);
-		BeeSystem system(G, *solver);
-		assert(!system.hold_endpoints);
-		assert(!system.useDummyPaths);
-		set_parameters(system, vm);
-        system.start_time = start_time;
-		G.preprocessing(system.consider_rotation, vm["task"].as<std::string>());
-		system.load_task_assignments(vm["task"].as<std::string>());
-		system.simulate();
-		double runtime = (double)(clock() - start_time)/ CLOCKS_PER_SEC;
-		cout << "Overall runtime:			" << runtime << " seconds." << endl;
-		// cout << "	Reading from file:		" << G.loading_time + system.loading_time << " seconds." << endl;
-		// cout << "	Preprocessing:			" << G.preprocessing_time << " seconds." << endl;
-		// cout << "	Writing to file:		" << system.saving_time << " seconds." << endl;
-		cout << "Makespan:		" << system.get_makespan() << " timesteps." << endl;
-		cout << "Flowtime:		" << system.get_flowtime() << " timesteps." << endl;
-		cout << "Flowtime lowerbound:	" << system.get_flowtime_lowerbound() << " timesteps." << endl;
-		auto flower_ids = system.get_missed_flower_ids();
-		cout << "Missed tasks:";
-		for (auto id : flower_ids)
-			cout << " " << id;
-		cout << endl;
-		// cout << "Remaining tasks: " << system.get_num_of_remaining_tasks() << endl;
-		cout << "Objective: " << system.get_objective() << endl;
-		std::ofstream output;
-		output.open(vm["output"].as<std::string>() + "/MAPF_results.txt", std::ios::out);
-		output << "Overall runtime: " << runtime << " seconds." << endl;;
-		output << "Makespan: " << system.get_makespan() << " timesteps." << endl;
-		output << "Flowtime: " << system.get_flowtime() << " timesteps." << endl;
-		output << "Flowtime lowerbound: " << system.get_flowtime_lowerbound() << " timesteps." << endl;
-		output << "Missed tasks:";
-		for (auto id : flower_ids)
-			output << " " << id;
-		output << endl;
-		output << "Objective: " << system.get_objective() << endl;
-		output.close();
-        return 0;
 	}
 	else
 	{
