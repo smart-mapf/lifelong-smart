@@ -15,6 +15,8 @@ void ADG::addMAPFPlan(const vector<vector<Action>>& plans) {
         graph.resize(num_robots);
         get_initial_plan = true;
     }
+
+    // Record the size of each robot's graph before adding new plans
     vector<int> graph_offset(num_robots, -1);
     for (int i = 0; i < num_robots; i++) {
         graph_offset[i] = static_cast<int>(graph[i].size());
@@ -28,7 +30,8 @@ void ADG::addMAPFPlan(const vector<vector<Action>>& plans) {
         }
     }
 
-    // Find the type-2 edges of the current episode
+    // Create the type-2 edges from the current episode of the plans to the
+    // newly added plans
     for (int i = 0; i < num_robots; i++) {
         for (int j = 0; j < plans[i].size(); j++) {
             for (int robot_id = 0; robot_id < num_robots; robot_id++) {
@@ -53,7 +56,7 @@ void ADG::addMAPFPlan(const vector<vector<Action>>& plans) {
         }
     }
 
-    // Create Type 2 edges
+    // Create Type 2 edges within the newly added plans
     for (int i = 0; i < plans.size(); i++) {
         adg_stats.type1EdgeCount += static_cast<int>(plans[i].size()) - 1;
         adg_stats.totalNodes += static_cast<int>(plans[i].size());
@@ -134,48 +137,47 @@ bool isAddStop(double x) {
     return true;
 }
 
-// [first commited action, last commited action + 1)
-// If first commited action == last commited action + 1, no action is commited
+// Fix the incoming edges of the committed actions s.t.
+// 1. no type 2 edges is from inside the commit cut to outside.
+// 2. commit cut does not fall on an added stop.
 bool ADG::fixInconsistentIncomingEdge(
     vector<pair<int, int>>& commited_actions) {
     vector<bool> commit_cut_state(num_robots, false);
     while (not all_of(commit_cut_state.begin(), commit_cut_state.end(),
                       [](bool v) { return v; })) {
-        for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-            if (not commit_cut_state[agent_id]) {
-                if (commited_actions[agent_id].first !=
-                    commited_actions[agent_id].second) {
-                    double tmp_x =
-                        graph[agent_id][commited_actions[agent_id].second - 1]
-                            .action.goal.first;
-                    double tmp_y =
-                        graph[agent_id][commited_actions[agent_id].second - 1]
-                            .action.goal.second;
+        for (int k = 0; k < num_robots; k++) {
+            if (not commit_cut_state[k]) {
+                if (commited_actions[k].first != commited_actions[k].second) {
+                    // If the last commited action is an added stop, we move the
+                    // last commited action to the next action. It is always
+                    // safe to do so because added stops must be followed by a
+                    // non-added stop action.
+                    Action last_action =
+                        graph[k][commited_actions[k].second - 1].action;
+                    double tmp_x = last_action.goal.first;
+                    double tmp_y = last_action.goal.second;
                     if (isAddStop(tmp_x) or isAddStop(tmp_y)) {
-                        assert(commited_actions[agent_id].second <
-                               graph[agent_id].size());
-                        commited_actions[agent_id].second++;
+                        assert(commited_actions[k].second < graph[k].size());
+                        commited_actions[k].second++;
                     }
                 }
-                for (int tmp_action = commited_actions[agent_id].first;
-                     tmp_action < commited_actions[agent_id].second;
-                     tmp_action++) {
-                    for (auto& tmp_in_edge :
-                         graph[agent_id][tmp_action].incomeEdges) {
-                        if (tmp_in_edge->from_node_id >=
-                            commited_actions[tmp_in_edge->from_agent_id]
-                                .second) {
-                            commited_actions[tmp_in_edge->from_agent_id]
-                                .second = tmp_in_edge->from_node_id + 1;
-                            commit_cut_state[tmp_in_edge->from_agent_id] =
-                                false;
+                // For each committed action, check its incoming edges. If an
+                // incoming edge is from a node (of agent a_m) that is not
+                // committed, we need to extend the a_m's committed action to
+                // include that node.
+                for (int a = commited_actions[k].first;
+                     a < commited_actions[k].second; a++) {
+                    for (auto& in_e : graph[k][a].incomeEdges) {
+                        if (in_e->from_node_id >=
+                            commited_actions[in_e->from_agent_id].second) {
+                            commited_actions[in_e->from_agent_id].second =
+                                in_e->from_node_id + 1;
+                            commit_cut_state[in_e->from_agent_id] = false;
                         }
                     }
                 }
-            } else {
-                ;
             }
-            commit_cut_state[agent_id] = true;
+            commit_cut_state[k] = true;
         }
     }
     return true;
@@ -188,131 +190,150 @@ vector<robotState> ADG::computeCommitCut() {
         return {};
     }
     curr_commit.clear();
-    // If it is never initialized
+    // If ADG graph is never initialized, we return the initial locations
     if (graph.size() == 0) {
-        for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-            curr_commit.emplace_back(init_locs[agent_id].position, 0);
+        for (int k = 0; k < num_robots; k++) {
+            curr_commit.emplace_back(init_locs[k].position, 0);
         }
         return curr_commit;
     }
 
+    // Each agent has (first commited action, last commited action + 1).
+    // If first commited action == last commited action + 1, no action is
+    // commited
     vector<pair<int, int>> commited_actions(num_robots);
-    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+    for (int k = 0; k < num_robots; k++) {
         // set all enqueue actions as commited
-        commited_actions[agent_id] = make_pair(finished_node_idx[agent_id] + 1,
-                                               finished_node_idx[agent_id] + 1);
+        commited_actions[k] =
+            make_pair(finished_node_idx[k] + 1, finished_node_idx[k] + 1);
 
         // We first find the first node idx that is not enqueued. All enqueued
         // actions must be commited.
-        if (not enqueue_nodes_idx[agent_id].empty()) {
-            assert(enqueue_nodes_idx[agent_id].front() ==
-                   commited_actions[agent_id].first);
-            commited_actions[agent_id].second =
-                enqueue_nodes_idx[agent_id].back() + 1;
+        if (not enqueue_nodes_idx[k].empty()) {
+            assert(enqueue_nodes_idx[k].front() == commited_actions[k].first);
+            commited_actions[k].second = enqueue_nodes_idx[k].back() + 1;
         }
         // If number of enqueued action is smaller than the pre-defined
         // look-ahead-dist, we then find actions that are staged
-        int num_commit_actions = commited_actions[agent_id].second -
-                                 commited_actions[agent_id].first;
+        int num_commit_actions =
+            commited_actions[k].second - commited_actions[k].first;
         if (num_commit_actions < this->look_ahead_dist) {
-            commited_actions[agent_id].second =
-                min((int)graph[agent_id].size(),
-                    commited_actions[agent_id].first + this->look_ahead_dist);
+            commited_actions[k].second =
+                min((int)graph[k].size(),
+                    commited_actions[k].first + this->look_ahead_dist);
         }
     }
-    fixInconsistentIncomingEdge(commited_actions);
+    this->fixInconsistentIncomingEdge(commited_actions);
 #ifdef DEBUG
     cout << "commited actions after fix: " << endl;
-    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        cout << "Agent " << agent_id << ": " << commited_actions[agent_id].first
-             << " -> " << commited_actions[agent_id].second << endl;
+    for (int k = 0; k < num_robots; k++) {
+        cout << "Agent " << k << ": " << commited_actions[k].first << " -> "
+             << commited_actions[k].second << endl;
     }
 #endif
+
+    // Check if there are duplicate start locations
+    this->findDuplicateStarts(commited_actions);
+
+    // Remove all uncommited actions and their incoming edges
+    this->removeUncommittedActions(commited_actions);
+
+    // printProgress();
+    if (this->screen > 0) {
+        spdlog::info("ADG::computeCommitCut: Commit cut number: {}, total "
+                     "number of robots: {}",
+                     curr_commit.size(), num_robots);
+    }
+
+    return curr_commit;
+}
+
+void ADG::findDuplicateStarts(vector<pair<int, int>>& commited_actions) const {
     unordered_map<pair<double, double>, vector<int>, pair_hash>
         duplicate_starts;
-    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+    for (int k = 0; k < num_robots; k++) {
         if (this->screen > 1) {
-            spdlog::info("Agent {}: {} -> {}", agent_id,
-                         commited_actions[agent_id].first,
-                         commited_actions[agent_id].second);
-            // cout << "Agent " << agent_id << ": "
-            //           << commited_actions[agent_id].first << " -> "
-            //           << commited_actions[agent_id].second << endl;
+            spdlog::info("Agent {}: {} -> {}", k, commited_actions[k].first,
+                         commited_actions[k].second);
+            // cout << "Agent " << k << ": "
+            //           << commited_actions[k].first << " -> "
+            //           << commited_actions[k].second << endl;
         }
 
         pair<double, double> tmp_loc;
-        if (graph[agent_id].empty()) {
-            tmp_loc = init_locs[agent_id].position;
+        if (graph[k].empty()) {
+            tmp_loc = init_locs[k].position;
         } else {
-            tmp_loc = graph[agent_id][commited_actions[agent_id].second - 1]
-                          .action.goal;
+            tmp_loc = graph[k][commited_actions[k].second - 1].action.goal;
         }
         if (duplicate_starts.find(tmp_loc) != duplicate_starts.end()) {
             spdlog::warn(
                 "Duplicate start location found! Agent {}. Duplicate start "
                 "location: {}, {}",
-                agent_id, tmp_loc.first, tmp_loc.second);
-            // cerr << "Duplicate start location found! Agent " << agent_id
-            //           << ". Duplicate start location: " << tmp_loc.first <<
-            //           ", "
-            //           << tmp_loc.second << endl;
-            graph[agent_id].back().showNode();
-            string skip_info;
-            // cerr << "Duplicate agent: " << endl;
+                k, tmp_loc.first, tmp_loc.second);
+
+            graph[k].back().showNode();
+            // string skip_info;
             spdlog::warn("Duplicate agent: ");
-            for (int dup_agent_id : duplicate_starts[tmp_loc]) {
-                // cerr << dup_agent_id << ": ";
-                spdlog::warn("{}: ", dup_agent_id);
-                graph[dup_agent_id].back().showNode();
+            for (int dup_k : duplicate_starts[tmp_loc]) {
+                spdlog::warn("{}: ", dup_k);
+                graph[dup_k].back().showNode();
             }
             // cerr << "Continue? y/n" << endl;
             // cin >> skip_info;
         }
-        duplicate_starts[tmp_loc].push_back(agent_id);
+        duplicate_starts[tmp_loc].push_back(k);
     }
+}
 
-    // pop out unused actions
-    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        assert(commited_actions[agent_id].second <= graph[agent_id].size());
-        assert(commited_actions[agent_id].first <=
-               commited_actions[agent_id].second);
+void ADG::removeUncommittedActions(
+    const vector<pair<int, int>>& commited_actions) {
+    for (int k = 0; k < num_robots; k++) {
+        assert(commited_actions[k].second <= graph[k].size());
+        assert(commited_actions[k].first <= commited_actions[k].second);
         // when remove nodes not commited, also remove the type-2 edges
 #ifdef DEBUG
-        cout << "Clean commited actions for agent " << agent_id
-             << ", total actions: " << graph[agent_id].size() << endl;
+        cout << "Clean commited actions for agent " << k
+             << ", total actions: " << graph[k].size() << endl;
 #endif
-        if (graph[agent_id].empty()) {
-            curr_commit.emplace_back(init_locs[agent_id].position, 0);
+        // If no action is commited, we just return the initial location
+        if (graph[k].empty()) {
+            curr_commit.emplace_back(init_locs[k].position, 0);
             continue;
         }
-        for (int node_idx = commited_actions[agent_id].second;
-             node_idx < graph[agent_id].size(); node_idx++) {
+
+        // Remove all incoming edges to the uncommitted actions
+        for (int v = commited_actions[k].second; v < graph[k].size(); v++) {
             // we can ignore outgoing edges
-            for (auto& tmp_in_edge : graph[agent_id][node_idx].incomeEdges) {
+            for (auto& in_e : graph[k][v].incomeEdges) {
                 // auto& vec =
-                // graph[tmp_in_edge->from_agent_id][tmp_in_edge->from_node_id].outEdges;
-                // vec.erase(remove(vec.begin(), vec.end(), tmp_in_edge),
+                // graph[in_e->from_k][in_e->from_node_id].outEdges;
+                // vec.erase(remove(vec.begin(), vec.end(), in_e),
                 // vec.end());
-                tmp_in_edge->valid = false;
+                in_e->valid = false;
             }
         }
-        // cout << "Clean commited actions for agent " << agent_id << ".
+        // cout << "Clean commited actions for agent " << k << ".
         // total graph size: "
-        //     << graph[agent_id].size() << ",remove start from: " <<
-        //     commited_actions[agent_id].second << endl;
-        graph[agent_id].erase(
-            graph[agent_id].begin() + commited_actions[agent_id].second,
-            graph[agent_id].end());
-        // cout << "Remove rest of actions for agent " << agent_id <<
+        //     << graph[k].size() << ",remove start from: " <<
+        //     commited_actions[k].second << endl;
+
+        // Remove all uncommited actions nodes
+        graph[k].erase(graph[k].begin() + commited_actions[k].second,
+                       graph[k].end());
+        // cout << "Remove rest of actions for agent " << k <<
         // endl;
 
-        ADGNode last_node = graph[agent_id].back();
+        // Take the last commited action as the commit cut and use the goal of
+        // it as the initial location/orientation of the next MAPF problem
+        // instance
+        ADGNode last_node = graph[k].back();
         auto action = last_node.action;
-        // commitCut[agent_id] = last_node.action.goal;
+        // commitCut[k] = last_node.action.goal;
         curr_commit.emplace_back(
             last_node.action.goal,
             static_cast<int>(last_node.action.orientation));
-        // cout << "Loop end for agent " << agent_id << ": " << endl;
+        // cout << "Loop end for agent " << k << ": " << endl;
         // cout << "curr size of commited is: " << curr_commit.size() << ":
         // graph size: " << graph.size() << endl; cout << "        {"
         // << action.robot_id << ", " << action.time << ", "
@@ -323,18 +344,6 @@ vector<robotState> ADG::computeCommitCut() {
         //   << action.goal.first << ", " << action.goal.second << "}, " <<
         //   action.nodeID  << "}," << endl;
     }
-#ifdef DEBUG
-    cout << "Find commit Cut " << endl;
-#endif
-    // printProgress();
-    if (this->screen > 0) {
-        spdlog::info("Commit cut number: {}, total number of robots: {}",
-                     curr_commit.size(), num_robots);
-        // cout << "Commit cut number: " << curr_commit.size()
-        //           << ", total number of robots: " << num_robots << endl;
-    }
-
-    return curr_commit;
 }
 
 void printEdge() {
@@ -398,27 +407,6 @@ bool ADG::createRobotIDToStartIndexMaps(string& robot_id_str,
         return true;
     }
     return false;
-
-    // int robot_id = static_cast<int>(init_locs.size());
-    // robotIDToStartIndex[robot_id] = robot_id_str;
-    // startIndexToRobotID[robot_id_str] = robot_id;
-
-    // size_t pos = robot_id_str.find('_');
-    // if (pos == string::npos) {
-    //     cerr << "Invalid robot locations!" << endl;
-    //     exit(-1);
-    // }
-
-    // int x = stoi(robot_id_str.substr(0, pos));
-    // int y = stoi(robot_id_str.substr(pos + 1));
-    // init_locs.emplace_back(x, y);
-
-    // if (init_locs.size() == num_robots) {
-    //     initialized = true;
-    //     robot_states = init_locs;
-    //     return true;
-    // }
-    // return false;
 }
 
 void inline updateADGNode(ADGNode& tmp_node) {
@@ -458,32 +446,38 @@ bool ADG::getAvailableNodes(int robot_id, vector<int>& available_nodes) {
     return true;
 }
 
+// Robot `robot_id` has finished executing node `node_id`.
+// We need to update the ADG by removing all type-2 edges from this node and
+// before.
 bool ADG::updateFinishedNode(int robot_id, int node_id) {
-    int latest_finished_idx = finished_node_idx[robot_id];
-    if (node_id <= latest_finished_idx) {
-        // cerr << "Reconfirming nodes!" << endl;
+    int latest_finished_node = finished_node_idx[robot_id];
+    // Check if we have "finished" this node before.
+    if (node_id <= latest_finished_node) {
         spdlog::warn("ADG::updateFinishedNode: Reconfirming nodes!");
         return true;
     } else {
+        // Check if the node to be finished is enqueued.
         if (not enqueue_nodes_idx[robot_id].empty() and
             node_id > enqueue_nodes_idx[robot_id].back()) {
-            // cerr << "Confirm for nodes never enqueue!" << endl;
             spdlog::warn("ADG::updateFinishedNode: Confirm for nodes never "
                          "enqueue!");
             return false;
         } else {
             // remove type-2 edges
-            for (int tmp_idx = latest_finished_idx + 1; tmp_idx <= node_id;
-                 tmp_idx++) {
-                for (auto& tmp_edge : graph[robot_id][tmp_idx].incomeEdges) {
-                    assert(not tmp_edge->valid);
+            for (int v = latest_finished_node + 1; v <= node_id; v++) {
+                for (auto& e : graph[robot_id][v].incomeEdges) {
+                    assert(not e->valid);
                 }
 
-                for (auto& tmp_edge : graph[robot_id][tmp_idx].outEdges) {
-                    tmp_edge->valid = false;
+                for (auto& e : graph[robot_id][v].outEdges) {
+                    e->valid = false;
                 }
             }
+
+            // Update finished_node_idx to the current finished node
             finished_node_idx[robot_id] = node_id;
+
+            // Remove all enqueued nodes that are <= node_id
             while (not enqueue_nodes_idx[robot_id].empty()) {
                 if (enqueue_nodes_idx[robot_id].front() <= node_id) {
                     enqueue_nodes_idx[robot_id].pop_front();
@@ -491,6 +485,8 @@ bool ADG::updateFinishedNode(int robot_id, int node_id) {
                     break;
                 }
             }
+
+            // Update the robot_states
             robot_states[robot_id].position =
                 graph[robot_id][node_id].action.goal;
             robot_states[robot_id].orient =
@@ -605,20 +601,20 @@ set<int> ADG::updateFinishedTasks() {
     // finish_tasks.clear();
     // finish_tasks.resize(num_robots);
     set<int> new_finished_tasks;
-    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        for (int j = graph[agent_id].size() - 1; j >= 0; j--) {
+    for (int k = 0; k < num_robots; k++) {
+        for (int j = graph[k].size() - 1; j >= 0; j--) {
             // Current ADGNode has a non-negative task_id, then we finish a
             // task.
             // Note: this function is invoked after ComputeCommitCut, which
             // removed actions that are to be replaced by future plans.
-            int curr_task = graph[agent_id][j].action.task_id;
-            // cout << "Agent " << agent_id << ", Node "
-            //      << graph[agent_id][j].node_id
-            //      << ", Action: " << graph[agent_id][j].action.type << " at ("
-            //      << graph[agent_id][j].action.start.first << ", "
-            //      << graph[agent_id][j].action.start.second << ") -> ("
-            //      << graph[agent_id][j].action.goal.first << ", "
-            //      << graph[agent_id][j].action.goal.second << ")"
+            int curr_task = graph[k][j].action.task_id;
+            // cout << "Agent " << k << ", Node "
+            //      << graph[k][j].node_id
+            //      << ", Action: " << graph[k][j].action.type << " at ("
+            //      << graph[k][j].action.start.first << ", "
+            //      << graph[k][j].action.start.second << ") -> ("
+            //      << graph[k][j].action.goal.first << ", "
+            //      << graph[k][j].action.goal.second << ")"
             //      << ", Task ID: " << curr_task << endl;
             if (this->finished_tasks_.find(curr_task) !=
                 this->finished_tasks_.end()) {
@@ -652,22 +648,21 @@ json ADG::getADGStats() {
     // Path of the robots. Each element is a list of (x, y, orientation,
     // task_id)
     vector<vector<tuple<double, double, double, int>>> robot_paths(num_robots);
-    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
+    for (int k = 0; k < num_robots; k++) {
         // 0 indicates the initial orientation of North
-        robot_paths[agent_id].push_back({init_locs[agent_id].position.second,
-                                         init_locs[agent_id].position.first,
-                                         0.0, -1});
+        robot_paths[k].push_back({init_locs[k].position.second,
+                                  init_locs[k].position.first, 0.0, -1});
     }
-    for (int agent_id = 0; agent_id < num_robots; agent_id++) {
-        for (int j = 0; j < finished_node_idx[agent_id]; j++) {
+    for (int k = 0; k < num_robots; k++) {
+        for (int j = 0; j < finished_node_idx[k]; j++) {
             // Count the number of different actions
-            if (graph[agent_id][j].action.type == 'T') {
+            if (graph[k][j].action.type == 'T') {
                 if (j > 0) {
                     int degree;
-                    int abs_ = abs(graph[agent_id][j].action.orientation -
-                                   graph[agent_id][j - 1].action.orientation);
-                    if (graph[agent_id][j].action.orientation ==
-                        graph[agent_id][j - 1].action.orientation)
+                    int abs_ = abs(graph[k][j].action.orientation -
+                                   graph[k][j - 1].action.orientation);
+                    if (graph[k][j].action.orientation ==
+                        graph[k][j - 1].action.orientation)
                         degree = 0;
                     else if (abs_ == 1 || abs_ == 3)
                         degree = 1;
@@ -675,22 +670,21 @@ json ADG::getADGStats() {
                         spdlog::warn(
                             "ADG::getADGStats: Unexpected orientation change "
                             "from {} to {}",
-                            graph[agent_id][j - 1].action.orientation,
-                            graph[agent_id][j].action.orientation);
+                            graph[k][j - 1].action.orientation,
+                            graph[k][j].action.orientation);
                         degree = 2;
                     }
                     total_rotation += degree;
                 } else
                     total_rotation++;
-            } else if (graph[agent_id][j].action.type == 'M') {
+            } else if (graph[k][j].action.type == 'M') {
                 total_move++;
             }
 
             // Record the agents path
-            auto action = graph[agent_id][j].action;
-            robot_paths[agent_id].push_back(
-                {action.goal.second, action.goal.first, action.orientation,
-                 action.task_id});
+            auto action = graph[k][j].action;
+            robot_paths[k].push_back({action.goal.second, action.goal.first,
+                                      action.orientation, action.task_id});
         }
     }
     int total_actions = total_rotation + total_move;

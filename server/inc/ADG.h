@@ -37,6 +37,7 @@ struct ADGNode {
     //    (outgoing edges) vector<int> incomingType2Edges; // Indices of
     //    incoming edges
 
+    // Every agent has its own node_id space
     int node_id;
     vector<shared_ptr<Edge>> incomeEdges;
     vector<shared_ptr<Edge>> outEdges;
@@ -148,6 +149,9 @@ private:
                            pair<double, double>>>& actions);
     void findConstraining(int robot_id);
     bool fixInconsistentIncomingEdge(vector<pair<int, int>>& commited_actions);
+    void findDuplicateStarts(vector<pair<int, int>>& commited_actions) const;
+    void removeUncommittedActions(
+        const vector<pair<int, int>>& commited_actions);
     // Helper DFS function
     using loopNode = pair<int, int>;
     struct NodeHash {
@@ -172,12 +176,14 @@ public:
     bool get_initial_plan = false;
     map<int, string> robotIDToStartIndex;
     map<string, int> startIndexToRobotID;
+    // Current commit cut, the robots' states of the next MAPF problem instance
     vector<robotState> curr_commit;
     int screen;
     double avg_n_rotation = 0;
     set<int> backup_tasks;
 
 private:
+    // ADG graph. graph[k][v] is the v-th action node of agent k
     vector<vector<ADGNode>> graph;
     unordered_set<int> finished_tasks_;
     int n_finished_tasks = 0;
