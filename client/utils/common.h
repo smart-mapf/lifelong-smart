@@ -17,5 +17,8 @@
 #include <algorithm>
 
 #include <spdlog/spdlog.h>
+#include "json.hpp"
+
+using json = nlohmann::json;
 
 bool is_port_open(const std::string& ip, int port);
