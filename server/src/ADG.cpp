@@ -34,22 +34,20 @@ void ADG::addMAPFPlan(const vector<vector<Action>>& plans) {
     // newly added plans
     for (int i = 0; i < num_robots; i++) {
         for (int j = 0; j < plans[i].size(); j++) {
-            for (int robot_id = 0; robot_id < num_robots; robot_id++) {
-                if (i == robot_id) {
+            for (int k = 0; k < num_robots; k++) {
+                if (i == k) {
                     continue;
                 }
-                int latest_finished_idx = finished_node_idx[robot_id];
+                int latest_finished_idx = finished_node_idx[k];
                 // Indicating no node is finished yet
                 int next_node_idx = latest_finished_idx + 1;
-                for (int prev_idx = next_node_idx;
-                     prev_idx < graph_offset[robot_id]; prev_idx++) {
-                    if (graph[robot_id][prev_idx].action.start ==
-                        plans[i][j].goal) {
-                        shared_ptr<Edge> tmp_edge = make_shared<Edge>(
-                            robot_id, i, prev_idx, j + graph_offset[i]);
-                        graph[i][j + graph_offset[i]].incomeEdges.push_back(
-                            tmp_edge);
-                        graph[robot_id][prev_idx].outEdges.push_back(tmp_edge);
+                for (int prev_v = next_node_idx; prev_v < graph_offset[k];
+                     prev_v++) {
+                    if (graph[k][prev_v].action.start == plans[i][j].goal) {
+                        shared_ptr<Edge> e = make_shared<Edge>(
+                            k, i, prev_v, j + graph_offset[i]);
+                        graph[i][j + graph_offset[i]].incomeEdges.push_back(e);
+                        graph[k][prev_v].outEdges.push_back(e);
                     }
                 }
             }
@@ -138,7 +136,7 @@ bool isAddStop(double x) {
 }
 
 // Fix the incoming edges of the committed actions s.t.
-// 1. no type 2 edges is from inside the commit cut to outside.
+// 1. no type 2 edges is from uncommitted action to committed action.
 // 2. commit cut does not fall on an added stop.
 bool ADG::fixInconsistentIncomingEdge(
     vector<pair<int, int>>& commited_actions) {
