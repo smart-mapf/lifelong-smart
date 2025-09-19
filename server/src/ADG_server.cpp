@@ -369,9 +369,7 @@ void closeServer(rpc::server& srv) {
     spdlog::info("Server closed successfully.");
 }
 
-vector<tuple<string, int, double, string, pair<double, double>,
-             pair<double, double>, int>>
-update(string RobotID) {
+SIM_PLAN update(string RobotID) {
     lock_guard<mutex> guard(globalMutex);
     if (not server_ptr->adg->initialized or
         not server_ptr->adg->get_initial_plan) {

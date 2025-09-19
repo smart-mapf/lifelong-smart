@@ -47,7 +47,11 @@
  * With this statement, you save typing argos:: every time.
  */
 using namespace argos;
-using outputTuple = std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>, int>;
+// using outputTuple = std::tuple<std::string, int, double, std::string, std::pair<double, double>, std::pair<double, double>, int>;
+typedef std::vector<
+    std::tuple<std::string, int, double, std::string, std::pair<double, double>,
+               std::pair<double, double>, int>>
+    SIM_PLAN;
 
 struct Action {
     // target position and orientation
@@ -159,7 +163,7 @@ private:
 
     static Real ChangeCoordinateFromMapToArgos(Real x);
     static Real ChangeCoordinateFromArgosToMap(Real x);
-    void insertActions(const std::vector<outputTuple>& actions);
+    void insertActions(const SIM_PLAN& actions);
     double getReferenceSpeed(double dist) const;
     void updateQueue();
 

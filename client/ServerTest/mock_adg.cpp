@@ -8,12 +8,12 @@
 
 #include <utility>
 
+typedef std::vector<
+    std::tuple<std::string, int, double, std::string, std::pair<int, int>, std::pair<double, double>>>
+    SIM_PLAN;
 
-
-using outputTuple = std::tuple<std::string, int, double, std::string, std::pair<int, int>, std::pair<double, double>>;
-
-std::vector<outputTuple> init(std::string robot_id){
-    std::vector<outputTuple> actions;
+SIM_PLAN init(std::string robot_id){
+    SIM_PLAN actions;
     actions.push_back(std::make_tuple("00", 0, 0.0, "M",std::make_pair(0, 0), std::make_pair(0.5, 0.0)));
     return actions;
 
@@ -21,7 +21,7 @@ std::vector<outputTuple> init(std::string robot_id){
 
 int main() {
     rpc::server server(9000);
-    server.bind("init", &initActions);
+    server.bind("init", &init);
     server.run();
     return 0;
 }

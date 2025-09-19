@@ -20,7 +20,7 @@ CFootBotDiffusion::CFootBotDiffusion()
 
 /****************************************/
 /****************************************/
-void CFootBotDiffusion::insertActions(const std::vector<outputTuple>& actions) {
+void CFootBotDiffusion::insertActions(const SIM_PLAN& actions) {
     // std::vector<action> tmp_cache;
     for (const auto& action : actions) {
         // std::cout << "not empty init" << std::endl;
@@ -231,7 +231,7 @@ void CFootBotDiffusion::ControlStep() {
     CVector3 currPos = m_pcPosSens->GetReading().Position;
     if (count % 10 == 0) {
         auto updateActions =
-            client->call("update", robot_id).as<std::vector<outputTuple>>();
+            client->call("update", robot_id).as<SIM_PLAN>();
         if (not updateActions.empty()) {
             insertActions(updateActions);
         }
