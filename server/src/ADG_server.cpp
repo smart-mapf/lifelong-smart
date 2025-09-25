@@ -540,6 +540,16 @@ int getNumUnfinishedActions(string RobotID) {
     return server_ptr->adg->getNumUnfinishedActions(Robot_ID);
 }
 
+void recordStatsPerTick() {
+    lock_guard<mutex> guard(globalMutex);
+    if (not server_ptr->adg->initialized) {
+        return;
+    }
+
+    // Record ADG stats per tick
+    server_ptr->adg->recordStatsPerTick();
+}
+
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
     // Declare the supported options.
@@ -602,6 +612,7 @@ int main(int argc, char** argv) {
     srv.bind("freeze_simulation_if_necessary", &freezeSimulationIfNecessary);
     srv.bind("is_simulation_frozen", &isSimulationFrozen);
     srv.bind("sim_status", &simStatus);
+    srv.bind("record_stats_per_tick", &recordStatsPerTick);
     srv.run();  // Start the server, blocking call
 
     return 0;

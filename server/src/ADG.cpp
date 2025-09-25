@@ -56,26 +56,26 @@ void ADG::addMAPFPlan(const vector<vector<Action>>& plans) {
 
     // Create Type 2 edges within the newly added plans
     for (int i = 0; i < plans.size(); i++) {
-        adg_stats.type1EdgeCount += static_cast<int>(plans[i].size()) - 1;
-        adg_stats.totalNodes += static_cast<int>(plans[i].size());
-        bool consecutive_move = false;
+        // adg_stats.type1EdgeCount += static_cast<int>(plans[i].size()) - 1;
+        // adg_stats.totalNodes += static_cast<int>(plans[i].size());
+        // bool consecutive_move = false;
         for (int j = 0; j < plans[i].size(); j++) {
             // Iterate through all nodes to count type 2 edges and actions
-            if (plans[i][j].type == 'M') {
-                adg_stats.moveActionCount++;
-                if (not consecutive_move) {
-                    consecutive_move = true;
-                    adg_stats.consecutiveMoveSequences++;
-                }
-            } else if (plans[i][j].type == 'T') {
-                adg_stats.rotateActionCount++;
-                consecutive_move = false;
-            } else if (plans[i][j].type == 'S' or plans[i][j].type == 'P') {
-                consecutive_move = false;
-            } else {
-                cerr << "Invalid type!\n" << endl;
-                consecutive_move = false;
-            }
+            // if (plans[i][j].type == 'M') {
+            //     adg_stats.moveActionCount++;
+            //     if (not consecutive_move) {
+            //         consecutive_move = true;
+            //         adg_stats.consecutiveMoveSequences++;
+            //     }
+            // } else if (plans[i][j].type == 'T') {
+            //     adg_stats.rotateActionCount++;
+            //     consecutive_move = false;
+            // } else if (plans[i][j].type == 'S' or plans[i][j].type == 'P') {
+            //     consecutive_move = false;
+            // } else {
+            //     cerr << "Invalid type!\n" << endl;
+            //     consecutive_move = false;
+            // }
             for (int k = i + 1; k < plans.size(); k++) {
                 for (int l = 0; l < plans[k].size(); l++) {
                     bool found_conflict = false;
@@ -690,6 +690,12 @@ json ADG::getADGStats() {
     result["mean_avg_move"] = total_move / num_robots;
     result["avg_total_actions"] = total_actions / num_robots;
     result["robot_paths"] = robot_paths;
+
+    // Add per tick stats
+    auto stats_per_tick_json = to_json(this->stats_per_tick);
+    for (auto& [key, value] : stats_per_tick_json.items()) {
+        result[key] = value;
+    }
     return result;
 }
 
@@ -844,7 +850,33 @@ int ADG::getNumUnfinishedActions(int agent_id) {
     // }
     int n_unfinished_actions =
         graph[agent_id].size() - finished_node_idx[agent_id] - 1;
-    // The actions here considers the actions that happen in the middle of the
-    // grids, so we divide by 2
-    return n_unfinished_actions / 2;
+
+    return n_unfinished_actions;
+}
+
+void ADG::recordStatsPerTick() {
+    // ADG Graph is uninitialized
+    if (graph.empty() || graph[0].empty()) {
+        return;
+    }
+
+    // Record the ADG_STATS per tick
+    int n_finished_nodes = 0;
+    int n_unfinished_nodes = 0;
+    int min_unfinished_nodes = numeric_limits<int>::max();
+    int n_total_nodes = 0;
+    for (int k = 0; k < this->num_robots; k++) {
+        if (finished_node_idx[k] >= 0) {
+            n_finished_nodes += finished_node_idx[k] + 1;
+        }
+        int curr_u = this->getNumUnfinishedActions(k);
+        n_unfinished_nodes += curr_u;
+        min_unfinished_nodes = min(min_unfinished_nodes, curr_u);
+        n_total_nodes += graph[k].size();
+    }
+
+    // this->stats_per_tick.n_finished_nodes.push_back(n_finished_nodes);
+    this->stats_per_tick.n_unfinished_nodes.push_back(n_unfinished_nodes);
+    this->stats_per_tick.min_unfinished_nodes.push_back(min_unfinished_nodes);
+    // this->stats_per_tick.n_total_nodes.push_back(n_total_nodes);
 }

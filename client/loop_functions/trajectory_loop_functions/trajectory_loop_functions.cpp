@@ -105,6 +105,10 @@ void CTrajectoryLoopFunctions::PostStep() {
     }
     addMobileVisualization();
 
+    // Invoke the server to record per tick stats. We do it here because
+    // PostStep function is invoked after each tick.
+    client->async_call("record_stats_per_tick");
+
     // Get simulation status, return true if the simulation shall end
     this->end_sim = client->call("sim_status").as<bool>();
 }

@@ -21,21 +21,35 @@ struct Edge {
     }
 };
 
+// struct ADG_STATS {
+//     int type1EdgeCount = 0;
+//     int type2EdgeCount = 0;
+//     int moveActionCount = 0;
+//     int rotateActionCount = 0;
+//     int consecutiveMoveSequences = 0;
+//     int totalNodes = 0;
+//     set<pair<int, int>> conflict_pairs;
+// };
+
+// ADG Stats to record per tick
 struct ADG_STATS {
-    int type1EdgeCount = 0;
-    int type2EdgeCount = 0;
-    int moveActionCount = 0;
-    int rotateActionCount = 0;
-    int consecutiveMoveSequences = 0;
-    int totalNodes = 0;
-    set<pair<int, int>> conflict_pairs;
+    // vector<int> n_finished_nodes;
+    vector<int> n_unfinished_nodes;
+    vector<int> min_unfinished_nodes;
+    // vector<int> n_total_nodes;
 };
+
+inline json to_json(const ADG_STATS& c) {
+    return json{
+        // {"n_finished_nodes", c.n_finished_nodes},
+        {"n_unfinished_nodes", c.n_unfinished_nodes},
+        {"min_unfinished_nodes", c.min_unfinished_nodes},
+        // {"n_total_nodes", c.n_total_nodes},
+    };
+}
 
 struct ADGNode {
     Action action;
-    //    vector<int> dependencies; // Indices of dependent actions
-    //    (outgoing edges) vector<int> incomingType2Edges; // Indices of
-    //    incoming edges
 
     // Every agent has its own node_id space
     int node_id;
@@ -70,9 +84,9 @@ public:
         return num_robots;
     }
 
-    [[nodiscard]] int numNodes() const {
-        return total_nodes_cnt;
-    }
+    // [[nodiscard]] int numNodes() const {
+    //     return total_nodes_cnt;
+    // }
 
     bool createRobotIDToStartIndexMaps(string& robot_id_str,
                                        tuple<int, int> init_loc);
@@ -143,6 +157,8 @@ public:
         return look_ahead_dist;
     }
 
+    void recordStatsPerTick();
+
 private:
     void printActions(
         const vector<tuple<string, int, double, string, pair<double, double>,
@@ -171,7 +187,7 @@ private:
 public:
     vector<int> finished_node_idx;
     vector<deque<int>> enqueue_nodes_idx;
-    ADG_STATS adg_stats;
+    // ADG_STATS adg_stats;
     bool initialized = false;
     bool get_initial_plan = false;
     map<int, string> robotIDToStartIndex;
@@ -185,16 +201,19 @@ public:
 private:
     // ADG graph. graph[k][v] is the v-th action node of agent k
     vector<vector<ADGNode>> graph;
-    unordered_set<int> finished_tasks_;
-    int n_finished_tasks = 0;
-    int n_finished_backup_tasks = 0;
-    // vector<pair<double, double>> commitCut;
-
-    int num_robots = 0;
-    int total_nodes_cnt = 0;
+    // Look-ahead distance for commit cut computation
     int look_ahead_dist = 0;
+    // Record number of initialized robots
     int n_robot_init = 0;
+    // Number of robots in the system
+    int num_robots = 0;
 
     vector<robotState> init_locs;
     vector<robotState> robot_states;
+
+    // Stats
+    unordered_set<int> finished_tasks_;
+    int n_finished_tasks = 0;
+    int n_finished_backup_tasks = 0;
+    ADG_STATS stats_per_tick;
 };
