@@ -692,10 +692,7 @@ json ADG::getADGStats() {
     result["robot_paths"] = robot_paths;
 
     // Add per tick stats
-    auto stats_per_tick_json = to_json(this->stats_per_tick);
-    for (auto& [key, value] : stats_per_tick_json.items()) {
-        result[key] = value;
-    }
+    result["stats_per_tick"] = to_json(this->stats_per_tick);
     return result;
 }
 
