@@ -6,6 +6,8 @@
 
 #include "utils/common.h"
 
+using namespace argos;
+
 class CTrajectoryLoopFunctions;
 
 class CTrajectoryQTUserFunctions : public CQTOpenGLUserFunctions {
