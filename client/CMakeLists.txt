@@ -24,12 +24,6 @@ include_directories(${CMAKE_SOURCE_DIR} ${ARGOS_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR
 link_directories(${ARGOS_LIBRARY_DIR})
 link_libraries(${ARGOS_LDFLAGS})
 
-# Look for the (optional) galib library
-find_package(GALIB)
-if(GALIB_FOUND)
-  include_directories(${GALIB_INCLUDE_DIRS})
-endif(GALIB_FOUND)
-
 add_subdirectory(externalDependencies/rpclib)
 include_directories(externalDependencies/rpclib/include)
 
@@ -38,9 +32,6 @@ add_subdirectory(controllers)
 
 # Descend into the loop_functions directory
 add_subdirectory(loop_functions)
-
-# Descend into the embedding directory
-add_subdirectory(embedding)
 
 # Descend into the utils directory
 add_subdirectory(utils)
