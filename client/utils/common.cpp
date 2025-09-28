@@ -1,6 +1,6 @@
 #include "utils/common.h"
 
-bool is_port_open(const std::string& ip, int port) {
+bool is_port_open(const string& ip, int port) {
     boost::asio::io_context io_context;
     boost::asio::ip::tcp::socket socket(io_context);
 
@@ -14,7 +14,7 @@ bool is_port_open(const std::string& ip, int port) {
         return true;  // Connection succeeded
     } catch (const boost::system::system_error& e) {
         // Catch connection errors
-        // std::cerr << "Connection failed: " << e.what() << std::endl;
+        // cerr << "Connection failed: " << e.what() << endl;
         return false;
     }
 }

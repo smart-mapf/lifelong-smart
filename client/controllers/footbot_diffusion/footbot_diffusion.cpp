@@ -21,38 +21,38 @@ CFootBotDiffusion::CFootBotDiffusion()
 /****************************************/
 /****************************************/
 void CFootBotDiffusion::insertActions(const SIM_PLAN& actions) {
-    // std::vector<action> tmp_cache;
+    // vector<action> tmp_cache;
     for (const auto& action : actions) {
-        // std::cout << "not empty init" << std::endl;
-        std::string action1 = std::get<3>(action);
-        int nodeID = std::get<1>(action);
-        //        std::cout << "NodeID init: " << nodeID << std::endl;
-        std::tuple<double, double> start_pos = std::get<4>(action);
-        double start_x = ChangeCoordinateFromMapToArgos(std::get<1>(start_pos));
-        double start_y = ChangeCoordinateFromMapToArgos(std::get<0>(start_pos));
-        std::tuple<double, double> end_pos = std::get<5>(action);
-        //        std::cout << "End Position init: " << std::get<0>(end_pos) <<
-        //        " " << std::get<1>(end_pos) << std::endl;
-        double x = ChangeCoordinateFromMapToArgos(std::get<1>(end_pos));
-        double y = ChangeCoordinateFromMapToArgos(std::get<0>(end_pos));
+        // cout << "not empty init" << endl;
+        string action1 = get<3>(action);
+        int nodeID = get<1>(action);
+        //        cout << "NodeID init: " << nodeID << endl;
+        tuple<double, double> start_pos = get<4>(action);
+        double start_x = ChangeCoordinateFromMapToArgos(get<1>(start_pos));
+        double start_y = ChangeCoordinateFromMapToArgos(get<0>(start_pos));
+        tuple<double, double> end_pos = get<5>(action);
+        //        cout << "End Position init: " << get<0>(end_pos) <<
+        //        " " << get<1>(end_pos) << endl;
+        double x = ChangeCoordinateFromMapToArgos(get<1>(end_pos));
+        double y = ChangeCoordinateFromMapToArgos(get<0>(end_pos));
         double angle;
-        if (std::get<2>(action) == 0) {
+        if (get<2>(action) == 0) {
             angle = 0.0;
-        } else if (std::get<2>(action) == 1) {
+        } else if (get<2>(action) == 1) {
             angle = 270.0;
-        } else if (std::get<2>(action) == 2) {
+        } else if (get<2>(action) == 2) {
             angle = 180.0;
         } else {
             angle = 90.0;
         }
-        int task_id = std::get<6>(action);
+        int task_id = get<6>(action);
         if (robot_id == debug_id) {
-            std::cout << "Action: " << action1 << " NodeID: " << nodeID
-                      << " End Position: " << x << " " << y
-                      << " Angle: " << angle << std::endl;
+            cout << "Action: " << action1 << " NodeID: " << nodeID
+                 << " End Position: " << x << " " << y << " Angle: " << angle
+                 << endl;
         }
         if (action1 == "M") {
-            std::deque<int> prev_ids;
+            deque<int> prev_ids;
             if (not q.empty() and q.back().type == Action::MOVE) {
                 prev_ids = q.back().nodeIDS;
                 q.pop_back();
@@ -60,14 +60,14 @@ void CFootBotDiffusion::insertActions(const SIM_PLAN& actions) {
             prev_ids.push_back(nodeID);
             q.emplace_back(x, y, angle, prev_ids, Action::MOVE);
         } else if (action1 == "T") {
-            q.emplace_back(x, y, angle, std::deque<int>{nodeID}, Action::TURN);
+            q.emplace_back(x, y, angle, deque<int>{nodeID}, Action::TURN);
         } else if (action1 == "S") {
-            q.emplace_back(x, y, angle, std::deque<int>{nodeID},
-                           Action::STATION, DELIVER_T, task_id);
+            q.emplace_back(x, y, angle, deque<int>{nodeID}, Action::STATION,
+                           DELIVER_T, task_id);
         } else {
             printf("Unknown action %s\n", action1.c_str());
             exit(-2);
-            q.emplace_back(x, y, angle, std::deque<int>{nodeID}, Action::STOP);
+            q.emplace_back(x, y, angle, deque<int>{nodeID}, Action::STOP);
         }
     }
     // q.back_insert(q.begin(), tmp_cache.begin(), tmp_cache.end());
@@ -101,8 +101,8 @@ void CFootBotDiffusion::Init(TConfigurationNode& t_node) {
     m_pcProximity = GetSensor<CCI_FootBotProximitySensor>("footbot_proximity");
     m_pcPosSens = GetSensor<CCI_PositioningSensor>("positioning");
 
-    angular_pid_ptr = std::make_shared<PIDController>(1.0, 0.0, 0.1);
-    linear_pid_ptr = std::make_shared<PIDController>(2.0, 0.0, 0.1);
+    angular_pid_ptr = make_shared<PIDController>(1.0, 0.0, 0.1);
+    linear_pid_ptr = make_shared<PIDController>(2.0, 0.0, 0.1);
     /*
      * Parse the configuration file
      *
@@ -121,18 +121,18 @@ void CFootBotDiffusion::Init(TConfigurationNode& t_node) {
     GetNodeAttributeOrDefault(t_node, "portNumber", port_number, 8080);
     GetNodeAttributeOrDefault(t_node, "simDuration", total_sim_duration, 1200);
     GetNodeAttributeOrDefault(t_node, "outputDir", m_outputDir,
-                              std::string("metaData/"));
+                              string("metaData/"));
     GetNodeAttributeOrDefault(t_node, "screen", screen, 0);
     m_linearVelocity = 1.22 * m_angularVelocity;
     m_currVelocity = 0.0;
     this->init_pos = m_pcPosSens->GetReading().Position;
     // CVector3 currPos = m_pcPosSens->GetReading().Position;
     // robot_id =
-    //     std::to_string(
+    //     to_string(
     //         static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetY())))
     //         +
     //     "_" +
-    //     std::to_string(
+    //     to_string(
     //         static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetX())));
     // spdlog::info("My Robot ID: {}, argos Robot ID: {}", robot_id,
     //              this->GetId());
@@ -182,24 +182,23 @@ void CFootBotDiffusion::updateQueue() {
     }
     if (robot_id == debug_id) {
         for (auto& tmp_act : q) {
-            std::cout << tmp_act.type << ", Goal position: (" << tmp_act.x
-                      << ", " << tmp_act.y << ")" << std::endl;
+            cout << tmp_act.type << ", Goal position: (" << tmp_act.x << ", "
+                 << tmp_act.y << ")" << endl;
         }
-        std::cout << "#######################" << std::endl;
+        cout << "#######################" << endl;
     }
 }
 
 void CFootBotDiffusion::ControlStep() {
     if (not is_initialized) {
         if (is_port_open("127.0.0.1", port_number)) {
-            client = std::make_shared<rpc::client>("127.0.0.1", port_number);
+            client = make_shared<rpc::client>("127.0.0.1", port_number);
         } else {
-            std::cout << "Failed to connect to server. Retrying..."
-                      << std::endl;
+            cout << "Failed to connect to server. Retrying..." << endl;
             return;
         }
         is_initialized = true;
-        auto init_loc = std::make_tuple(
+        auto init_loc = make_tuple(
             static_cast<int>(
                 ChangeCoordinateFromArgosToMap(this->init_pos.GetY())),
             static_cast<int>(
@@ -208,15 +207,16 @@ void CFootBotDiffusion::ControlStep() {
             ;
         client->call("init", robot_id, init_loc);
         if (screen > 0) {
-            // std::cout << "Robot " << robot_id
+            // cout << "Robot " << robot_id
             //           << " connected to server at port: " << port_number
-            //           << std::endl;
+            //           << endl;
             spdlog::info("Robot {} at ({},{}) connected to server at port: {}",
-                         robot_id, std::get<1>(init_loc), std::get<0>(init_loc),
+                         robot_id, get<1>(init_loc), get<0>(init_loc),
                          port_number);
         }
         return;
     }
+
     auto start = std::chrono::high_resolution_clock::now();
     Action a;
     a.type = Action::STOP;
@@ -230,21 +230,20 @@ void CFootBotDiffusion::ControlStep() {
     Real left_v, right_v;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
     if (count % 10 == 0) {
-        auto updateActions =
-            client->call("update", robot_id).as<SIM_PLAN>();
+        auto updateActions = client->call("update", robot_id).as<SIM_PLAN>();
         if (not updateActions.empty()) {
             insertActions(updateActions);
         }
     }
     auto end_update = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> update_duration_ms =
+    std::chrono::duration<double, milli> update_duration_ms =
         end_update - start;
 
     count++;
-    std::string receive_msg;
+    string receive_msg;
     updateQueue();
     auto end_queue_update = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> queue_update_duration_ms =
+    std::chrono::duration<double, milli> queue_update_duration_ms =
         end_queue_update - end_update;
     while (!q.empty()) {
         a = q.front();
@@ -252,22 +251,21 @@ void CFootBotDiffusion::ControlStep() {
         if (a.type == Action::MOVE && ((currPos - targetPos).Length() < EPS) and
             (abs(prevVelocity_)) <= dt * m_fWheelVelocity) {
             if (robot_id == debug_id) {
-                std::cout << "Confirm move when reach the goal! Remaining "
-                             "actions num: "
-                          << a.nodeIDS.size() << std::endl;
-                std::cout << "Action: " << a.type << ", Target Position: ("
-                          << a.x << ", " << a.y << ")"
-                          << ", Current Position: (" << currPos.GetX() << ", "
-                          << currPos.GetY()
-                          << "). Previous speed is: " << prevVelocity_
-                          << std::endl;
+                cout << "Confirm move when reach the goal! Remaining "
+                        "actions num: "
+                     << a.nodeIDS.size() << endl;
+                cout << "Action: " << a.type << ", Target Position: (" << a.x
+                     << ", " << a.y << ")"
+                     << ", Current Position: (" << currPos.GetX() << ", "
+                     << currPos.GetY()
+                     << "). Previous speed is: " << prevVelocity_ << endl;
             }
             a.type = Action::STOP;
             q.pop_front();
             for (auto tmp_nodeId : a.nodeIDS) {
                 receive_msg =
                     client->call("receive_update", robot_id, tmp_nodeId)
-                        .as<std::string>();
+                        .as<string>();
             }
             continue;
         } else if (a.type == Action::MOVE &&
@@ -275,19 +273,18 @@ void CFootBotDiffusion::ControlStep() {
                     MOVE_DIS * (-static_cast<double>(a.nodeIDS.size()) + 1)) <
                        EPS) {
             if (robot_id == debug_id) {
-                std::cout << "Confirm move on the fly! Remaining actions num: "
-                          << a.nodeIDS.size() << std::endl;
-                std::cout << "Action: " << a.type << ", Target Position: ("
-                          << a.x << ", " << a.y << ")"
-                          << ", Current Position: (" << currPos.GetX() << ", "
-                          << currPos.GetY()
-                          << "). Previous speed is: " << prevVelocity_
-                          << std::endl;
+                cout << "Confirm move on the fly! Remaining actions num: "
+                     << a.nodeIDS.size() << endl;
+                cout << "Action: " << a.type << ", Target Position: (" << a.x
+                     << ", " << a.y << ")"
+                     << ", Current Position: (" << currPos.GetX() << ", "
+                     << currPos.GetY()
+                     << "). Previous speed is: " << prevVelocity_ << endl;
             }
             if (a.nodeIDS.size() > 1) {
                 receive_msg =
                     client->call("receive_update", robot_id, a.nodeIDS.front())
-                        .as<std::string>();
+                        .as<string>();
                 q.front().nodeIDS.pop_front();
             }
             if ((currPos - targetPos).Length() < EPS) {
@@ -297,7 +294,7 @@ void CFootBotDiffusion::ControlStep() {
                     for (auto tmp_nodeId : a.nodeIDS) {
                         receive_msg =
                             client->call("receive_update", robot_id, tmp_nodeId)
-                                .as<std::string>();
+                                .as<string>();
                     }
                     continue;
                 }
@@ -307,14 +304,14 @@ void CFootBotDiffusion::ControlStep() {
             a.type = Action::STOP;
             receive_msg =
                 client->call("receive_update", robot_id, a.nodeIDS.front())
-                    .as<std::string>();
+                    .as<string>();
             q.pop_front();
             continue;
         } else if (a.type == Action::STATION and a.timer <= 0) {
             a.type = Action::STOP;
             receive_msg =
                 client->call("receive_update", robot_id, a.nodeIDS.front())
-                    .as<std::string>();
+                    .as<string>();
             q.pop_front();
             curr_station = CVector3{-1, -1, -100};
             continue;
@@ -323,18 +320,17 @@ void CFootBotDiffusion::ControlStep() {
     }
 
     auto end_find_act = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> find_act_duration_ms =
+    std::chrono::duration<double, milli> find_act_duration_ms =
         end_find_act - end_queue_update;
 
     if (a.type == Action::MOVE) {
         CVector3 targetPos = CVector3(a.x, a.y, 0.0f);
-        std::pair<Real, Real> velocities =
-            Move(targetPos, currPos, currAngle, 1.0f);
+        pair<Real, Real> velocities = Move(targetPos, currPos, currAngle, 1.0f);
         left_v = velocities.first;
         right_v = velocities.second;
     } else if (a.type == Action::TURN) {
         //        TurnLeft(a.angle, currAngle, 1.0f);
-        std::pair<Real, Real> turn_velocities = Turn(a.angle, currAngle, 1.0f);
+        pair<Real, Real> turn_velocities = Turn(a.angle, currAngle, 1.0f);
         left_v = turn_velocities.first;
         right_v = turn_velocities.second;
     } else if (a.type == Action::STATION) {
@@ -348,11 +344,9 @@ void CFootBotDiffusion::ControlStep() {
         right_v = 0.0f;
     }
 
-
     auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> exec_duration_ms =
-        end - end_find_act;
-    std::chrono::duration<double, std::milli> total_duration_ms = end - start;
+    std::chrono::duration<double, milli> exec_duration_ms = end - end_find_act;
+    std::chrono::duration<double, milli> total_duration_ms = end - start;
     if (total_duration_ms.count() > 1 && screen > 0) {
         spdlog::info(
             "Agent {}: Total time: {:.2f} ms, Update time: {:.2f} ms, "
@@ -361,16 +355,6 @@ void CFootBotDiffusion::ControlStep() {
             robot_id, total_duration_ms.count(), update_duration_ms.count(),
             queue_update_duration_ms.count(), find_act_duration_ms.count(),
             exec_duration_ms.count(), step_count_);
-        // std::cout << "Agent " << robot_id
-        //           << ": Total time:" << total_duration_ms.count() << " ms, "
-        //           << "Update time: " << update_duration_ms.count() << " ms, "
-        //           << "Queue update time: " <<
-        //           queue_update_duration_ms.count()
-        //           << " ms, "
-        //           << "Find action time: " << find_act_duration_ms.count()
-        //           << " ms, "
-        //           << "Execution time: " << exec_duration_ms.count()
-        //           << " ms, with control step count: " << step_count_ << "\n";
     }
 
     // Free simulation if necessary
@@ -378,9 +362,9 @@ void CFootBotDiffusion::ControlStep() {
 
     // Loop until the simulation is defrozen
     while (client->call("is_simulation_frozen").as<bool>()) {
-        // std::cout << "Robot " << this->robot_id
+        // cout << "Robot " << this->robot_id
         //           << ": Simulation is frozen, waiting to defrost..."
-        //           << std::endl;
+        //           << endl;
         if (screen > 1) {
             // spdlog::info(
             //     "Robot {}: Simulation is frozen, waiting to defrost...",
@@ -398,7 +382,7 @@ void CFootBotDiffusion::ControlStep() {
     // }
 }
 
-std::pair<Real, Real> CFootBotDiffusion::pidAngular(Real error) {
+pair<Real, Real> CFootBotDiffusion::pidAngular(Real error) {
     //    Real error = normalizeAngle(targetAngle - currAngle);
     integral_turn_error += error * dt;
     Real derivative = (error - prev_turn_error) / dt;
@@ -407,9 +391,9 @@ std::pair<Real, Real> CFootBotDiffusion::pidAngular(Real error) {
     Real output = kp_turn_ * error + ki_turn_ * integral_turn_error +
                   kd_turn_ * derivative;
     // Clamp the output to the max velocity
-    output = std::clamp(output, -m_linearVelocity, m_linearVelocity);
+    output = clamp(output, -m_linearVelocity, m_linearVelocity);
     Real left_v = -output, right_v = output;
-    return std::make_pair(left_v, right_v);
+    return make_pair(left_v, right_v);
 }
 
 Real CFootBotDiffusion::pidLinear(Real error) {
@@ -421,25 +405,25 @@ Real CFootBotDiffusion::pidLinear(Real error) {
     return desiredVelocity;
 }
 
-std::pair<Real, Real> CFootBotDiffusion::Turn(Real targetAngle, Real currAngle,
-                                              Real tolerance = 1.0f) {
+pair<Real, Real> CFootBotDiffusion::Turn(Real targetAngle, Real currAngle,
+                                         Real tolerance = 1.0f) {
     Real error = normalizeAngle(targetAngle - currAngle);
     auto turn_v = pidAngular(error);
     Real left_v = turn_v.first;
     Real right_v = turn_v.second;
     // if ("04" == robot_id){
-    // std::cout << "PID modified velocity" << left_v<< ", " << right_v <<
-    // std::endl;
+    // cout << "PID modified velocity" << left_v<< ", " << right_v <<
+    // endl;
     // }
 
-    //    std::cout << "PID::Left_v: " << left_v << ", right_v: " << right_v <<
-    //    std::endl;
+    //    cout << "PID::Left_v: " << left_v << ", right_v: " << right_v <<
+    //    endl;
     m_pcWheels->SetLinearVelocity(left_v, right_v);
-    return std::make_pair(left_v, right_v);
+    return make_pair(left_v, right_v);
 }
 
 inline Real toAngle(Real deltaX, Real deltaY) {
-    Real targetAngle = std::atan2(deltaY, deltaX);
+    Real targetAngle = atan2(deltaY, deltaX);
     Real tmp_angle = targetAngle / M_PI * 180.0 + 360;
     if (tmp_angle > 360) {
         tmp_angle -= 360;
@@ -450,26 +434,25 @@ inline Real toAngle(Real deltaX, Real deltaY) {
 
 double CFootBotDiffusion::getReferenceSpeed(double dist) const {
     if (debug_id == robot_id)
-        std::cout << "reference dist is: " << dist << std::endl;
+        cout << "reference dist is: " << dist << endl;
     int dist_flag = 0;
     if (dist < 0) {
         dist_flag = -1;
     } else if (dist > 0) {
         dist_flag = 1;
     }
-    return dist_flag *
-           std::min(sqrt(2 * m_linearAcceleration * std::abs(dist) / dt),
-                    m_fWheelVelocity);
+    return dist_flag * min(sqrt(2 * m_linearAcceleration * abs(dist) / dt),
+                           m_fWheelVelocity);
 }
 
-std::pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos,
-                                              const CVector3& currPos,
-                                              Real currAngle,
-                                              Real tolerance = 1.0f) {
+pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos,
+                                         const CVector3& currPos,
+                                         Real currAngle,
+                                         Real tolerance = 1.0f) {
     // Calculate the distance and angle to the target
     Real deltaX = targetPos.GetX() - currPos.GetX();
     Real deltaY = targetPos.GetY() - currPos.GetY();
-    Real distance = std::sqrt(deltaX * deltaX + deltaY * deltaY);
+    Real distance = sqrt(deltaX * deltaX + deltaY * deltaY);
     Real targetAngle = toAngle(deltaX, deltaY);
     Real targetAngle2 = toAngle(-deltaX, -deltaY);
 
@@ -478,9 +461,9 @@ std::pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos,
     Real angleError2 = normalizeAngle(targetAngle2 - currAngle);
     Real angleError = 0.0;
     Real flag = 0.0;
-    //    std::cout << "angle error 1: " << angleError1 << ", angle error 2: "
-    //    << angleError2 << std::endl;
-    if (std::abs(angleError1) < std::abs(angleError2)) {
+    //    cout << "angle error 1: " << angleError1 << ", angle error 2: "
+    //    << angleError2 << endl;
+    if (abs(angleError1) < abs(angleError2)) {
         angleError = angleError1;
         flag = 1.0;
     } else {
@@ -490,68 +473,66 @@ std::pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos,
 
     // PID calculations
     Real refer_velocity = flag * getReferenceSpeed(distance);
-    // std::cout << "Reference velocity: " << refer_velocity << std::endl;
+    // cout << "Reference velocity: " << refer_velocity << endl;
     Real control_acc = pidLinear(refer_velocity - prevVelocity_);
     auto angularVelocity = pidAngular(angleError);
 
-    //    std::cout << "PID::init_l_v: " << left_v_total << ", init_r_v: " <<
-    //    right_v_total << std::endl;
+    //    cout << "PID::init_l_v: " << left_v_total << ", init_r_v: " <<
+    //    right_v_total << endl;
 
     // Clamp the output to the max velocity
     Real maxDeltaV = m_linearAcceleration * dt;
     Real linearVelocity =
-        prevVelocity_ + std::clamp(control_acc, -maxDeltaV, maxDeltaV);
+        prevVelocity_ + clamp(control_acc, -maxDeltaV, maxDeltaV);
     ;
-    //    std::cout << "linearVelocity: " << linearVelocity << std::endl;
+    //    cout << "linearVelocity: " << linearVelocity << endl;
     // if (debug_id == robot_id){
-    //     std::cout <<
+    //     cout <<
     //     "PID::start###########################################################"
-    //     << std::endl; std::cout << "Distance error: " << distance << ",
+    //     << endl; cout << "Distance error: " << distance << ",
     //     PID::Angle Error: " << angleError << ", curr angle: " <<
     //               currAngle << ", target angle: " << targetAngle <<", flag
-    //               is: " << flag << std::endl;
-    //     std::cout << "PID::Linear Velocity: " << linearVelocity << ", refer
+    //               is: " << flag << endl;
+    //     cout << "PID::Linear Velocity: " << linearVelocity << ", refer
     //     vel: " << refer_velocity
-    //         << "Prev vel: " << prevVelocity_ << std::endl;
-    //     std::cout << "PID::Angular Velocity: " << angularVelocity.first << ",
-    //     " << angularVelocity.second << std::endl; std::cout << "control acc:
-    //     " << control_acc << std::endl; std::cout << "curr pos (" <<
+    //         << "Prev vel: " << prevVelocity_ << endl;
+    //     cout << "PID::Angular Velocity: " << angularVelocity.first << ",
+    //     " << angularVelocity.second << endl; cout << "control acc:
+    //     " << control_acc << endl; cout << "curr pos (" <<
     //     currPos.GetX() << ", " << currPos.GetY()
     //               << "). curr angle: " << currAngle
     //               << ", target angle: " << targetAngle
     //               << ", target angle2: " << targetAngle2
     //               << ", delta_x: " << deltaX
     //               << ", delta_y: " << deltaY
-    //               << std::endl;
+    //               << endl;
     // }
     Real left_v_total = linearVelocity;
     Real right_v_total = linearVelocity;
-    //    left_v_total = std::clamp(left_v_total, prevLeftVelocity_ - maxDeltaV,
+    //    left_v_total = clamp(left_v_total, prevLeftVelocity_ - maxDeltaV,
     //    prevLeftVelocity_ + maxDeltaV); right_v_total =
-    //    std::clamp(right_v_total, prevRightVelocity_ - maxDeltaV,
+    //    clamp(right_v_total, prevRightVelocity_ - maxDeltaV,
     //    prevRightVelocity_ + maxDeltaV);
 
-    left_v_total =
-        std::clamp(left_v_total, -m_fWheelVelocity, m_fWheelVelocity);
-    right_v_total =
-        std::clamp(right_v_total, -m_fWheelVelocity, m_fWheelVelocity);
-    left_v_total += (1 / m_fWheelVelocity) * std::abs(linearVelocity) *
-                    angularVelocity.first;
-    right_v_total += (1 / m_fWheelVelocity) * std::abs(linearVelocity) *
-                     angularVelocity.second;
+    left_v_total = clamp(left_v_total, -m_fWheelVelocity, m_fWheelVelocity);
+    right_v_total = clamp(right_v_total, -m_fWheelVelocity, m_fWheelVelocity);
+    left_v_total +=
+        (1 / m_fWheelVelocity) * abs(linearVelocity) * angularVelocity.first;
+    right_v_total +=
+        (1 / m_fWheelVelocity) * abs(linearVelocity) * angularVelocity.second;
     // Update previous velocities for the next iteration
     prevLeftVelocity_ = left_v_total;
     prevRightVelocity_ = right_v_total;
     prevVelocity_ = linearVelocity;
-    // std::cout << "PID::Left_v: " << left_v_total << ", right_v: " <<
-    // right_v_total << ", refer speed: " << refer_velocity << std::endl;
+    // cout << "PID::Left_v: " << left_v_total << ", right_v: " <<
+    // right_v_total << ", refer speed: " << refer_velocity << endl;
     m_pcWheels->SetLinearVelocity(left_v_total, right_v_total);
     // if (debug_id == robot_id){
-    // std::cout << "target position: " << targetPos.GetX() << ", " <<
-    // targetPos.GetY() << std::endl; std::cout << "PID modified velocity" <<
-    // left_v_total<< ", " << right_v_total << std::endl;
+    // cout << "target position: " << targetPos.GetX() << ", " <<
+    // targetPos.GetY() << endl; cout << "PID modified velocity" <<
+    // left_v_total<< ", " << right_v_total << endl;
     // }
-    return std::make_pair(left_v_total, right_v_total);
+    return make_pair(left_v_total, right_v_total);
 }
 
 void CFootBotDiffusion::TurnLeft(Real targetAngle, Real currAngle,
@@ -576,7 +557,7 @@ void CFootBotDiffusion::TurnLeft(Real targetAngle, Real currAngle,
         }
     }
     ////  cout cout << "Left_v: " << : " << << " left_v <: " << right_v <<
-    /// std::endl;
+    /// endl;
     m_pcWheels->SetLinearVelocity(left_v, right_v);
 }
 

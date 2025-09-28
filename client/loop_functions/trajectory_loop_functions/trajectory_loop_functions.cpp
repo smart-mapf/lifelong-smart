@@ -29,7 +29,7 @@ void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
         /* Create a pointer to the current foot-bot */
         CFootBotEntity* pcFB = any_cast<CFootBotEntity*>(it->second);
         /* Create a waypoint vector */
-        m_tWaypoints[pcFB] = std::vector<CVector3>();
+        m_tWaypoints[pcFB] = vector<CVector3>();
         /* Add the initial position of the foot-bot */
         m_tWaypoints[pcFB].push_back(
             pcFB->GetEmbodiedEntity().GetOriginAnchor().Position);
@@ -93,10 +93,10 @@ void CTrajectoryLoopFunctions::addMobileVisualization() {
 void CTrajectoryLoopFunctions::PostStep() {
     if (not is_initialized) {
         if (is_port_open("127.0.0.1", port_number)) {
-            client = std::make_shared<rpc::client>("127.0.0.1", port_number);
+            client = make_shared<rpc::client>("127.0.0.1", port_number);
         } else {
-            // std::cout << "Failed to connect to server. Retrying..." <<
-            // std::endl; std::this_thread::sleep_for(std::chrono::seconds(5));
+            // cout << "Failed to connect to server. Retrying..." <<
+            // endl; this_thread::sleep_for(std::chrono::seconds(5));
             // // Wait for 1 second before retrying
             return;
         }

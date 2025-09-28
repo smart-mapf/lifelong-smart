@@ -5,22 +5,14 @@
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
 #include <argos3/plugins/simulator/visualizations/qt-opengl/qtopengl_render.h>
 
-#include <numeric>
-#include <utility>
-
 #include "controllers/footbot_diffusion/footbot_diffusion.h"
-
-#define PICK_T 120
-#define MOVE_T 15
-#define UNLOAD_T 60
-#define LOAD_NUM 6
-#define WINDOW_SIE 40
+#include "utils/common.h"
 
 using namespace argos;
 
 class CTrajectoryLoopFunctions : public CLoopFunctions {
 public:
-    typedef std::map<CFootBotEntity*, std::vector<CVector3> > TWaypointMap;
+    typedef map<CFootBotEntity*, vector<CVector3> > TWaypointMap;
     TWaypointMap m_tWaypoints;
 
 public:
@@ -46,21 +38,13 @@ public:
 private:
     void addMobileVisualization();
 
-    static CVector3 coordPlanner2Sim(std::pair<int, int>& loc);
-    static std::pair<int, int> coordSim2Planner(CVector3& loc);
-
 public:
-    std::vector<CVector3> task_stations;
-
-    /* Indicates the states of the picker robots, mainly for visualization */
-    // std::vector<CVector3> picker_curr_locs;
-    // std::vector<CVector3> curr_picking_objs;
-    // std::vector<CVector3> picker_unload_locs;
+    vector<CVector3> task_stations;
 
 private:
     bool is_initialized = false;
     int port_number = -1;
-    std::shared_ptr<rpc::client> client;
+    shared_ptr<rpc::client> client;
     int time_step_tick = 0;
     bool end_sim = false;
 };
