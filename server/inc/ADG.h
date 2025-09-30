@@ -21,21 +21,16 @@ struct Edge {
     }
 };
 
-// struct ADG_STATS {
-//     int type1EdgeCount = 0;
-//     int type2EdgeCount = 0;
-//     int moveActionCount = 0;
-//     int rotateActionCount = 0;
-//     int consecutiveMoveSequences = 0;
-//     int totalNodes = 0;
-//     set<pair<int, int>> conflict_pairs;
-// };
-
 // ADG Stats to record per tick
 struct ADG_STATS {
     // vector<int> n_finished_nodes;
+    // Number of unfinished nodes for all robots
     vector<int> n_unfinished_nodes;
+    // Minimum number of unfinished nodes among all robots
     vector<int> min_unfinished_nodes;
+    // Portion of robots with 0 unfinished nodes
+    vector<double> portion_idle_robots;
+    // Total number of nodes
     // vector<int> n_total_nodes;
 };
 
@@ -44,6 +39,7 @@ inline json to_json(const ADG_STATS& c) {
         // {"n_finished_nodes", c.n_finished_nodes},
         {"n_unfinished_nodes", c.n_unfinished_nodes},
         {"min_unfinished_nodes", c.min_unfinished_nodes},
+        {"portion_idle_robots", c.portion_idle_robots},
         // {"n_total_nodes", c.n_total_nodes},
     };
 }
@@ -187,7 +183,6 @@ private:
 public:
     vector<int> finished_node_idx;
     vector<deque<int>> enqueue_nodes_idx;
-    // ADG_STATS adg_stats;
     bool initialized = false;
     bool get_initial_plan = false;
     map<int, string> robotIDToStartIndex;

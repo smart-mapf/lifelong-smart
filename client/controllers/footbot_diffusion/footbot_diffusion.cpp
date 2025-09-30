@@ -218,7 +218,7 @@ void CFootBotDiffusion::ControlStep() {
     }
 
     auto start = std::chrono::high_resolution_clock::now();
-    Action a;
+    Action a; // current action
     a.type = Action::STOP;
     CQuaternion currOrient = m_pcPosSens->GetReading().Orientation;
     CRadians cZAngle, cYAngle, cXAngle;

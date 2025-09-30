@@ -693,6 +693,16 @@ json ADG::getADGStats() {
 
     // Add per tick stats
     result["stats_per_tick"] = to_json(this->stats_per_tick);
+
+    // Compute idle time from `portion_idle_robots`
+    double avg_idle_time =
+        std::accumulate(this->stats_per_tick.portion_idle_robots.begin(),
+                        this->stats_per_tick.portion_idle_robots.end(), 0.0) /
+        this->stats_per_tick.portion_idle_robots.size();
+    // Idle time per robot per tick, indicating on average, each robot is
+    // idle (has no unfinished actions in ADG) for `avg_idle_time` portion of
+    // time during each tick.
+    result["avg_idle_time_per_bot_tick"] = avg_idle_time;
     return result;
 }
 
@@ -862,6 +872,7 @@ void ADG::recordStatsPerTick() {
     int n_unfinished_nodes = 0;
     int min_unfinished_nodes = numeric_limits<int>::max();
     int n_total_nodes = 0;
+    int n_robots_idle = 0;
     for (int k = 0; k < this->num_robots; k++) {
         if (finished_node_idx[k] >= 0) {
             n_finished_nodes += finished_node_idx[k] + 1;
@@ -870,10 +881,17 @@ void ADG::recordStatsPerTick() {
         n_unfinished_nodes += curr_u;
         min_unfinished_nodes = min(min_unfinished_nodes, curr_u);
         n_total_nodes += graph[k].size();
+
+        // Check if the robot is idle
+        if (curr_u == 0) {
+            n_robots_idle++;
+        }
     }
 
     // this->stats_per_tick.n_finished_nodes.push_back(n_finished_nodes);
     this->stats_per_tick.n_unfinished_nodes.push_back(n_unfinished_nodes);
     this->stats_per_tick.min_unfinished_nodes.push_back(min_unfinished_nodes);
+    this->stats_per_tick.portion_idle_robots.push_back(
+        static_cast<double>(n_robots_idle) / this->num_robots);
     // this->stats_per_tick.n_total_nodes.push_back(n_total_nodes);
 }

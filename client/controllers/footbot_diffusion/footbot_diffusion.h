@@ -64,7 +64,7 @@ struct Action {
     enum Type { MOVE, TURN, STOP, STATION } type;
     Action() {
         x = 0.0, y = 0.0, angle = 0.0;
-        type = STOP;
+        type = STOP;  // default action is STOP
     }
     Action(Real x, Real y, Real angle, deque<int> node_ids, Type act_type,
            int time_dura = -1, int task_id = -1)
@@ -198,7 +198,7 @@ private:
     CRange<CRadians> m_cGoStraightAngleRange;
     string m_outputDir;
 
-    deque<Action> q;
+    deque<Action> q;  // Action queue of the robot
     queue<Real> velocityQueue;
     int moveForwardFlag;
     int count = 0;
