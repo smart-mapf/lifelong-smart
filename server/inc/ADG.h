@@ -54,7 +54,7 @@ struct ADGNode {
     bool has_valid_in_edge = true;
     void showNode() const {
         cout << "        {" << action.robot_id << ", " << action.time << ", "
-             << fixed << setprecision(1) << action.orientation << ", '"
+             << std::fixed << setprecision(1) << action.orientation << ", '"
              << action.type << "', {" << action.start.first << ", "
              << action.start.second << "}, {" << action.goal.first << ", "
              << action.goal.second << "}, " << action.nodeID << "}," << endl;

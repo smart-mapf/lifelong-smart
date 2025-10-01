@@ -6,6 +6,8 @@
 #include <boost/tokenizer.hpp>
 
 #include "ADG.h"
+#include "backup_planners/PIBT.h"
+#include "backup_planners/SMARTGraph.h"
 #include "common.h"
 
 #ifdef DEBUG
@@ -18,7 +20,7 @@ std::mutex globalMutex;
 
 class ADG_Server {
 public:
-    ADG_Server(boost::program_options::variables_map vm);
+    ADG_Server(const boost::program_options::variables_map vm);
     void saveStats();
     int getCurrSimStep();
 
@@ -35,6 +37,9 @@ public:
     bool simTickElapsedFromLastInvoke(int ticks) {
         return getCurrSimStep() - this->prev_invoke_planner_tick >= ticks;
     }
+
+    // Setup the backup planner
+    void setupBackupPlanner();
 
     std::shared_ptr<ADG> adg;
     bool flipped_coord = true;
@@ -71,11 +76,14 @@ public:
     // Stats related
     // Start time of the simulation
     string output_filename;
-    chrono::steady_clock::time_point start_time;
+    std::chrono::steady_clock::time_point start_time;
     double overall_runtime = 0.0;      // Overall runtime of the simulation
     vector<int> planner_invoke_ticks;  // Sim ticks when planner is invoked
     string planner_stats = "{}";       // Store planner stats in JSON format
 
+    // Backup planner related
+    shared_ptr<MAPFSolver> backup_planner = nullptr;
 private:
     bool save_stats = false;
+    boost::program_options::variables_map _vm;
 };

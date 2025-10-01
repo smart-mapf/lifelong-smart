@@ -19,6 +19,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "backup_planners/common.h"
 #include "json.hpp"
 #include "spdlog/spdlog.h"
 
@@ -29,7 +30,16 @@
 #define MAX_ENQUE 5
 // #define DEBUG
 
-using namespace std;
+// using namespace std;
+using std::cerr;
+using std::cin;
+using std::fixed;
+using std::hash;
+using std::lock_guard;
+using std::mutex;
+using std::numeric_limits;
+using std::setprecision;
+using std::shared_ptr;
 using json = nlohmann::json;
 
 const double EPS = 1e-8;

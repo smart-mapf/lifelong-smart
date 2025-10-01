@@ -5,8 +5,9 @@
 shared_ptr<ADG_Server> server_ptr = nullptr;
 // =======================
 
-ADG_Server::ADG_Server(boost::program_options::variables_map vm)
-    : output_filename(vm["output_file"].as<string>()),
+ADG_Server::ADG_Server(const boost::program_options::variables_map vm)
+    : _vm(vm),
+      output_filename(vm["output_file"].as<string>()),
       save_stats(vm["save_stats"].as<bool>()),
       screen(vm["screen"].as<int>()),
       port(vm["port_number"].as<int>()),
@@ -15,18 +16,77 @@ ADG_Server::ADG_Server(boost::program_options::variables_map vm)
       sim_window_tick(vm["sim_window_tick"].as<int>()),
       look_ahead_tick(vm["look_ahead_tick"].as<int>()),
       // Hacky way to make sure the simulation is frozen at the beginning
-      prev_invoke_planner_tick(-look_ahead_tick),
+      prev_invoke_planner_tick(-vm["look_ahead_tick"].as<int>()),
       seed(vm["seed"].as<int>()),
       planner_invoke_policy(vm["planner_invoke_policy"].as<string>()),
-      adg(make_shared<ADG>(vm["num_robots"].as<int>(), screen,
+      adg(make_shared<ADG>(vm["num_robots"].as<int>(), vm["screen"].as<int>(),
                            vm["look_ahead_dist"].as<int>())),
-      numRobots(adg->numRobots()),
-      parser(PlanParser(screen)),
-      tick_per_robot(vector<int>(numRobots, 0)) {
+      numRobots(vm["num_robots"].as<int>()),
+      parser(PlanParser(vm["screen"].as<int>())),
+      tick_per_robot(vector<int>(vm["num_robots"].as<int>(), 0)) {
     spdlog::info("Invoke policy: {}", planner_invoke_policy);
     spdlog::info("Look ahead tick: {}", look_ahead_tick);
     spdlog::info("Look ahead dist: {}", adg->getLookAheadDist());
     spdlog::info("Simulation window tick: {}", sim_window_tick);
+}
+
+void ADG_Server::setupBackupPlanner() {
+    spdlog::info("Setting up backup planner...");
+    // Setup graph. We are computing heuristics here and in the planner, which
+    // is redundant. Consider optimizing this later.
+    string grid_type = this->_vm["grid_type"].as<std::string>();
+    SMARTGrid G;
+    G.screen = this->screen;
+    G.hold_endpoints = false;
+    G.useDummyPaths = false;
+    G._save_heuristics_table = this->_vm["save_heuristics_table"].as<bool>();
+    G.rotation_time = this->_vm["rotation_time"].as<int>();
+    // Grid type
+    if (!convert_G_type.count(grid_type)) {
+        spdlog::error("Grid type {} does not exist!", grid_type);
+        exit(-1);
+    }
+    G.set_grid_type(convert_G_type.at(grid_type));
+    std::ifstream i(this->_vm["map"].as<std::string>());
+    json map_json;
+    i >> map_json;
+    if (!G.load_map_from_jsonstr(map_json.dump(4), 1.0, 1.0)) {
+        return;
+    }
+
+    // Setup backup single agent planner
+    string single_solver_name =
+        this->_vm["backup_single_agent_solver"].as<string>();
+    SingleAgentSolver* path_planner;
+    if (single_solver_name == "ASTAR") {
+        path_planner = new StateTimeAStar();
+    } else if (single_solver_name == "SIPP") {
+        path_planner = new SIPP();
+    } else {
+        spdlog::error("Backup single-agent solver {} does not exist!",
+                      single_solver_name);
+        exit(-1);
+    }
+
+    // Set parameters for the path planner
+    path_planner->rotation_time = this->_vm["rotation_time"].as<int>();
+
+    // Setup backup MAPF planner
+    string solver_name = this->_vm["backup_planner"].as<string>();
+    spdlog::info("Backup planner: {}", solver_name);
+    if (solver_name == "PIBT") {
+        this->backup_planner = make_shared<PIBT>(G, *path_planner);
+    } else {
+        spdlog::error("Backup solver {} does not exist!", solver_name);
+        exit(-1);
+    }
+
+    // Set parameters for the MAPF solver
+    this->backup_planner->seed = this->seed;
+    this->backup_planner->gen = mt19937(this->backup_planner->seed);
+
+    // Set initialized flag
+    this->backup_planner->set_initialized(true);
 }
 
 void ADG_Server::saveStats() {
@@ -307,6 +367,13 @@ string actionFinished(string& robot_id_str, int node_ID) {
 
 void init(string RobotID, tuple<int, int> init_loc) {
     lock_guard<mutex> guard(globalMutex);
+    // Initialize the backup planner if it has not been initialized
+    if (server_ptr->backup_planner == nullptr ||
+        !server_ptr->backup_planner->is_initialized()) {
+        server_ptr->setupBackupPlanner();
+    }
+
+    // Inform ADG with the current robot's initial location
     server_ptr->adg->createRobotIDToStartIndexMaps(RobotID, init_loc);
 }
 
@@ -344,9 +411,9 @@ void closeServer(rpc::server& srv) {
     // cout << "Num of finished tasks: "
     //           << server_ptr->adg->getNumFinishedTasks() << endl;
 
-    auto end = chrono::steady_clock::now();
-    auto elapsed_seconds =
-        chrono::duration_cast<chrono::seconds>(end - server_ptr->start_time);
+    auto end = std::chrono::steady_clock::now();
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
+        end - server_ptr->start_time);
     server_ptr->overall_runtime = elapsed_seconds.count();
     spdlog::info("Simulation count: {}", server_ptr->tick_per_robot[0]);
     // spdlog::info("Number of actual finished tasks: {}",
@@ -493,7 +560,7 @@ bool invokePlanner() {
 
     // First invoke, start record runtime
     if (invoke && sim_step == 0) {
-        server_ptr->start_time = chrono::steady_clock::now();
+        server_ptr->start_time = std::chrono::steady_clock::now();
         spdlog::info("Start time recorded at sim step 0.");
     }
 
@@ -570,6 +637,12 @@ int main(int argc, char** argv) {
             ("look_ahead_dist,l", po::value<int>()->default_value(5), "look ahead # of actions for the robot to query its location")
             ("look_ahead_tick,m", po::value<int>()->default_value(5), "look ahead tick for the robot to query its location")
             ("seed", po::value<int>()->default_value(0), "random seed for the simulation (default: 0)")
+            ("backup_planner", po::value<string>()->default_value("PIBT"), "backup planner: PIBT or none")
+            ("backup_single_agent_solver", po::value<string>()->default_value("ASTAR"), "backup single-agent solver: ASTAR, SIPP")
+            ("map", po::value<string>()->default_value("maps/empty_32_32.json"), "map filename")
+            ("grid_type", po::value<string>()->default_value("four_connected"), "grid type: four_connected, four_connected_with_diagonal, eight_connected")
+            ("rotation_time", po::value<int>()->default_value(1), "rotation time for the robots (default: 1)")
+            ("save_heuristics_table", po::value<bool>()->default_value(false), "save heuristics table to speed up single-agent pathfinding")
             ;
     // clang-format on
     po::variables_map vm;

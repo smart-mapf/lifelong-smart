@@ -275,6 +275,12 @@ def run_lifelong_argos(
             f"--seed={seed}",
             f"--sim_window_tick={sim_window_tick}",
             f"--planner_invoke_policy={planner_invoke_policy}",
+            f"--backup_planner={backup_solver}",
+            f"--backup_single_agent_solver={single_agent_solver}",
+            f"--map={map_filepath}",
+            f"--grid_type={grid_type}",
+            f"--rotation_time={rotation_time}",
+            f"--save_heuristics_table={str(save_heuristics_table).lower()}",
         ]
         client_command = [
             "argos3",

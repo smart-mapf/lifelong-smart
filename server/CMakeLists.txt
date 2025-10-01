@@ -20,8 +20,9 @@ find_package(Boost 1.49.0 REQUIRED COMPONENTS program_options system filesystem)
 find_package(spdlog REQUIRED)
 
 include_directories("inc")
+include_directories("inc/backup_planners")
 
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB SOURCES "src/*.cpp" "src/backup_planners/*.cpp")
 
 # Add the executable
 add_executable(ADG_server ${SOURCES})
