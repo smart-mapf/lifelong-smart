@@ -27,3 +27,14 @@ std::ostream & operator << (std::ostream &out, const Path &path)
     out << std::endl;
     return out;
 }
+
+void to_json(json& j, const State& s)
+{
+    j = json{
+        {"location", s.location},
+        {"timestep", s.timestep},
+        {"orientation", s.orientation},
+        {"is_tasking_wait", s.is_tasking_wait},
+        {"is_rotating", s.is_rotating}
+    };
+}

@@ -8,11 +8,17 @@ bool PIBT::run(const vector<State> &starts,
                const vector<vector<Task>> &goal_locations, int time_limit,
                const vector<int> &waited_time) {
     // set timer
+    spdlog::info("Backup PIBT starts planning for {} agents", starts.size());
     clock_t start = std::clock();
     num_expanded = 0;
     num_generated = 0;
     num_restarts = 0;
-    int num_of_agents = starts.size();
+    this->num_of_agents = starts.size();
+
+    if (this->screen > 1) {
+        spdlog::info("MAPF instance in backup planner:");
+        this->print_mapf_instance(starts, goal_locations);
+    }
 
     // Initialize
     this->curr_occupied.clear();

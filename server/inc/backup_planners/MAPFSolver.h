@@ -29,18 +29,18 @@ public:
     ReservationTable initial_rt;
     vector<Path> initial_paths;
     // <agent, location, timestep>:
-    list<tuple<int, int, int> > initial_constraints;
+    list<tuple<int, int, int>> initial_constraints;
     // only this agent can stay in this location before this timestep.
     // the paths that all agents try to avoid
     list<const Path*> initial_soft_path_constraints;
-    unordered_map<int, double> travel_times;
+    // unordered_map<int, double> travel_times;
 
     SingleAgentSolver& path_planner;
     // Runs the algorithm until the problem is solved or time is exhausted
     virtual bool run(
         const vector<State>& starts,
         // an ordered list of tuple of <location, release time, wait time>
-        const vector<vector<Task> >& goal_locations, int time_limit,
+        const vector<vector<Task>>& goal_locations, int time_limit = 60,
         // The number of timesteps each agent has waited. Used if considering
         // tasking wait time
         const vector<int>& waited_time = vector<int>()) = 0;
@@ -59,8 +59,8 @@ public:
     virtual string get_name() const = 0;
 
     const BasicGraph& G;
-    vector<State> starts;
-    vector<vector<Task> > goal_locations;
+    // vector<State> starts;
+    // vector<vector<Task>> goal_locations;
     int num_of_agents;
     int time_limit;
     int n_iter_limit;
@@ -78,9 +78,14 @@ public:
         this->_is_initialized = initialized;
     }
 
+    vector<vector<tuple<int, int, double, int>>> convert_path_to_smart(
+        const vector<vector<Task>>& goal_locations);
+    void print_mapf_instance(vector<State> starts_,
+                             vector<vector<Task>> goals_) const;
+    bool congested() const;
 protected:
-    vector<vector<bool> > cat;  // conflict avoidance table
-    vector<unordered_set<pair<int, int> > > constraint_table;
+    vector<vector<bool>> cat;  // conflict avoidance table
+    vector<unordered_set<pair<int, int>>> constraint_table;
     ReservationTable rt;
     // Flag to indicate whether the solver has been initialized
     bool _is_initialized = false;

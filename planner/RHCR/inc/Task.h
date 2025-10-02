@@ -106,3 +106,5 @@ std::ostream& operator<<(std::ostream& os, const Task& task);
 vector<list<Task>> read_task_vec(const std::string& fname, int num_of_drives);
 vector<tuple<int, int>> read_start_vec(const std::string& fname,
                                        int num_of_drives);
+
+void to_json(json& j, const Task& t);

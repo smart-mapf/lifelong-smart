@@ -18,11 +18,13 @@
 #include <vector>
 
 #include "spdlog/spdlog.h"
+#include "json.hpp"
 
 using boost::unordered_map;
 using boost::unordered_set;
 using boost::heap::compare;
 using boost::heap::fibonacci_heap;
+using json = nlohmann::json;
 
 using std::cout;
 using std::deque;

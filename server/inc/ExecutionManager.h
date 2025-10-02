@@ -16,11 +16,9 @@
 #define DEBUG_AGENT
 #endif
 
-std::mutex globalMutex;
-
-class ADG_Server {
+class ExecutionManager {
 public:
-    ADG_Server(const boost::program_options::variables_map vm);
+    ExecutionManager(const boost::program_options::variables_map vm);
     void saveStats();
     int getCurrSimStep();
 
@@ -82,7 +80,10 @@ public:
     string planner_stats = "{}";       // Store planner stats in JSON format
 
     // Backup planner related
+    SMARTGrid G;
+    shared_ptr<SingleAgentSolver> path_planner;
     shared_ptr<MAPFSolver> backup_planner = nullptr;
+
 private:
     bool save_stats = false;
     boost::program_options::variables_map _vm;

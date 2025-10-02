@@ -4,10 +4,8 @@ std::ostream& operator<<(std::ostream& os, const Task& task) {
     os << "( loc : " << task.location << ", ori : " << task.orientation
        << ", wait_time : " << task.task_wait_time
        << ", hold_time : " << task.hold_time
-       << ", is_parking : " << task.is_parking
-       << ", movable : " << task.movable
-       << ", id : " << task.id
-       << " )";
+       << ", is_parking : " << task.is_parking << ", movable : " << task.movable
+       << ", id : " << task.id << " )";
     return os;
 }
 
@@ -37,4 +35,16 @@ vector<tuple<int, int>> read_start_vec(const std::string& fname,
         start_vec.push_back(start_tuple);
     }
     return start_vec;
+}
+
+void from_json(const json& j, Task& t) {
+    j.at("location").get_to(t.location);
+    j.at("orientation").get_to(t.orientation);
+    j.at("task_wait_time").get_to(t.task_wait_time);
+    j.at("hold_time").get_to(t.hold_time);
+    j.at("agent_id").get_to(t.agent_id);
+    j.at("finish_t").get_to(t.finish_t);
+    j.at("is_parking").get_to(t.is_parking);
+    j.at("movable").get_to(t.movable);
+    j.at("id").get_to(t.id);
 }

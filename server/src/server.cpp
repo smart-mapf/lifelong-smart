@@ -1,164 +1,7 @@
-#include "ADG_server.h"
+#include "ExecutionManager.h"
 
-// vector<chrono::steady_clock::time_point>
-//     startTimers;  // Start times for each robot
-shared_ptr<ADG_Server> server_ptr = nullptr;
-// =======================
-
-ADG_Server::ADG_Server(const boost::program_options::variables_map vm)
-    : _vm(vm),
-      output_filename(vm["output_file"].as<string>()),
-      save_stats(vm["save_stats"].as<bool>()),
-      screen(vm["screen"].as<int>()),
-      port(vm["port_number"].as<int>()),
-      total_sim_step_tick(vm["total_sim_step_tick"].as<int>()),
-      ticks_per_second(vm["ticks_per_second"].as<int>()),
-      sim_window_tick(vm["sim_window_tick"].as<int>()),
-      look_ahead_tick(vm["look_ahead_tick"].as<int>()),
-      // Hacky way to make sure the simulation is frozen at the beginning
-      prev_invoke_planner_tick(-vm["look_ahead_tick"].as<int>()),
-      seed(vm["seed"].as<int>()),
-      planner_invoke_policy(vm["planner_invoke_policy"].as<string>()),
-      adg(make_shared<ADG>(vm["num_robots"].as<int>(), vm["screen"].as<int>(),
-                           vm["look_ahead_dist"].as<int>())),
-      numRobots(vm["num_robots"].as<int>()),
-      parser(PlanParser(vm["screen"].as<int>())),
-      tick_per_robot(vector<int>(vm["num_robots"].as<int>(), 0)) {
-    spdlog::info("Invoke policy: {}", planner_invoke_policy);
-    spdlog::info("Look ahead tick: {}", look_ahead_tick);
-    spdlog::info("Look ahead dist: {}", adg->getLookAheadDist());
-    spdlog::info("Simulation window tick: {}", sim_window_tick);
-}
-
-void ADG_Server::setupBackupPlanner() {
-    spdlog::info("Setting up backup planner...");
-    // Setup graph. We are computing heuristics here and in the planner, which
-    // is redundant. Consider optimizing this later.
-    string grid_type = this->_vm["grid_type"].as<std::string>();
-    SMARTGrid G;
-    G.screen = this->screen;
-    G.hold_endpoints = false;
-    G.useDummyPaths = false;
-    G._save_heuristics_table = this->_vm["save_heuristics_table"].as<bool>();
-    G.rotation_time = this->_vm["rotation_time"].as<int>();
-    // Grid type
-    if (!convert_G_type.count(grid_type)) {
-        spdlog::error("Grid type {} does not exist!", grid_type);
-        exit(-1);
-    }
-    G.set_grid_type(convert_G_type.at(grid_type));
-    std::ifstream i(this->_vm["map"].as<std::string>());
-    json map_json;
-    i >> map_json;
-    if (!G.load_map_from_jsonstr(map_json.dump(4), 1.0, 1.0)) {
-        return;
-    }
-
-    // Setup backup single agent planner
-    string single_solver_name =
-        this->_vm["backup_single_agent_solver"].as<string>();
-    SingleAgentSolver* path_planner;
-    if (single_solver_name == "ASTAR") {
-        path_planner = new StateTimeAStar();
-    } else if (single_solver_name == "SIPP") {
-        path_planner = new SIPP();
-    } else {
-        spdlog::error("Backup single-agent solver {} does not exist!",
-                      single_solver_name);
-        exit(-1);
-    }
-
-    // Set parameters for the path planner
-    path_planner->rotation_time = this->_vm["rotation_time"].as<int>();
-
-    // Setup backup MAPF planner
-    string solver_name = this->_vm["backup_planner"].as<string>();
-    spdlog::info("Backup planner: {}", solver_name);
-    if (solver_name == "PIBT") {
-        this->backup_planner = make_shared<PIBT>(G, *path_planner);
-    } else {
-        spdlog::error("Backup solver {} does not exist!", solver_name);
-        exit(-1);
-    }
-
-    // Set parameters for the MAPF solver
-    this->backup_planner->seed = this->seed;
-    this->backup_planner->gen = mt19937(this->backup_planner->seed);
-
-    // Set initialized flag
-    this->backup_planner->set_initialized(true);
-}
-
-void ADG_Server::saveStats() {
-    if (!save_stats) {
-        return;
-    }
-
-    // ifstream infile(output_filename);
-    // bool exist = infile.good();
-    // infile.close();
-    // if (!exist) {
-    //     ofstream addHeads(output_filename);
-    //     addHeads << "Num of agent,Num of Finished Tasks" << endl;
-    //     addHeads.close();
-    // }
-    // ofstream stats(output_filename, ios::app);
-    // stats << numRobots << "," << this->adg->getNumFinishedTasks() << endl;
-    // stats.close();
-
-    // Compute throughput as the number of finished tasks per sim second
-    int total_finished_tasks = adg->getNumFinishedTasks();
-    int total_finished_backup_tasks = adg->getNumFinishedBackupTasks();
-    int sim_seconds = total_sim_step_tick / ticks_per_second;
-    double throughput = static_cast<double>(total_finished_tasks -
-                                            total_finished_backup_tasks) /
-                        sim_seconds;
-    json result = {{"total_finished_tasks", total_finished_tasks},
-                   {"total_finished_backup_tasks", total_finished_backup_tasks},
-                   {"throughput", throughput},
-                   {"success", true},
-                   {"cpu_runtime", this->overall_runtime},
-                   {"congested", this->congested_sim},
-                   {"tasks_finished_timestep", this->tasks_finished_per_sec},
-                   {"planner_invoke_ticks", this->planner_invoke_ticks},
-                   {"n_planner_invokes", this->planner_invoke_ticks.size()}};
-
-    // Unwrap and add planner stats to results
-    json planner_stats_json = json::parse(this->planner_stats);
-    for (auto& [key, value] : planner_stats_json.items()) {
-        result[key] = value;
-    }
-
-    // Add ADG statistics
-    json adg_stats = adg->getADGStats();
-    for (auto& [key, value] : adg_stats.items()) {
-        result[key] = value;
-    }
-
-    // Print some key statistics to console
-    vector<string> key_stats = {
-        "n_rule_based_calls", "mean_avg_rotation", "mean_avg_move",
-        "avg_total_actions",  "n_planner_invokes",
-    };
-
-    for (const auto& stat : key_stats) {
-        if (result.contains(stat)) {
-            spdlog::info("{}: {}", stat, result[stat].dump());
-        }
-    }
-
-    // Write the statistics to the output file
-    ofstream stats(output_filename);
-    stats << result.dump(4);  // Pretty print with 4 spaces
-
-    // cout << "Statistics written to " << output_filename << endl;
-    spdlog::info("Statistics written to {}", output_filename);
-}
-
-int ADG_Server::getCurrSimStep() {
-    // Return the minimum tick count among all robots
-    return *min_element(tick_per_robot.begin(), tick_per_robot.end());
-}
+shared_ptr<ExecutionManager> server_ptr = nullptr;
+std::mutex globalMutex;
 
 void freezeSimulationIfNecessary(string RobotID) {
     lock_guard<mutex> guard(globalMutex);
@@ -190,10 +33,6 @@ void freezeSimulationIfNecessary(string RobotID) {
             spdlog::info(
                 "Robot {} requests to freeze the simulation at the first tick!",
                 robot_id);
-            // cout << "Robot " << robot_id
-            //           << " requests to freeze the simulation at the first
-            //           tick!"
-            //           << endl;
         }
     } else if (server_ptr->simTickElapsedFromLastInvoke(
                    server_ptr->look_ahead_tick) &&
@@ -205,11 +44,6 @@ void freezeSimulationIfNecessary(string RobotID) {
                 "Robot {} requests to freeze the simulation at sim step {} "
                 "due to planner not return in time (synchronize)!",
                 robot_id, sim_step);
-            // cout << "Robot " << robot_id
-            //           << " requests to freeze the simulation at sim step "
-            //           << sim_step
-            //           << " due to simulation time exceeding the window tick!"
-            //           << endl;
         }
     }
 }
@@ -228,7 +62,6 @@ string getRobotsLocation() {
 
     if (server_ptr->screen > 0) {
         spdlog::info("Get robot location query received!");
-        // cout << "Get robot location query received!" << endl;
     }
 
     server_ptr->curr_robot_states = server_ptr->adg->computeCommitCut();
@@ -267,20 +100,61 @@ string getRobotsLocation() {
     return result_message.dump();
 }
 
-// Add a new MAPF plan to the ADG
+// Add a new MAPF plan to the ADG. Use backup planner if necessary
 // new_plan: a vector of paths, each path is a vector of (row, col, t, task_id)
 // Raw plan --> points --> Steps --> Actions
 void addNewPlan(string& new_plan_json_str) {
-    // x, y and time
     lock_guard<mutex> guard(globalMutex);
 
     json new_plan_json = json::parse(new_plan_json_str);
 
-    auto new_plan = new_plan_json["plan"]
-                        .get<vector<vector<tuple<int, int, double, int>>>>();
+    vector<vector<tuple<int, int, double, int>>> new_plan;
+    bool congested = false;
+    bool success = false;
 
-    bool congested = new_plan_json["congested"].get<bool>();
+    if (new_plan_json.contains("success"))
+        success = new_plan_json["success"].get<bool>();
+    else {
+        spdlog::warn("No success field in the new plan json! Assume failure.");
+    }
 
+    // Planner successfully returns.
+    if (success) {
+        new_plan = new_plan_json["plan"]
+                       .get<vector<vector<tuple<int, int, double, int>>>>();
+        congested = new_plan_json["congested"].get<bool>();
+    }
+    // Planner fails. Use the backup planner.
+    else {
+        if (!new_plan_json.contains("mapf_instance")) {
+            spdlog::error("No MAPF instance provided when planner fails!");
+            exit(-1);
+        }
+
+        json mapf_instance = new_plan_json["mapf_instance"];
+
+        if (!mapf_instance.contains("starts") ||
+            !mapf_instance.contains("goals")) {
+            spdlog::error(
+                "MAPF instance does not contain starts or goals when planner "
+                "fails!");
+            exit(-1);
+        }
+
+        auto starts = mapf_instance.at("starts").get<vector<State>>();
+        auto goal_locations =
+            mapf_instance.at("goals").get<vector<vector<Task>>>();
+
+        // Plan using the backup planner
+        spdlog::info("Planner fails, using backup planner");
+        server_ptr->backup_planner->clear();
+        server_ptr->backup_planner->run(starts, goal_locations);
+        new_plan =
+            server_ptr->backup_planner->convert_path_to_smart(goal_locations);
+        congested = server_ptr->backup_planner->congested();
+    }
+
+    // TODO: consider backup planner for the following entries.
     // Store stats, if available
     if (new_plan_json.contains("stats")) {
         server_ptr->planner_stats = new_plan_json["stats"];
@@ -305,6 +179,7 @@ void addNewPlan(string& new_plan_json_str) {
         server_ptr->congested_sim = true;
     }
 
+    // Convert raw plan to points
     vector<vector<Step>> steps;
     assert(new_plan.size() == server_ptr->numRobots);
     for (int agent_id = 0; agent_id < server_ptr->numRobots; agent_id++) {
@@ -355,7 +230,9 @@ void addNewPlan(string& new_plan_json_str) {
 string actionFinished(string& robot_id_str, int node_ID) {
     lock_guard<mutex> guard(globalMutex);
     if (not server_ptr->adg->initialized) {
-        cerr << "ADG_Server::ADG_Server: server_ptr is not initialized" << endl;
+        cerr << "ExecutionManager::ExecutionManager: server_ptr is not "
+                "initialized"
+             << endl;
         exit(-1);
         return "None";
     }
@@ -632,6 +509,8 @@ int main(int argc, char** argv) {
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
             ("planner_invoke_policy", po::value<string>()->default_value("default"), "planner invoke policy: default or no_action")
             ("sim_window_tick,w", po::value<int>()->default_value(50), "invoke planner every sim_window_tick (default: 50)")
+            ("sim_window_timestep", po::value<int>()->default_value(5), "invoke planner every sim_window_timestep (default: 5)")
+            ("plan_window_timestep", po::value<int>()->default_value(5), "plan for this many timesteps (default: 5)")
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
             ("ticks_per_second,f", po::value<int>()->default_value(10), "ticks per second for the simulation (default: 10)")
             ("look_ahead_dist,l", po::value<int>()->default_value(5), "look ahead # of actions for the robot to query its location")
@@ -641,6 +520,7 @@ int main(int argc, char** argv) {
             ("backup_single_agent_solver", po::value<string>()->default_value("ASTAR"), "backup single-agent solver: ASTAR, SIPP")
             ("map", po::value<string>()->default_value("maps/empty_32_32.json"), "map filename")
             ("grid_type", po::value<string>()->default_value("four_connected"), "grid type: four_connected, four_connected_with_diagonal, eight_connected")
+            ("rotation", po::value<bool>()->default_value(false), "consider rotation when planning and executing")
             ("rotation_time", po::value<int>()->default_value(1), "rotation time for the robots (default: 1)")
             ("save_heuristics_table", po::value<bool>()->default_value(false), "save heuristics table to speed up single-agent pathfinding")
             ;
@@ -659,10 +539,10 @@ int main(int argc, char** argv) {
     int seed = vm["seed"].as<int>();
     srand(seed);
 
-    server_ptr = make_shared<ADG_Server>(vm);
+    server_ptr = make_shared<ExecutionManager>(vm);
 
     // Set up logger
-    auto console_logger = spdlog::default_logger()->clone("ADG_Server");
+    auto console_logger = spdlog::default_logger()->clone("ExecutionManager");
     spdlog::set_default_logger(console_logger);
 
     // Setup the server to listen on the specified port number

@@ -12,7 +12,7 @@ public:
 
     // Runs the algorithm until the problem is solved or time is exhausted
     bool run(const vector<State> &starts,
-             const vector<vector<Task>> &goal_locations, int time_limit,
+             const vector<vector<Task>> &goal_locations, int time_limit = 60,
              const vector<int> &waited_time = vector<int>()) override;
 
     string get_name() const override {

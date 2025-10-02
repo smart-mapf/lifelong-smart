@@ -756,11 +756,18 @@ json SMARTSystem::simulate(int simulation_time) {
         update_goal_locations();
         solve();
 
-        auto new_mapf_plan = this->convert_path_to_smart();
         json new_plan_json = {
-            {"plan", new_mapf_plan},
-            {"congested", congested()},
+            // The planner is considered successful if it did not call the
+            // backup planner.
+            {"success", !this->rule_based_called},
+            // {"success", false},
+            {"plan", this->convert_path_to_smart()},
+            {"congested", this->congested()},
             {"stats", this->get_curr_stats()},
+            // Tmp: Pass the current MAPF instance to the backup planner if the
+            // planner is not successful
+            // TODO: Remove this after the task assigner is migrated to server.
+            {"mapf_instance", this->convert_mapf_instance_to_smart()},
         };
 
         client.call("add_plan", new_plan_json.dump());
@@ -778,6 +785,12 @@ json SMARTSystem::simulate(int simulation_time) {
 vector<vector<tuple<int, int, double, int>>>
 SMARTSystem::convert_path_to_smart() {
     std::vector<std::vector<std::tuple<int, int, double, int>>> new_mapf_plan;
+
+    // Planner failed, return empty plan
+    if (this->rule_based_called) {
+        return new_mapf_plan;
+    }
+
     new_mapf_plan.resize(this->num_of_drives);
     if (screen > 0) {
         // std::cout << "######################################" << std::endl;
@@ -827,7 +840,27 @@ SMARTSystem::convert_path_to_smart() {
     return new_mapf_plan;
 }
 
+json SMARTSystem::convert_mapf_instance_to_smart() {
+    if (this->rule_based_called) {
+        return json{
+            {"starts", this->starts},
+            {"goals", this->goal_locations},
+        };
+    } else
+        return json{};
+    // return json{
+    //     {"starts", this->starts},
+    //     {"goals", this->goal_locations},
+    // };
+}
+
 bool SMARTSystem::congested() const {
+    // Planner failed, do not consider congested in the planner, as it will be
+    // considered in the server when backup planner is called.
+    if (this->rule_based_called)
+        return false;
+
+    // Count the number of agents that are not making progress in the current
     int wait_agents = 0;
     for (const auto &path : this->solver.solution) {
         int t = 0;
@@ -1129,6 +1162,11 @@ void SMARTSystem::solve() {
     }
 
     this->solve_helper(lra, pibt, real_goal_locations);
+
+    // Stop here if the planner fails
+    if (this->rule_based_called) {
+        return;
+    }
 
     if (screen > 0) {
         if (!this->validateSolution()) {
