@@ -5,7 +5,7 @@
 */cmake
 ./server/ADG/ADG
 ./server/ADG/ADG_client
-./server/ADG/ADG_server
+./server/ADG/ExecutionManager
 ./server/ADG/external
 cmake-build-debug/
 client/client_output/*

@@ -1,4 +1,4 @@
-#include "Task.h"
+#include "backup_planners/Task.h"
 
 std::ostream& operator<<(std::ostream& os, const Task& task) {
     os << "( loc : " << task.location << ", ori : " << task.orientation
@@ -37,16 +37,14 @@ vector<tuple<int, int>> read_start_vec(const std::string& fname,
     return start_vec;
 }
 
-void to_json(json& j, const Task& t) {
-    j = {
-        {"location", t.location},
-        {"orientation", t.orientation},
-        {"task_wait_time", t.task_wait_time},
-        {"hold_time", t.hold_time},
-        {"agent_id", t.agent_id},
-        {"finish_t", t.finish_t},
-        {"is_parking", t.is_parking},
-        {"movable", t.movable},
-        {"id", t.id},
-    };
+void from_json(const json& j, Task& t) {
+    j.at("location").get_to(t.location);
+    j.at("orientation").get_to(t.orientation);
+    j.at("task_wait_time").get_to(t.task_wait_time);
+    j.at("hold_time").get_to(t.hold_time);
+    j.at("agent_id").get_to(t.agent_id);
+    j.at("finish_t").get_to(t.finish_t);
+    j.at("is_parking").get_to(t.is_parking);
+    j.at("movable").get_to(t.movable);
+    j.at("id").get_to(t.id);
 }

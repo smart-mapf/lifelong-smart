@@ -6,36 +6,81 @@
 #include <boost/tokenizer.hpp>
 
 #include "ADG.h"
+#include "backup_planners/PIBT.h"
+#include "backup_planners/SMARTGraph.h"
 #include "common.h"
 
-#ifdef DEBUG
-#define DEBUG_AGENT 13
-#else
-#define DEBUG_AGENT
-#endif
-
-std::mutex globalMutex;
-
-class ADG_Server {
+class ExecutionManager {
 public:
-    ADG_Server(boost::program_options::variables_map vm);
+    ExecutionManager(const boost::program_options::variables_map vm);
+
+    // Compute and save stats
     void saveStats();
+
+    // Get the current simulation step (tick) as the min of all robots' ticks
     int getCurrSimStep();
 
     // Return true if the planner has never been invoked
-    bool plannerNeverInvoked() {
-        return prev_invoke_planner_tick < 0;
-    }
+    bool plannerNeverInvoked();
+
     // Return true if the simulation has finished
-    bool simulationFinished() {
-        return getCurrSimStep() >= this->total_sim_step_tick;
-    }
+    bool simulationFinished();
+
     // Return true if at least `ticks` simulation ticks have elapsed since last
     // planner invocation
-    bool simTickElapsedFromLastInvoke(int ticks) {
-        return getCurrSimStep() - this->prev_invoke_planner_tick >= ticks;
+    bool simTickElapsedFromLastInvoke(int ticks);
+
+    // Update the simulation step tick
+    void updateSimStep(string RobotID);
+
+    // Return true if we should stop the simulation, either due to congestion or
+    // due to the simulation finished
+    bool stopSimulation();
+
+    // Setup the backup planner
+    void setupBackupPlanner();
+
+    // Freeze the simulation if necessary
+    void freezeSimulationIfNecessary(string RobotID);
+
+    // Obtain current location of the robots
+    string getRobotsLocation();
+
+    // Add a new MAPF plan to the ADG. Use backup planner if necessary
+    // new_plan: a vector of paths, each path is a vector of (row, col, t,
+    // task_id) Raw plan --> points --> Steps --> Actions
+    void addNewPlan(string& new_plan_json_str);
+
+    // A robot finished an action, update ADG
+    string actionFinished(string& robot_id_str, int node_ID);
+
+    // Initialize the ExecutionManager with the initial location of a robot
+    void init(string RobotID, tuple<int, int> init_loc);
+
+    // Obtain new batch of actions from ADG for a robot
+    SIM_PLAN obtainActionsFromADG(string RobotID);
+
+    // Return true if we should invoke the planner
+    bool invokePlanner();
+
+    // Record stats per tick
+    void recordStatsPerTick();
+
+    // Return true if the simulation is currently frozen
+    bool isSimulationFrozen() const {
+        return this->freeze_simulation;
     }
 
+    // Return true if the ADG has been initialized
+    bool isADGInitialized() const {
+        return this->adg->initialized;
+    }
+
+    int getRPCPort() const {
+        return this->port;
+    }
+
+private:
     std::shared_ptr<ADG> adg;
     bool flipped_coord = true;
     int screen = 0;
@@ -56,7 +101,7 @@ public:
     int ticks_per_second;          // Ticks per second for the simulation
     vector<robotState> curr_robot_states;  // Current states of all robots
     // (row, col, orientation) or (col, row, orientation)
-    vector<tuple<double, double, int>> robots_location;
+    // vector<tuple<double, double, int>> robots_location;
     // vector of <n_finished tasks, time in sim seconds>
     vector<tuple<int, double>> tasks_finished_per_sec;
 
@@ -71,11 +116,15 @@ public:
     // Stats related
     // Start time of the simulation
     string output_filename;
-    chrono::steady_clock::time_point start_time;
+    std::chrono::steady_clock::time_point start_time;
     double overall_runtime = 0.0;      // Overall runtime of the simulation
     vector<int> planner_invoke_ticks;  // Sim ticks when planner is invoked
     string planner_stats = "{}";       // Store planner stats in JSON format
 
-private:
+    // Backup planner related
+    SMARTGrid G;
+    shared_ptr<SingleAgentSolver> path_planner;
+    shared_ptr<MAPFSolver> backup_planner = nullptr;
     bool save_stats = false;
+    boost::program_options::variables_map _vm;
 };

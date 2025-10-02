@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include "backup_planners/common.h"
 
 struct Task {
     int location;        // location of the goal
@@ -68,7 +68,8 @@ struct Task {
             // to create a unique hash value
             return (loc_hash ^ (ori_hash << 1) ^ (wait_hash << 2) ^
                     (hold_hash << 3) ^ (is_parking_hash << 4) ^
-                    (movable_hash << 5)) ^ (id_hash << 6);
+                    (movable_hash << 5)) ^
+                   (id_hash << 6);
         }
     };
 
@@ -106,5 +107,4 @@ std::ostream& operator<<(std::ostream& os, const Task& task);
 vector<list<Task>> read_task_vec(const std::string& fname, int num_of_drives);
 vector<tuple<int, int>> read_start_vec(const std::string& fname,
                                        int num_of_drives);
-
-void to_json(json& j, const Task& t);
+void from_json(const json& j, Task& t);

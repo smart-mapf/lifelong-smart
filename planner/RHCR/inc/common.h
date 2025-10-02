@@ -17,6 +17,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include "spdlog/spdlog.h"
+#include "nlohmann/json.hpp"
 
 using boost::heap::fibonacci_heap;
 using boost::heap::compare;
@@ -42,6 +43,8 @@ using std::mt19937;
 using std::to_string;
 using std::map;
 using std::queue;
+
+using json = nlohmann::json;
 
 //#include <boost/graph/adjacency_list.hpp>
 //typedef boost::adjacency_list_traits<int, int, boost::undirectedS > confilctGraph_t;

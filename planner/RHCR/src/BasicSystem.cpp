@@ -969,6 +969,7 @@ void BasicSystem::solve_helper(LRAStar &lra, PIBT &pibt,
         }
         else
         {
+            this->rule_based_called = true;
             lra.resolve_conflicts(solver.solution);
             update_paths(lra.solution);
             this->solver.solution = lra.solution;
@@ -1080,25 +1081,25 @@ void BasicSystem::solve_helper(LRAStar &lra, PIBT &pibt,
                     this->solver.solution = lra.solution;
                 }
                 else{
-                    if (this->backup_solver == "PIBT")
-                    {
-                        bool sol = pibt.run(
-                        starts, real_goal_locations, time_limit, waited_time);
-                        this->solver.solution = pibt.solution;
-                        update_paths(pibt.solution);
-                    }
-                    else if (this->backup_solver == "LRA")
-                    {
-                        lra.resolve_conflicts(solver.solution);
-                        update_paths(lra.solution);
-                        this->solver.solution = lra.solution;
-                    }
-                    else
-                    {
-                        spdlog::warn("Unknown backup solver: {}", this->backup_solver);
-                        exit(-1);
-                    }
-
+                    this->rule_based_called = true;
+                    // if (this->backup_solver == "PIBT")
+                    // {
+                    //     bool sol = pibt.run(
+                    //     starts, real_goal_locations, time_limit, waited_time);
+                    //     this->solver.solution = pibt.solution;
+                    //     update_paths(pibt.solution);
+                    // }
+                    // else if (this->backup_solver == "LRA")
+                    // {
+                    //     lra.resolve_conflicts(solver.solution);
+                    //     update_paths(lra.solution);
+                    //     this->solver.solution = lra.solution;
+                    // }
+                    // else
+                    // {
+                    //     spdlog::warn("Unknown backup solver: {}", this->backup_solver);
+                    //     exit(-1);
+                    // }
                 }
                 this->n_rule_based_calls++;
             }
