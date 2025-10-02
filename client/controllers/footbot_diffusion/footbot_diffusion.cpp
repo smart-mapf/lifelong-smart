@@ -218,7 +218,7 @@ void CFootBotDiffusion::ControlStep() {
     }
 
     auto start = std::chrono::high_resolution_clock::now();
-    Action a; // current action
+    Action a;  // current action
     a.type = Action::STOP;
     CQuaternion currOrient = m_pcPosSens->GetReading().Orientation;
     CRadians cZAngle, cYAngle, cXAngle;
@@ -230,7 +230,8 @@ void CFootBotDiffusion::ControlStep() {
     Real left_v, right_v;
     CVector3 currPos = m_pcPosSens->GetReading().Position;
     if (count % 10 == 0) {
-        auto updateActions = client->call("update", robot_id).as<SIM_PLAN>();
+        auto updateActions =
+            client->call("obtain_actions", robot_id).as<SIM_PLAN>();
         if (not updateActions.empty()) {
             insertActions(updateActions);
         }
@@ -375,11 +376,7 @@ void CFootBotDiffusion::ControlStep() {
 
     // Update sim step count in client and server.
     step_count_++;
-    bool end_sim = client->call("update_sim_step", robot_id).as<bool>();
-    // if (end_sim) {
-    //     client->async_call("close_server");
-    //     exit(0);
-    // }
+    client->call("update_sim_step", robot_id);
 }
 
 pair<Real, Real> CFootBotDiffusion::pidAngular(Real error) {
