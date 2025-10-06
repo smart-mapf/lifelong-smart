@@ -272,10 +272,10 @@ int main(int argc, char **argv) {
         json stats = {{"n_mapf_calls", n_mapf_calls},
                       {"n_rule_based_calls", n_rule_based_calls}};
         json new_plan_json = {
+            {"success", pbs_success},
             {"plan", new_mapf_plan},
             {"congested", false},
             {"stats", stats.dump()},
-
         };
         client.call("add_plan", new_plan_json.dump());
 

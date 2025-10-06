@@ -177,6 +177,7 @@ int main(int argc, char** argv) {
         json stats = {{"n_mapf_calls", n_mapf_calls},
                       {"n_rule_based_calls", n_rule_based_calls}};
         json new_plan_json = {
+            {"success", success},
             {"plan", new_mapf_plan},
             {"congested", congested(new_mapf_plan)},
             {"backup_tasks", task_assigner->getBackupTasks()},

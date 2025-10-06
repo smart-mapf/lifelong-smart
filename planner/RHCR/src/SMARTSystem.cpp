@@ -137,7 +137,6 @@ void SMARTSystem::update_start_locations(
         int row = static_cast<int>(std::get<0>(start_locs[i]));
         int col = static_cast<int>(std::get<1>(start_locs[i]));
         int ori = std::get<2>(start_locs[i]);
-        // TODO: Add support for orientation
         this->starts[i] = State(this->G.getCellId(row, col), 0);
         if (this->consider_rotation) {
             this->starts[i].orientation = this->G.ORI_SMART_TO_RHCR.at(ori);
