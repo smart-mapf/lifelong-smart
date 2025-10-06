@@ -56,7 +56,7 @@ public:
     inline int getColCoordinate(int id) const {
         return id % this->cols;
     }
-    inline int getCellId(int row_idx, int col_idx) {
+    inline int getCellId(int row_idx, int col_idx) const {
         return this->cols * row_idx + col_idx;
     }
 

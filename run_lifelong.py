@@ -148,6 +148,7 @@ def run_lifelong_argos(
     right_w_weight: float = 1.0,
     grid_type: str = "regular",
     planner_invoke_policy: str = "default",
+    task_assigner_type: str = "windowed",
 ):
     """Function to run the lifelong SMART simulator with the given parameters.
 
@@ -284,6 +285,7 @@ def run_lifelong_argos(
             f"--rotation={str(rotation).lower()}",
             f"--rotation_time={rotation_time}",
             f"--save_heuristics_table={str(save_heuristics_table).lower()}",
+            f"--task_assigner_type={task_assigner_type}",
         ]
         client_command = [
             "argos3",

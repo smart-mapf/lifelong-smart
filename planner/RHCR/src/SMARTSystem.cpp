@@ -87,61 +87,65 @@ void SMARTSystem::initialize_start_locations() {
 void SMARTSystem::update_start_locations(
     vector<tuple<double, double, int>> &start_locs,
     set<int> finished_tasks_id) {
-    if (start_locs.size() != this->num_of_drives) {
-        cout << "SMARTSystem::update_start_locations: start_locs size does not "
-                "match num_of_drives."
-             << endl;
-    }
+    throw std::runtime_error(
+        "SMARTSystem::update_start_locations is not implemented. "
+        "Please implement this function for SMARTSystem.");
+    // if (start_locs.size() != this->num_of_drives) {
+    //     cout << "SMARTSystem::update_start_locations: start_locs size does
+    //     not "
+    //             "match num_of_drives."
+    //          << endl;
+    // }
 
-    if (screen > 0) {
-        string new_finished_tasks = "New finished tasks: ";
-        // cout << "New finished tasks: ";
-        for (const auto &task_id : finished_tasks_id) {
-            // cout << task_id << " ";
-            new_finished_tasks += std::to_string(task_id) + " ";
-        }
-        // cout << endl;
-        spdlog::info(new_finished_tasks);
-    }
+    // if (screen > 0) {
+    //     string new_finished_tasks = "New finished tasks: ";
+    //     // cout << "New finished tasks: ";
+    //     for (const auto &task_id : finished_tasks_id) {
+    //         // cout << task_id << " ";
+    //         new_finished_tasks += std::to_string(task_id) + " ";
+    //     }
+    //     // cout << endl;
+    //     spdlog::info(new_finished_tasks);
+    // }
 
-    if (!this->goal_locations.empty()) {
-        // Remove finished tasks from goal locations
-        for (int i = 0; i < this->num_of_drives; i++) {
-            for (int j = 0; j < (int)goal_locations[i].size(); j++) {
-                if (finished_tasks_id.find(goal_locations[i][j].id) !=
-                    finished_tasks_id.end()) {
-                    goal_locations[i][j].id = -1;  // reset goal id
-                    if (this->G.get_grid_type() ==
-                            SMARTGridType::ONE_BOT_PER_AISLE &&
-                        this->G.types[goal_locations[i][j].location] ==
-                            "Endpoint") {
-                        this->aisle_usage[this->G.aisle_entry(
-                            goal_locations[i][j].location)] -= 1;
-                    }
-                }
-            }
-        }
+    // if (!this->goal_locations.empty()) {
+    //     // Remove finished tasks from goal locations
+    //     for (int i = 0; i < this->num_of_drives; i++) {
+    //         for (int j = 0; j < (int)goal_locations[i].size(); j++) {
+    //             if (finished_tasks_id.find(goal_locations[i][j].id) !=
+    //                 finished_tasks_id.end()) {
+    //                 goal_locations[i][j].id = -1;  // reset goal id
+    //                 if (this->G.get_grid_type() ==
+    //                         SMARTGridType::ONE_BOT_PER_AISLE &&
+    //                     this->G.types[goal_locations[i][j].location] ==
+    //                         "Endpoint") {
+    //                     this->aisle_usage[this->G.aisle_entry(
+    //                         goal_locations[i][j].location)] -= 1;
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        // Remove goals that are already finished
-        for (int i = 0; i < this->num_of_drives; i++) {
-            goal_locations[i].erase(
-                remove_if(goal_locations[i].begin(), goal_locations[i].end(),
-                          [](const Task &t) { return t.id == -1; }),
-                goal_locations[i].end());
-        }
-    }
+    //     // Remove goals that are already finished
+    //     for (int i = 0; i < this->num_of_drives; i++) {
+    //         goal_locations[i].erase(
+    //             remove_if(goal_locations[i].begin(), goal_locations[i].end(),
+    //                       [](const Task &t) { return t.id == -1; }),
+    //             goal_locations[i].end());
+    //     }
+    // }
 
-    // Set new starts
-    for (int i = 0; i < this->num_of_drives; i++) {
-        // Obtain the starts
-        int row = static_cast<int>(std::get<0>(start_locs[i]));
-        int col = static_cast<int>(std::get<1>(start_locs[i]));
-        int ori = std::get<2>(start_locs[i]);
-        this->starts[i] = State(this->G.getCellId(row, col), 0);
-        if (this->consider_rotation) {
-            this->starts[i].orientation = this->G.ORI_SMART_TO_RHCR.at(ori);
-        }
-    }
+    // // Set new starts
+    // for (int i = 0; i < this->num_of_drives; i++) {
+    //     // Obtain the starts
+    //     int row = static_cast<int>(std::get<0>(start_locs[i]));
+    //     int col = static_cast<int>(std::get<1>(start_locs[i]));
+    //     int ori = std::get<2>(start_locs[i]);
+    //     this->starts[i] = State(this->G.getCellId(row, col), 0);
+    //     if (this->consider_rotation) {
+    //         this->starts[i].orientation = this->G.ORI_SMART_TO_RHCR.at(ori);
+    //     }
+    // }
 }
 
 void SMARTSystem::initialize_goal_locations() {
@@ -185,178 +189,186 @@ int SMARTSystem::sample_workstation() {
 }
 
 int SMARTSystem::gen_next_goal(int agent_id, bool repeat_last_goal) {
-    int next = -1;
-    if (!this->random_task && !this->tasks[agent_id].empty()) {
-        Task next = this->tasks[agent_id].front();
-        this->tasks[agent_id].pop_front();
-        return next.location;  // Only take the location of the task
-    }
+    throw std::runtime_error("SMARTSystem::gen_next_goal is not implemented. "
+                             "Please implement this function for SMARTSystem.");
+    // int next = -1;
+    // if (!this->random_task && !this->tasks[agent_id].empty()) {
+    //     Task next = this->tasks[agent_id].front();
+    //     this->tasks[agent_id].pop_front();
+    //     return next.location;  // Only take the location of the task
+    // }
 
-    // Under w mode, alternate goal locations between workstations and endpoints
+    // // Under w mode, alternate goal locations between workstations and
+    // endpoints
 
-    if (this->next_goal_type[agent_id] == "w") {
-        if (repeat_last_goal) {
-            next = G.endpoints[rand() % (int)G.endpoints.size()];
-            // next = this->sample_end_points();
-        } else {
-            next = sample_workstation();
-            this->next_goal_type[agent_id] = "e";
-        }
-    } else if (this->next_goal_type[agent_id] == "e") {
-        if (repeat_last_goal) {
-            next = sample_workstation();
-        } else {
-            // next = this->sample_end_points();
-            // if (this->G.get_grid_type() == SMARTGridType::REGULAR)
-            next = G.endpoints[rand() % (int)G.endpoints.size()];
-            // else if (this->G.get_grid_type() ==
-            //          SMARTGridType::ONE_BOT_PER_AISLE) {
-            //     // Sample an endpoint from the aisle with the smallest number
-            //     // of aisle_usage, break ties randomly
-            //     int min_aisle_id = select_min_key_random_tie(
-            //         this->aisle_usage, this->seed);
-            //     // Sample an endpoint from the aisle with the smallest usage
-            //     auto aisle = this->G.get_aisle(min_aisle_id);
-            //     int idx = rand() % (int)aisle.size();
-            //     auto it = aisle.begin();
-            //     std::advance(it, idx);
-            //     next = *it;
-            // }
-            this->next_goal_type[agent_id] = "w";
-        }
-    } else {
-        // std::cout << "error! next goal type is not w or e, but "
-        //           << this->next_goal_type[agent_id] << std::endl;
-        spdlog::error(
-            "SMARTSystem::gen_next_goal: next goal type is not w or e, but {}",
-            this->next_goal_type[agent_id]);
-        exit(1);
-    }
+    // if (this->next_goal_type[agent_id] == "w") {
+    //     if (repeat_last_goal) {
+    //         next = G.endpoints[rand() % (int)G.endpoints.size()];
+    //         // next = this->sample_end_points();
+    //     } else {
+    //         next = sample_workstation();
+    //         this->next_goal_type[agent_id] = "e";
+    //     }
+    // } else if (this->next_goal_type[agent_id] == "e") {
+    //     if (repeat_last_goal) {
+    //         next = sample_workstation();
+    //     } else {
+    //         // next = this->sample_end_points();
+    //         // if (this->G.get_grid_type() == SMARTGridType::REGULAR)
+    //         next = G.endpoints[rand() % (int)G.endpoints.size()];
+    //         // else if (this->G.get_grid_type() ==
+    //         //          SMARTGridType::ONE_BOT_PER_AISLE) {
+    //         //     // Sample an endpoint from the aisle with the smallest
+    //         number
+    //         //     // of aisle_usage, break ties randomly
+    //         //     int min_aisle_id = select_min_key_random_tie(
+    //         //         this->aisle_usage, this->seed);
+    //         //     // Sample an endpoint from the aisle with the smallest
+    //         usage
+    //         //     auto aisle = this->G.get_aisle(min_aisle_id);
+    //         //     int idx = rand() % (int)aisle.size();
+    //         //     auto it = aisle.begin();
+    //         //     std::advance(it, idx);
+    //         //     next = *it;
+    //         // }
+    //         this->next_goal_type[agent_id] = "w";
+    //     }
+    // } else {
+    //     // std::cout << "error! next goal type is not w or e, but "
+    //     //           << this->next_goal_type[agent_id] << std::endl;
+    //     spdlog::error(
+    //         "SMARTSystem::gen_next_goal: next goal type is not w or e, but
+    //         {}", this->next_goal_type[agent_id]);
+    //     exit(1);
+    // }
 
-    return next;
+    // return next;
 }
 
 void SMARTSystem::update_goal_locations() {
-    if (!this->rule_based_called)
-        new_agents.clear();
+    throw std::runtime_error(
+        "SMARTSystem::update_goal_locations is not implemented. "
+        "Please implement this function for SMARTSystem.");
+    // if (!this->rule_based_called)
+    //     new_agents.clear();
 
-    // Initialize next_goal_type
-    if (this->next_goal_type.empty()) {
-        for (int i = 0; i < num_of_drives; i++) {
-            int start_loc = this->starts[i].location;
-            // If start from workstation, next goal is endpoint
-            if (G.types[start_loc] == "Workstation") {
-                this->next_goal_type.push_back("e");
-            }
-            // If start from endpoint, next goal is workstation
-            else if (G.types[start_loc] == "Endpoint") {
-                this->next_goal_type.push_back("w");
-            }
-            // Otherwise, randomize the first goal
-            else {
-                // Randomly choose a goal location and infer its type
-                int tmp_goal_loc =
-                    G.task_locations[rand() %
-                                     static_cast<int>(G.task_locations.size())];
-                if (G.types[tmp_goal_loc] == "Workstation") {
-                    this->next_goal_type.push_back("w");
-                } else if (G.types[tmp_goal_loc] == "Endpoint") {
-                    this->next_goal_type.push_back("e");
-                } else {
-                    std::cout << "ERROR in update_goal_locations()"
-                              << std::endl;
-                    std::cout << "The fiducial type at start=" << start_loc
-                              << " should not be " << G.types[start_loc]
-                              << std::endl;
-                    exit(-1);
-                }
-                // this->next_goal_type.push_back("w");
-            }
-        }
-    }
+    // // Initialize next_goal_type
+    // if (this->next_goal_type.empty()) {
+    //     for (int i = 0; i < num_of_drives; i++) {
+    //         int start_loc = this->starts[i].location;
+    //         // If start from workstation, next goal is endpoint
+    //         if (G.types[start_loc] == "Workstation") {
+    //             this->next_goal_type.push_back("e");
+    //         }
+    //         // If start from endpoint, next goal is workstation
+    //         else if (G.types[start_loc] == "Endpoint") {
+    //             this->next_goal_type.push_back("w");
+    //         }
+    //         // Otherwise, randomize the first goal
+    //         else {
+    //             // Randomly choose a goal location and infer its type
+    //             int tmp_goal_loc =
+    //                 G.task_locations[rand() %
+    //                                  static_cast<int>(G.task_locations.size())];
+    //             if (G.types[tmp_goal_loc] == "Workstation") {
+    //                 this->next_goal_type.push_back("w");
+    //             } else if (G.types[tmp_goal_loc] == "Endpoint") {
+    //                 this->next_goal_type.push_back("e");
+    //             } else {
+    //                 std::cout << "ERROR in update_goal_locations()"
+    //                           << std::endl;
+    //                 std::cout << "The fiducial type at start=" << start_loc
+    //                           << " should not be " << G.types[start_loc]
+    //                           << std::endl;
+    //                 exit(-1);
+    //             }
+    //             // this->next_goal_type.push_back("w");
+    //         }
+    //     }
+    // }
 
-    // RHCR Algorithm
-    for (int k = 0; k < num_of_drives; k++) {
-        int curr = starts[k].location;  // current location
-        Task goal;                      // The last goal location
-        if (goal_locations[k].empty()) {
-            // goal = make_tuple(curr, 0, 0);
-            goal = Task(curr, -1, 0, 0);
-        } else {
-            goal = goal_locations[k].back();
-        }
-        double min_timesteps = 0;
-        int prev_loc = curr;
-        for (const auto &g : goal_locations[k]) {
-            min_timesteps += G.get_Manhattan_distance(g.location, prev_loc);
-            prev_loc = g.location;
-        }
-        // double min_timesteps = G.get_Manhattan_distance((goal.location),
-        // curr);
-        while (min_timesteps <= simulation_window ||
-               goal_locations[k].size() < 2)
-        // The agent might finish its tasks during the next planning
-        // horizon
-        {
-            // assign a new task
-            Task next;
-            if (G.types[goal.location] == "Endpoint" ||
-                G.types[goal.location] == "Workstation" ||
-                G.types[goal.location] == "Travel") {
-                // next = make_tuple(this->gen_next_goal(k), 0, 0);
-                next = Task(this->gen_next_goal(k), -1, 0, 0);
-                while (next == goal) {
-                    // next = make_tuple(
-                    //     this->gen_next_goal(k, true), 0, 0);
-                    next = Task(this->gen_next_goal(k, true), -1, 0, 0);
-                }
-                if (this->G.get_grid_type() ==
-                        SMARTGridType::ONE_BOT_PER_AISLE &&
-                    G.types[next.location] == "Endpoint") {
-                    // If the next goal is an endpoint, increment the aisle
-                    // usage for the aisle that contains this endpoint
-                    int aisle_id = this->G.aisle_entry(next.location);
-                    this->aisle_usage[aisle_id] += 1;
-                }
-            } else {
-                std::cout << "ERROR in update_goal_function()" << std::endl;
-                std::cout << "The fiducial type at curr=" << curr
-                          << " should not be " << G.types[curr] << std::endl;
-                exit(-1);
-            }
-            next.id = task_id;
-            task_id += 1;  // Increment the global task ID
-            goal_locations[k].emplace_back(next);
-            min_timesteps +=
-                G.get_Manhattan_distance(next.location, goal.location);
-            goal = next;
-        }
-    }
+    // // RHCR Algorithm
+    // for (int k = 0; k < num_of_drives; k++) {
+    //     int curr = starts[k].location;  // current location
+    //     Task goal;                      // The last goal location
+    //     if (goal_locations[k].empty()) {
+    //         // goal = make_tuple(curr, 0, 0);
+    //         goal = Task(curr, -1, 0, 0);
+    //     } else {
+    //         goal = goal_locations[k].back();
+    //     }
+    //     double min_timesteps = 0;
+    //     int prev_loc = curr;
+    //     for (const auto &g : goal_locations[k]) {
+    //         min_timesteps += G.get_Manhattan_distance(g.location, prev_loc);
+    //         prev_loc = g.location;
+    //     }
+    //     // double min_timesteps = G.get_Manhattan_distance((goal.location),
+    //     // curr);
+    //     while (min_timesteps <= simulation_window ||
+    //            goal_locations[k].size() < 2)
+    //     // The agent might finish its tasks during the next planning
+    //     // horizon
+    //     {
+    //         // assign a new task
+    //         Task next;
+    //         if (G.types[goal.location] == "Endpoint" ||
+    //             G.types[goal.location] == "Workstation" ||
+    //             G.types[goal.location] == "Travel") {
+    //             // next = make_tuple(this->gen_next_goal(k), 0, 0);
+    //             next = Task(this->gen_next_goal(k), -1, 0, 0);
+    //             while (next == goal) {
+    //                 // next = make_tuple(
+    //                 //     this->gen_next_goal(k, true), 0, 0);
+    //                 next = Task(this->gen_next_goal(k, true), -1, 0, 0);
+    //             }
+    //             if (this->G.get_grid_type() ==
+    //                     SMARTGridType::ONE_BOT_PER_AISLE &&
+    //                 G.types[next.location] == "Endpoint") {
+    //                 // If the next goal is an endpoint, increment the aisle
+    //                 // usage for the aisle that contains this endpoint
+    //                 int aisle_id = this->G.aisle_entry(next.location);
+    //                 this->aisle_usage[aisle_id] += 1;
+    //             }
+    //         } else {
+    //             std::cout << "ERROR in update_goal_function()" << std::endl;
+    //             std::cout << "The fiducial type at curr=" << curr
+    //                       << " should not be " << G.types[curr] << std::endl;
+    //             exit(-1);
+    //         }
+    //         next.id = task_id;
+    //         task_id += 1;  // Increment the global task ID
+    //         goal_locations[k].emplace_back(next);
+    //         min_timesteps +=
+    //             G.get_Manhattan_distance(next.location, goal.location);
+    //         goal = next;
+    //     }
+    // }
 
-    // Log the current start and goal locations in the format of () -> () -> ...
-    if (screen > 0) {
-        // cout << "SMARTSystem::update_goal_locations: "
-        //      << "Current start and goal locations:" << endl;
-        spdlog::info("Current start and goal locations:");
-        this->print_mapf_instance(this->starts, this->goal_locations);
-        if (screen > 1) {
-            // Check for consecutive duplicate goals for each agent
-            for (int i = 0; i < num_of_drives; i++) {
-                if (goal_locations[i].size() > 1) {
-                    auto &goals = goal_locations[i];
-                    for (size_t j = 1; j < goals.size(); j++) {
-                        if (goals[j].location == goals[j - 1].location) {
-                            spdlog::warn(
-                                "Agent {} has consecutive duplicate goals at "
-                                "location ({}, {})",
-                                i, G.getRowCoordinate(goals[j].location),
-                                G.getColCoordinate(goals[j].location));
-                        }
-                    }
-                }
-            }
-        }
-    }
+    // // Log the current start and goal locations in the format of () -> () ->
+    // ... if (screen > 0) {
+    //     // cout << "SMARTSystem::update_goal_locations: "
+    //     //      << "Current start and goal locations:" << endl;
+    //     spdlog::info("Current start and goal locations:");
+    //     this->print_mapf_instance(this->starts, this->goal_locations);
+    //     if (screen > 1) {
+    //         // Check for consecutive duplicate goals for each agent
+    //         for (int i = 0; i < num_of_drives; i++) {
+    //             if (goal_locations[i].size() > 1) {
+    //                 auto &goals = goal_locations[i];
+    //                 for (size_t j = 1; j < goals.size(); j++) {
+    //                     if (goals[j].location == goals[j - 1].location) {
+    //                         spdlog::warn(
+    //                             "Agent {} has consecutive duplicate goals at
+    //                             " "location ({}, {})", i,
+    //                             G.getRowCoordinate(goals[j].location),
+    //                             G.getColCoordinate(goals[j].location));
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 tuple<vector<double>, double, double> SMARTSystem::edge_pair_usage_mean_std(
@@ -744,15 +756,40 @@ json SMARTSystem::simulate(int simulation_time) {
             sleep(1);
             continue;
         }
-        auto commit_cut =
-            result_json["robots_location"]
-                .get<std::vector<std::tuple<double, double, int>>>();
-        auto new_finished_tasks_id =
-            result_json["new_finished_tasks"].get<std::set<int>>();
+        // auto commit_cut =
+        //     result_json["robots_location"]
+        //         .get<std::vector<std::tuple<double, double, int>>>();
+        // auto new_finished_tasks_id =
+        //     result_json["new_finished_tasks"].get<std::set<int>>();
 
         // Update start locations
-        update_start_locations(commit_cut, new_finished_tasks_id);
-        update_goal_locations();
+        if (!result_json.contains("mapf_instance")) {
+            spdlog::error(
+                "SMARTSystem::simulate: mapf_instance not found in the JSON "
+                "from server. Retrying...");
+            exit(1);
+        }
+
+        if (!result_json["mapf_instance"].contains("starts") ||
+            !result_json["mapf_instance"].contains("goals")) {
+            spdlog::error(
+                "SMARTSystem::simulate: starts or goals not found in the "
+                "mapf_instance from server. Retrying...");
+            exit(1);
+        }
+        json mapf_instance = result_json["mapf_instance"];
+        this->starts = mapf_instance.at("starts").get<vector<State>>();
+        // Update orientation of start location if the planner does not consider
+        // rotation
+        if (!this->consider_rotation) {
+            for (auto &s : this->starts) {
+                s.orientation = -1;
+            }
+        }
+        this->goal_locations =
+            mapf_instance.at("goals").get<vector<vector<Task>>>();
+        // update_start_locations(commit_cut, new_finished_tasks_id);
+        // update_goal_locations();
         solve();
 
         json new_plan_json = {
@@ -766,7 +803,7 @@ json SMARTSystem::simulate(int simulation_time) {
             // Tmp: Pass the current MAPF instance to the backup planner if the
             // planner is not successful
             // TODO: Remove this after the task assigner is migrated to server.
-            {"mapf_instance", this->convert_mapf_instance_to_smart()},
+            // {"mapf_instance", this->convert_mapf_instance_to_smart()},
         };
 
         client.call("add_plan", new_plan_json.dump());

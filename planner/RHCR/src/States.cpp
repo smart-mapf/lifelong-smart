@@ -28,6 +28,15 @@ std::ostream & operator << (std::ostream &out, const Path &path)
     return out;
 }
 
+void from_json(const json &j, State &s)
+{
+    j.at("location").get_to(s.location);
+    j.at("timestep").get_to(s.timestep);
+    j.at("orientation").get_to(s.orientation);
+    j.at("is_tasking_wait").get_to(s.is_tasking_wait);
+    j.at("is_rotating").get_to(s.is_rotating);
+}
+
 void to_json(json& j, const State& s)
 {
     j = json{
@@ -38,3 +47,4 @@ void to_json(json& j, const State& s)
         {"is_rotating", s.is_rotating}
     };
 }
+

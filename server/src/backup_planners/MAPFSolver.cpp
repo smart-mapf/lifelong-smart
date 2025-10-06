@@ -134,26 +134,26 @@ vector<vector<tuple<int, int, double, int>>> MAPFSolver::convert_path_to_smart(
     return new_mapf_plan;
 }
 
-void MAPFSolver::print_mapf_instance(vector<State> starts_,
-                                     vector<vector<Task>> goals_) const {
-    for (int i = 0; i < starts_.size(); i++) {
-        cout << "Agent " << i << ": ";
-        int start_x = G.getRowCoordinate(starts_[i].location);
-        int start_y = G.getColCoordinate(starts_[i].location);
-        cout << "(" << start_x << ", " << start_y << ", "
-             << starts_[i].orientation << ", t = " << starts_[i].timestep
-             << ") => ";
-        for (const auto& goal : goals_[i]) {
-            int goal_x = G.getRowCoordinate(goal.location);
-            int goal_y = G.getColCoordinate(goal.location);
-            int wait_t = goal.task_wait_time;
-            cout << "(" << goal_x << ", " << goal_y << ", "
-                 << this->G.types[goal.location] << ", "
-                 << "wait: " << wait_t << ") -> ";
-        }
-        cout << endl;
-    }
-}
+// void MAPFSolver::print_mapf_instance(vector<State> starts_,
+//                                      vector<vector<Task>> goals_) const {
+//     for (int i = 0; i < starts_.size(); i++) {
+//         cout << "Agent " << i << ": ";
+//         int start_x = G.getRowCoordinate(starts_[i].location);
+//         int start_y = G.getColCoordinate(starts_[i].location);
+//         cout << "(" << start_x << ", " << start_y << ", "
+//              << starts_[i].orientation << ", t = " << starts_[i].timestep
+//              << ") => ";
+//         for (const auto& goal : goals_[i]) {
+//             int goal_x = G.getRowCoordinate(goal.location);
+//             int goal_y = G.getColCoordinate(goal.location);
+//             int wait_t = goal.task_wait_time;
+//             cout << "(" << goal_x << ", " << goal_y << ", "
+//                  << this->G.types[goal.location] << ", "
+//                  << "wait: " << wait_t << ") -> ";
+//         }
+//         cout << endl;
+//     }
+// }
 
 bool MAPFSolver::congested() const {
     // Count the number of agents that are not making progress in the current
