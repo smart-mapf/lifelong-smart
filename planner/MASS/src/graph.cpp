@@ -44,21 +44,6 @@ double Graph::getHeuristic(vector<Task> goals, int start_loc, orient start_ori,
     return h;
 }
 
-double Graph::getHeuristicOneGoalPebbleMotion(int goal_loc, int start_loc,
-                                              orient start_ori) const {
-    if (d_heuristics.find(goal_loc) == d_heuristics.end()) {
-        spdlog::error("Error: goal_loc = {} not found in d_heuristics.",
-                      goal_loc);
-        exit(1);
-    }
-    if (start_ori != orient::None)
-        throw std::runtime_error(
-            "Orientation is not supported in getHeuristicOneGoalPebbleMotion");
-    else {
-        return d_heuristics.at(goal_loc)[start_loc];
-    }
-}
-
 bool Graph::loadMapFromBench() {
     ifstream myfile(map_fname.c_str());
     if (!myfile.is_open())
@@ -395,17 +380,6 @@ list<int> Graph::getNeighbors(int curr) const {
     return neighbors;
 }
 
-// Get inverse neighbors of the current location, assuming pebble motion
-list<int> Graph::getInverseNeighborsPebbleMotion(int curr) const {
-    list<int> neighbors;
-    for (int d : this->move) {
-        int next = curr - d;
-        if (InvValidMove(curr, next))
-            neighbors.emplace_back(next);
-    }
-    return neighbors;
-}
-
 /**
  * @brief Get the neighbor for heuristic function
  *
@@ -622,15 +596,6 @@ void Graph::computeHeuristics() {
             t.join();
         }
     }
-
-    // Compute the heuristics that consider pebble motion model. Used by PIBT
-    spdlog::info("Computing heuristics for pebble motion...");
-    for (int loc : h_locations) {
-        // Compute heuristics for each free location
-        vector<double> d_heuristics_for_loc;
-        d_heuristics_for_loc = computeHeuristicsOneLocPebbleMotion(loc);
-        this->d_heuristics[loc] = d_heuristics_for_loc;
-    }
 }
 
 /**
@@ -746,97 +711,4 @@ bool Graph::BackDijkstra(int root_location) {
 
     // return curr_heuristic;
     return true;
-}
-
-// Compute backward dijkstra heuristics from a single location, assuming pebble
-// motion
-vector<double> Graph::computeHeuristicsOneLocPebbleMotion(int root_location) {
-    struct Node {
-        int location;
-        double value;  // g-value (cost from root to this node)
-        int duration;  // path duration.
-
-        Node() = default;
-        Node(int location, double value, int duration)
-            : location(location), value(value), duration(duration) {
-        }
-        // the following is used to comapre nodes in the OPEN list
-        struct compare_node {
-            // returns true if n1 > n2 (note -- this gives us *min*-heap).
-            bool operator()(const Node* n1, const Node* n2) const {
-                return n1->value >= n2->value;
-            }
-        };  // used by OPEN (heap) to compare nodes (top of the heap has min
-            // f-val, and then highest g-val)
-
-        struct EqNode {
-            bool operator()(const Node* n1, const Node* n2) const {
-                return (n1 == n2) || (n1 && n2 && n1->location == n2->location);
-            }
-        };
-
-        // The following is used to generate the hash value of a node
-        struct Hasher {
-            std::size_t operator()(const Node* n) const {
-                return std::hash<int>()(n->location);
-            }
-        };
-
-        fibonacci_heap<Node*, compare<Node::compare_node>>::handle_type
-            open_handle;
-    };
-
-    vector<double> curr_heuristics;
-
-    curr_heuristics.resize(this->map_size, DBL_MAX);
-
-    // std::cout << "start computing h for loc = "<< root_location <<std::endl;
-    fibonacci_heap<Node*, compare<Node::compare_node>> heap;
-    unordered_set<Node*, Node::Hasher, Node::EqNode> nodes;
-
-    Node* root = new Node(root_location, 0, 0);
-    root->open_handle = heap.push(root);  // add root to heap
-    nodes.insert(root);                   // add root to hash_table (nodes)
-
-    while (!heap.empty()) {
-        Node* curr = heap.top();
-        heap.pop();
-        for (auto next_state :
-             this->getInverseNeighborsPebbleMotion(curr->location)) {
-            double curr_weight = this->getWeight(next_state, curr->location);
-            double next_g_val;
-            int next_duration;
-
-            next_g_val = curr->value + curr_weight;
-            next_duration = curr->duration + 1;  // increment duration by 1
-
-            Node* next = new Node(next_state, next_g_val, next_duration);
-            auto it = nodes.find(next);
-            if (it == nodes.end()) {  // add the newly generated node to heap
-                                      // and hash table
-                next->open_handle = heap.push(next);
-                nodes.insert(next);
-            } else {  // update existing node's g_val if needed (only in the
-                      // heap)
-                delete (next);  // not needed anymore -- we already generated it
-                                // before
-                Node* existing_next = *it;
-                if (existing_next->value > next_g_val) {
-                    existing_next->value = next_g_val;
-                    heap.increase(existing_next->open_handle);
-                }
-            }
-        }
-    }
-    // iterate over all nodes and populate the distances
-    for (auto it = nodes.begin(); it != nodes.end(); it++) {
-        Node* s = *it;
-        curr_heuristics[s->location] =
-            std::min(s->value, curr_heuristics[s->location]);
-        delete (s);
-    }
-    nodes.clear();
-    heap.clear();
-
-    return curr_heuristics;
 }

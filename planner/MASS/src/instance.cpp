@@ -2,52 +2,25 @@
 
 int RANDOM_WALK_STEPS = 100000;
 
-Instance::Instance(shared_ptr<Graph> graph,
-                   shared_ptr<TaskAssigner> task_assigner,
-                   shared_ptr<RobotMotion> bot_motion,
-                   vector<tuple<double, double, int>>& start_locs,
-                   set<int> finished_tasks_id, bool use_partial_expansion,
+Instance::Instance(shared_ptr<Graph> graph, shared_ptr<RobotMotion> bot_motion,
+                   json mapf_instance, bool use_partial_expansion,
                    int used_sps_solver, int screen, double simulation_window)
     : graph(graph),
-      task_assigner(task_assigner),
       bot_motion(bot_motion),
-      num_of_agents(static_cast<int>(start_locs.size())),
       use_pe(use_partial_expansion),
       use_sps_type(used_sps_solver),
       screen(screen),
       simulation_window(simulation_window) {
-    // bool succ = loadMap();
-    // if (!succ)
-    // {
-    // 	if (num_of_rows > 0 && num_of_cols > 0 && num_of_obstacles >= 0 &&
-    // 		num_of_obstacles < num_of_rows * num_of_cols) // generate random
-    // grid
-    // 	{
-    // 		generateConnectedRandomGrid(num_of_rows, num_of_cols,
-    // num_of_obstacles); 		saveMap();
-    // 	}
-    // 	else
-    // 	{
-    // 		cerr << "Map file " << map_fname << " not found." << endl;
-    // 		exit(-1);
-    // 	}
-    // }
+    this->num_of_agents = mapf_instance["starts"].size();
     GetRawReservationTable();
-    bool succ = loadAgents(start_locs, finished_tasks_id);
+    bool succ = loadAgents(mapf_instance);
     if (!succ) {
         spdlog::error("Failed to load agents.");
         if (num_of_agents > 0) {
             generateRandomAgents();
             // saveAgents();
         }
-        // else {
-        //     cerr << "Agent file " << agent_fname << " not found." << endl;
-        //     exit(-1);
-        // }
     }
-    // for (int i = 0; i < num_of_agents; i++) {
-    //     agents[i].id = i;
-    // }
 }
 
 Instance::~Instance() {
@@ -163,236 +136,30 @@ void Instance::generateRandomAgents() {
                 cout << endl;
             }
         }
-
-        // int k = 0;
-        // while (k < num_of_agents) {
-        //     int x = rand() % this->graph->num_of_rows,
-        //         y = rand() % this->graph->num_of_cols;
-        //     if (k % 2 == 0)
-        //         y = this->graph->num_of_cols - y - 1;
-        //     int start = this->graph->linearizeCoordinate(x, y);
-        //     if (starts[start])
-        //         continue;
-        //     // update start
-
-        //     agents[k] = Agent(start, 0);
-        //     starts[start] = true;
-
-        //     k++;
-        // }
-        // // Choose random goal locations
-        // k = 0;
-        // while (k < num_of_agents) {
-        //     int x = rand() % this->graph->num_of_rows,
-        //         y = rand() % this->graph->num_of_cols;
-        //     if (k % 2 == 1)
-        //         y = this->graph->num_of_cols - y - 1;
-        //     int goal = this->graph->linearizeCoordinate(x, y);
-        //     if (goals[goal])
-        //         continue;
-        //     // update goal
-        //     agents[k].goal_location = goal;
-        //     goals[goal] = true;
-        //     k++;
-        // }
     }
 }
 
-// bool Instance::addObstacle(int obstacle) {
-//     if (my_map[obstacle])
-//         return false;
-//     my_map[obstacle] = true;
-//     int obstacle_x = this->graph->getRowCoordinate(obstacle);
-//     int obstacle_y = this->graph->getColCoordinate(obstacle);
-//     int x[4] = {obstacle_x, obstacle_x + 1, obstacle_x, obstacle_x - 1};
-//     int y[4] = {obstacle_y - 1, obstacle_y, obstacle_y + 1, obstacle_y};
-//     int start = 0;
-//     int goal = 1;
-//     while (start < 3 && goal < 4) {
-//         if (x[start] < 0 || x[start] >= num_of_rows || y[start] < 0 ||
-//             y[start] >= num_of_cols ||
-//             my_map[this->graph->linearizeCoordinate(x[start], y[start])])
-//             start++;
-//         else if (goal <= start)
-//             goal = start + 1;
-//         else if (x[goal] < 0 || x[goal] >= num_of_rows || y[goal] < 0 ||
-//                  y[goal] >= num_of_cols ||
-//                  my_map[this->graph->linearizeCoordinate(x[goal], y[goal])])
-//             goal++;
-//         else if (graph->isConnected(
-//                      this->graph->linearizeCoordinate(x[start], y[start]),
-//                      this->graph->linearizeCoordinate(
-//                          x[goal],
-//                          y[goal])))  // cannot find a path from start to goal
-//         {
-//             start = goal;
-//             goal++;
-//         } else {
-//             my_map[obstacle] = false;
-//             return false;
-//         }
-//     }
-//     return true;
-// }
+bool Instance::loadAgents(json mapf_instance) {
+    json starts_json = mapf_instance.at("starts");
+    json goals_json = mapf_instance.at("goals");
+    this->num_of_agents = starts_json.size();
+    this->agents.resize(this->num_of_agents);
 
-// void Instance::generateConnectedRandomGrid(int rows, int cols, int obstacles)
-// {
-// 	cout << "Generate a " << rows << " x " << cols << " grid with " <<
-// obstacles << " obstacles. " << endl; 	int i, j; 	num_of_rows =
-// rows + 2; 	num_of_cols = cols + 2; 	this->graph->map_size =
-// num_of_rows * num_of_cols; 	my_map.resize(this->graph->map_size, false);
-// 	// add padding
-// 	i = 0;
-// 	for (j = 0; j < num_of_cols; j++)
-// 		my_map[this->graph->linearizeCoordinate(i, j)] = true;
-// 	i = num_of_rows - 1;
-// 	for (j = 0; j < num_of_cols; j++)
-// 		my_map[this->graph->linearizeCoordinate(i, j)] = true;
-// 	j = 0;
-// 	for (i = 0; i < num_of_rows; i++)
-// 		my_map[this->graph->linearizeCoordinate(i, j)] = true;
-// 	j = num_of_cols - 1;
-// 	for (i = 0; i < num_of_rows; i++)
-// 		my_map[this->graph->linearizeCoordinate(i, j)] = true;
-
-// 	// add obstacles uniformly at random
-// 	i = 0;
-// 	while (i < obstacles)
-// 	{
-// 		int loc = rand() % this->graph->map_size;
-// 		if (addObstacle(loc))
-// 		{
-// 			printMap();
-// 			i++;
-// 		}
-// 	}
-// }
-
-// bool Instance::loadMap()
-// {
-// 	using namespace boost;
-// 	using namespace std;
-// 	ifstream myfile(map_fname.c_str());
-// 	if (!myfile.is_open())
-// 		return false;
-// 	string line;
-// 	tokenizer<char_separator<char>>::iterator beg;
-// 	getline(myfile, line);
-// 	if (line[0] == 't') // Nathan's benchmark
-// 	{
-// 		char_separator<char> sep(" ");
-// 		getline(myfile, line);
-// 		tokenizer<char_separator<char>> tok(line, sep);
-// 		beg = tok.begin();
-// 		beg++;
-// 		num_of_rows = atoi((*beg).c_str()); // read number of rows
-// 		getline(myfile, line);
-// 		tokenizer<char_separator<char>> tok2(line, sep);
-// 		beg = tok2.begin();
-// 		beg++;
-// 		num_of_cols = atoi((*beg).c_str()); // read number of cols
-// 		getline(myfile, line); // skip "map"
-// 	}
-// 	else // my benchmark
-// 	{
-// 		char_separator<char> sep(",");
-// 		tokenizer<char_separator<char>> tok(line, sep);
-// 		beg = tok.begin();
-// 		num_of_rows = atoi((*beg).c_str()); // read number of rows
-// 		beg++;
-// 		num_of_cols = atoi((*beg).c_str()); // read number of cols
-// 	}
-// 	this->graph->map_size = num_of_cols * num_of_rows;
-// 	my_map.resize(this->graph->map_size, false);
-// 	// read map (and start/goal locations)
-// 	for (int i = 0; i < num_of_rows; i++)
-// 	{
-// 		getline(myfile, line);
-// 		for (int j = 0; j < num_of_cols; j++)
-// 		{
-// 			my_map[this->graph->linearizeCoordinate(i, j)] =
-// (line[j] != '.');
-// 		}
-// 	}
-// 	myfile.close();
-// 	return true;
-// }
-bool Instance::loadAgents(
-    std::vector<std::tuple<double, double, int>>& start_locs,
-    set<int> finished_tasks_id) {
-    if (num_of_agents == 0) {
-        // cerr << "The number of agents should be larger than 0" << endl;
-        spdlog::error("The number of agents should be larger than 0");
-        exit(-1);
-    }
-
-    agents.resize(num_of_agents);
-    vector<int> start_locations(num_of_agents, -1);
-
-    // Obtain start locations
-    for (int i = 0; i < num_of_agents; i++) {
-        // Start loc and orientation
-        int row = static_cast<int>(std::get<0>(start_locs[i]));
-        int col = static_cast<int>(std::get<1>(start_locs[i]));
-        start_locations[i] = this->graph->linearizeCoordinate(row, col);
-    }
-
-    // Update goal locations
-    this->task_assigner->updateGoalLocations(start_locations,
-                                             finished_tasks_id);
-    vector<vector<Task>> goal_locations =
-        this->task_assigner->getGoalLocations();
-
-    // Print the start and goal locations
-    if (this->screen > 0) {
-        spdlog::info("Start to goal locations:");
-        for (int i = 0; i < num_of_agents; i++) {
-            int ori = std::get<2>(start_locs[i]);
-            cout << "Agent " << i << ": ("
-                 << graph->getCoordinate(start_locations[i]).first << ", "
-                 << graph->getCoordinate(start_locations[i]).second << ", "
-                 << this->graph->ORI_SMART_TO_MASS.at(ori) << ") => ";
-            for (const auto& task : goal_locations[i]) {
-                cout << "(" << graph->getCoordinate(task.loc).first << ", "
-                     << graph->getCoordinate(task.loc).second << ", "
-                     << graph->types[task.loc] << ", "
-                     << ") -> ";
-            }
-            cout << endl;
+    for (int i = 0; i < this->num_of_agents; i++) {
+        int start_loc = starts_json[i].at("location");
+        int start_ori = starts_json[i].at("orientation");
+        vector<Task> tasks;
+        for (const auto& goal : goals_json[i]) {
+            int task_loc = goal.at("location");
+            int task_id = goal.at("id");
+            tasks.push_back(Task(task_id, task_loc, orient::None));
         }
+        this->agents[i] =
+            Agent(start_loc, this->graph->ORI_RHCR_TO_MASS.at(start_ori), tasks,
+                  bot_motion);
     }
-
-    // Construct agents
-    for (int i = 0; i < num_of_agents; i++) {
-        if (goal_locations[i].empty()) {
-            spdlog::error("Agent {} has no goal locations assigned.", i);
-            return false;
-        }
-        int ori = std::get<2>(start_locs[i]);
-        agents[i] =
-            Agent(start_locations[i], this->graph->ORI_SMART_TO_MASS.at(ori),
-                  goal_locations[i], bot_motion);
-        agents[i].id = i;
-    }
-
     return true;
 }
-
-// void Instance::printAgents() const {
-//     for (int i = 0; i < num_of_agents; i++) {
-//         Agent curr_agent = agents[i];
-//         cout << "Agent " << i << " with id: " << curr_agent.id << " : S=("
-//              << this->graph->getRowCoordinate(curr_agent.start_location) <<
-//              ","
-//              << this->graph->getColCoordinate(curr_agent.start_location)
-//              << ") ; G=("
-//              << this->graph->getRowCoordinate(curr_agent.goal_location) <<
-//              ","
-//              << this->graph->getColCoordinate(curr_agent.goal_location) <<
-//              ")"
-//              << endl;
-//     }
-// }
 
 void Instance::saveAgents(string filename) const {
     ofstream myfile(filename);
