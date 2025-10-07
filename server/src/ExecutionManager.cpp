@@ -122,10 +122,14 @@ void ExecutionManager::setupBackupPlanner() {
 
 void ExecutionManager::setupTaskAssigner() {
     spdlog::info("Setting up task assigner...");
+    string task_file = this->_vm["task_file"].as<string>();
     if (this->task_assigner_type == "windowed") {
         this->task_assigner = make_shared<WindowedTaskAssigner>(
             this->G, this->screen, this->_vm["sim_window_timestep"].as<int>(),
-            this->numRobots, this->seed, this->_vm["task_file"].as<string>());
+            this->numRobots, this->seed, task_file);
+    } else if (this->task_assigner_type == "distinct_one_goal") {
+        this->task_assigner = make_shared<DistinctOneGoalTaskAssigner>(
+            this->G, this->screen, this->numRobots, this->seed, task_file);
     } else {
         spdlog::error("Task assigner type {} does not exist!",
                       this->task_assigner_type);
@@ -359,10 +363,11 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
     }
 
     // update backup tasks, if available
-    if (new_plan_json.contains("backup_tasks")) {
-        auto backup_tasks = new_plan_json["backup_tasks"].get<set<int>>();
-        this->adg->backup_tasks = backup_tasks;
-    }
+    // if (new_plan_json.contains("backup_tasks")) {
+    //     auto backup_tasks = new_plan_json["backup_tasks"].get<set<int>>();
+    //     this->adg->backup_tasks = backup_tasks;
+    // }
+    this->adg->backup_tasks = this->task_assigner->getBackupTasks();
 
     if (congested) {
         // Stop the server early.

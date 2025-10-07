@@ -150,89 +150,67 @@ Instance::Instance(shared_ptr<Graph> graph,
 // }
 
 // Update the goal locations
-bool Instance::loadAgents(
-    std::vector<std::tuple<double, double, int>>& start_locs,
-    set<int> finished_tasks_id) {
-    num_of_agents = static_cast<int>(start_locs.size());
-    if (num_of_agents == 0) {
-        cerr << "The number of agents should be larger than 0" << endl;
-        exit(-1);
-    }
-    start_locations.resize(num_of_agents);
-    // Generate start locations
-    for (int i = 0; i < num_of_agents; i++) {
-        int row = static_cast<int>(std::get<0>(start_locs[i]));
-        int col = static_cast<int>(std::get<1>(start_locs[i]));
-        start_locations[i] = this->graph->linearizeCoordinate(row, col);
-    }
+// bool Instance::loadAgents(
+//     std::vector<std::tuple<double, double, int>>& start_locs,
+//     set<int> finished_tasks_id) {
+//     num_of_agents = static_cast<int>(start_locs.size());
+//     if (num_of_agents == 0) {
+//         cerr << "The number of agents should be larger than 0" << endl;
+//         exit(-1);
+//     }
+//     start_locations.resize(num_of_agents);
+//     // Generate start locations
+//     for (int i = 0; i < num_of_agents; i++) {
+//         int row = static_cast<int>(std::get<0>(start_locs[i]));
+//         int col = static_cast<int>(std::get<1>(start_locs[i]));
+//         start_locations[i] = this->graph->linearizeCoordinate(row, col);
+//     }
 
-    this->task_assigner->updateGoalLocations(start_locations,
-                                             finished_tasks_id);
-    goal_locations = this->task_assigner->getGoalLocations();
+//     this->task_assigner->updateGoalLocations(start_locations,
+//                                              finished_tasks_id);
+//     goal_locations = this->task_assigner->getGoalLocations();
 
-    // if (goal_locations.size() != num_of_agents) {
-    //     goal_locations.resize(num_of_agents, Task(-1, -1));
-    // }
+//     // Print the start and goal locations
+//     if (this->screen > 0) {
+//         spdlog::info("Start to goal locations:");
+//         for (int i = 0; i < num_of_agents; i++) {
+//             spdlog::info("Agent {} : S=({}, {}) ; G=({}, {}, {})", i,
+//                          this->graph->getRowCoordinate(start_locations[i]),
+//                          this->graph->getColCoordinate(start_locations[i]),
+//                          this->graph->getRowCoordinate(goal_locations[i].loc),
+//                          this->graph->getColCoordinate(goal_locations[i].loc),
+//                          this->graph->types[goal_locations[i].loc]);
+//         }
+//         // cout << "Goal locations: ";
+//         // for (int i = 0; i < num_of_agents; i++) {
+//         //     cout << "a_" << i << ":("
+//         //          << this->graph->getRowCoordinate(goal_locations[i].loc)
+//         <<
+//         //          ","
+//         //          << this->graph->getColCoordinate(goal_locations[i].loc)
+//         //          << ", d_h="
+//         //          << this->graph
+//         // .d_heuristics[goal_locations[i].loc][start_locations[i]]
+//         //          << ") ";
+//         // }
+//         // cout << endl;
+//     }
+//     return true;
+// }
 
-    // // Remove finished tasks from goal locations
-    // set<int> unfinished_goal_locs;  // For duplicate checking
-    // for (int i = 0; i < num_of_agents; i++) {
-    //     if (finished_tasks_id.find(goal_locations[i].id) !=
-    //         finished_tasks_id.end()) {
-    //         goal_locations[i].id = -1;  // reset goal id
-    //     } else {
-    //         unfinished_goal_locs.insert(goal_locations[i].loc);
-    //     }
-    // }
+bool Instance::loadAgents(const json &mapf_instance) {
+    json starts_json = mapf_instance.at("starts");
+    json goals_json = mapf_instance.at("goals");
+    this->num_of_agents = starts_json.size();
+    this->start_locations.resize(this->num_of_agents);
+    this->goal_locations.resize(this->num_of_agents);
 
-    // // Generate new starts/goals
-    // for (int i = 0; i < num_of_agents; i++) {
-    //     // Obtain the starts
-    //     int row = static_cast<int>(std::get<0>(start_locs[i]));
-    //     int col = static_cast<int>(std::get<1>(start_locs[i]));
-    //     start_locations[i] = this->graph->linearizeCoordinate(row, col);
-
-    //     // generate a goal for the agent if it does not have one
-    //     if (goal_locations[i].id == -1) {
-    //         spdlog::info("Agent {} has no goal, generating a new one.", i);
-    //         int curr_goal = goal_locations[i].loc;
-    //         int next_goal;
-    //         bool back_up;
-    //         tie(next_goal, back_up) = this->task_assigner->genGoal(
-    //             unfinished_goal_locs, curr_goal, start_locations[i], i);
-    //         goal_locations[i] = Task(this->task_id, next_goal);
-    //         unfinished_goal_locs.insert(goal_locations[i].loc);
-    //         this->task_id++;
-    //     }
-    // }
-
-    // spdlog::info("Number of agents: {}", num_of_agents);
-    // spdlog::info("Number of goals: {}", goal_locations.size());
-    // spdlog::info("screen level: {}", this->screen);
-
-    // Print the start and goal locations
-    if (this->screen > 0) {
-        spdlog::info("Start to goal locations:");
-        for (int i = 0; i < num_of_agents; i++) {
-            spdlog::info("Agent {} : S=({}, {}) ; G=({}, {}, {})", i,
-                         this->graph->getRowCoordinate(start_locations[i]),
-                         this->graph->getColCoordinate(start_locations[i]),
-                         this->graph->getRowCoordinate(goal_locations[i].loc),
-                         this->graph->getColCoordinate(goal_locations[i].loc),
-                         this->graph->types[goal_locations[i].loc]);
-        }
-        // cout << "Goal locations: ";
-        // for (int i = 0; i < num_of_agents; i++) {
-        //     cout << "a_" << i << ":("
-        //          << this->graph->getRowCoordinate(goal_locations[i].loc) <<
-        //          ","
-        //          << this->graph->getColCoordinate(goal_locations[i].loc)
-        //          << ", d_h="
-        //          << this->graph
-        //                 .d_heuristics[goal_locations[i].loc][start_locations[i]]
-        //          << ") ";
-        // }
-        // cout << endl;
+    for (int i = 0; i < this->num_of_agents; i++) {
+        int start_loc = starts_json[i].at("location");
+        int task_loc = goals_json[i].begin()->at("location");
+        int task_id = goals_json[i].begin()->at("id");
+        this->start_locations[i] = start_loc;
+        this->goal_locations[i] = Task(task_id, task_loc);
     }
     return true;
 }

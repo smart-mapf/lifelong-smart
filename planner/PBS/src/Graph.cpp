@@ -423,7 +423,7 @@ void Graph::computeHeuristics() {
         this->d_heuristics[loc] = d_heuristics_for_loc;
     }
     if (this->screen > 0)
-        cout << "Heuristics computed." << endl;
+        spdlog::info("Heuristics computed.");
 }
 
 // Compute backward dijkstra heuristics from a single location

@@ -762,7 +762,6 @@ json SMARTSystem::simulate(int simulation_time) {
         // auto new_finished_tasks_id =
         //     result_json["new_finished_tasks"].get<std::set<int>>();
 
-        // Update start locations
         if (!result_json.contains("mapf_instance")) {
             spdlog::error(
                 "SMARTSystem::simulate: mapf_instance not found in the JSON "
@@ -778,6 +777,8 @@ json SMARTSystem::simulate(int simulation_time) {
             exit(1);
         }
         json mapf_instance = result_json["mapf_instance"];
+
+        // Update start locations
         this->starts = mapf_instance.at("starts").get<vector<State>>();
         // Update orientation of start location if the planner does not consider
         // rotation

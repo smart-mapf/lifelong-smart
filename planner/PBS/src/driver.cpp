@@ -123,27 +123,45 @@ int main(int argc, char** argv) {
             sleep(1);
             continue;
         }
-        auto commit_cut =
-            result_json["robots_location"]
-                .get<std::vector<std::tuple<double, double, int>>>();
-        auto new_finished_tasks_id =
-            result_json["new_finished_tasks"].get<std::set<int>>();
 
-        if (screen > 0) {
-            // printf("Agent locations:\n");
-            // for (auto loc : commit_cut) {
-            //     printf("%f %f\n", loc.first, loc.second);
-            // }
-
-            printf("New finished tasks:\n");
-            for (auto finish_task_id : new_finished_tasks_id) {
-                printf("%d,", finish_task_id);
-            }
-            printf("\n");
+        if (!result_json.contains("mapf_instance")) {
+            spdlog::error(
+                "SMARTSystem::simulate: mapf_instance not found in the JSON "
+                "from server. Retrying...");
+            exit(1);
         }
 
+        if (!result_json["mapf_instance"].contains("starts") ||
+            !result_json["mapf_instance"].contains("goals")) {
+            spdlog::error(
+                "SMARTSystem::simulate: starts or goals not found in the "
+                "mapf_instance from server. Retrying...");
+            exit(1);
+        }
+        json mapf_instance = result_json["mapf_instance"];
+
+        // auto commit_cut =
+        //     result_json["robots_location"]
+        //         .get<std::vector<std::tuple<double, double, int>>>();
+        // auto new_finished_tasks_id =
+        //     result_json["new_finished_tasks"].get<std::set<int>>();
+
+        // if (screen > 0) {
+        //     // printf("Agent locations:\n");
+        //     // for (auto loc : commit_cut) {
+        //     //     printf("%f %f\n", loc.first, loc.second);
+        //     // }
+
+        //     printf("New finished tasks:\n");
+        //     for (auto finish_task_id : new_finished_tasks_id) {
+        //         printf("%d,", finish_task_id);
+        //     }
+        //     printf("\n");
+        // }
+
         Instance instance(graph, task_assigner, screen, simulation_window);
-        instance.loadAgents(commit_cut, new_finished_tasks_id);
+        // instance.loadAgents(commit_cut, new_finished_tasks_id);
+        instance.loadAgents(mapf_instance);
         PBS pbs(instance, vm["sipp"].as<bool>(), screen);
         // run
         double runtime = 0;
@@ -163,24 +181,24 @@ int main(int argc, char** argv) {
         } else {
             pibt.clear();
             n_rule_based_calls += 1;
-            success =
-                pibt.run(instance.getStartStates(), instance.getGoalTasks());
-            new_mapf_plan = pibt.getPaths();
-            if (!success) {
-                spdlog::error("PIBT failed to find a solution.");
-                // If PIBT also fails, we will not send any plan to the server.
-                exit(-1);
-            }
+            // success =
+            //     pibt.run(instance.getStartStates(), instance.getGoalTasks());
+            // new_mapf_plan = pibt.getPaths();
+            // if (!success) {
+            //     spdlog::error("PIBT failed to find a solution.");
+            //     // If PIBT also fails, we will not send any plan to the server.
+            //     exit(-1);
+            // }
         }
 
         // Send new plan
         json stats = {{"n_mapf_calls", n_mapf_calls},
                       {"n_rule_based_calls", n_rule_based_calls}};
         json new_plan_json = {
-            {"success", success},
+            {"success", false},
             {"plan", new_mapf_plan},
             {"congested", congested(new_mapf_plan)},
-            {"backup_tasks", task_assigner->getBackupTasks()},
+            // {"backup_tasks", task_assigner->getBackupTasks()},
             {"stats", stats.dump()},
 
         };

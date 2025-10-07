@@ -10,6 +10,7 @@
 #include "backup_planners/SMARTGraph.h"
 #include "common.h"
 #include "task_assigners/BasicTaskAssigner.h"
+#include "task_assigners/DistinctOneGoalTaskAssigner.h"
 
 class ExecutionManager {
 public:

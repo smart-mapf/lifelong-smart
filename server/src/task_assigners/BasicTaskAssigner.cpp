@@ -108,8 +108,8 @@ void WindowedTaskAssigner::updateStartsAndGoals(
     // Remove finished goals
     if (screen > 0) {
         string new_finished_tasks = "New finished tasks: ";
-        for (const auto& task_id : finished_tasks_id) {
-            new_finished_tasks += std::to_string(task_id) + " ";
+        for (const auto& _task_id : finished_tasks_id) {
+            new_finished_tasks += std::to_string(_task_id) + " ";
         }
         spdlog::info(new_finished_tasks);
     }
@@ -215,8 +215,8 @@ void WindowedTaskAssigner::updateStartsAndGoals(
                               curr, G.types[curr]);
                 exit(-1);
             }
-            next.id = task_id;
-            task_id += 1;  // Increment the global task ID
+            next.id = this->task_id;
+            this->task_id += 1;  // Increment the global task ID
             goal_locations[k].emplace_back(next);
             min_timesteps +=
                 G.get_Manhattan_distance(next.location, goal.location);

@@ -1,3 +1,4 @@
+#pragma once
 #include "backup_planners/SMARTGraph.h"
 #include "backup_planners/Task.h"
 #include "backup_planners/common.h"
@@ -15,6 +16,9 @@ public:
     }
     vector<vector<Task>> getGoalLocations() const {
         return goal_locations;
+    }
+    set<int> getBackupTasks() const {
+        return backup_tasks;
     }
     json getMAPFInstanceJSON() const;
 
@@ -54,8 +58,14 @@ protected:
     // Remember the next goal type for each agent, "w" for workstation, "e" for
     // endpoint
     std::vector<string> next_goal_type;
+
+    // Remember the tasks that are backup tasks, i.e., the agents are going to
+    // these tasks because their original goals are occupied by other agents.
+    set<int> backup_tasks;
 };
 
+// Assign each agent a sequence of goals, making sure that it has enough goals
+// within the `simulation_window`, specified in timestpeps.
 class WindowedTaskAssigner : public BasicTaskAssigner {
 public:
     WindowedTaskAssigner() = default;

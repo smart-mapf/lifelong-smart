@@ -111,8 +111,9 @@ public:
         return num_of_agents;
     }
 
-    bool loadAgents(std::vector<std::tuple<double, double, int>>& start_locs,
-                    set<int> finished_tasks_id);
+    bool loadAgents(const json& mapf_instance);
+    // bool loadAgents(std::vector<std::tuple<double, double, int>>& start_locs,
+    //                 set<int> finished_tasks_id);
     // void printMap() const;
     // void saveInstance();
 

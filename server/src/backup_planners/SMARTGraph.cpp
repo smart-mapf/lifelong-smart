@@ -131,6 +131,12 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
             int id = this->cols * i + j;
             this->weights[id].clear();
             this->weights[id].resize(5, WEIGHT_MAX);
+
+            // All non-obstacle locations are free locations
+            if (line[j] != '@') {
+                this->free_locations.push_back(id);
+            }
+
             if (line[j] == '@')  // obstacle
             {
                 this->types[id] = "Obstacle";
@@ -567,24 +573,27 @@ void SMARTGrid::preprocessing(bool consider_rotation, std::string log_dir) {
         myfile.close();
     }
     if (!succ) {
-        for (auto endpoint : this->endpoints) {
-            this->heuristics[endpoint] = compute_heuristics(endpoint);
-            this->pebble_motion_heuristics[endpoint] =
-                compute_pebble_motion_heuristics(endpoint);
-        }
+        // for (auto endpoint : this->endpoints) {
+        //     this->heuristics[endpoint] = compute_heuristics(endpoint);
+        //     this->pebble_motion_heuristics[endpoint] =
+        //         compute_pebble_motion_heuristics(endpoint);
+        // }
 
-        // Under w mode, home location is endpoints but need additional
-        // heuristics to workstations
-        for (auto workstation : this->workstations) {
-            this->heuristics[workstation] = compute_heuristics(workstation);
-            this->pebble_motion_heuristics[workstation] =
-                compute_pebble_motion_heuristics(workstation);
-        }
+        // for (auto workstation : this->workstations) {
+        //     this->heuristics[workstation] = compute_heuristics(workstation);
+        //     this->pebble_motion_heuristics[workstation] =
+        //         compute_pebble_motion_heuristics(workstation);
+        // }
 
-        for (auto aisle_id : this->aisle_entries) {
-            this->heuristics[aisle_id] = compute_heuristics(aisle_id);
-            this->pebble_motion_heuristics[aisle_id] =
-                compute_pebble_motion_heuristics(aisle_id);
+        // for (auto aisle_id : this->aisle_entries) {
+        //     this->heuristics[aisle_id] = compute_heuristics(aisle_id);
+        //     this->pebble_motion_heuristics[aisle_id] =
+        //         compute_pebble_motion_heuristics(aisle_id);
+        // }
+        for (auto loc : this->free_locations) {
+            this->heuristics[loc] = compute_heuristics(loc);
+            this->pebble_motion_heuristics[loc] =
+                compute_pebble_motion_heuristics(loc);
         }
 
         // cout << table_save_path << endl;
@@ -606,36 +615,25 @@ void SMARTGrid::reset_weights(bool consider_rotation, std::string log_dir,
     std::cout << "*** reset map weights***" << std::endl;
     clock_t t = std::clock();
     this->consider_rotation = consider_rotation;
-    // fs::path table_save_path(log_dir);
-    // if (consider_rotation)
-    // 	table_save_path /= map_name + "_rotation_heuristics_table.txt";
-    // else
-    // 	table_save_path /= map_name + "_heuristics_table.txt";
 
-    for (auto endpoint : this->endpoints) {
-        this->heuristics[endpoint] = compute_heuristics(endpoint);
-        // std::cout << "endpoint= "<<endpoint<<", h size ="<<
-        // this->heuristics[endpoint].size() <<std::endl;
+    // for (auto endpoint : this->endpoints) {
+    //     this->heuristics[endpoint] = compute_heuristics(endpoint);
+    // }
+
+    // for (auto workstation : this->workstations) {
+    //     this->heuristics[workstation] = compute_heuristics(workstation);
+    // }
+    // if (this->heuristics.size() !=
+    //     this->endpoints.size() + this->workstations.size()) {
+    //     std::cout << "error h size!" << std::endl;
+    //     exit(1);
+    // }
+
+    for (auto loc : this->free_locations) {
+        this->heuristics[loc] = compute_heuristics(loc);
+        this->pebble_motion_heuristics[loc] =
+            compute_pebble_motion_heuristics(loc);
     }
-
-    std::cout << "after compute h, h size =" << this->heuristics.size()
-              << ", end points size =" << this->endpoints.size() << std::endl;
-
-    // Under w mode, home location is endpoints but need additional
-    // heuristics to workstations
-    for (auto workstation : this->workstations) {
-        this->heuristics[workstation] = compute_heuristics(workstation);
-        // std::cout << "workstation= "<<workstation<<", h size ="<<
-        // this->heuristics[workstation].size() <<std::endl;
-    }
-    if (this->heuristics.size() !=
-        this->endpoints.size() + this->workstations.size()) {
-        std::cout << "error h size!" << std::endl;
-        exit(1);
-    }
-
-    // cout << table_save_path << endl;
-    // save_heuristics_table(table_save_path.string());
 
     double runtime = (std::clock() - t) / CLOCKS_PER_SEC;
     std::cout << "Done! (" << runtime << " s)" << std::endl;
