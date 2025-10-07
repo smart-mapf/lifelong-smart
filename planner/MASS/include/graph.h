@@ -30,12 +30,21 @@ public:
     // distance heuristics, used for reasoning target conflicts
     // boost::unordered_map<int, vector<int>> d_heuristics;
 
-    // Map from the orientation in SMART to the orientation in RHCR.
-    const boost::unordered_map<int, orient> ORI_SMART_TO_MASS = {
-        {0, orient::North},
-        {1, orient::East},
-        {2, orient::South},
-        {3, orient::West},
+    // // Map from the orientation in SMART to the orientation in MASS.
+    // const boost::unordered_map<int, orient> ORI_SMART_TO_MASS = {
+    //     {0, orient::North},
+    //     {1, orient::East},
+    //     {2, orient::South},
+    //     {3, orient::West},
+    // };
+
+    // Map from the orientation in Back up planner of SMART (aka RHCR code base)
+    // to the orientation in MASS.
+    const boost::unordered_map<int, orient> ORI_RHCR_TO_MASS = {
+        {1, orient::North},
+        {0, orient::East},
+        {3, orient::South},
+        {2, orient::West},
     };
 
     Graph() {
@@ -79,7 +88,6 @@ public:
         return getManhattanDistance(curr, next) < 2;
     }
     list<int> getNeighbors(int curr) const;
-    list<int> getInverseNeighborsPebbleMotion(int curr) const;
     void getNeighbors(
         int curr, orient curr_o,
         std::vector<std::tuple<int, orient, double>>& neighbors) const;
@@ -134,7 +142,6 @@ public:
     // void printMap() const;
 
     void computeHeuristics();
-    vector<double> computeHeuristicsOneLocPebbleMotion(int root_location);
     bool BackDijkstra(int root_location);
 
     // nodes from and to are neighbors
@@ -192,8 +199,6 @@ public:
 
     double getHeuristic(vector<Task> goals, int start_loc, orient start_ori,
                         int goal_id) const;
-    double getHeuristicOneGoalPebbleMotion(int goal_loc, int start_loc,
-                                           orient start_ori) const;
 
     int walkCounterClockwise(int from, int to) const {
         assert(validMove(from, to));

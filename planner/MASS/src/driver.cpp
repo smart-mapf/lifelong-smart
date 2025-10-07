@@ -13,8 +13,6 @@
 #include "instance.h"
 #include "motion.h"
 #include "pbs.h"
-#include "pibt.h"
-#include "task_assigner.h"
 
 /* Main function */
 int main(int argc, char **argv) {
@@ -27,16 +25,10 @@ int main(int argc, char **argv) {
 
             // params for the input instance and experiment settings
             ("map,m", po::value<string>()->default_value("random-32-32-20.map"), "input file for map")
-            // ("agents,a", po::value<string>()->default_value(""), "input file for agents")
-
-            // ("heuristic,h",
-            //  po::value<string>()->default_value("./data/sortation_large/heuristic/sortation_large-random-1.heuristic"),
-            //  "heuristic for agents")
             ("output,o", po::value<string>()->default_value("./output/output.txt"), "output file for schedule")
             ("statistic,c", po::value<string>()->default_value("./output/output.csv"),
              "output file for statistic result")
             ("agentNum,k", po::value<int>()->default_value(1), "number of agents")
-            // ("agentIdx", po::value<string>()->default_value(""), "customize the indices of the agents (e.g., \"0,1\")")
             ("seed,d", po::value<int>()->default_value(0), "random seed")
             ("solver,s", po::value<int>()->default_value(0),
              "SPS solver, choose from 0 for BAS, and 1 for BCS")
@@ -46,16 +38,6 @@ int main(int argc, char **argv) {
             ("screen", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
             ("simulation_window", po::value<double>()->default_value(10), "simulation window (in seconds) for the planner")
             ("saveInstance", po::value<bool>()->default_value(false), "save the instance to a file")
-
-            // params for instance generators
-            // ("rows", po::value<int>()->default_value(0), "number of rows")
-            // ("cols", po::value<int>()->default_value(0), "number of columns")
-            // ("obs", po::value<int>()->default_value(0), "number of obstacles")
-            // ("warehouseWidth", po::value<int>()->default_value(0),
-            //  "width of working stations on both sides, for generating instances")
-
-            // params for CBS
-            // ("sipp", po::value<bool>()->default_value(false), "using sipp as the single agent solver")
 
             // params for rpc
             ("portNum", po::value<int>()->default_value(8080), "port number for the server");
@@ -91,11 +73,6 @@ int main(int argc, char **argv) {
     int sps_solver_type = vm["solver"].as<int>();
     std::shared_ptr<Graph> graph =
         make_shared<Graph>(vm["map"].as<string>(), screen, bot_motion);
-    std::shared_ptr<TaskAssigner> task_assigner = make_shared<TaskAssigner>(
-        graph, bot_motion, screen, simulation_window_ts, num_agents);
-
-    // Backup solver
-    PIBT pibt(graph, simulation_window_ts, screen, seed, num_agents);
 
     // Stats
     int n_mapf_calls = 0;        // number of MAPF calls
@@ -133,32 +110,28 @@ int main(int argc, char **argv) {
             sleep(1);
             continue;
         }
-        auto commit_cut =
-            result_json["robots_location"]
-                .get<std::vector<std::tuple<double, double, int>>>();
-        auto new_finished_tasks_id =
-            result_json["new_finished_tasks"].get<std::set<int>>();
 
-        if (screen > 0) {
-            // printf("Agent locations:\n");
-            // for (auto loc : commit_cut) {
-            //     printf("%f %f\n", loc.first, loc.second);
-            // }
-
-            printf("New finished tasks:\n");
-            for (auto finish_task_id : new_finished_tasks_id) {
-                printf("%d,", finish_task_id);
-            }
-            printf("\n");
+        // Obtain the MAPF instance
+        if (!result_json.contains("mapf_instance")) {
+            spdlog::error("MASS Driver: mapf_instance not found in the JSON "
+                          "from server. Exit...");
+            exit(1);
         }
+
+        if (!result_json["mapf_instance"].contains("starts") ||
+            !result_json["mapf_instance"].contains("goals")) {
+            spdlog::error("MASS Driver: starts or goals not found in the "
+                          "mapf_instance from server. Exit...");
+            exit(1);
+        }
+        json mapf_instance = result_json["mapf_instance"];
 
         //////////////////////////////////////////////////////////////////////
         /// load the instance
         //////////////////////////////////////////////////////////////////////
         std::shared_ptr<Instance> instance_ptr = std::make_shared<Instance>(
-            graph, task_assigner, bot_motion, commit_cut, new_finished_tasks_id,
-            vm["partialExpansion"].as<bool>(), sps_solver_type, screen,
-            simulation_window);
+            graph, bot_motion, mapf_instance, vm["partialExpansion"].as<bool>(),
+            sps_solver_type, screen, simulation_window);
 
         // Record the MAPF instance (start and goal locations)
         if (vm["saveInstance"].as<bool>()) {
@@ -184,7 +157,7 @@ int main(int argc, char **argv) {
         double multiplier = 1.0;
         double delta_multi = 2.0;
         double cutoff_time = vm["cutoffTime"].as<double>();
-        double pbs_success = false;
+        bool pbs_success = false;
         auto global_start_time = Time::now();
         std::chrono::duration<float> global_run_time =
             Time::now() - global_start_time;
@@ -244,26 +217,7 @@ int main(int argc, char **argv) {
         }
 
         if (!pbs_success) {
-            // printf("Solution found!\n");
-            // if (screen > 0) {
-            //     spdlog::info("MASS: Solution found!");
-            // }
-            // pbs.updateCost();
-            // new_mapf_plan = pbs.getTimedPath();
-            // pbs.clear();
-            // if (vm.count("outputPaths"))
-            //     pbs.saveTimedPath(vm["outputPaths"].as<std::string>());
-            // pbs.savePath("durationPath.txt");
-
-            // printf("No solution found!\n");
-            if (screen > 0) {
-                spdlog::warn("MASS: No solution found, invoking PIBT!");
-            }
-            pibt.run(instance_ptr->getStartLocations(),
-                     instance_ptr->task_assigner->getGoalLocations());
             n_rule_based_calls++;
-            new_mapf_plan = pibt.getPaths();
-            pibt.clear();
         }
 
         instance_ptr = nullptr;  // Clear the instance

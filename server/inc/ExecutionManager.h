@@ -9,6 +9,8 @@
 #include "backup_planners/PIBT.h"
 #include "backup_planners/SMARTGraph.h"
 #include "common.h"
+#include "task_assigners/BasicTaskAssigner.h"
+#include "task_assigners/DistinctOneGoalTaskAssigner.h"
 
 class ExecutionManager {
 public:
@@ -39,6 +41,9 @@ public:
 
     // Setup the backup planner
     void setupBackupPlanner();
+
+    // Setup task assigner
+    void setupTaskAssigner();
 
     // Freeze the simulation if necessary
     void freezeSimulationIfNecessary(string RobotID);
@@ -127,4 +132,8 @@ private:
     shared_ptr<MAPFSolver> backup_planner = nullptr;
     bool save_stats = false;
     boost::program_options::variables_map _vm;
+
+    // Task assigner related
+    shared_ptr<BasicTaskAssigner> task_assigner = nullptr;
+    string task_assigner_type;
 };

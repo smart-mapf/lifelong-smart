@@ -148,6 +148,7 @@ def run_lifelong_argos(
     right_w_weight: float = 1.0,
     grid_type: str = "regular",
     planner_invoke_policy: str = "default",
+    task_assigner_type: str = "windowed",
 ):
     """Function to run the lifelong SMART simulator with the given parameters.
 
@@ -238,11 +239,10 @@ def run_lifelong_argos(
     #                          look_ahead_dist / 2).astype(int)
     plan_window_ts = np.ceil(
         (sim_window_tick / ticks_per_second) * (velocity / 100)).astype(int)
-    if planner in ["RHCR"]:
-        plan_window_ts = np.max([plan_window_ts, planning_window])
-        logger.info(
-            f"{planner}: Planning window in timesteps: {plan_window_ts}")
-    # plan_window_ts = int(np.ceil(1.5 * look_ahead_dist * (velocity / 100)))
+    # We need a planning window in all cases because the backup planner might
+    # be windowed
+    plan_window_ts = np.max([plan_window_ts, planning_window])
+    logger.info(f"{planner}: Planning window in timesteps: {plan_window_ts}")
 
     # Path to the executables
     if container:
@@ -284,6 +284,7 @@ def run_lifelong_argos(
             f"--rotation={str(rotation).lower()}",
             f"--rotation_time={rotation_time}",
             f"--save_heuristics_table={str(save_heuristics_table).lower()}",
+            f"--task_assigner_type={task_assigner_type}",
         ]
         client_command = [
             "argos3",

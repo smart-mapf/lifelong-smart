@@ -102,6 +102,8 @@ int main(int argc, char** argv) {
             ("rotation", po::value<bool>()->default_value(false), "consider rotation when planning and executing")
             ("rotation_time", po::value<int>()->default_value(1), "rotation time for the robots (default: 1)")
             ("save_heuristics_table", po::value<bool>()->default_value(false), "save heuristics table to speed up single-agent pathfinding")
+            ("task_assigner_type", po::value<string>()->default_value("windowed"))
+            ("task_file", po::value<string>()->default_value(""), "task file for the robots (default: empty, meaning random tasks)")
             ;
     // clang-format on
     po::variables_map vm;

@@ -66,9 +66,6 @@ private:
     // Convert path to SMART format.
     vector<vector<tuple<int, int, double, int>>> convert_path_to_smart();
 
-    // Convert the current MAPF instance to SMART format.
-    json convert_mapf_instance_to_smart();
-
     // Aisle related
     // A rt used for aisle path planning.
     ReservationTable aisle_rt;

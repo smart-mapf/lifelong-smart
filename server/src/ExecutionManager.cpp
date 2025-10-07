@@ -19,7 +19,8 @@ ExecutionManager::ExecutionManager(
                            vm["look_ahead_dist"].as<int>())),
       numRobots(vm["num_robots"].as<int>()),
       parser(PlanParser(vm["screen"].as<int>())),
-      tick_per_robot(vector<int>(vm["num_robots"].as<int>(), 0)) {
+      tick_per_robot(vector<int>(vm["num_robots"].as<int>(), 0)),
+      task_assigner_type(vm["task_assigner_type"].as<string>()) {
     spdlog::info("Invoke policy: {}", planner_invoke_policy);
     spdlog::info("Look ahead tick: {}", look_ahead_tick);
     spdlog::info("Look ahead dist: {}", adg->getLookAheadDist());
@@ -117,6 +118,23 @@ void ExecutionManager::setupBackupPlanner() {
 
     // Set initialized flag
     this->backup_planner->set_initialized(true);
+}
+
+void ExecutionManager::setupTaskAssigner() {
+    spdlog::info("Setting up task assigner...");
+    string task_file = this->_vm["task_file"].as<string>();
+    if (this->task_assigner_type == "windowed") {
+        this->task_assigner = make_shared<WindowedTaskAssigner>(
+            this->G, this->screen, this->_vm["sim_window_timestep"].as<int>(),
+            this->numRobots, this->seed, task_file);
+    } else if (this->task_assigner_type == "distinct_one_goal") {
+        this->task_assigner = make_shared<DistinctOneGoalTaskAssigner>(
+            this->G, this->screen, this->numRobots, this->seed, task_file);
+    } else {
+        spdlog::error("Task assigner type {} does not exist!",
+                      this->task_assigner_type);
+        exit(-1);
+    }
 }
 
 void ExecutionManager::saveStats() {
@@ -238,14 +256,24 @@ string ExecutionManager::getRobotsLocation() {
     this->curr_robot_states = this->adg->computeCommitCut();
 
     vector<tuple<double, double, int>> robots_location;
+
+    // If no robot has initialized yet, return empty locations
     if (this->curr_robot_states.empty()) {
         result_message["robots_location"] = {};
         result_message["new_finished_tasks"] = {};
         result_message["initialized"] = false;
         return result_message.dump();
     }
-    assert(static_cast<int>(this->curr_robot_states.size()) == this->numRobots);
 
+    // Sanity check for number of robots
+    if (this->curr_robot_states.size() !=
+        static_cast<size_t>(this->numRobots)) {
+        spdlog::warn("Warning: current robot states size {} does not match num "
+                     "robots {}!",
+                     this->curr_robot_states.size(), this->numRobots);
+    }
+
+    // Get the current locations of all robots
     for (auto& robot : this->curr_robot_states) {
         if (this->flipped_coord) {
             robots_location.emplace_back(make_tuple(
@@ -262,11 +290,16 @@ string ExecutionManager::getRobotsLocation() {
         make_tuple(new_finished_tasks.size(),
                    this->getCurrSimStep() / this->ticks_per_second));
 
-    // this->robots_location = robots_location;
-
-    result_message["robots_location"] = robots_location;
-    result_message["new_finished_tasks"] = new_finished_tasks;
+    // result_message["robots_location"] = robots_location;
+    // result_message["new_finished_tasks"] = new_finished_tasks;
     result_message["initialized"] = true;
+
+    // Update the start and goal locations
+    this->task_assigner->updateStartsAndGoals(robots_location,
+                                              new_finished_tasks);
+    result_message["mapf_instance"] =
+        this->task_assigner->getMAPFInstanceJSON();
+
     return result_message.dump();
 }
 
@@ -294,24 +327,26 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
     }
     // Planner fails. Use the backup planner.
     else {
-        if (!new_plan_json.contains("mapf_instance")) {
-            spdlog::error("No MAPF instance provided when planner fails!");
-            exit(-1);
-        }
+        // if (!new_plan_json.contains("mapf_instance")) {
+        //     spdlog::error("No MAPF instance provided when planner fails!");
+        //     exit(-1);
+        // }
 
-        json mapf_instance = new_plan_json["mapf_instance"];
+        // json mapf_instance = new_plan_json["mapf_instance"];
 
-        if (!mapf_instance.contains("starts") ||
-            !mapf_instance.contains("goals")) {
-            spdlog::error(
-                "MAPF instance does not contain starts or goals when planner "
-                "fails!");
-            exit(-1);
-        }
+        // if (!mapf_instance.contains("starts") ||
+        //     !mapf_instance.contains("goals")) {
+        //     spdlog::error(
+        //         "MAPF instance does not contain starts or goals when planner
+        //         " "fails!");
+        //     exit(-1);
+        // }
 
-        auto starts = mapf_instance.at("starts").get<vector<State>>();
-        auto goal_locations =
-            mapf_instance.at("goals").get<vector<vector<Task>>>();
+        // auto starts = mapf_instance.at("starts").get<vector<State>>();
+        // auto goal_locations =
+        //     mapf_instance.at("goals").get<vector<vector<Task>>>();
+        auto starts = this->task_assigner->getStarts();
+        auto goal_locations = this->task_assigner->getGoalLocations();
 
         // Plan using the backup planner
         spdlog::info("Planner fails, using backup planner");
@@ -328,10 +363,11 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
     }
 
     // update backup tasks, if available
-    if (new_plan_json.contains("backup_tasks")) {
-        auto backup_tasks = new_plan_json["backup_tasks"].get<set<int>>();
-        this->adg->backup_tasks = backup_tasks;
-    }
+    // if (new_plan_json.contains("backup_tasks")) {
+    //     auto backup_tasks = new_plan_json["backup_tasks"].get<set<int>>();
+    //     this->adg->backup_tasks = backup_tasks;
+    // }
+    this->adg->backup_tasks = this->task_assigner->getBackupTasks();
 
     if (congested) {
         // Stop the server early.
@@ -410,6 +446,11 @@ void ExecutionManager::init(string RobotID, tuple<int, int> init_loc) {
     if (this->backup_planner == nullptr ||
         !this->backup_planner->is_initialized()) {
         this->setupBackupPlanner();
+    }
+
+    // Initialize the task assigner if it has not been initialized
+    if (this->task_assigner == nullptr) {
+        this->setupTaskAssigner();
     }
 
     // Inform ADG with the current robot's initial location

@@ -80,8 +80,8 @@ public:
 
     vector<vector<tuple<int, int, double, int>>> convert_path_to_smart(
         const vector<vector<Task>>& goal_locations);
-    void print_mapf_instance(vector<State> starts_,
-                             vector<vector<Task>> goals_) const;
+    // void print_mapf_instance(vector<State> starts_,
+    //                          vector<vector<Task>> goals_) const;
     bool congested() const;
 protected:
     vector<vector<bool>> cat;  // conflict avoidance table

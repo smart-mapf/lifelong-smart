@@ -15,10 +15,10 @@ bool PIBT::run(const vector<State> &starts,
     num_restarts = 0;
     this->num_of_agents = starts.size();
 
-    if (this->screen > 1) {
-        spdlog::info("MAPF instance in backup planner:");
-        this->print_mapf_instance(starts, goal_locations);
-    }
+    // if (this->screen > 1) {
+    //     spdlog::info("MAPF instance in backup planner:");
+    //     this->print_mapf_instance(starts, goal_locations);
+    // }
 
     // Initialize
     this->curr_occupied.clear();

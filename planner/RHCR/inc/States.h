@@ -85,4 +85,6 @@ typedef std::vector<State> Path;
 
 std::ostream & operator << (std::ostream &out, const Path &path);
 
+void from_json(const json &j, State &s);
+
 void to_json(json& j, const State& s);

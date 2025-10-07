@@ -25,3 +25,11 @@ void from_json(const json &j, State &s) {
     j.at("is_tasking_wait").get_to(s.is_tasking_wait);
     j.at("is_rotating").get_to(s.is_rotating);
 }
+
+void to_json(json &j, const State &s) {
+    j = json{{"location", s.location},
+             {"timestep", s.timestep},
+             {"orientation", s.orientation},
+             {"is_tasking_wait", s.is_tasking_wait},
+             {"is_rotating", s.is_rotating}};
+}
