@@ -1,7 +1,6 @@
 #pragma once
 #include "backup_planners/SingleAgentSolver.h"
 #include "backup_planners/StateTimeAStar.h"
-// TODO: make SIPP work with edge-weighted graphs
 
 class SIPPNode : public StateTimeAStarNode {
 public:

@@ -1,39 +1,41 @@
 #pragma once
-#include "BasicGraph.h"
-#include <json.hpp>
 #include <random>
 
-using json = nlohmann::json;
+#include "utils/BasicGraph.h"
 
-class SMARTGrid :
-	public BasicGraph
-{
+class SMARTGrid : public BasicGraph {
 public:
-	vector<int> endpoints;
-	vector<int> agent_home_locations;
+    vector<int> endpoints;
+    vector<int> agent_home_locations;
     vector<int> workstations;
-    vector<int> task_locations; // basically endpoints + workstations
-    vector<int> free_locations; // all non-obstacle locations
+    vector<int> task_locations;  // basically endpoints + workstations
+    vector<int> free_locations;  // all non-obstacle locations
     vector<double> workstation_weights;
     vector<double> end_points_weights;
 
     // Dummy function to get around inheritance issue
-    bool load_map(string fname) { return false; }
+    bool load_map(string fname) {
+        return false;
+    }
     // bool load_map(string fname, double left_w_weight, double right_w_weight);
-    bool load_map_from_jsonstr(
-        std::string json_str, double left_w_weight, double right_w_weight) override;
-    void preprocessing(bool consider_rotation, std::string log_dir) override; // compute heuristics
-    void reset_weights(bool consider_rotation, std::string log_dir, bool optimize_wait, std::vector<double>& weights) override;
+    bool load_map_from_jsonstr(std::string json_str, double left_w_weight,
+                               double right_w_weight) override;
+    void preprocessing(bool consider_rotation,
+                       std::string log_dir) override;  // compute heuristics
+    void reset_weights(bool consider_rotation, std::string log_dir,
+                       bool optimize_wait,
+                       std::vector<double>& weights) override;
     void update_map_weights(std::vector<double>& new_weights);
     double get_avg_task_len(
         unordered_map<int, vector<double>> heuristics) const;
     int get_n_valid_edges() const;
 
-    void initialize_end_points_weights(){
+    void initialize_end_points_weights() {
         this->end_points_weights.clear();
         this->end_points_weights.resize(this->endpoints.size(), 1.0);
     }
-    void parseMap(std::vector<std::vector<double>>& map_e, std::vector<std::vector<double>>& map_w);
+    void parseMap(std::vector<std::vector<double>>& map_e,
+                  std::vector<std::vector<double>>& map_w);
     void update_task_dist(std::mt19937& gen, std::string task_dist_type);
 
     bool in_aisle(int loc) const {
@@ -48,7 +50,8 @@ public:
         if (this->in_aisle(loc)) {
             return this->aisles.at(this->endpt_to_aisle.at(loc));
         } else {
-            throw std::runtime_error("SMARTGrid::get_aisle: location is not in an aisle.");
+            throw std::runtime_error(
+                "SMARTGrid::get_aisle: location is not in an aisle.");
         }
     }
 
@@ -56,14 +59,14 @@ public:
         if (this->in_aisle(loc)) {
             return this->endpt_to_aisle.at(loc);
         } else {
-            throw std::runtime_error("SMARTGrid::aisle_entry: location is not in an aisle.");
+            throw std::runtime_error(
+                "SMARTGrid::aisle_entry: location is not in an aisle.");
         }
     }
 
     set<int> get_aisle_entries() const {
         return this->aisle_entries;
     }
-
 
 private:
     // Number of valid edges.
@@ -82,10 +85,10 @@ private:
     // bool load_weighted_map(string fname);
     // bool load_unweighted_map(
     //     string fname, double left_w_weight, double right_w_weight);
-    bool load_unweighted_map_from_json(
-        json G_json, double left_w_weight, double right_w_weight);
-    bool load_weighted_map_from_json(
-        json G_json, double left_w_weight, double right_w_weight);
+    bool load_unweighted_map_from_json(json G_json, double left_w_weight,
+                                       double right_w_weight);
+    bool load_weighted_map_from_json(json G_json, double left_w_weight,
+                                     double right_w_weight);
     // Function to get the aisle information from the map. Applicable to the
     // SMARTGridType::ONE_BOT_PER_AISLE.
     void analyze_aisle();

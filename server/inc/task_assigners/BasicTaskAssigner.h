@@ -1,7 +1,7 @@
 #pragma once
-#include "backup_planners/SMARTGraph.h"
-#include "backup_planners/Task.h"
-#include "backup_planners/common.h"
+#include "utils/SMARTGraph.h"
+#include "utils/Task.h"
+#include "utils/common.h"
 
 class BasicTaskAssigner {
 public:

@@ -2,8 +2,8 @@
 #include <ctime>
 
 #include "backup_planners/SIPP.h"
-#include "backup_planners/States.h"
-#include "backup_planners/Task.h"
+#include "utils/States.h"
+#include "utils/Task.h"
 
 // Base class for MAPF solvers
 class MAPFSolver {
@@ -83,6 +83,7 @@ public:
     // void print_mapf_instance(vector<State> starts_,
     //                          vector<vector<Task>> goals_) const;
     bool congested() const;
+
 protected:
     vector<vector<bool>> cat;  // conflict avoidance table
     vector<unordered_set<pair<int, int>>> constraint_table;

@@ -1,6 +1,6 @@
 #pragma once
-#include "backup_planners/BasicGraph.h"
-#include "backup_planners/States.h"
+#include "utils/BasicGraph.h"
+#include "utils/States.h"
 
 class ReservationTable {
 public:

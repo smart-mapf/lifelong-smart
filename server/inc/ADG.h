@@ -1,11 +1,7 @@
 #pragma once
 
-#include "common.h"
 #include "parser.h"
-
-typedef vector<tuple<string, int, double, string, pair<double, double>,
-                     pair<double, double>, int>>
-    SIM_PLAN;
+#include "utils/common.h"
 
 struct Edge {
     int from_agent_id;

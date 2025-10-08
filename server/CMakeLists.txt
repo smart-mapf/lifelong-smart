@@ -21,9 +21,11 @@ find_package(spdlog REQUIRED)
 
 include_directories("inc")
 include_directories("inc/backup_planners")
+include_directories("inc/task_assigners")
+include_directories("inc/utils")
 
 file(GLOB SOURCES "src/*.cpp" "src/backup_planners/*.cpp"
-                  "src/task_assigners/*.cpp")
+                  "src/task_assigners/*.cpp" "src/utils/*.cpp")
 
 # Add the executable
 add_executable(ExecutionManager ${SOURCES})

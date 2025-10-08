@@ -1,15 +1,24 @@
 #pragma once
+#include <boost/algorithm/string.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
 #include <cassert>
+#include <cfloat>
 #include <cmath>
+#include <ctime>
 #include <fstream>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <list>
 #include <map>
 #include <mutex>
 #include <numeric>
 #include <queue>
+#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -17,35 +26,82 @@
 #include <string>
 #include <tuple>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-#include "backup_planners/common.h"
-#include "json.hpp"
 #include "spdlog/spdlog.h"
+#include "utils/enums.h"
+#include "utils/json.hpp"
 
-#define MAX_LOADS 1
-#define MAX_TASKS 100
-#define MAX_NUM_GOALS 1
-#define NUM_GENRE 10
-#define MAX_ENQUE 5
-// #define DEBUG
-
-// using namespace std;
-using std::cerr;
-using std::cin;
-using std::fixed;
-using std::hash;
-using std::lock_guard;
-using std::mutex;
-using std::numeric_limits;
-using std::setprecision;
-using std::shared_ptr;
+using boost::unordered_map;
+using boost::unordered_set;
+using boost::heap::compare;
+using boost::heap::fibonacci_heap;
 using json = nlohmann::json;
 
-const double EPS = 1e-8;
-const int INF = numeric_limits<int>::max();
+using std::cerr;
+using std::cin;
+using std::cout;
+using std::deque;
+using std::discrete_distribution;
+using std::endl;
+using std::fixed;
+using std::hash;
+using std::list;
+using std::lock_guard;
+using std::make_pair;
+using std::make_shared;
+using std::make_tuple;
+using std::map;
+using std::max;
+using std::min;
+using std::mt19937;
+using std::mutex;
+using std::numeric_limits;
+using std::ofstream;
+using std::ostream;
+using std::pair;
+using std::queue;
+using std::set;
+using std::setprecision;
+using std::shared_ptr;
+using std::size_t;
+using std::string;
+using std::tie;
+using std::to_string;
+using std::tuple;
+using std::vector;
 
+#define MAX_ENQUE 5
+#define INTERVAL_MAX 10000
+#define EPS 1e-8
+
+typedef tuple<int, int, int, int, bool> Constraint;
+typedef tuple<int, int, int, int, int> Conflict;
+// [t_min, t_max), have conflicts or not
+typedef tuple<int, int, bool> Interval;
 typedef pair<double, double> Location;
+typedef vector<tuple<string, int, double, string, pair<double, double>,
+                     pair<double, double>, int>>
+    SIM_PLAN;
+
+ostream& operator<<(ostream& os, const Constraint& constraint);
+
+ostream& operator<<(ostream& os, const Conflict& conflict);
+
+ostream& operator<<(ostream& os, const Interval& interval);
+
+// According to https://stackoverflow.com/a/40854664, we need to add a
+// operator<<() for vector<int> so that boost can automatically cast the
+// default vector parameter value. We need this specifically for the
+// `station_wait_times` command line argument.
+namespace std {
+ostream& operator<<(ostream& os, const vector<int>& vec);
+}
+
+vector<list<int>> read_int_vec(string fname, int team_size);
+vector<list<tuple<int, int, int, int>>> read_tuple_vec(string fname,
+                                                       int team_size);
 
 // Define a structure to hold coordinate points and time.
 struct Point {
@@ -70,58 +126,16 @@ struct Step {
     }
 };
 
-struct Pod {
-    int x, y, orientation;
-    int idx = -1;
-    // true if assigned, false if free
-    bool status = false;
-
-    Pod(int x, int y, int orientation, int idx)
-        : x(x), y(y), orientation(orientation), idx(idx) {
-    }
-};
-
-struct Station {
-    int x, y, orientation;
-    int idx = -1;
-    bool status = false;
-    Station(int x, int y, int orientation, int idx)
-        : x(x), y(y), orientation(orientation), idx(idx) {
-    }
-};
-
-struct PickerTask {
-    int id;
-    int genre;
-    std::pair<int, int> goal_position;
-    std::pair<int, int> obj_position;
-    int operate_obj_idx = -1;
-
-    bool status = true;  // false if finished, true otherwise
-    PickerTask(int id, int genre, std::pair<int, int> goal_position)
-        : id(id), genre(genre), goal_position(std::move(goal_position)) {
-        obj_position = goal_position;
-    }
-};
-
-enum MobileAction {
-    // DELIVER = 0, PICK = 1, NONE = 2
-    NONE = 0,
-    PICK = 1,
-    DELIVER = 2,
-    DONE = 3
-};
-
 struct pair_hash {
-    std::size_t operator()(const std::pair<int, int>& p) const {
-        return std::hash<int>()(p.first) ^ (std::hash<int>()(p.second) << 1);
+    size_t operator()(const pair<int, int>& p) const {
+        return hash<int>()(p.first) ^ (hash<int>()(p.second) << 1);
     }
 };
 
 struct MobileRobotTask {
     int id;
     int agent_id;
-    std::pair<int, int> goal_position;
+    pair<int, int> goal_position;
     int goal_orient = 0;
 
     MobileAction status = NONE;
@@ -130,13 +144,10 @@ struct MobileRobotTask {
     // bool status=true; // false if finished, true otherwise
 
     int picker_robot_id = -1;
-    std::pair<int, int> station_position;
-    // MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position):
-    // id(id), agent_id(agent_id), goal_position(std::move(goal_position)) {
-    // }
-    MobileRobotTask(int id, int agent_id, std::pair<int, int> goal_position,
+    pair<int, int> station_position;
+    MobileRobotTask(int id, int agent_id, pair<int, int> goal_position,
                     int obj_idx, MobileAction flag, int picker_id,
-                    std::pair<int, int> station_position)
+                    pair<int, int> station_position)
         : id(id),
           agent_id(agent_id),
           goal_position(std::move(goal_position)),
@@ -146,13 +157,13 @@ struct MobileRobotTask {
           station_position(station_position) {
     }
 
-    std::pair<int, int> get_goal_position() const {
+    pair<int, int> get_goal_position() const {
         if (status == PICK) {
             return goal_position;
         } else if (status == DELIVER) {
             return station_position;
         } else {
-            std::cerr << "Invalid action" << std::endl;
+            cerr << "Invalid action" << endl;
             exit(1);
         }
     }
@@ -164,10 +175,10 @@ struct Action {
     double time;  // time that start an action
     double orientation;
     char type;  // 'M' for move, 'T' for turn, 'S' for station, 'P' for pod
-    std::pair<double, double> start;
-    std::pair<double, double> goal;
+    Location start;
+    Location goal;
     int nodeID;
-    std::shared_ptr<MobileRobotTask> task_ptr = nullptr;
+    shared_ptr<MobileRobotTask> task_ptr = nullptr;
     int task_id = -1;  // Task ID associated with the completion of this action
 
     // default constructor
@@ -210,21 +221,3 @@ struct Action {
           task_id(other.task_id) {
     }
 };
-
-inline bool positionCompare(std::pair<double, double> a,
-                            std::pair<int, int> b) {
-    if (std::fabs(a.first - b.first) < EPS and
-        std::fabs(a.second - b.second) < EPS) {
-        return true;
-    }
-    return false;
-}
-
-template <typename T>
-T twoPointDistance(std::pair<T, T> a, std::pair<T, T> b) {
-    return std::abs(a.first - b.first) + std::abs(a.second - b.second);
-}
-
-// bool congested(
-//     const std::vector<std::vector<std::tuple<int, int, double, int>>>&
-//         new_plan);

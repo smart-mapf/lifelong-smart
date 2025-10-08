@@ -1,7 +1,7 @@
 #pragma once
-#include "backup_planners/BasicGraph.h"
 #include "backup_planners/ReservationTable.h"
-#include "backup_planners/Task.h"
+#include "utils/BasicGraph.h"
+#include "utils/Task.h"
 
 class SingleAgentSolver {
 public:

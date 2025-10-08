@@ -7,10 +7,10 @@
 
 #include "ADG.h"
 #include "backup_planners/PIBT.h"
-#include "backup_planners/SMARTGraph.h"
-#include "common.h"
 #include "task_assigners/BasicTaskAssigner.h"
 #include "task_assigners/DistinctOneGoalTaskAssigner.h"
+#include "utils/SMARTGraph.h"
+#include "utils/common.h"
 
 class ExecutionManager {
 public:

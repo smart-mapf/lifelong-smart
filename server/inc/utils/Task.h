@@ -1,5 +1,5 @@
 #pragma once
-#include "backup_planners/common.h"
+#include "utils/common.h"
 
 struct Task {
     int location;        // location of the goal
