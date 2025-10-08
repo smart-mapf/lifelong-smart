@@ -1,7 +1,9 @@
 #include "backup_planners/PIBT.h"
 
-PIBT::PIBT(const BasicGraph &G, SingleAgentSolver &path_planner)
-    : MAPFSolver(G, path_planner) {
+PIBT::PIBT(const BasicGraph &G, SingleAgentSolver &path_planner,
+           shared_ptr<HeuristicTableBase> heuristic_table,
+           const boost::program_options::variables_map vm)
+    : MAPFSolver(G, path_planner, heuristic_table, vm) {
 }
 
 bool PIBT::run(const vector<State> &starts,
@@ -10,9 +12,6 @@ bool PIBT::run(const vector<State> &starts,
     // set timer
     spdlog::info("Backup PIBT starts planning for {} agents", starts.size());
     clock_t start = std::clock();
-    num_expanded = 0;
-    num_generated = 0;
-    num_restarts = 0;
     this->num_of_agents = starts.size();
 
     // if (this->screen > 1) {
@@ -160,9 +159,13 @@ bool PIBT::run(const vector<State> &starts,
             // If one of the agents has no goals, do not compare
             if (this->goals_mem[a].empty() || this->goals_mem[b].empty())
                 return false;
-            double dist_a = this->G.get_pebble_motion_heuristic(
+            // double dist_a = this->G.get_pebble_motion_heuristic(
+            //     this->goals_mem[a][0].location, solution[a][t - 1].location);
+            // double dist_b = this->G.get_pebble_motion_heuristic(
+            //     this->goals_mem[b][0].location, solution[b][t - 1].location);
+            double dist_a = this->heuristic_table->get(
                 this->goals_mem[a][0].location, solution[a][t - 1].location);
-            double dist_b = this->G.get_pebble_motion_heuristic(
+            double dist_b = this->heuristic_table->get(
                 this->goals_mem[b][0].location, solution[b][t - 1].location);
             // Prefer the agent with smaller distance to its goal
             if (dist_a != dist_b)
@@ -378,10 +381,12 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     auto action_cmp = [&](const State &n1, const State &n2) {
         double cost1 = this->G.get_weight(start_state.location, n1.location);
         double cost2 = this->G.get_weight(start_state.location, n2.location);
-        double h1 =
-            this->G.get_pebble_motion_heuristic(goal.location, n1.location);
-        double h2 =
-            this->G.get_pebble_motion_heuristic(goal.location, n2.location);
+        // double h1 =
+        //     this->G.get_pebble_motion_heuristic(goal.location, n1.location);
+        // double h2 =
+        //     this->G.get_pebble_motion_heuristic(goal.location, n2.location);
+        double h1 = this->heuristic_table->get(goal.location, n1.location);
+        double h2 = this->heuristic_table->get(goal.location, n2.location);
         if (cost1 + h1 != cost2 + h2)
             return (cost1 + h1) < (cost2 + h2);
         // Tie breaking. Prefer the next state that is currently not
@@ -492,10 +497,8 @@ void PIBT::save_results(const std::string &fileName,
                         const std::string &instanceName) const {
     std::ofstream stats;
     stats.open(fileName, std::ios::app);
-    stats << runtime << "," << num_restarts << "," << num_restarts << ","
-          << num_expanded << "," << num_generated << "," << solution_cost << ","
-          << min_sum_of_costs << "," << avg_path_length << "," << "0"
-          << "," << instanceName << std::endl;
+    stats << runtime << "," << "," << solution_cost << "," << min_sum_of_costs
+          << "," << avg_path_length << "," << instanceName << std::endl;
     stats.close();
 }
 
@@ -504,9 +507,6 @@ void PIBT::clear() {
     solution_found = false;
     solution_cost = -2;
     avg_path_length = -1;
-    num_expanded = 0;
-    num_generated = 0;
-    num_restarts = 0;
     solution.clear();
     initial_constraints.clear();
 }

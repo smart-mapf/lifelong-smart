@@ -1,5 +1,6 @@
 #pragma once
 #include "backup_planners/ReservationTable.h"
+#include "heuristics/BasicHeuristicTable.h"
 #include "utils/BasicGraph.h"
 #include "utils/Task.h"
 
@@ -24,12 +25,15 @@ public:
 
     unordered_map<int, double> travel_times;
 
-    double compute_h_value(const BasicGraph& G, State curr, int goal_id,
+    double compute_h_value(const BasicGraph& G,
+                           shared_ptr<HeuristicTableBase> heuristic_table,
+                           State curr, int goal_id,
                            const vector<Task>& goal_location) const;
 
-    virtual Path run(const BasicGraph& G, const State& start,
-                     const vector<Task>& goal_location, ReservationTable& RT,
-                     const int agent_waited_time = 0) = 0;
+    virtual Path run(const BasicGraph& G,
+                     shared_ptr<HeuristicTableBase> heuristic_table,
+                     const State& start, const vector<Task>& goal_location,
+                     ReservationTable& RT, const int agent_waited_time = 0) = 0;
     virtual string getName() const = 0;
     SingleAgentSolver()
         : suboptimal_bound(1),

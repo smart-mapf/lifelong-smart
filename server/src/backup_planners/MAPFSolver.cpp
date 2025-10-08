@@ -2,16 +2,26 @@
 
 #include <ctime>
 #include <iostream>
-// #include "backup_planners/PathTable.h"
 
-MAPFSolver::MAPFSolver(const BasicGraph& G, SingleAgentSolver& path_planner)
+MAPFSolver::MAPFSolver(const BasicGraph& G, SingleAgentSolver& path_planner,
+                       shared_ptr<HeuristicTableBase> heuristic_table,
+                       const boost::program_options::variables_map vm)
     : solution_found(false),
       solution_cost(-2),
       avg_path_length(-1),
       G(G),
       path_planner(path_planner),
       initial_rt(G),
-      rt(G) {
+      rt(G),
+      seed(vm["seed"].as<int>()),
+      gen(mt19937(vm["seed"].as<int>())),
+      k_robust(0),
+      window(vm["plan_window_timestep"].as<int>()),
+      simulation_window(vm["sim_window_timestep"].as<int>()),
+      hold_endpoints(false),
+      screen(vm["screen"].as<int>()),
+      num_of_agents(vm["num_robots"].as<int>()),
+      heuristic_table(heuristic_table) {
 }
 
 MAPFSolver::~MAPFSolver() {

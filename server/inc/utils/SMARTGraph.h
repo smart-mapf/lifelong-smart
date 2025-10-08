@@ -13,30 +13,12 @@ public:
     vector<double> workstation_weights;
     vector<double> end_points_weights;
 
-    // Dummy function to get around inheritance issue
-    bool load_map(string fname) {
-        return false;
-    }
-    // bool load_map(string fname, double left_w_weight, double right_w_weight);
     bool load_map_from_jsonstr(std::string json_str, double left_w_weight,
                                double right_w_weight) override;
-    void preprocessing(bool consider_rotation,
-                       std::string log_dir) override;  // compute heuristics
-    void reset_weights(bool consider_rotation, std::string log_dir,
-                       bool optimize_wait,
-                       std::vector<double>& weights) override;
     void update_map_weights(std::vector<double>& new_weights);
     double get_avg_task_len(
         unordered_map<int, vector<double>> heuristics) const;
     int get_n_valid_edges() const;
-
-    void initialize_end_points_weights() {
-        this->end_points_weights.clear();
-        this->end_points_weights.resize(this->endpoints.size(), 1.0);
-    }
-    void parseMap(std::vector<std::vector<double>>& map_e,
-                  std::vector<std::vector<double>>& map_w);
-    void update_task_dist(std::mt19937& gen, std::string task_dist_type);
 
     bool in_aisle(int loc) const {
         return this->endpt_to_aisle.count(loc) > 0;

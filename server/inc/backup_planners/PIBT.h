@@ -6,10 +6,6 @@
 
 class PIBT : public MAPFSolver {
 public:
-    uint64_t num_expanded;
-    uint64_t num_generated;
-    uint64_t num_restarts;
-
     // Runs the algorithm until the problem is solved or time is exhausted
     bool run(const vector<State> &starts,
              const vector<vector<Task>> &goal_locations, int time_limit = 60,
@@ -35,7 +31,9 @@ public:
                     int from_t);
 
     // The path planner is never used in PIBT, it is kept for compatibility
-    PIBT(const BasicGraph &G, SingleAgentSolver &path_planner);
+    PIBT(const BasicGraph &G, SingleAgentSolver &path_planner,
+         shared_ptr<HeuristicTableBase> heuristic_table,
+         const boost::program_options::variables_map vm);
     ~PIBT() {
     }
 

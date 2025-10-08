@@ -89,7 +89,8 @@ public:
 
 class SIPP : public SingleAgentSolver {
 public:
-    Path run(const BasicGraph& G, const State& start,
+    Path run(const BasicGraph& G,
+             shared_ptr<HeuristicTableBase> heuristic_table, const State& start,
              const vector<Task>& goal_location, ReservationTable& RT,
              const int agent_waited_time = 0) override;
     string getName() const override {

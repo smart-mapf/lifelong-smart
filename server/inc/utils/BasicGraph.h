@@ -3,21 +3,10 @@
 #include "utils/common.h"
 #include "utils/enums.h"
 
-#define WEIGHT_MAX INT_MAX / 2
-
 class BasicGraph {
 public:
-    vector<std::string> types;
-
-    string map_name;
-    virtual bool load_map(string fname) = 0;
-    virtual bool load_map_from_jsonstr(std::string json_str,
-                                       double left_w_weight,
+    virtual bool load_map_from_jsonstr(string json_str, double left_w_weight,
                                        double right_w_weight) = 0;
-    virtual void preprocessing(bool consider_rotation, std::string log_dir) = 0;
-    virtual void reset_weights(bool consider_rotation, std::string log_dir,
-                               bool optimize_wait,
-                               std::vector<double>& weights) = 0;
 
     list<State> get_neighbors(const State& v) const;
     list<int> get_neighbors(int v) const;
@@ -45,7 +34,6 @@ public:
         return (weights[loc][dir] < WEIGHT_MAX - 1);
     }
     int get_Manhattan_distance(int loc1, int loc2) const;
-    int move[4];
     void copy(const BasicGraph& copy);
     int get_direction(int from, int to) const;
     int get_direction_output(int from, int to) const;
@@ -60,15 +48,9 @@ public:
         return this->cols * row_idx + col_idx;
     }
 
-    // compute distances from all lacations to the root location
-    vector<double> compute_heuristics(int root_location);
-    vector<double> compute_pebble_motion_heuristics(int root_location);
-    double get_heuristic(int goal_loc, int start_loc, int start_ori = -1) const;
-    double get_pebble_motion_heuristic(int goal_loc, int start_loc) const;
-    bool load_heuristics_table(std::ifstream& myfile);
-    void save_heuristics_table(string fname);
-    bool _save_heuristics_table;
-
+    int move[4];
+    vector<string> types;
+    string map_name;
     int rows;
     int cols;
     vector<vector<double>> weights;  // (directed) weighted 4-neighbor grid
@@ -81,10 +63,6 @@ public:
 
     // Rotational time
     int rotation_time = 1;
-
-    // Each workstation has a set of queue locations for robots to wait in a
-    // queue. Used by the queueing mechanism of GreyOrange system.
-    unordered_map<int, vector<int>> queue_locations;
 
     // Map from the orientation in SMART to the orientation in RHCR.
     const unordered_map<int, int> ORI_SMART_TO_RHCR = {
@@ -103,9 +81,6 @@ public:
     }
 
 protected:
-    unordered_map<int, vector<double>> heuristics;
-    unordered_map<int, vector<double>> pebble_motion_heuristics;
-
     // Type of the SMART grid.
     SMARTGridType grid_type = SMARTGridType::REGULAR;
 };

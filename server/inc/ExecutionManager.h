@@ -7,6 +7,9 @@
 
 #include "ADG.h"
 #include "backup_planners/PIBT.h"
+#include "heuristics/BasicHeuristicTable.h"
+#include "heuristics/LazyHeuristicTable.h"
+#include "heuristics/LandmarkHeuristicTable.h"
 #include "task_assigners/BasicTaskAssigner.h"
 #include "task_assigners/DistinctOneGoalTaskAssigner.h"
 #include "utils/SMARTGraph.h"
@@ -86,6 +89,12 @@ public:
     }
 
 private:
+    // Setup the heuristic table
+    void setupHeuristicTable();
+
+    // Setup single agent path planner
+    void setupSingleAgentPlanner();
+
     std::shared_ptr<ADG> adg;
     bool flipped_coord = true;
     int screen = 0;
@@ -128,8 +137,9 @@ private:
 
     // Backup planner related
     SMARTGrid G;
-    shared_ptr<SingleAgentSolver> path_planner;
+    shared_ptr<SingleAgentSolver> path_planner = nullptr;
     shared_ptr<MAPFSolver> backup_planner = nullptr;
+    shared_ptr<HeuristicTableBase> heuristic_table = nullptr;
     bool save_stats = false;
     boost::program_options::variables_map _vm;
 

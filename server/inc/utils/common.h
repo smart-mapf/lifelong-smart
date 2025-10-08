@@ -1,6 +1,7 @@
 #pragma once
 #include <boost/algorithm/string.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
+#include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
@@ -37,6 +38,7 @@ using boost::unordered_map;
 using boost::unordered_set;
 using boost::heap::compare;
 using boost::heap::fibonacci_heap;
+using boost::program_options::variables_map;
 using json = nlohmann::json;
 
 using std::cerr;
@@ -75,6 +77,7 @@ using std::vector;
 #define MAX_ENQUE 5
 #define INTERVAL_MAX 10000
 #define EPS 1e-8
+#define WEIGHT_MAX INT_MAX / 2
 
 typedef tuple<int, int, int, int, bool> Constraint;
 typedef tuple<int, int, int, int, int> Conflict;

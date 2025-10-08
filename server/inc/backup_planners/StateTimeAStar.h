@@ -117,15 +117,17 @@ public:
 class StateTimeAStar : public SingleAgentSolver {
 public:
     // find path by time-space A* search
-    Path run(const BasicGraph& G, const State& start,
+    Path run(const BasicGraph& G,
+             shared_ptr<HeuristicTableBase> heuristic_table, const State& start,
              const vector<Task>& goal_location, ReservationTable& RT,
              const int agent_waited_time = 0) override;
 
     string getName() const override {
         return "AStar";
     }
-    void findTrajectory(const BasicGraph& G, const State& start,
-                        const vector<Task>& goal_locations,
+    void findTrajectory(const BasicGraph& G,
+                        shared_ptr<HeuristicTableBase> heuristic_table,
+                        const State& start, const vector<Task>& goal_locations,
                         const unordered_map<int, double>& travel_times,
                         list<pair<int, int> >& path);
     StateTimeAStar() : SingleAgentSolver() {

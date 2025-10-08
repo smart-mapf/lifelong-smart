@@ -101,8 +101,11 @@ int main(int argc, char** argv) {
             ("grid_type", po::value<string>()->default_value("four_connected"), "grid type: four_connected, four_connected_with_diagonal, eight_connected")
             ("rotation", po::value<bool>()->default_value(false), "consider rotation when planning and executing")
             ("rotation_time", po::value<int>()->default_value(1), "rotation time for the robots (default: 1)")
-            ("save_heuristics_table", po::value<bool>()->default_value(false), "save heuristics table to speed up single-agent pathfinding")
-            ("task_assigner_type", po::value<string>()->default_value("windowed"))
+            ("heuristic_type", po::value<string>()->default_value("basic"), "heuristic type: basic, landmark")
+            ("num_landmarks", po::value<int>()->default_value(20), "number of landmarks for landmark heuristic (default: 20)")
+            ("landmark_selection", po::value<string>()->default_value("workstation+endpt_corners"), "landmark selection strategy: random, workstation+endpt_corners")
+            ("save_heuristics_table", po::value<bool>()->default_value(false), "save heuristics table or not")
+            ("task_assigner_type", po::value<string>()->default_value("windowed"), "windowed or distinct_one_goal")
             ("task_file", po::value<string>()->default_value(""), "task file for the robots (default: empty, meaning random tasks)")
             ;
     // clang-format on

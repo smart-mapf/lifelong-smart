@@ -48,16 +48,16 @@ int ExecutionManager::getCurrSimStep() {
 
 void ExecutionManager::setupBackupPlanner() {
     spdlog::info("Setting up backup planner...");
-    // Setup graph. We are computing heuristics here and in the planner, which
-    // is redundant. Consider optimizing this later.
-    string grid_type = this->_vm["grid_type"].as<std::string>();
+    // Setup graph.
     this->G.screen = this->screen;
     this->G.hold_endpoints = false;
     this->G.useDummyPaths = false;
-    this->G._save_heuristics_table =
-        this->_vm["save_heuristics_table"].as<bool>();
-    this->G.rotation_time = this->_vm["rotation_time"].as<int>();
+    // Backup planner is based on PIBT. Do not consider rotation.
+    // TODO: Make heuristic table rotational compatible
+    this->G.consider_rotation = false;
+    // this->G.rotation_time = this->_vm["rotation_time"].as<int>();
     // Grid type
+    string grid_type = this->_vm["grid_type"].as<std::string>();
     if (!convert_G_type.count(grid_type)) {
         spdlog::error("Grid type {} does not exist!", grid_type);
         exit(-1);
@@ -77,11 +77,34 @@ void ExecutionManager::setupBackupPlanner() {
     if (!G.load_map_from_jsonstr(map_json.dump(4), 1.0, 1.0)) {
         return;
     }
-    this->G.preprocessing(this->_vm["rotation"].as<bool>(), "map");
 
+    // Setup single agent path planner
+    this->setupSingleAgentPlanner();
+
+    // Setup heuristic table. We are computing heuristics here and in the
+    // planner, which is redundant. Consider optimizing this later.
+    this->setupHeuristicTable();
+
+    // Setup backup MAPF planner
+    string solver_name = this->_vm["backup_planner"].as<string>();
+    spdlog::info("Backup planner: {}", solver_name);
+    if (solver_name == "PIBT") {
+        this->backup_planner = make_shared<PIBT>(
+            this->G, *this->path_planner, this->heuristic_table, this->_vm);
+    } else {
+        spdlog::error("Backup solver {} does not exist!", solver_name);
+        exit(-1);
+    }
+
+    // Set initialized flag
+    this->backup_planner->set_initialized(true);
+}
+
+void ExecutionManager::setupSingleAgentPlanner() {
     // Setup backup single agent planner
     string single_solver_name =
         this->_vm["backup_single_agent_solver"].as<string>();
+    spdlog::info("Setting up single-agent planner: {}...", single_solver_name);
     if (single_solver_name == "ASTAR") {
         path_planner = make_shared<StateTimeAStar>();
     } else if (single_solver_name == "SIPP") {
@@ -94,30 +117,30 @@ void ExecutionManager::setupBackupPlanner() {
 
     // Set parameters for the path planner
     path_planner->rotation_time = this->_vm["rotation_time"].as<int>();
+}
 
-    // Setup backup MAPF planner
-    string solver_name = this->_vm["backup_planner"].as<string>();
-    spdlog::info("Backup planner: {}", solver_name);
-    if (solver_name == "PIBT") {
-        this->backup_planner = make_shared<PIBT>(this->G, *this->path_planner);
+void ExecutionManager::setupHeuristicTable() {
+    string h_type = this->_vm["heuristic_type"].as<string>();
+    spdlog::info("Setting up heuristic table: {}...", h_type);
+    // string log_dir = this->_vm["output"].as<string>();
+    string log_dir = ".";
+    int seed = this->_vm["seed"].as<int>();
+    bool save_heuristics_table = this->_vm["save_heuristics_table"].as<bool>();
+    if (h_type == "basic") {
+        this->heuristic_table = make_shared<BasicHeuristicTable>(
+            G, G.task_locations, seed, log_dir, save_heuristics_table);
+    } else if (h_type == "lazy") {
+        this->heuristic_table = make_shared<LazyHeuristicTable>(
+            G, G.task_locations, seed, log_dir, save_heuristics_table);
+    } else if (h_type == "landmark") {
+        this->heuristic_table = make_shared<LandmarkHeuristicTable>(
+            G, G.task_locations, seed, log_dir, save_heuristics_table,
+            this->_vm["num_landmarks"].as<int>(),
+            this->_vm["landmark_selection"].as<string>());
     } else {
-        spdlog::error("Backup solver {} does not exist!", solver_name);
+        spdlog::error("Heuristic table {} does not exist!", h_type);
         exit(-1);
     }
-
-    // Set parameters for the MAPF solver
-    this->backup_planner->seed = this->seed;
-    this->backup_planner->gen = mt19937(this->backup_planner->seed);
-    this->backup_planner->screen = this->screen;
-    this->backup_planner->simulation_window =
-        this->_vm["sim_window_timestep"].as<int>();
-    this->backup_planner->window = this->_vm["plan_window_timestep"].as<int>();
-    this->backup_planner->hold_endpoints = false;
-    this->backup_planner->num_of_agents = this->numRobots;
-    this->backup_planner->k_robust = 0;
-
-    // Set initialized flag
-    this->backup_planner->set_initialized(true);
 }
 
 void ExecutionManager::setupTaskAssigner() {

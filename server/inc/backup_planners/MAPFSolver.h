@@ -2,6 +2,7 @@
 #include <ctime>
 
 #include "backup_planners/SIPP.h"
+#include "heuristics/BasicHeuristicTable.h"
 #include "utils/States.h"
 #include "utils/Task.h"
 
@@ -36,6 +37,7 @@ public:
     // unordered_map<int, double> travel_times;
 
     SingleAgentSolver& path_planner;
+    shared_ptr<HeuristicTableBase> heuristic_table;
     // Runs the algorithm until the problem is solved or time is exhausted
     virtual bool run(
         const vector<State>& starts,
@@ -45,7 +47,9 @@ public:
         // tasking wait time
         const vector<int>& waited_time = vector<int>()) = 0;
 
-    MAPFSolver(const BasicGraph& G, SingleAgentSolver& path_planner);
+    MAPFSolver(const BasicGraph& G, SingleAgentSolver& path_planner,
+               shared_ptr<HeuristicTableBase> heuristic_table,
+               const boost::program_options::variables_map vm);
     ~MAPFSolver();
 
     // Save results
