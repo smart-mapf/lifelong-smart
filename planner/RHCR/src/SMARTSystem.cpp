@@ -288,14 +288,10 @@ json SMARTSystem::simulate(int simulation_time) {
 // (row, col, time, task_id).
 // Orientation will be inferred by SMART (ADG). If orientatio is considered
 // during planning, that should yield better path for ADG.
+// If the planner is failed, return the current non-collision-free plan anyway
 vector<vector<tuple<int, int, double, int>>>
 SMARTSystem::convert_path_to_smart() {
     std::vector<std::vector<std::tuple<int, int, double, int>>> new_mapf_plan;
-
-    // Planner failed, return empty plan
-    if (this->rule_based_called) {
-        return new_mapf_plan;
-    }
 
     new_mapf_plan.resize(this->num_of_drives);
     if (screen > 0) {

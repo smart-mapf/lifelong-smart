@@ -76,9 +76,9 @@ struct State {
     }
 };
 
-std::ostream& operator<<(std::ostream& out, const State& s);
-
 typedef std::vector<State> Path;
+
+std::ostream& operator<<(std::ostream& out, const State& s);
 
 std::ostream& operator<<(std::ostream& out, const Path& path);
 

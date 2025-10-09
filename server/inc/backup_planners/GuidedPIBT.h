@@ -4,7 +4,7 @@
 #include "backup_planners/MAPFSolver.h"
 #include "backup_planners/SIPP.h"
 
-class PIBT : public MAPFSolver {
+class GuidedPIBT : public MAPFSolver {
 public:
     // Runs the algorithm until the problem is solved or time is exhausted
     bool run(const vector<State> &starts,
@@ -14,7 +14,7 @@ public:
              const vector<int> &waited_time = vector<int>()) override;
 
     string get_name() const override {
-        return "PIBT";
+        return "GuidedPIBT";
     }
 
     void save_results(const std::string &fileName,
@@ -30,13 +30,13 @@ public:
     // a_j: the agent where a_i inherits priority from, -1 if None
     // Return true if a valid path is found, false otherwise.s
     bool pibt_funct(int a_i, int a_j, State start_state, Task goal_locations,
-                    int from_t);
+                    int from_t, const vector<Path> &guide_paths);
 
     // The path planner is never used in PIBT, it is kept for compatibility
-    PIBT(const BasicGraph &G, SingleAgentSolver &path_planner,
-         shared_ptr<HeuristicTableBase> heuristic_table,
-         const boost::program_options::variables_map vm);
-    ~PIBT() {
+    GuidedPIBT(const BasicGraph &G, SingleAgentSolver &path_planner,
+               shared_ptr<HeuristicTableBase> heuristic_table,
+               const boost::program_options::variables_map vm);
+    ~GuidedPIBT() {
     }
 
 private:

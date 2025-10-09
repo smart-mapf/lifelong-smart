@@ -84,6 +84,8 @@ typedef tuple<int, int, int, int, int> Conflict;
 // [t_min, t_max), have conflicts or not
 typedef tuple<int, int, bool> Interval;
 typedef pair<double, double> Location;
+// State in a path used by user's planner. [row, col, time, task_id]
+typedef tuple<int, int, double, int> UserState;
 typedef vector<tuple<string, int, double, string, pair<double, double>,
                      pair<double, double>, int>>
     SIM_PLAN;

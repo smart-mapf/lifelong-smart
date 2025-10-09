@@ -1,17 +1,42 @@
-#include "backup_planners/PIBT.h"
+#include "backup_planners/GuidedPIBT.h"
 
-PIBT::PIBT(const BasicGraph &G, SingleAgentSolver &path_planner,
-           shared_ptr<HeuristicTableBase> heuristic_table,
-           const boost::program_options::variables_map vm)
+GuidedPIBT::GuidedPIBT(const BasicGraph &G, SingleAgentSolver &path_planner,
+                       shared_ptr<HeuristicTableBase> heuristic_table,
+                       const boost::program_options::variables_map vm)
     : MAPFSolver(G, path_planner, heuristic_table, vm) {
 }
 
-bool PIBT::run(const vector<State> &starts,
-               const vector<vector<Task>> &goal_locations,
-               const vector<Path> &guide_paths, int time_limit,
-               const vector<int> &waited_time) {
+bool GuidedPIBT::run(const vector<State> &starts,
+                     const vector<vector<Task>> &goal_locations,
+                     const vector<Path> &guide_paths, int time_limit,
+                     const vector<int> &waited_time) {
+    // Sanity check guide paths
+    if (guide_paths.size() != this->num_of_agents) {
+        spdlog::error(
+            "The number of guide paths ({}) is not equal to the number of "
+            "agents ({})",
+            guide_paths.size(), this->num_of_agents);
+        throw std::runtime_error("The number of guide paths is not correct");
+    }
+
+    // Print guide paths
+    if (screen > 0) {
+        spdlog::info("Guide paths:");
+        for (int i = 0; i < guide_paths.size(); i++) {
+            cout << "Agent " << i << ": ";
+            for (const auto &state : guide_paths[i]) {
+                cout << "(t=" << state.timestep << ","
+                     << this->G.getRowCoordinate(state.location) << ","
+                     << this->G.getColCoordinate(state.location) << ","
+                     << state.orientation << ") -> ";
+            }
+            cout << endl;
+        }
+    }
+
     // set timer
-    spdlog::info("Backup PIBT starts planning for {} agents", starts.size());
+    spdlog::info("Backup GuidedPIBT starts planning for {} agents",
+                 starts.size());
     clock_t start = std::clock();
     this->num_of_agents = starts.size();
 
@@ -160,17 +185,14 @@ bool PIBT::run(const vector<State> &starts,
             // If one of the agents has no goals, do not compare
             if (this->goals_mem[a].empty() || this->goals_mem[b].empty())
                 return false;
-            // double dist_a = this->G.get_pebble_motion_heuristic(
-            //     this->goals_mem[a][0].location, solution[a][t - 1].location);
-            // double dist_b = this->G.get_pebble_motion_heuristic(
-            //     this->goals_mem[b][0].location, solution[b][t - 1].location);
-            double dist_a = this->heuristic_table->get(
-                this->goals_mem[a][0].location, solution[a][t - 1].location);
-            double dist_b = this->heuristic_table->get(
-                this->goals_mem[b][0].location, solution[b][t - 1].location);
-            // Prefer the agent with smaller distance to its goal
-            if (dist_a != dist_b)
-                return dist_a < dist_b;
+            GuidePathHVal dist_a = this->heuristic_table->get_guide_path_h(
+                this->goals_mem[a][0].location, solution[a][t - 1].location,
+                guide_paths[a]);
+            GuidePathHVal dist_b = this->heuristic_table->get_guide_path_h(
+                this->goals_mem[b][0].location, solution[b][t - 1].location,
+                guide_paths[b]);
+            // Prefer the agent with smaller Hval
+            return dist_a < dist_b;
             // If the distances are equal, break ties randomly
             return false;
         };
@@ -196,7 +218,8 @@ bool PIBT::run(const vector<State> &starts,
                     }
                     cout << endl;
                 }
-                bool success = pibt_funct(k, -1, start, goals[0], t - 1);
+                bool success =
+                    pibt_funct(k, -1, start, goals[0], t - 1, guide_paths);
             }
         }
 
@@ -272,81 +295,8 @@ bool PIBT::run(const vector<State> &starts,
     return true;
 }
 
-bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
-                      int from_t) {
-    // Determine the actions
-    // State tmp_start(start_state);
-    // // Use a dummy start state to get the movement neighbors
-    // tmp_start.orientation = -1;
-    // list<State> next_states_ = this->G.get_neighbors(tmp_start);
-
-    // if (start_state.orientation >= 0) {
-    //     for (auto &next_state : next_states_) {
-    //         // Get the orientation at the next state
-    //         int next_ori = this->G.get_direction(start_state.location,
-    //                                              next_state.location);
-
-    //         // Set the orientation of the next state
-    //         if (next_ori < 4)
-    //             next_state.orientation = next_ori;
-    //         else
-    //             next_state.orientation = start_state.orientation;
-    //     }
-    // }
-
-    // vector<State> next_states(next_states_.begin(), next_states_.end());
-
-    // Sort the next states by action cost + heuristic values, breaking ties
-    // randomly.
-    // auto action_cmp = [&](const State &n1, const State &n2) {
-    //     // Rotation cost is the cost of rotating
-    //     double rot_cost1 = 0;
-    //     double rot_cost2 = 0;
-    //     if (start_state.orientation >= 0) {
-    //         // Get the rotation degree
-    //         int rot_degree1 =
-    //         this->G.get_rotate_degree(start_state.orientation,
-    //                                                     n1.orientation);
-    //         int rot_degree2 =
-    //         this->G.get_rotate_degree(start_state.orientation,
-    //                                                     n2.orientation);
-
-    //         // Calculate the rotation cost
-    //         double cost1 =
-    //             this->G.get_weight(start_state.location, n1.location);
-    //         double cost2 =
-    //             this->G.get_weight(start_state.location, n2.location);
-    //         rot_cost1 = rot_degree1 * cost1;
-    //         rot_cost2 = rot_degree2 * cost2;
-    //     }
-
-    //     // Movement cost is the cost of moving from start loc to end loc
-    //     double move_cost1 =
-    //         this->G.get_weight(start_state.location, n1.location);
-    //     double move_cost2 =
-    //         this->G.get_weight(start_state.location, n2.location);
-    //     double h1 =
-    //         this->G.get_pebble_motion_heuristic(goal.location, n1.location,
-    //         n1.orientation);
-    //     double h2 =
-    //         this->G.get_pebble_motion_heuristic(goal.location, n2.location,
-    //         n2.orientation);
-    //     double cost1 = move_cost1 + rot_cost1 + h1;
-    //     double cost2 = move_cost2 + rot_cost2 + h2;
-    //     if (cost1 != cost2)
-    //         return cost1 < cost2;
-    //     // Tie breaking. Prefer the next state that is currently not
-    //     occupied if (this->curr_occupied[n1.location] == -1 &&
-    //         this->curr_occupied[n2.location] != -1) {
-    //         return true;  // n1 is not occupied, n2 is occupied
-    //     } else if (this->curr_occupied[n1.location] != -1 &&
-    //                this->curr_occupied[n2.location] == -1) {
-    //         return false;  // n2 is not occupied, n1 is occupied
-    //     }
-    //     return false;
-    // };
-
-    // ########### OLD implementation without orientation ###########
+bool GuidedPIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
+                            int from_t, const vector<Path> &guide_paths) {
     // Determine the actions
     list<State> next_states_ = this->G.get_neighbors(start_state);
 
@@ -382,16 +332,29 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     auto action_cmp = [&](const State &n1, const State &n2) {
         double cost1 = this->G.get_weight(start_state.location, n1.location);
         double cost2 = this->G.get_weight(start_state.location, n2.location);
-        // double h1 =
-        //     this->G.get_pebble_motion_heuristic(goal.location, n1.location);
-        // double h2 =
-        //     this->G.get_pebble_motion_heuristic(goal.location, n2.location);
-        double h1 = this->heuristic_table->get(goal.location, n1.location);
-        double h2 = this->heuristic_table->get(goal.location, n2.location);
-        if (cost1 + h1 != cost2 + h2)
-            return (cost1 + h1) < (cost2 + h2);
-        // Tie breaking. Prefer the next state that is currently not
-        // occupied
+        GuidePathHVal h1 = this->heuristic_table->get_guide_path_h(
+            goal.location, n1.location, guide_paths[a_i]);
+        GuidePathHVal h2 = this->heuristic_table->get_guide_path_h(
+            goal.location, n2.location, guide_paths[a_i]);
+
+        // Both states are on guide path, no need to consider dp
+        if (h1.dp == 0 && h2.dp == 0) {
+            return h1.dg < h2.dg;
+        }
+
+        // One of the state is not on guide path, need to consider dp.
+        // Distance to the guide paths are different, prefer the one closer to
+        // the guide path
+        if (cost1 + h1.dp != cost2 + h2.dp)
+            return cost1 + h1.dp < cost2 + h2.dp;
+
+        // Distance to the guide paths are the same. Prefer the one closer to
+        // goal
+        if (h1.dg != h2.dg)
+            return h1.dg < h2.dg;
+
+        // Distance to guide path and to goal are the same. Prefer the next
+        // state that is currently not occupied
         if (this->curr_occupied[n1.location] == -1 &&
             this->curr_occupied[n2.location] != -1) {
             return true;  // n1 is not occupied, n2 is occupied
@@ -401,57 +364,28 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
         }
         return false;
     };
-    // ########### OLD implementation without orientation ###########
 
     // Shuffle the next states to break ties randomly, then sort
     std::shuffle(next_states.begin(), next_states.end(), this->gen);
     std::sort(next_states.begin(), next_states.end(), action_cmp);
 
-    // cout << "start state: " << start_state << endl;
+    if (screen > 1) {
+        cout << "start state: " << start_state << endl;
 
-    // cout << "Next states: " << endl;
-    // for (const auto &next_state : next_states) {
-    //     cout << next_state << " (cost: "
-    //          << this->G.get_weight(start_state.location,
-    //          next_state.location)
-    //          << ", heuristic: "
-    //          << this->G.get_pebble_motion_heuristic(goal.location,
-    //          next_state.location,
-    //                                   next_state.orientation)
-    //          << ")" << endl;
-    // }
-    // cout << endl;
+        cout << "Next states: " << endl;
+        for (const auto &next_state : next_states) {
+            cout << next_state << " (cost: "
+                 << this->G.get_weight(start_state.location,
+                                       next_state.location)
+                 << ", heuristic: "
+                 << this->heuristic_table->get_guide_path_h(
+                        goal.location, next_state.location, guide_paths[a_i])
+                 << ")" << endl;
+        }
+        cout << endl;
+    }
 
     for (auto next_state : next_states) {
-        // // For rotation, infer the actual next state
-        // if (start_state.orientation >= 0 &&
-        //     start_state.location != next_state.location &&
-        //     start_state.orientation != next_state.orientation) {
-        //     // The agent is rotating and moving at the same time. We make
-        //     it
-        //     // rotate first
-        //     cout << "Moving and rotating from " << start_state << " to "
-        //          << next_state << endl;
-        //     State actual_next_state(next_state);
-        //     actual_next_state.location = start_state.location;
-
-        //     // Check if the rotation is 180 degrees
-        //     if (this->G.get_rotate_degree(start_state.orientation,
-        //                                   next_state.orientation) >= 2) {
-        //         // Always turn left
-        //         actual_next_state.orientation =
-        //             (start_state.orientation + 1) % 4;
-        //         cout << "Rotating 90 degrees from " <<
-        //         start_state.orientation
-        //              << " to " << actual_next_state.orientation << endl;
-        //     }
-
-        //     cout << "Actual next state: " << actual_next_state << endl;
-        //     cout << endl;
-
-        //     next_state = actual_next_state;
-        // }
-
         // avoid vertex conflicts
         if (this->next_occupied[next_state.location] != -1) {
             continue;
@@ -473,7 +407,7 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
         if (a_k != -1 && solution[a_k][from_t + 1].location == -1 &&
             this->goals_mem[a_k].size() > 0) {
             if (!pibt_funct(a_k, a_i, solution[a_k][from_t],
-                            this->goals_mem[a_k][0], from_t)) {
+                            this->goals_mem[a_k][0], from_t, guide_paths)) {
                 continue;
             }
         }
@@ -488,14 +422,13 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     return false;
 }
 
-void PIBT::print_results() const {
-    // std::cout << "PIBT*:Succeed," << runtime << "," << std::endl;
-    string result_str = "PIBT*:Succeed,Runtime=" + to_string(runtime);
+void GuidedPIBT::print_results() const {
+    string result_str = "GuidedPIBT*:Succeed,Runtime=" + to_string(runtime);
     spdlog::info(result_str);
 }
 
-void PIBT::save_results(const std::string &fileName,
-                        const std::string &instanceName) const {
+void GuidedPIBT::save_results(const std::string &fileName,
+                              const std::string &instanceName) const {
     std::ofstream stats;
     stats.open(fileName, std::ios::app);
     stats << runtime << "," << "," << solution_cost << "," << min_sum_of_costs
@@ -503,7 +436,7 @@ void PIBT::save_results(const std::string &fileName,
     stats.close();
 }
 
-void PIBT::clear() {
+void GuidedPIBT::clear() {
     runtime = 0;
     solution_found = false;
     solution_cost = -2;

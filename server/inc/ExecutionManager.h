@@ -6,10 +6,11 @@
 #include <boost/tokenizer.hpp>
 
 #include "ADG.h"
+#include "backup_planners/GuidedPIBT.h"
 #include "backup_planners/PIBT.h"
 #include "heuristics/BasicHeuristicTable.h"
-#include "heuristics/LazyHeuristicTable.h"
 #include "heuristics/LandmarkHeuristicTable.h"
+#include "heuristics/LazyHeuristicTable.h"
 #include "task_assigners/BasicTaskAssigner.h"
 #include "task_assigners/DistinctOneGoalTaskAssigner.h"
 #include "utils/SMARTGraph.h"
@@ -94,6 +95,9 @@ private:
 
     // Setup single agent path planner
     void setupSingleAgentPlanner();
+
+    // Convert paths from planner to spatial guide paths
+    vector<Path> convertPlanToGuidePaths(const vector<vector<UserState>>& plan);
 
     std::shared_ptr<ADG> adg;
     bool flipped_coord = true;

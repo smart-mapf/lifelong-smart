@@ -146,16 +146,14 @@ int main(int argc, char** argv) {
         n_mapf_calls += 1;
         success = pbs.solve(runtime_limit);
         runtime_limit = runtime_limit * 2;
-        vector<vector<tuple<int, int, double, int>>> new_mapf_plan;
-        if (success) {
-            new_mapf_plan = pbs.getPaths();
-
-            pbs.clearSearchEngines();
-            pbs.clear();
-
-        } else {
+        vector<vector<tuple<int, int, double, int>>> new_mapf_plan =
+            pbs.getPaths();
+        if (!success) {
             n_rule_based_calls += 1;
         }
+
+        pbs.clearSearchEngines();
+        pbs.clear();
 
         // Send new plan
         json stats = {{"n_mapf_calls", n_mapf_calls},

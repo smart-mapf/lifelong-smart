@@ -197,3 +197,55 @@ void BasicHeuristicTable::reset_heuristics() {
     if (this->_save_heuristics_table)
         save_heuristics_table(this->save_path.string());
 }
+
+GuidePathHVal BasicHeuristicTable::get_guide_path_h(int goal_location,
+                                                    int start_location,
+                                                    const Path& g_path) {
+    GuidePathHVal res;
+
+    // For all points on the guide path, select the one that is closest to
+    // `start_location`.
+    State closest_pt;
+    int closest_idx = -1;
+    res.dp = WEIGHT_MAX;
+    for (int i = 0; i < g_path.size(); i++) {
+        State pt = g_path[i];
+        double h_val = this->get(pt.location, start_location);
+        if (h_val < res.dp) {
+            res.dp = h_val;
+            closest_pt = pt;
+            closest_idx = i;
+        }
+
+        // Stop when reached the current goal
+        if (g_path[i].location == goal_location) {
+            break;
+        }
+    }
+
+    // Start from closest_pt, compute the distance along the guide path to the
+    // `goal_location`.
+    res.dg = 0;
+    for (int i = closest_idx; i < g_path.size() - 1; i++) {
+        // Stop if we reach the goal location. If the goal location does not
+        // appear on the guide path, we will go all the way to the end of the
+        // guide path.
+        if (g_path[i].location == goal_location) {
+            break;
+        }
+        double weight =
+            this->G.get_weight(g_path[i].location, g_path[i + 1].location);
+        if (weight > WEIGHT_MAX) {
+            spdlog::error("Edge weight in guide path from {} to {} is invalid.",
+                          g_path[i].location, g_path[i + 1].location);
+            exit(-1);
+        }
+        // Print the status
+        // cout << "Guide path from " << g_path[i].location << " to "
+        //      << g_path[i + 1].location << " with weight " << weight
+        //      << std::endl;
+        res.dg += weight;
+    }
+
+    return res;
+}

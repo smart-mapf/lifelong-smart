@@ -39,13 +39,13 @@ public:
     SingleAgentSolver& path_planner;
     shared_ptr<HeuristicTableBase> heuristic_table;
     // Runs the algorithm until the problem is solved or time is exhausted
-    virtual bool run(
-        const vector<State>& starts,
-        // an ordered list of tuple of <location, release time, wait time>
-        const vector<vector<Task>>& goal_locations, int time_limit = 60,
-        // The number of timesteps each agent has waited. Used if considering
-        // tasking wait time
-        const vector<int>& waited_time = vector<int>()) = 0;
+    virtual bool run(const vector<State>& starts,
+                     const vector<vector<Task>>& goal_locations,
+                     const vector<Path>& guide_paths = vector<Path>(),
+                     int time_limit = 60,
+                     // The number of timesteps each agent has waited. Used if
+                     // considering tasking wait time
+                     const vector<int>& waited_time = vector<int>()) = 0;
 
     MAPFSolver(const BasicGraph& G, SingleAgentSolver& path_planner,
                shared_ptr<HeuristicTableBase> heuristic_table,

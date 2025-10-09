@@ -91,6 +91,9 @@ void ExecutionManager::setupBackupPlanner() {
     if (solver_name == "PIBT") {
         this->backup_planner = make_shared<PIBT>(
             this->G, *this->path_planner, this->heuristic_table, this->_vm);
+    } else if (solver_name == "GuidedPIBT") {
+        this->backup_planner = make_shared<GuidedPIBT>(
+            this->G, *this->path_planner, this->heuristic_table, this->_vm);
     } else {
         spdlog::error("Backup solver {} does not exist!", solver_name);
         exit(-1);
@@ -128,13 +131,13 @@ void ExecutionManager::setupHeuristicTable() {
     bool save_heuristics_table = this->_vm["save_heuristics_table"].as<bool>();
     if (h_type == "basic") {
         this->heuristic_table = make_shared<BasicHeuristicTable>(
-            G, G.task_locations, seed, log_dir, save_heuristics_table);
+            G, G.free_locations, seed, log_dir, save_heuristics_table);
     } else if (h_type == "lazy") {
         this->heuristic_table = make_shared<LazyHeuristicTable>(
-            G, G.task_locations, seed, log_dir, save_heuristics_table);
+            G, G.free_locations, seed, log_dir, save_heuristics_table);
     } else if (h_type == "landmark") {
         this->heuristic_table = make_shared<LandmarkHeuristicTable>(
-            G, G.task_locations, seed, log_dir, save_heuristics_table,
+            G, G.free_locations, seed, log_dir, save_heuristics_table,
             this->_vm["num_landmarks"].as<int>(),
             this->_vm["landmark_selection"].as<string>());
     } else {
@@ -332,49 +335,35 @@ string ExecutionManager::getRobotsLocation() {
 void ExecutionManager::addNewPlan(string& new_plan_json_str) {
     json new_plan_json = json::parse(new_plan_json_str);
 
-    vector<vector<tuple<int, int, double, int>>> new_plan;
-    bool congested = false;
-    bool success = false;
-
-    if (new_plan_json.contains("success"))
-        success = new_plan_json["success"].get<bool>();
-    else {
-        spdlog::warn("No success field in the new plan json! Assume failure.");
+    // Sanity check for the necessary fields
+    if (!new_plan_json.contains("plan")) {
+        spdlog::error("addNewPlan: No `plan` is found!");
+        exit(-1);
     }
 
-    // Planner successfully returns.
-    if (success) {
-        new_plan = new_plan_json["plan"]
-                       .get<vector<vector<tuple<int, int, double, int>>>>();
-        congested = new_plan_json["congested"].get<bool>();
+    if (!new_plan_json.contains("success")) {
+        spdlog::warn("addNewPlan: No success is found! Assume failure.");
     }
+
+    vector<vector<UserState>> new_plan;
+    new_plan = new_plan_json["plan"].get<vector<vector<UserState>>>();
+
+    bool congested = new_plan_json.value("congested", false);
+    bool success = new_plan_json.value("success", false);
+
     // Planner fails. Use the backup planner.
-    else {
-        // if (!new_plan_json.contains("mapf_instance")) {
-        //     spdlog::error("No MAPF instance provided when planner fails!");
-        //     exit(-1);
-        // }
-
-        // json mapf_instance = new_plan_json["mapf_instance"];
-
-        // if (!mapf_instance.contains("starts") ||
-        //     !mapf_instance.contains("goals")) {
-        //     spdlog::error(
-        //         "MAPF instance does not contain starts or goals when planner
-        //         " "fails!");
-        //     exit(-1);
-        // }
-
-        // auto starts = mapf_instance.at("starts").get<vector<State>>();
-        // auto goal_locations =
-        //     mapf_instance.at("goals").get<vector<vector<Task>>>();
+    success = false;
+    if (!success) {
         auto starts = this->task_assigner->getStarts();
         auto goal_locations = this->task_assigner->getGoalLocations();
+
+        // Obtain the guide paths
+        vector<Path> guide_paths = this->convertPlanToGuidePaths(new_plan);
 
         // Plan using the backup planner
         spdlog::info("Planner fails, using backup planner");
         this->backup_planner->clear();
-        this->backup_planner->run(starts, goal_locations);
+        this->backup_planner->run(starts, goal_locations, guide_paths);
         new_plan = this->backup_planner->convert_path_to_smart(goal_locations);
         congested = this->backup_planner->congested();
     }
@@ -385,11 +374,7 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
         this->planner_stats = new_plan_json["stats"];
     }
 
-    // update backup tasks, if available
-    // if (new_plan_json.contains("backup_tasks")) {
-    //     auto backup_tasks = new_plan_json["backup_tasks"].get<set<int>>();
-    //     this->adg->backup_tasks = backup_tasks;
-    // }
+    // Update backup tasks, if available
     this->adg->backup_tasks = this->task_assigner->getBackupTasks();
 
     if (congested) {
@@ -398,9 +383,6 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
         // the clients (robots) are closed. So we set a flag to let the robots
         // know the simulation should be stopped and the robots will call
         // closeServer.
-        // cout << "Congested simulation detected, stopping the
-        // simulation!"
-        //           << endl;
         spdlog::info("Congested simulation detected, stopping the simulation!");
         this->congested_sim = true;
     }
@@ -428,9 +410,6 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
     // to at most two actions.
     vector<vector<Action>> actions;
     actions = this->parser.StepsToActions(steps, this->flipped_coord);
-#ifdef DEBUG
-    cout << "Finish action process, plan size: " << actions.size() << endl;
-#endif
 
     this->adg->addMAPFPlan(actions);
 
@@ -446,10 +425,32 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
 
     // Planner stop running
     this->planner_running = false;
+}
 
-#ifdef DEBUG
-    cout << "Finish add plan" << endl;
-#endif
+// Obtain the guide paths. Guide paths are assumed to be
+// non-collision-free solutions from the planner.
+vector<Path> ExecutionManager::convertPlanToGuidePaths(
+    const vector<vector<UserState>>& plan) {
+    vector<Path> guide_paths(this->numRobots);
+    for (int k = 0; k < this->numRobots; k++) {
+        Path path;
+        auto raw_path = plan[k];
+        for (auto& step : raw_path) {
+            int row = get<0>(step);
+            int col = get<1>(step);
+            int loc = this->G.getCellId(row, col);
+            int t = static_cast<int>(get<2>(step));
+            // For some algos, remove waiting from the path as guide paths are
+            // meant to be spatial
+            if (this->backup_planner->get_name() == "GuidedPIBT" && t > 0 &&
+                path.back().location == loc) {
+                continue;
+            }
+            path.push_back(State(loc, t));
+        }
+        guide_paths[k] = path;
+    }
+    return guide_paths;
 }
 
 string ExecutionManager::actionFinished(string& robot_id_str, int node_ID) {
