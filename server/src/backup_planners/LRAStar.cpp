@@ -34,9 +34,9 @@ bool LRAStar::run(const vector<State> &starts,
                 "Agent {} does not have a guide path. Using A* to plan "
                 "from scratch.",
                 i);
-        }
-        shortest_paths[i] =
+            shortest_paths[i] =
                 find_shortest_path(starts[i], goal_locations[i]);
+        }
     }
     // resolve conflicts
     resolve_conflicts(shortest_paths);

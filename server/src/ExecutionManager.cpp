@@ -355,7 +355,7 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
     bool success = new_plan_json.value("success", false);
 
     // Planner fails. Use the backup planner.
-    success = false;
+    // success = false;
     if (!success) {
         auto starts = this->task_assigner->getStarts();
         auto goal_locations = this->task_assigner->getGoalLocations();
