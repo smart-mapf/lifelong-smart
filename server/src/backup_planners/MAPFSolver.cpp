@@ -37,15 +37,21 @@ bool MAPFSolver::validate_solution() {
                 int loc1 = this->solution[a1][timestep].location;
                 int loc2 = this->solution[a2][timestep].location;
                 if (loc1 == loc2) {
-                    cout << "Agents " << a1 << " and " << a2 << " collides at "
-                         << loc1 << " at timestep " << timestep << endl;
+                    spdlog::error(
+                        "Agents {} and {} collides at ({},{}) at timestep {}",
+                        a1, a2, this->G.getRowCoordinate(loc1),
+                        this->G.getColCoordinate(loc1), timestep);
                     return false;
                 } else if (timestep < min_path_length - 1 &&
                            loc1 == this->solution[a2][timestep + 1].location &&
                            loc2 == this->solution[a1][timestep + 1].location) {
-                    cout << "Agents " << a1 << " and " << a2 << " collides at ("
-                         << loc1 << "-->" << loc2 << ") at timestep "
-                         << timestep << endl;
+                    spdlog::error(
+                        "Agents {} and {} collides at ({},{})->({},{}) at "
+                        "timestep {}",
+                        a1, a2, this->G.getRowCoordinate(loc1),
+                        this->G.getColCoordinate(loc1),
+                        this->G.getRowCoordinate(loc2),
+                        this->G.getColCoordinate(loc2), timestep);
                     return false;
                 }
             }
@@ -81,12 +87,12 @@ bool MAPFSolver::validate_solution() {
 
 void MAPFSolver::print_solution() const {
     for (int i = 0; i < num_of_agents; i++) {
-        cout << "Agent " << i << ":\t";
+        cout << "Agent " << i << ":";
         for (const auto& loc : solution[i]) {
-            cout << loc.location;
-            if (loc.is_tasking_wait)
-                cout << "(wait)";
-            cout << "->";
+            cout << " (t=" << loc.timestep << ","
+                 << this->G.getRowCoordinate(loc.location) << ","
+                 << this->G.getColCoordinate(loc.location) << ","
+                 << loc.orientation << ")->";
         }
         cout << endl;
     }

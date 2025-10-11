@@ -290,8 +290,13 @@ bool GuidedPIBT::run(const vector<State> &starts,
             cout << "#################" << endl;
         }
     }
-    if (screen > 0)
+    if (screen > 0) {
         print_results();
+        if (!this->validate_solution()) {
+            spdlog::error("Backup PIBT found an invalid solution.");
+            exit(-1);
+        }
+    }
     return true;
 }
 

@@ -94,6 +94,9 @@ void ExecutionManager::setupBackupPlanner() {
     } else if (solver_name == "GuidedPIBT") {
         this->backup_planner = make_shared<GuidedPIBT>(
             this->G, *this->path_planner, this->heuristic_table, this->_vm);
+    } else if (solver_name == "LRAStar") {
+        this->backup_planner = make_shared<LRAStar>(
+            this->G, *this->path_planner, this->heuristic_table, this->_vm);
     } else {
         spdlog::error("Backup solver {} does not exist!", solver_name);
         exit(-1);

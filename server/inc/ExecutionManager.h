@@ -7,6 +7,7 @@
 
 #include "ADG.h"
 #include "backup_planners/GuidedPIBT.h"
+#include "backup_planners/LRAStar.h"
 #include "backup_planners/PIBT.h"
 #include "heuristics/BasicHeuristicTable.h"
 #include "heuristics/LandmarkHeuristicTable.h"
