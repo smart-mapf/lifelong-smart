@@ -15,11 +15,6 @@ bool PIBT::run(const vector<State> &starts,
     clock_t start = std::clock();
     this->num_of_agents = starts.size();
 
-    // if (this->screen > 1) {
-    //     spdlog::info("MAPF instance in backup planner:");
-    //     this->print_mapf_instance(starts, goal_locations);
-    // }
-
     // Initialize
     this->curr_occupied.clear();
     this->curr_occupied.resize(this->G.size(), -1);
@@ -82,7 +77,7 @@ bool PIBT::run(const vector<State> &starts,
         }
     }
 
-    // Print the solution
+    // Print the initial solution
     if (screen > 1) {
         cout << "Initialized solution:" << endl;
         for (int i = 0; i < num_of_agents; i++) {
@@ -104,7 +99,7 @@ bool PIBT::run(const vector<State> &starts,
 
     for (int t = 1; t < this->simulation_window + 1; t++) {
         // Each iteration plans from t - 1 to t, until t is larer than
-        // planning_window
+        // simulation_window
 
         // if (screen > 1) {
         //     cout << "#################" << endl;
@@ -156,36 +151,57 @@ bool PIBT::run(const vector<State> &starts,
             //     }
             // }
 
-            // Compare the distance to the goal for each agent
-            // If one of the agents has no goals, do not compare
-            if (this->goals_mem[a].empty() || this->goals_mem[b].empty())
+            // Prefer agents that have at least one goal.
+            // a has no goal and b has some goals, prefer b.
+            if (this->goals_mem[a].empty() && !this->goals_mem[b].empty())
                 return false;
-            // double dist_a = this->G.get_pebble_motion_heuristic(
-            //     this->goals_mem[a][0].location, solution[a][t - 1].location);
-            // double dist_b = this->G.get_pebble_motion_heuristic(
-            //     this->goals_mem[b][0].location, solution[b][t - 1].location);
+            // a has some goals and b has no goals, prefer a.
+            else if (!this->goals_mem[a].empty() && this->goals_mem[b].empty())
+                return true;
+            // If both agents has no goals, do not compare.
+            // TODO: break ties randomly.
+            else if (this->goals_mem[a].empty() && this->goals_mem[b].empty())
+                return false;
+
+            // Both agents have goals. Compare the distance to the goals.
             double dist_a = this->heuristic_table->get(
                 this->goals_mem[a][0].location, solution[a][t - 1].location);
             double dist_b = this->heuristic_table->get(
                 this->goals_mem[b][0].location, solution[b][t - 1].location);
+
             // Prefer the agent with smaller distance to its goal
             if (dist_a != dist_b)
                 return dist_a < dist_b;
-            // If the distances are equal, break ties randomly
+
+            // If the distances are equal, TODO: break ties randomly
             return false;
         };
         std::shuffle(agents.begin(), agents.end(), this->gen);
         std::sort(agents.begin(), agents.end(), agents_cmp);
+
+        // Depending on the task assigner, some agents might finish their
+        // goals before reaching simulation_window. We temporarily assign
+        // their current locations as goals.
+        // We do this after sorting the agents, because having temporary goals
+        // or not is part of the sorting criteria.
+        for (int k : agents) {
+            if (this->goals_mem[k].empty()) {
+                Task tmp_goal(goal_locations[k].back());
+                tmp_goal.id = -1;
+                this->goals_mem[k].push_back(tmp_goal);
+            }
+        }
+
         for (int k : agents) {
             // If the agent is already planned, skip it
-            if (solution[k][t].location == -1 &&
-                this->goals_mem[k].size() > 0) {
+            if (solution[k][t].location == -1) {
                 // Determine the start loc and goals
                 State start = solution[k][t - 1];
                 if (this->goals_mem[k].empty()) {
                     cout << "No goals for agent " << k << endl;
                     continue;  // No goals left for this agent
                 }
+
                 vector<Task> goals = this->goals_mem[k];
                 if (screen > 1) {
                     cout << "Planning agent " << k << " from " << start.location
@@ -280,79 +296,6 @@ bool PIBT::run(const vector<State> &starts,
 bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
                       int from_t) {
     // Determine the actions
-    // State tmp_start(start_state);
-    // // Use a dummy start state to get the movement neighbors
-    // tmp_start.orientation = -1;
-    // list<State> next_states_ = this->G.get_neighbors(tmp_start);
-
-    // if (start_state.orientation >= 0) {
-    //     for (auto &next_state : next_states_) {
-    //         // Get the orientation at the next state
-    //         int next_ori = this->G.get_direction(start_state.location,
-    //                                              next_state.location);
-
-    //         // Set the orientation of the next state
-    //         if (next_ori < 4)
-    //             next_state.orientation = next_ori;
-    //         else
-    //             next_state.orientation = start_state.orientation;
-    //     }
-    // }
-
-    // vector<State> next_states(next_states_.begin(), next_states_.end());
-
-    // Sort the next states by action cost + heuristic values, breaking ties
-    // randomly.
-    // auto action_cmp = [&](const State &n1, const State &n2) {
-    //     // Rotation cost is the cost of rotating
-    //     double rot_cost1 = 0;
-    //     double rot_cost2 = 0;
-    //     if (start_state.orientation >= 0) {
-    //         // Get the rotation degree
-    //         int rot_degree1 =
-    //         this->G.get_rotate_degree(start_state.orientation,
-    //                                                     n1.orientation);
-    //         int rot_degree2 =
-    //         this->G.get_rotate_degree(start_state.orientation,
-    //                                                     n2.orientation);
-
-    //         // Calculate the rotation cost
-    //         double cost1 =
-    //             this->G.get_weight(start_state.location, n1.location);
-    //         double cost2 =
-    //             this->G.get_weight(start_state.location, n2.location);
-    //         rot_cost1 = rot_degree1 * cost1;
-    //         rot_cost2 = rot_degree2 * cost2;
-    //     }
-
-    //     // Movement cost is the cost of moving from start loc to end loc
-    //     double move_cost1 =
-    //         this->G.get_weight(start_state.location, n1.location);
-    //     double move_cost2 =
-    //         this->G.get_weight(start_state.location, n2.location);
-    //     double h1 =
-    //         this->G.get_pebble_motion_heuristic(goal.location, n1.location,
-    //         n1.orientation);
-    //     double h2 =
-    //         this->G.get_pebble_motion_heuristic(goal.location, n2.location,
-    //         n2.orientation);
-    //     double cost1 = move_cost1 + rot_cost1 + h1;
-    //     double cost2 = move_cost2 + rot_cost2 + h2;
-    //     if (cost1 != cost2)
-    //         return cost1 < cost2;
-    //     // Tie breaking. Prefer the next state that is currently not
-    //     occupied if (this->curr_occupied[n1.location] == -1 &&
-    //         this->curr_occupied[n2.location] != -1) {
-    //         return true;  // n1 is not occupied, n2 is occupied
-    //     } else if (this->curr_occupied[n1.location] != -1 &&
-    //                this->curr_occupied[n2.location] == -1) {
-    //         return false;  // n2 is not occupied, n1 is occupied
-    //     }
-    //     return false;
-    // };
-
-    // ########### OLD implementation without orientation ###########
-    // Determine the actions
     list<State> next_states_ = this->G.get_neighbors(start_state);
 
     // If the agent is waiting, it can only wait in place
@@ -387,10 +330,6 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     auto action_cmp = [&](const State &n1, const State &n2) {
         double cost1 = this->G.get_weight(start_state.location, n1.location);
         double cost2 = this->G.get_weight(start_state.location, n2.location);
-        // double h1 =
-        //     this->G.get_pebble_motion_heuristic(goal.location, n1.location);
-        // double h2 =
-        //     this->G.get_pebble_motion_heuristic(goal.location, n2.location);
         double h1 = this->heuristic_table->get(goal.location, n1.location);
         double h2 = this->heuristic_table->get(goal.location, n2.location);
         if (cost1 + h1 != cost2 + h2)
@@ -406,7 +345,6 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
         }
         return false;
     };
-    // ########### OLD implementation without orientation ###########
 
     // Shuffle the next states to break ties randomly, then sort
     std::shuffle(next_states.begin(), next_states.end(), this->gen);
@@ -428,35 +366,6 @@ bool PIBT::pibt_funct(int a_i, int a_j, State start_state, Task goal,
     // cout << endl;
 
     for (auto next_state : next_states) {
-        // // For rotation, infer the actual next state
-        // if (start_state.orientation >= 0 &&
-        //     start_state.location != next_state.location &&
-        //     start_state.orientation != next_state.orientation) {
-        //     // The agent is rotating and moving at the same time. We make
-        //     it
-        //     // rotate first
-        //     cout << "Moving and rotating from " << start_state << " to "
-        //          << next_state << endl;
-        //     State actual_next_state(next_state);
-        //     actual_next_state.location = start_state.location;
-
-        //     // Check if the rotation is 180 degrees
-        //     if (this->G.get_rotate_degree(start_state.orientation,
-        //                                   next_state.orientation) >= 2) {
-        //         // Always turn left
-        //         actual_next_state.orientation =
-        //             (start_state.orientation + 1) % 4;
-        //         cout << "Rotating 90 degrees from " <<
-        //         start_state.orientation
-        //              << " to " << actual_next_state.orientation << endl;
-        //     }
-
-        //     cout << "Actual next state: " << actual_next_state << endl;
-        //     cout << endl;
-
-        //     next_state = actual_next_state;
-        // }
-
         // avoid vertex conflicts
         if (this->next_occupied[next_state.location] != -1) {
             continue;

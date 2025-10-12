@@ -66,8 +66,7 @@ def create_Argos(map_data: List[str],
         robot_init_pos (list): initial position of the robots in the map.
         curr_num_agent (int): number of robots.
         port_num (int): port number for the server/client communication.
-        n_threads (int): number of threads for the simulation. 0 for all
-            threads.
+        n_threads (int): number of threads for the simulation.
         visualization (bool, optional): whether run with visualization.
             Defaults to False.
         sim_duration (int, optional): duration of the simulation in number of
@@ -100,6 +99,7 @@ def create_Argos(map_data: List[str],
     framework = ET.SubElement(argos_config, "framework")
 
     # System configuration
+    # NOTE: We use n_threads - 1 because 0 means no threading in Argos.
     system = ET.SubElement(framework, "system", threads=str(n_threads - 1))
 
     # Experiment configuration
