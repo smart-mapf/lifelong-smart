@@ -64,13 +64,10 @@ int main(int argc, char** argv) {
     // vector<Task> prev_goal_locs;
     set<int> finished_tasks_id;
     int screen = vm["screen"].as<int>();
-    int simulation_window = vm["simulation_window"].as<int>();
     int num_agents = vm["agentNum"].as<int>();
 
     // Create a graph, heuristic will be computed only once in the graph
     auto graph = make_shared<Graph>(vm["map"].as<string>(), screen);
-    auto task_assigner =
-        make_shared<TaskAssigner>(graph, screen, simulation_window, num_agents);
 
     // Stats
     int n_mapf_calls = 0;        // number of MAPF calls
@@ -134,7 +131,7 @@ int main(int argc, char** argv) {
         }
         json mapf_instance = result_json["mapf_instance"];
 
-        Instance instance(graph, task_assigner, screen, simulation_window);
+        Instance instance(graph, screen);
         // instance.loadAgents(commit_cut, new_finished_tasks_id);
         instance.loadAgents(mapf_instance);
         PBS pbs(instance, vm["sipp"].as<bool>(), screen);
@@ -145,7 +142,6 @@ int main(int argc, char** argv) {
         int fail_count = 0;
         n_mapf_calls += 1;
         success = pbs.solve(runtime_limit);
-        runtime_limit = runtime_limit * 2;
         vector<vector<tuple<int, int, double, int>>> new_mapf_plan =
             pbs.getPaths();
         if (!success) {

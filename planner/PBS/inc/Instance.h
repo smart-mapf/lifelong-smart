@@ -7,14 +7,11 @@
 class Instance {
 public:
     int screen = 0;
-    shared_ptr<Graph> graph;                 // graph representation of the map
-    shared_ptr<TaskAssigner> task_assigner;  // task assigner for the instance
-    int simulation_window = 0;  // simulation window for the planner
+    shared_ptr<Graph> graph;  // graph representation of the map
 
     Instance() {
     }
-    Instance(shared_ptr<Graph> graph, shared_ptr<TaskAssigner> task_assigner,
-             int screen, int simulation_window);
+    Instance(shared_ptr<Graph> graph, int screen);
 
     void setGoalLocations(const vector<Task>& goal_locations) {
         this->goal_locations = goal_locations;

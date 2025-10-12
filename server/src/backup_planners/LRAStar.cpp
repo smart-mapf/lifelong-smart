@@ -37,6 +37,13 @@ bool LRAStar::run(const vector<State> &starts,
             shortest_paths[i] =
                 find_shortest_path(starts[i], goal_locations[i]);
         }
+
+        // If the length of the path is less than the simulation window,
+        // extend the path by waiting at the last location
+        while (shortest_paths[i].size() <
+               static_cast<size_t>(this->simulation_window)) {
+            shortest_paths[i].push_back(shortest_paths[i].back().wait());
+        }
     }
     // resolve conflicts
     resolve_conflicts(shortest_paths);

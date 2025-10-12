@@ -133,10 +133,10 @@ vector<vector<tuple<int, int, double, int>>> MAPFSolver::convert_path_to_smart(
                                           this->G.getColCoordinate(s.location),
                                           static_cast<double>(t), task_id);
             if (screen > 0) {
-                cout << "(" << "t=" << s.timestep << ","
+                cout << "t=" << s.timestep << ",loc=("
                      << this->G.getRowCoordinate(s.location) << ","
-                     << this->G.getColCoordinate(s.location) << ","
-                     << s.orientation << "," << task_id << ")->";
+                     << this->G.getColCoordinate(s.location)
+                     << "),ori=" << s.orientation << "-> ";
                 if (task_id >= 0) {
                     cout << "End of task " << task_id << " at step " << t
                          << "->";
