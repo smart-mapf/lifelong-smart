@@ -85,46 +85,6 @@ public:
         return empty_locations.size();
     }
 
-    int sampleEmptyLocation() const {
-        if (empty_locations.empty()) {
-            return -1;  // no empty locations
-        }
-        int idx = rand() % empty_locations.size();
-        return empty_locations[idx];
-    }
-
-    int sampleWorkstation() const {
-        if (workstations.empty()) {
-            return -1;  // no workstations
-        }
-        int idx = rand() % workstations.size();
-        return workstations[idx];
-    }
-
-    int sampleEndpoint() const {
-        if (endpoints.empty()) {
-            return -1;  // no endpoints
-        }
-        int idx = rand() % endpoints.size();
-        return endpoints[idx];
-    }
-
-    int sampleWarehouseTaskLoc() const {
-        if (warehouse_task_locs.empty()) {
-            return -1;  // no warehouse task locations
-        }
-        int idx = rand() % warehouse_task_locs.size();
-        return warehouse_task_locs[idx];
-    }
-
-    int sampleFreeLocation() const {
-        if (free_locations.empty()) {
-            return -1;  // no free locations
-        }
-        int idx = rand() % free_locations.size();
-        return free_locations[idx];
-    }
-
     int size() const {
         return map_size;
     }

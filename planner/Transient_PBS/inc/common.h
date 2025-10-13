@@ -64,6 +64,9 @@ using json = nlohmann::json;
 struct PathEntry {
     int location = -1;
     int task_id = -1;  // task id of the task that this location belongs to
+
+    // Record the sum of costs at the end of the path.
+    double sum_of_costs = -1;
     explicit PathEntry(int loc = -1) : location(loc) {
     }
 };
@@ -74,17 +77,3 @@ std::ostream& operator<<(std::ostream& os, const Path& path);
 bool isSamePath(const Path& p1, const Path& p2);
 
 bool congested(const vector<vector<tuple<int, int, double, int>>>& new_plan);
-
-// Only for three-tuples of std::hash-able types for simplicity.
-// You can of course template this struct to allow other hash functions
-/*struct three_tuple_hash {
-    template <class T1, class T2, class T3>
-    std::size_t operator () (const std::tuple<T1, T2, T3> &p) const {
-        auto h1 = std::hash<T1>{}(get<0>(p));
-        auto h2 = std::hash<T2>{}(get<1>(p));
-        auto h3 = std::hash<T3>{}(get<2>(p));
-        // Mainly for demonstration purposes, i.e. works but is overly simple
-        // In the real world, use sth. like boost.hash_combine
-        return h1 ^ h2 ^ h3;
-    }
-};*/

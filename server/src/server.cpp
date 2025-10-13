@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
             ("num_landmarks", po::value<int>()->default_value(20), "number of landmarks for landmark heuristic (default: 20)")
             ("landmark_selection", po::value<string>()->default_value("workstation+endpt_corners"), "landmark selection strategy: random, workstation+endpt_corners")
             ("save_heuristics_table", po::value<bool>()->default_value(false), "save heuristics table or not")
-            ("task_assigner_type", po::value<string>()->default_value("windowed"), "windowed or distinct_one_goal")
+            ("task_assigner_type", po::value<string>()->default_value("windowed"), "windowed, one_goal, distinct_one_goal")
             ("task_file", po::value<string>()->default_value(""), "task file for the robots (default: empty, meaning random tasks)")
             ;
     // clang-format on

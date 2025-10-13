@@ -307,7 +307,6 @@ def run_lifelong_argos(
                 f"--seed={seed}",
                 f"--screen={screen}",
                 f"--cutoffTime={cutoffTime}",
-                f"--simulation_window={plan_window_ts}",
             ]
         # Transient MAPF PBS
         elif planner == "TPBS":
@@ -319,7 +318,6 @@ def run_lifelong_argos(
                 f"--seed={seed}",
                 f"--screen={screen}",
                 f"--cutoffTime={cutoffTime}",
-                f"--simulation_window={plan_window_ts}",
             ]
         # RHCR, typically windowed PBS
         elif planner == "RHCR":

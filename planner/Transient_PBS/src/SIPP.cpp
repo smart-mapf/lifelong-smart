@@ -14,12 +14,15 @@ void SIPP::updatePath(const LLNode* goal, vector<PathEntry>& path) {
             path[t].location = prev->location;  // wait at prev location
             t++;
         }
-        path[curr->timestep].location =
-            curr->location;  // move to curr location
+        // move to curr location
+        path[curr->timestep].location = curr->location;
         curr = prev;
     }
     assert(curr->timestep == 0);
     path[0].location = curr->location;
+    cout << "Goal g val: " << goal->g_val << endl;
+    cout << "Goal h val: " << goal->h_val << endl;
+    path.back().sum_of_costs = goal->g_val;
 }
 
 Path SIPP::findOptimalPath(const set<int>& higher_agents,
@@ -54,15 +57,11 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
         return path;
 
     // generate start and add it to the OPEN list
-    // auto start = new SIPPNode(start_location, 0,
-    // max(instance.graph->heuristics.at(goal_location)[start_location],
-    // holding_time), nullptr, 0,
-    //                           get<1>(interval), get<1>(interval),
-    //                           get<2>(interval), get<2>(interval));
     auto start = new SIPPNode(
         start_location, 0,
-        instance.graph->heuristics.at(goal_location)[start_location], nullptr, 0,
-        get<1>(interval), get<1>(interval), get<2>(interval), get<2>(interval));
+        instance.graph->heuristics.at(goal_location)[start_location], nullptr,
+        0, get<1>(interval), get<1>(interval), get<2>(interval),
+        get<2>(interval));
     // min_f_val = max(holding_time, start->getFVal());
     min_f_val = start->getFVal();
     pushNodeToOpen(start);
@@ -73,16 +72,32 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
         curr->in_openlist = false;
         num_expanded++;
 
-        // check if the popped node is a goal node
-        if (curr->location == goal_location &&  // arrive at the goal location
-            !curr->wait_at_goal &&              // not wait at the goal location
-            // the agent can hold the goal location afterward
-            curr->timestep >= holding_time) {
+        // For transient MAPF, we stop the search if any of the ancestors of the
+        // current node has visited the goal.
+        if (curr->ancestorVisitedGoal()) {
             updatePath(curr, path);
             // The last node in the path is associated with the current task
             path.back().task_id = instance.getGoalTasks()[agent].id;
             break;
         }
+
+        // Otherwise, we continue the search.
+        // Remember whether we have visited the goal location.
+        bool visited_goal_loc = false;
+
+        // We arrived at the goal location, but we cannot stay because of target
+        // conflicts.
+        if (curr->location == goal_location &&  // arrive at the goal location
+            !curr->wait_at_goal)                // not wait at the goal location
+        {
+            // We need to do transient MAPF expansion.
+            visited_goal_loc = true;
+        }
+
+        // We set `visited_goal` of the successor node to true if we
+        // have visited goal in curr node or if the curr node has the
+        // flag to true.
+        visited_goal_loc = visited_goal_loc || curr->visited_goal;
 
         // move to neighboring locations
         for (int next_location : instance.graph->getNeighbors(curr->location)) {
@@ -97,26 +112,33 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
                 bool next_v_collision, next_e_collision;
                 tie(next_high_generation, next_timestep, next_high_expansion,
                     next_v_collision, next_e_collision) = i;
-                // compute cost to next_id via curr node
-                // inlcude rotate time
-                int wait_time = next_timestep - curr->timestep - 1;
-                // cost of waiting at the current location
-                double wait_cost =
-                    instance.graph->getWeight(curr->location, curr->location);
-                double move_cost =
-                    instance.graph->getWeight(curr->location, next_location);
-                // new g val considers the wait cost and movement cost
-                double next_g_val =
-                    curr->g_val + wait_time * wait_cost + move_cost;
-                // int next_g_val = next_timestep;
-                // double next_h_val =
-                // max(instance.graph->heuristics.at(goal_location)[next_location],
-                // curr->getFVal() - next_g_val);  // path max
-                double next_h_val =
-                    instance.graph->heuristics.at(goal_location)[next_location];
-                // if (next_g_val + next_h_val >
-                // reservation_table.constraint_table.length_max)
-                //     continue;
+
+                // Compute g and h
+                double next_g_val = 0, next_h_val = 0;
+                // If we have not visited the goal location, we compute g and h
+                // normally.
+                if (!visited_goal_loc) {
+                    // compute cost to next_id via curr node
+                    int wait_time = next_timestep - curr->timestep - 1;
+                    // cost of waiting at the current location
+                    double wait_cost = instance.graph->getWeight(
+                        curr->location, curr->location);
+                    double move_cost = instance.graph->getWeight(curr->location,
+                                                                 next_location);
+                    // new g val considers the wait cost and movement cost
+                    next_g_val =
+                        curr->g_val + wait_time * wait_cost + move_cost;
+                    next_h_val = instance.graph->heuristics.at(
+                        goal_location)[next_location];
+                }
+                // If any ancestors has visited the goal. We use the same g and
+                // h as the parent.
+                else {
+                    next_g_val = curr->g_val;
+                    next_h_val = curr->h_val;
+                }
+
+                // Compute the number of conflicts.
                 int next_conflicts =
                     curr->num_of_conflicts +
                     (int)curr->collision_v *
@@ -125,7 +147,7 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
                 auto next = new SIPPNode(
                     next_location, next_g_val, next_h_val, curr, next_timestep,
                     next_high_generation, next_high_expansion, next_v_collision,
-                    next_conflicts);
+                    next_conflicts, visited_goal_loc);
                 if (dominanceCheck(next))
                     pushNodeToOpen(next);
                 else
@@ -151,10 +173,10 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
                 (int)curr->collision_v *
                     max(next_timestep - curr->timestep - 1, 0)  // wait time
                 + (int)get<2>(interval);
-            auto next =
-                new SIPPNode(curr->location, next_timestep, next_h_val, curr,
-                             next_timestep, get<1>(interval), get<1>(interval),
-                             get<2>(interval), next_collisions);
+            auto next = new SIPPNode(curr->location, next_timestep, next_h_val,
+                                     curr, next_timestep, get<1>(interval),
+                                     get<1>(interval), get<2>(interval),
+                                     next_collisions, visited_goal_loc);
             if (curr->location == goal_location)
                 next->wait_at_goal = true;
             if (dominanceCheck(next))
@@ -230,31 +252,28 @@ bool SIPP::dominanceCheck(SIPPNode* new_node) {
     if (ptr == allNodes_table.end())
         return true;
     for (auto& old_node : ptr->second) {
+        // the new node is dominated by the old node
         if (old_node->timestep <= new_node->timestep and
-            old_node->num_of_conflicts <=
-                new_node->num_of_conflicts) {  // the new node is dominated by
-                                               // the old node
+            old_node->num_of_conflicts <= new_node->num_of_conflicts) {
             return false;
-        } else if (old_node->timestep >= new_node->timestep and
-                   old_node->num_of_conflicts >=
-                       new_node->num_of_conflicts)  // the old node is dominated
-                                                    // by the new node
-        {                                           // delete the old node
-            if (old_node
-                    ->in_openlist)  // the old node has not been expanded yet
-                eraseNodeFromLists(
-                    old_node);  // delete it from open and/or focal lists
+        }
+        // the old node is dominated by the new node, delete the old node
+        else if (old_node->timestep >= new_node->timestep and
+                 old_node->num_of_conflicts >= new_node->num_of_conflicts) {
+            // the old node has not been expanded yet
+            // delete it from open and/or focal lists
+            if (old_node->in_openlist)
+                eraseNodeFromLists(old_node);
             useless_nodes.push_back(old_node);
             ptr->second.remove(old_node);
-            num_generated--;  // this is because we later will increase
-                              // num_generated when we insert the new node into
-                              // lists.
+            // this is because we later will increase num_generated when we
+            // insert the new node into lists.
+            num_generated--;
             return true;
-        } else if (old_node->timestep < new_node->high_expansion and
-                   new_node->timestep <
-                       old_node->high_expansion) {  // intervals overlap --> we
-                                                    // need to split the node to
-                                                    // make them disjoint
+        }
+        // intervals overlap --> we need to split the node to make them disjoint
+        else if (old_node->timestep < new_node->high_expansion and
+                 new_node->timestep < old_node->high_expansion) {
             if (old_node->timestep <= new_node->timestep) {
                 assert(old_node->num_of_conflicts > new_node->num_of_conflicts);
                 old_node->high_expansion = new_node->timestep;

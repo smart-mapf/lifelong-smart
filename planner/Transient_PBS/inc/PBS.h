@@ -83,7 +83,7 @@ private:
     bool hasConflicts(int a1, int a2) const;
     bool hasConflicts(int a1, const set<int>& agents) const;
     shared_ptr<Conflict> chooseConflict(const PBSNode& node) const;
-    int getSumOfCosts() const;
+    double getSumOfCosts() const;
     inline void releaseNodes();
 
     // print and save

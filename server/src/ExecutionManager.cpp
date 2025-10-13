@@ -159,6 +159,9 @@ void ExecutionManager::setupTaskAssigner() {
     } else if (this->task_assigner_type == "distinct_one_goal") {
         this->task_assigner = make_shared<DistinctOneGoalTaskAssigner>(
             this->G, this->screen, this->numRobots, this->seed, task_file);
+    } else if (this->task_assigner_type == "one_goal") {
+        this->task_assigner = make_shared<OneGoalTaskAssigner>(
+            this->G, this->screen, this->numRobots, this->seed, task_file);
     } else {
         spdlog::error("Task assigner type {} does not exist!",
                       this->task_assigner_type);
@@ -228,7 +231,6 @@ void ExecutionManager::saveStats() {
         ofstream stats(output_filename);
         stats << result.dump(4);  // Pretty print with 4 spaces
 
-        // cout << "Statistics written to " << output_filename << endl;
         spdlog::info("Statistics written to {}", output_filename);
     }
 }
@@ -328,6 +330,14 @@ string ExecutionManager::getRobotsLocation() {
                                               new_finished_tasks);
     result_message["mapf_instance"] =
         this->task_assigner->getMAPFInstanceJSON();
+
+    // // Write mapf_instance to a file
+    // if (this->screen > 1) {
+    //     int tick = this->getCurrSimStep();
+    //     string filename = "mapf_instance_step_" + to_string(tick) + ".json";
+    //     std::ofstream mapf_instance_file(filename);
+    //     mapf_instance_file << result_message["mapf_instance"].dump(4);
+    // }
 
     return result_message.dump();
 }

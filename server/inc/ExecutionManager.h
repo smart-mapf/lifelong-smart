@@ -14,6 +14,7 @@
 #include "heuristics/LazyHeuristicTable.h"
 #include "task_assigners/BasicTaskAssigner.h"
 #include "task_assigners/DistinctOneGoalTaskAssigner.h"
+#include "task_assigners/OneGoalTaskAssigner.h"
 #include "utils/SMARTGraph.h"
 #include "utils/common.h"
 

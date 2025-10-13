@@ -16,7 +16,6 @@
 #include "Graph.h"
 #include "Instance.h"
 #include "PBS.h"
-#include "TaskAssigner.h"
 #include "common.h"
 
 /* Main function */
@@ -38,8 +37,6 @@ int main(int argc, char** argv) {
 		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
         ("portNum", po::value<int>()->default_value(8080), "port number for the server")
 		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
-		("simulation_window", po::value<int>()->default_value(5),
-         "The path planned every time should be >= this length")
         ("seed", po::value<int>()->default_value(0), "random seed");
     // clang-format on
     po::variables_map vm;

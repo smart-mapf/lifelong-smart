@@ -1,6 +1,6 @@
 #pragma once
 #include "Graph.h"
-#include "TaskAssigner.h"
+#include "Task.h"
 #include "common.h"
 
 // Currently only works for undirected unweighted 4-nighbor grids
