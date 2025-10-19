@@ -116,7 +116,7 @@ def run_lifelong_argos(
     ticks_per_second: int = 10,
     velocity: float = 200.0,
     # look_ahead_dist: int = 10,
-    planner: str = "RHCR",  # ["PBS", "RHCR", "MASS"]
+    planner: str = "RHCR",  # ["PBS", "RHCR", "MASS", "TPBS"]
     container: bool = False,
     seed: int = 42,
     screen: int = 0,
