@@ -23,11 +23,11 @@ bool GuidedPIBT::run(const vector<State> &starts,
     if (screen > 0) {
         spdlog::info("Guide paths:");
         print_paths(guide_paths, this->G);
+        spdlog::info("Backup GuidedPIBT starts planning for {} agents",
+                     starts.size());
     }
 
     // set timer
-    spdlog::info("Backup GuidedPIBT starts planning for {} agents",
-                 starts.size());
     clock_t start = std::clock();
     this->num_of_agents = starts.size();
 

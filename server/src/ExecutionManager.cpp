@@ -375,7 +375,8 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
         vector<Path> guide_paths = this->convertPlanToGuidePaths(new_plan);
 
         // Plan using the backup planner
-        spdlog::info("Planner fails, using backup planner");
+        if (screen > 0)
+            spdlog::info("Planner fails, using backup planner");
         this->backup_planner->clear();
         this->backup_planner->run(starts, goal_locations, guide_paths);
         new_plan = this->backup_planner->convert_path_to_smart(goal_locations);

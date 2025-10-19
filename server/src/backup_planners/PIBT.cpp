@@ -11,7 +11,11 @@ bool PIBT::run(const vector<State> &starts,
                const vector<Path> &guide_paths, int time_limit,
                const vector<int> &waited_time) {
     // set timer
-    spdlog::info("Backup PIBT starts planning for {} agents", starts.size());
+    if (screen > 0) {
+        spdlog::info("Backup PIBT starts planning for {} agents",
+                     starts.size());
+    }
+
     clock_t start = std::clock();
     this->num_of_agents = starts.size();
 
