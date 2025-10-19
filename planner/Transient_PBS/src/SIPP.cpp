@@ -20,8 +20,6 @@ void SIPP::updatePath(const LLNode* goal, vector<PathEntry>& path) {
     }
     assert(curr->timestep == 0);
     path[0].location = curr->location;
-    cout << "Goal g val: " << goal->g_val << endl;
-    cout << "Goal h val: " << goal->h_val << endl;
     path.back().sum_of_costs = goal->g_val;
 }
 
@@ -38,8 +36,9 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
     }
     runtime_build_CT = (double)(clock() - t) / CLOCKS_PER_SEC;
 
-    double holding_time = static_cast<double>(constraint_table.getHoldingTime(
-        goal_location, constraint_table.length_min));
+    // double holding_time =
+    // static_cast<double>(constraint_table.getHoldingTime(
+    //     goal_location, constraint_table.length_min));
 
     t = clock();
     constraint_table.insert2CAT(agent, paths);
@@ -73,11 +72,28 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
         num_expanded++;
 
         // For transient MAPF, we stop the search if any of the ancestors of the
-        // current node has visited the goal.
-        if (curr->ancestorVisitedGoal()) {
+        // current node has visited the goal and if the agent can hold here
+        // forever.
+
+        // spdlog::info("Expanding node at location ({},{}) at timestep {}, "
+        //              "visited goal: {}",
+        //              instance.graph->getRowCoordinate(curr->location),
+        //              instance.graph->getColCoordinate(curr->location),
+        //              curr->timestep, curr->visited_goal);
+
+        double holding_time = constraint_table.getHoldingTime(
+            curr->location, constraint_table.length_min);
+
+        if (curr->visited_goal && curr->timestep >= holding_time) {
+            // spdlog::info("Agent {}'s ancestor has arrived at goal ({},{}), "
+            //              "current loc ({}, {}) at, timestep {}, ",
+            //              agent,
+            //              instance.graph->getRowCoordinate(goal_location),
+            //              instance.graph->getColCoordinate(goal_location),
+            //              instance.graph->getRowCoordinate(curr->location),
+            //              instance.graph->getColCoordinate(curr->location),
+            //              curr->timestep);
             updatePath(curr, path);
-            // The last node in the path is associated with the current task
-            path.back().task_id = instance.getGoalTasks()[agent].id;
             break;
         }
 
@@ -92,6 +108,11 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
         {
             // We need to do transient MAPF expansion.
             visited_goal_loc = true;
+            // spdlog::info(
+            //     "Agent {} arrived at goal location ({},{}) at timestep {}",
+            //     agent, instance.graph->getRowCoordinate(goal_location),
+            //     instance.graph->getColCoordinate(goal_location),
+            //     curr->timestep);
         }
 
         // We set `visited_goal` of the successor node to true if we
@@ -137,6 +158,16 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
                     next_g_val = curr->g_val;
                     next_h_val = curr->h_val;
                 }
+
+                // spdlog::info(
+                //     "Generate successor at location ({},{}) at timestep {} "
+                //     "with interval [{},{}), v_collision: {}, e_collision: "
+                //     "{}, g_val: {}, h_val: {}",
+                //     instance.graph->getRowCoordinate(next_location),
+                //     instance.graph->getColCoordinate(next_location),
+                //     next_timestep, next_high_generation, next_high_expansion,
+                //     next_v_collision, next_e_collision, next_g_val,
+                //     next_h_val);
 
                 // Compute the number of conflicts.
                 int next_conflicts =

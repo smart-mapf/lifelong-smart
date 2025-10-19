@@ -14,7 +14,7 @@ public:
     bool in_openlist = false;
     // the action is to wait at the goal vertex or not. This is used for
     // >lenghth constraints
-    bool wait_at_goal;
+    bool wait_at_goal = false;
     bool is_goal = false;
 
     // Whether any of this node's ancestors have visited the goal. Used by

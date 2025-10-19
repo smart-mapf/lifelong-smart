@@ -63,7 +63,6 @@ using json = nlohmann::json;
 
 struct PathEntry {
     int location = -1;
-    int task_id = -1;  // task id of the task that this location belongs to
 
     // Record the sum of costs at the end of the path.
     double sum_of_costs = -1;

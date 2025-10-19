@@ -219,7 +219,7 @@ bool PBS::findPathForSingleAgent(PBSNode& node, const set<int>& higher_agents,
         return false;
     assert(paths[a] != nullptr and !isSamePath(*paths[a], new_path));
     // node.cost += (int)new_path.size() - (int)paths[a]->size();
-    cout << "New path sum of cost: " << new_path.back().sum_of_costs << endl;
+    // cout << "New path sum of cost: " << new_path.back().sum_of_costs << endl;
     node.cost += new_path.back().sum_of_costs - paths[a]->back().sum_of_costs;
     if (node.makespan >= paths[a]->size()) {
         node.makespan = max(node.makespan, new_path.size() - 1);
@@ -311,20 +311,22 @@ double PBS::getSumOfCosts() const {
     for (int i = 0; i < num_of_agents; i++) {
         auto path = paths[i];
         for (int t = 0; t < static_cast<int>(path->size() - 1); t++) {
-            cout << "("
-                 << this->search_engines[0]->instance.graph->getRowCoordinate(
-                        path->at(t).location)
-                 << ","
-                 << this->search_engines[0]->instance.graph->getColCoordinate(
-                        path->at(t).location)
-                 << ") -> ";
+            // cout << "("
+            //      <<
+            //      this->search_engines[0]->instance.graph->getRowCoordinate(
+            //             path->at(t).location)
+            //      << ","
+            //      <<
+            //      this->search_engines[0]->instance.graph->getColCoordinate(
+            //             path->at(t).location)
+            //      << ") -> ";
             if (path->at(t).location ==
                 this->search_engines[0]->instance.getGoalLocations()[i])
                 break;
             cost += this->search_engines[0]->instance.graph->getWeight(
                 path->at(t).location, path->at(t + 1).location);
         }
-        cout << endl;
+        // cout << endl;
     }
     return cost;
 }
@@ -589,13 +591,10 @@ std::vector<std::vector<std::tuple<int, int, double, int>>> PBS::getPaths() {
             int task_id = -1;
             if (t.location == search_engines[i]->goal_location &&
                 !task_finished) {
-                task_id = t.task_id;
+                task_id = search_engines[i]->instance.getGoalTasks().at(i).id;
                 task_finished = true;  // Task is finished
             }
-            // We only finish a task if we arrive at the goal
-            // if (tmp_step == paths[i]->size() - 1) {
-            //     task_id = t.task_id;  // last step is the end of the task
-            // }
+
             new_mapf_plan[i].emplace_back(
                 search_engines[0]->instance.graph->getRowCoordinate(t.location),
                 search_engines[0]->instance.graph->getColCoordinate(t.location),
@@ -684,8 +683,8 @@ bool PBS::generateRoot() {
         paths.emplace_back(&root->paths.back().second);
         root->makespan = max(root->makespan, new_path.size() - 1);
         // root->cost += (int)new_path.size() - 1;
-        cout << "New path sum of cost: " << new_path.back().sum_of_costs
-             << endl;
+        // cout << "New path sum of cost: " << new_path.back().sum_of_costs
+        //      << endl;
         root->cost += new_path.back().sum_of_costs;
     }
     auto t = clock();
