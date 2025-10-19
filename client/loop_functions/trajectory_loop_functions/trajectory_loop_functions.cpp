@@ -16,18 +16,18 @@ static const Real MIN_DISTANCE_SQUARED = MIN_DISTANCE * MIN_DISTANCE;
 /****************************************/
 /****************************************/
 
-void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
+void CTrajectoryLoopFunctions::Init(TConfigurationNode &t_tree) {
     /*
      * Go through all the robots in the environment
      * and create an entry in the waypoint map for each of them
      */
     /* Get the map of all foot-bots from the space */
-    CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
+    CSpace::TMapPerType &tFBMap = GetSpace().GetEntitiesByType("foot-bot");
     /* Go through them */
     for (CSpace::TMapPerType::iterator it = tFBMap.begin(); it != tFBMap.end();
          ++it) {
         /* Create a pointer to the current foot-bot */
-        CFootBotEntity* pcFB = any_cast<CFootBotEntity*>(it->second);
+        CFootBotEntity *pcFB = any_cast<CFootBotEntity *>(it->second);
         /* Create a waypoint vector */
         m_tWaypoints[pcFB] = vector<CVector3>();
         /* Add the initial position of the foot-bot */
@@ -35,7 +35,7 @@ void CTrajectoryLoopFunctions::Init(TConfigurationNode& t_tree) {
             pcFB->GetEmbodiedEntity().GetOriginAnchor().Position);
     }
 
-    TConfigurationNode& portParams = GetNode(t_tree, "port_number");
+    TConfigurationNode &portParams = GetNode(t_tree, "port_number");
     GetNodeAttribute(portParams, "value", port_number);
 
     // Set up logger
@@ -51,12 +51,12 @@ void CTrajectoryLoopFunctions::Reset() {
      * Clear all the waypoint vectors
      */
     /* Get the map of all foot-bots from the space */
-    CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
+    CSpace::TMapPerType &tFBMap = GetSpace().GetEntitiesByType("foot-bot");
     /* Go through them */
     for (CSpace::TMapPerType::iterator it = tFBMap.begin(); it != tFBMap.end();
          ++it) {
         /* Create a pointer to the current foot-bot */
-        CFootBotEntity* pcFB = any_cast<CFootBotEntity*>(it->second);
+        CFootBotEntity *pcFB = any_cast<CFootBotEntity *>(it->second);
         /* Clear the waypoint vector */
         m_tWaypoints[pcFB].clear();
         /* Add the initial position of the foot-bot */
@@ -67,16 +67,16 @@ void CTrajectoryLoopFunctions::Reset() {
 
 void CTrajectoryLoopFunctions::addMobileVisualization() {
     /* Get the map of all foot-bots from the space */
-    CSpace::TMapPerType& tFBMap = GetSpace().GetEntitiesByType("foot-bot");
+    CSpace::TMapPerType &tFBMap = GetSpace().GetEntitiesByType("foot-bot");
     /* Go through them */
     task_stations.clear();
     for (CSpace::TMapPerType::iterator it = tFBMap.begin(); it != tFBMap.end();
          ++it) {
         /* Create a pointer to the current foot-bot */
-        CFootBotEntity* pcFB = any_cast<CFootBotEntity*>(it->second);
+        CFootBotEntity *pcFB = any_cast<CFootBotEntity *>(it->second);
 
         // Get the controller
-        CFootBotDiffusion* pcController = dynamic_cast<CFootBotDiffusion*>(
+        CFootBotDiffusion *pcController = dynamic_cast<CFootBotDiffusion *>(
             &(pcFB->GetControllableEntity().GetController()));
 
         if (pcController) {
@@ -105,9 +105,20 @@ void CTrajectoryLoopFunctions::PostStep() {
     }
     addMobileVisualization();
 
+    // Free simulation if necessary
+    client->call("freeze_simulation_if_necessary");
+
+    // Loop until the simulation is defrozen
+    while (client->call("is_simulation_frozen").as<bool>()) {
+        // spdlog::info("Simulation is frozen, waiting to defrost...");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
     // Invoke the server to record per tick stats. We do it here because
     // PostStep function is invoked after each tick.
-    client->async_call("record_stats_per_tick");
+    client->call("record_stats_per_tick");
+
+    client->call("update_sim_step");
 
     // Get simulation status, return true if the simulation shall end
     this->end_sim = client->call("sim_status").as<bool>();
