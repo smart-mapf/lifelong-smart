@@ -14,9 +14,9 @@ PBS::PBS(const Instance& instance, bool sipp, int screen)
     search_engines.resize(num_of_agents);
     for (int i = 0; i < num_of_agents; i++) {
         if (sipp)
-            search_engines[i] = new SIPP(instance, i);
+            search_engines[i] = new SIPP(instance, i, screen);
         else
-            search_engines[i] = new SpaceTimeAStar(instance, i);
+            search_engines[i] = new SpaceTimeAStar(instance, i, screen);
     }
     runtime_preprocessing = (double)(clock() - t) / CLOCKS_PER_SEC;
 
@@ -220,6 +220,10 @@ bool PBS::findPathForSingleAgent(PBSNode& node, const set<int>& higher_agents,
     assert(paths[a] != nullptr and !isSamePath(*paths[a], new_path));
     // node.cost += (int)new_path.size() - (int)paths[a]->size();
     // cout << "New path sum of cost: " << new_path.back().sum_of_costs << endl;
+    if (screen > 2) {
+        cout << "Planned path for agent " << a
+             << ", sum of cost: " << new_path.back().sum_of_costs << endl;
+    }
     node.cost += new_path.back().sum_of_costs - paths[a]->back().sum_of_costs;
     if (node.makespan >= paths[a]->size()) {
         node.makespan = max(node.makespan, new_path.size() - 1);
@@ -256,6 +260,8 @@ inline void PBS::update(PBSNode* node) {
     if (get_sum != node->cost) {
         spdlog::error("Error: sum of costs = {}, node cost = {}", get_sum,
                       node->cost);
+        // Print paths
+        printPaths();
         exit(1);
     }
 
@@ -310,6 +316,7 @@ double PBS::getSumOfCosts() const {
     double cost = 0;
     for (int i = 0; i < num_of_agents; i++) {
         auto path = paths[i];
+        int agent_cost = 0;
         for (int t = 0; t < static_cast<int>(path->size() - 1); t++) {
             // cout << "("
             //      <<
@@ -323,9 +330,14 @@ double PBS::getSumOfCosts() const {
             if (path->at(t).location ==
                 this->search_engines[0]->instance.getGoalLocations()[i])
                 break;
-            cost += this->search_engines[0]->instance.graph->getWeight(
+            agent_cost += this->search_engines[0]->instance.graph->getWeight(
                 path->at(t).location, path->at(t + 1).location);
         }
+        if (screen > 3) {
+            spdlog::info("Agent {} cost: {}, original cost: {}", i, agent_cost,
+                         path->back().sum_of_costs);
+        }
+        cost += agent_cost;
         // cout << endl;
     }
     return cost;
@@ -671,6 +683,9 @@ bool PBS::generateRoot() {
     for (auto i = 0; i < num_of_agents; i++) {
         // CAT cat(dummy_start->makespan + 1);  // initialized to false
         // updateReservationTable(cat, i, *dummy_start);
+        if (screen > 2) {
+            cout << "Find root path for agent " << i << endl;
+        }
         auto new_path =
             search_engines[i]->findOptimalPath(higher_agents, paths, i);
         num_LL_expanded += search_engines[i]->num_expanded;
@@ -686,6 +701,10 @@ bool PBS::generateRoot() {
         // cout << "New path sum of cost: " << new_path.back().sum_of_costs
         //      << endl;
         root->cost += new_path.back().sum_of_costs;
+        if (screen > 2) {
+            cout << "Planned root path for agent " << i
+                 << ", sum of cost: " << new_path.back().sum_of_costs << endl;
+        }
     }
     auto t = clock();
     root->depth = 0;

@@ -58,8 +58,8 @@ public:
 
 	string getName() const override { return "AStar"; }
 
-	SpaceTimeAStar(const Instance& instance, int agent):
-		SingleAgentSolver(instance, agent) {}
+	SpaceTimeAStar(const Instance& instance, int agent, int screen = 0) :
+		SingleAgentSolver(instance, agent, screen) {}
 
 private:
 	// define typedefs and handles for heap

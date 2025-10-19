@@ -31,5 +31,5 @@ debug.argos
 debug_stats.json
 ReservationTable.txt
 save_instance/
-mapf_instance_*.json
+mapf_instance*.json
 instances/

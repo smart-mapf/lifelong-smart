@@ -71,28 +71,32 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
         curr->in_openlist = false;
         num_expanded++;
 
+        if (screen > 3) {
+            spdlog::info("Expanding node at location ({},{}) at timestep {}, "
+                         "visited goal: {}, g_val: {}, h_val: {}",
+                         instance.graph->getRowCoordinate(curr->location),
+                         instance.graph->getColCoordinate(curr->location),
+                         curr->timestep, curr->visited_goal, curr->g_val,
+                         curr->h_val);
+        }
+
         // For transient MAPF, we stop the search if any of the ancestors of the
         // current node has visited the goal and if the agent can hold here
         // forever.
-
-        // spdlog::info("Expanding node at location ({},{}) at timestep {}, "
-        //              "visited goal: {}",
-        //              instance.graph->getRowCoordinate(curr->location),
-        //              instance.graph->getColCoordinate(curr->location),
-        //              curr->timestep, curr->visited_goal);
-
         double holding_time = constraint_table.getHoldingTime(
             curr->location, constraint_table.length_min);
-
         if (curr->visited_goal && curr->timestep >= holding_time) {
-            // spdlog::info("Agent {}'s ancestor has arrived at goal ({},{}), "
-            //              "current loc ({}, {}) at, timestep {}, ",
-            //              agent,
-            //              instance.graph->getRowCoordinate(goal_location),
-            //              instance.graph->getColCoordinate(goal_location),
-            //              instance.graph->getRowCoordinate(curr->location),
-            //              instance.graph->getColCoordinate(curr->location),
-            //              curr->timestep);
+            if (screen > 3) {
+                spdlog::info("Agent {}'s ancestor has arrived at goal ({},{}), "
+                             "current loc ({}, {}) at, timestep {}, ",
+                             agent,
+                             instance.graph->getRowCoordinate(goal_location),
+                             instance.graph->getColCoordinate(goal_location),
+                             instance.graph->getRowCoordinate(curr->location),
+                             instance.graph->getColCoordinate(curr->location),
+                             curr->timestep);
+            }
+
             updatePath(curr, path);
             break;
         }
@@ -104,15 +108,19 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
         // We arrived at the goal location, but we cannot stay because of target
         // conflicts.
         if (curr->location == goal_location &&  // arrive at the goal location
-            !curr->wait_at_goal)                // not wait at the goal location
+            !curr->wait_at_goal &&              // not wait at the goal location
+            !curr->visited_goal)                // have not visited goal before
         {
             // We need to do transient MAPF expansion.
             visited_goal_loc = true;
-            // spdlog::info(
-            //     "Agent {} arrived at goal location ({},{}) at timestep {}",
-            //     agent, instance.graph->getRowCoordinate(goal_location),
-            //     instance.graph->getColCoordinate(goal_location),
-            //     curr->timestep);
+
+            if (screen > 3) {
+                spdlog::info(
+                    "Agent {} arrived at goal location ({},{}) at timestep {}",
+                    agent, instance.graph->getRowCoordinate(goal_location),
+                    instance.graph->getColCoordinate(goal_location),
+                    curr->timestep);
+            }
         }
 
         // We set `visited_goal` of the successor node to true if we
@@ -159,15 +167,17 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
                     next_h_val = curr->h_val;
                 }
 
-                // spdlog::info(
-                //     "Generate successor at location ({},{}) at timestep {} "
-                //     "with interval [{},{}), v_collision: {}, e_collision: "
-                //     "{}, g_val: {}, h_val: {}",
-                //     instance.graph->getRowCoordinate(next_location),
-                //     instance.graph->getColCoordinate(next_location),
-                //     next_timestep, next_high_generation, next_high_expansion,
-                //     next_v_collision, next_e_collision, next_g_val,
-                //     next_h_val);
+                if (screen > 3) {
+                    spdlog::info(
+                        "Generate successor at location ({},{}) at timestep {} "
+                        "with interval [{},{}), v_collision: {}, e_collision: "
+                        "{}, g_val: {}, h_val: {}",
+                        instance.graph->getRowCoordinate(next_location),
+                        instance.graph->getColCoordinate(next_location),
+                        next_timestep, next_high_generation,
+                        next_high_expansion, next_v_collision, next_e_collision,
+                        next_g_val, next_h_val);
+                }
 
                 // Compute the number of conflicts.
                 int next_conflicts =
@@ -198,13 +208,26 @@ Path SIPP::findOptimalPath(const set<int>& higher_agents,
             // int next_h_val = max(curr->h_val, curr->getFVal() -
             // next_timestep);  // path max
             // we do not change h_val when waiting
-            int next_h_val = curr->h_val;
+            double next_h_val = curr->h_val;
+
+            double next_g_val = 0;
+            // Not arrived at goal, compute g normally as the wait cost
+            if (!visited_goal_loc) {
+                int wait_time = next_timestep - curr->timestep;
+                double wait_cost =
+                    instance.graph->getWeight(curr->location, curr->location);
+                next_g_val = curr->g_val + wait_time * wait_cost;
+            } else {
+                // arrived at goal before, g_val does not change
+                next_g_val = curr->g_val;
+            }
+
             auto next_collisions =
                 curr->num_of_conflicts +
                 (int)curr->collision_v *
                     max(next_timestep - curr->timestep - 1, 0)  // wait time
                 + (int)get<2>(interval);
-            auto next = new SIPPNode(curr->location, next_timestep, next_h_val,
+            auto next = new SIPPNode(curr->location, next_g_val, next_h_val,
                                      curr, next_timestep, get<1>(interval),
                                      get<1>(interval), get<2>(interval),
                                      next_collisions, visited_goal_loc);

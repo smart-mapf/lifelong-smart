@@ -78,8 +78,8 @@ public:
         return "SIPP";
     }
 
-    SIPP(const Instance& instance, int agent)
-        : SingleAgentSolver(instance, agent) {
+    SIPP(const Instance& instance, int agent, int screen = 0)
+        : SingleAgentSolver(instance, agent, screen) {
     }
 
 private:

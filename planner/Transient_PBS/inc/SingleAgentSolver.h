@@ -38,22 +38,22 @@ public:
     struct compare_node {
         // returns true if n1 > n2 (note -- this gives us *min*-heap).
         bool operator()(const LLNode* n1, const LLNode* n2) const {
+            // If n1 has visited goal, and n2 has not, prefer n1
+            if (n1->visited_goal && !n2->visited_goal)
+                return true;
+            // If n2 has visited goal, and n1 has not, prefer n2
+            if (n2->visited_goal && !n1->visited_goal)
+                return false;
+
+            // Both has visited goal, prefer the one with smaller
+            // makespan
+            if (n1->visited_goal && n2->visited_goal) {
+                return n1->timestep >= n2->timestep;
+            }
+
+            // Both has not visited goal, use normal comparison
             if (n1->g_val + n1->h_val == n2->g_val + n2->h_val) {
                 if (n1->num_of_conflicts == n2->num_of_conflicts) {
-                    // If n1 has visited goal, and n2 has not, prefer n1
-                    if (n1->visited_goal && !n2->visited_goal)
-                        return true;
-                    // If n2 has visited goal, and n1 has not, prefer n2
-                    if (n2->visited_goal && !n1->visited_goal)
-                        return false;
-
-                    // Both has visited goal, prefer the one with smaller
-                    // makespan
-                    if (n1->visited_goal && n2->visited_goal) {
-                        if (n1->timestep != n2->timestep)
-                            return n1->timestep >= n2->timestep;
-                    }
-
                     if (n1->h_val == n2->h_val) {
                         // return rand() % 2 == 0;   // break ties randomly
                         return false;
@@ -162,10 +162,11 @@ public:
         return instance.graph->getNeighbors(curr);
     }
 
-    SingleAgentSolver(const Instance& instance, int agent)
+    SingleAgentSolver(const Instance& instance, int agent, int screen = 0)
         : instance(instance),  // agent(agent),
           start_location(instance.start_locations[agent]),
-          goal_location(instance.goal_locations[agent].loc) {
+          goal_location(instance.goal_locations[agent].loc),
+          screen(screen) {
     }
 
     virtual ~SingleAgentSolver() {
@@ -174,4 +175,5 @@ public:
 protected:
     double min_f_val;  // minimal f value in OPEN
     double w = 1;      // suboptimal bound
+    int screen = 0;
 };
