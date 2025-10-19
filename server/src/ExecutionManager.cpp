@@ -331,13 +331,14 @@ string ExecutionManager::getRobotsLocation() {
     result_message["mapf_instance"] =
         this->task_assigner->getMAPFInstanceJSON();
 
-    // // Write mapf_instance to a file
-    // if (this->screen > 1) {
-    //     int tick = this->getCurrSimStep();
-    //     string filename = "mapf_instance_step_" + to_string(tick) + ".json";
-    //     std::ofstream mapf_instance_file(filename);
-    //     mapf_instance_file << result_message["mapf_instance"].dump(4);
-    // }
+    // Write mapf_instance to a file
+    if (this->screen > 1) {
+        int tick = this->getCurrSimStep();
+        // string filename = "mapf_instance_step_" + to_string(tick) + ".json";
+        string filename = "mapf_instance.json";
+        std::ofstream mapf_instance_file(filename);
+        mapf_instance_file << result_message["mapf_instance"].dump(4);
+    }
 
     return result_message.dump();
 }
@@ -379,6 +380,8 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
         this->backup_planner->run(starts, goal_locations, guide_paths);
         new_plan = this->backup_planner->convert_path_to_smart(goal_locations);
         congested = this->backup_planner->congested();
+    } else {
+        // Planner is successful. Add additional sanity check for collisions.
     }
 
     // TODO: consider backup planner for the following entries.

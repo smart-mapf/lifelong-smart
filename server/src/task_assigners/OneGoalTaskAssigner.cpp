@@ -15,6 +15,14 @@ OneGoalTaskAssigner::OneGoalTaskAssigner(const SMARTGrid& G, int screen,
 void OneGoalTaskAssigner::updateStartsAndGoals(
     vector<tuple<double, double, int>>& start_locs,
     set<int> finished_tasks_id) {
+    if (screen > 0) {
+        string new_finished_tasks = "New finished tasks: ";
+        for (const auto& _task_id : finished_tasks_id) {
+            new_finished_tasks += std::to_string(_task_id) + " ";
+        }
+        spdlog::info(new_finished_tasks);
+    }
+
     // Set new starts
     for (int i = 0; i < this->num_of_agents; i++) {
         // Obtain the starts
@@ -45,6 +53,11 @@ void OneGoalTaskAssigner::updateStartsAndGoals(
                 Task(next_goal, -1, 0, 0, i, -1, false, false, this->task_id);
             this->task_id++;
         }
+    }
+
+    if (screen > 0) {
+        spdlog::info("Current start and goal locations:");
+        this->print_mapf_instance(this->starts, this->goal_locations);
     }
 }
 
