@@ -55,7 +55,10 @@ void ConstraintTable::insert2CT(const Path& path)
             prev_timestep = timestep;
         }
     }
-    insert2CT(path.back().location, (int) path.size() - 1, MAX_TIMESTEP);
+    // Last location holds forever. Note that we start from `prev_timestep`
+    // (instead of path.size() - 1) because the agent may wait at the last
+    // location for a while in transient MAPF.
+    insert2CT(path.back().location, prev_timestep, MAX_TIMESTEP);
 }
 
 void ConstraintTable::insertLandmark(size_t loc, int t)

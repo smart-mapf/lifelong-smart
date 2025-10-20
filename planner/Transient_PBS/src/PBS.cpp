@@ -7,7 +7,7 @@
 #include "SIPP.h"
 #include "SpaceTimeAStar.h"
 
-PBS::PBS(const Instance& instance, bool sipp, int screen)
+PBS::PBS(const Instance &instance, bool sipp, int screen)
     : screen(screen), num_of_agents(instance.getDefaultNumberOfAgents()) {
     clock_t t = clock();
 
@@ -55,7 +55,7 @@ bool PBS::solve(double _time_limit) {
         assert(!hasHigherPriority(curr->conflict->a1, curr->conflict->a2) and
                !hasHigherPriority(curr->conflict->a2, curr->conflict->a1));
         auto t1 = clock();
-        vector<Path*> copy(paths);
+        vector<Path *> copy(paths);
         generateChild(0, curr, curr->conflict->a1, curr->conflict->a2);
         paths = copy;
         generateChild(1, curr, curr->conflict->a2, curr->conflict->a1);
@@ -66,7 +66,7 @@ bool PBS::solve(double _time_limit) {
     return solution_found;
 }
 
-bool PBS::generateChild(int child_id, PBSNode* parent, int low, int high) {
+bool PBS::generateChild(int child_id, PBSNode *parent, int low, int high) {
     assert(child_id == 0 or child_id == 1);
     parent->children[child_id] = new PBSNode(*parent);
     auto node = parent->children[child_id];
@@ -85,7 +85,7 @@ bool PBS::generateChild(int child_id, PBSNode* parent, int low, int high) {
     vector<int> topological_orders(
         num_of_agents);  // map agent i to its position in ordered_agents
     auto i = num_of_agents - 1;
-    for (const auto& a : ordered_agents) {
+    for (const auto &a : ordered_agents) {
         topological_orders[a] = i;
         i--;
     }
@@ -110,7 +110,7 @@ bool PBS::generateChild(int child_id, PBSNode* parent, int low, int high) {
         assert(*p2 == low);
         getLowerPriorityAgents(p2, lower_agents);
 
-        for (const auto& conflict : node->conflicts) {
+        for (const auto &conflict : node->conflicts) {
             int a1 = conflict->a1;
             int a2 = conflict->a2;
             if (a1 == low or a2 == low)
@@ -205,8 +205,8 @@ bool PBS::generateChild(int child_id, PBSNode* parent, int low, int high) {
     return true;
 }
 
-bool PBS::findPathForSingleAgent(PBSNode& node, const set<int>& higher_agents,
-                                 int a, Path& new_path) {
+bool PBS::findPathForSingleAgent(PBSNode &node, const set<int> &higher_agents,
+                                 int a, Path &new_path) {
     clock_t t = clock();
     // TODO: add runtime check to the low level
     new_path = search_engines[a]->findOptimalPath(higher_agents, paths, a);
@@ -244,11 +244,11 @@ bool PBS::findPathForSingleAgent(PBSNode& node, const set<int>& higher_agents,
 
 // takes the paths_found_initially and UPDATE all (constrained) paths found for
 // agents from curr to start
-inline void PBS::update(PBSNode* node) {
+inline void PBS::update(PBSNode *node) {
     paths.assign(num_of_agents, nullptr);
     priority_graph.assign(num_of_agents, vector<bool>(num_of_agents, false));
     for (auto curr = node; curr != nullptr; curr = curr->parent) {
-        for (auto& path : curr->paths) {
+        for (auto &path : curr->paths) {
             if (paths[path.first] == nullptr) {
                 paths[path.first] = &(path.second);
             }
@@ -298,14 +298,39 @@ bool PBS::hasConflicts(int a1, int a2) const {
     }
     return false;  // conflict-free
 }
-bool PBS::hasConflicts(int a1, const set<int>& agents) const {
+bool PBS::hasConflicts(int a1, const set<int> &agents) const {
     for (auto a2 : agents) {
-        if (hasConflicts(a1, a2))
+        if (hasConflicts(a1, a2)) {
+            // spdlog::error("Conflict between agents {} and {}", a1, a2);
+            // Print path of a1 and a2
+            // cout << "Agent " << a1 << ": ";
+            // for (const auto &t : *paths[a1]) {
+            //     cout << "("
+            //          << search_engines[a1]->instance.graph->getRowCoordinate(
+            //                 t.location)
+            //          << ","
+            //          << search_engines[a1]->instance.graph->getColCoordinate(
+            //                 t.location)
+            //          << ") -> ";
+            // }
+            // cout << endl;
+            // cout << "Agent " << a2 << ": ";
+            // for (const auto &t : *paths[a2]) {
+            //     cout << "("
+            //          << search_engines[a2]->instance.graph->getRowCoordinate(
+            //                 t.location)
+            //          << ","
+            //          << search_engines[a2]->instance.graph->getColCoordinate(
+            //                 t.location)
+            //          << ") -> ";
+            // }
+            // cout << endl;
             return true;
+        }
     }
     return false;
 }
-shared_ptr<Conflict> PBS::chooseConflict(const PBSNode& node) const {
+shared_ptr<Conflict> PBS::chooseConflict(const PBSNode &node) const {
     if (screen == 3)
         printConflicts(node);
     if (node.conflicts.empty())
@@ -342,12 +367,12 @@ double PBS::getSumOfCosts() const {
     }
     return cost;
 }
-inline void PBS::pushNode(PBSNode* node) {
+inline void PBS::pushNode(PBSNode *node) {
     // update handles
     open_list.push(node);
     allNodes_table.push_back(node);
 }
-void PBS::pushNodes(PBSNode* n1, PBSNode* n2) {
+void PBS::pushNodes(PBSNode *n1, PBSNode *n2) {
     if (n1 != nullptr and n2 != nullptr) {
         if (n1->cost < n2->cost) {
             pushNode(n2);
@@ -363,8 +388,8 @@ void PBS::pushNodes(PBSNode* n1, PBSNode* n2) {
     }
 }
 
-PBSNode* PBS::selectNode() {
-    PBSNode* curr = open_list.top();
+PBSNode *PBS::selectNode() {
+    PBSNode *curr = open_list.top();
     open_list.pop();
     update(curr);
     num_HL_expanded++;
@@ -381,7 +406,7 @@ void PBS::printPaths() const {
                     search_engines[i]
                         ->goal_location)[search_engines[i]->start_location]
              << " -->" << paths[i]->size() - 1 << "): ";
-        for (const auto& t : *paths[i]) {
+        for (const auto &t : *paths[i]) {
             cout << "("
                  << search_engines[i]->instance.graph->getRowCoordinate(
                         t.location)
@@ -472,8 +497,8 @@ void PBS::printResults() const {
     }*/
 }
 
-void PBS::saveResults(const string& fileName,
-                      const string& instanceName) const {
+void PBS::saveResults(const string &fileName,
+                      const string &instanceName) const {
     std::ifstream infile(fileName);
     bool exist = infile.good();
     infile.close();
@@ -503,7 +528,7 @@ void PBS::saveResults(const string& fileName,
     stats.close();
 }
 
-void PBS::saveCT(const string& fileName) const  // write the CT to a file
+void PBS::saveCT(const string &fileName) const  // write the CT to a file
 {
     // Write the tree graph in dot language to a file
     {
@@ -512,13 +537,13 @@ void PBS::saveCT(const string& fileName) const  // write the CT to a file
         output << "digraph G {" << endl;
         output << "size = \"5,5\";" << endl;
         output << "center = true;" << endl;
-        set<PBSNode*> path_to_goal;
+        set<PBSNode *> path_to_goal;
         auto curr = goal_node;
         while (curr != nullptr) {
             path_to_goal.insert(curr);
             curr = curr->parent;
         }
-        for (const auto& node : allNodes_table) {
+        for (const auto &node : allNodes_table) {
             output << node->time_generated << " [label=\"g=" << node->cost;
             if (node->time_expanded > 0)  // the node has been expanded
             {
@@ -552,7 +577,7 @@ void PBS::saveCT(const string& fileName) const  // write the CT to a file
                << "f of best in open,f^ of best in open,d of best in open,"
                << "f of best in focal,f^ of best in focal,d of best in focal,"
                << "praent,goal node" << endl;
-        for (auto& node : allNodes_table) {
+        for (auto &node : allNodes_table) {
             output << node->time_generated << "," << node->cost << ","
                    << node->depth << "," << node->time_expanded << ",";
             if (node->parent == nullptr)
@@ -568,12 +593,12 @@ void PBS::saveCT(const string& fileName) const  // write the CT to a file
     }
 }
 
-void PBS::savePaths(const string& fileName) const {
+void PBS::savePaths(const string &fileName) const {
     std::ofstream output;
     output.open(fileName, std::ios::out);
     for (int i = 0; i < num_of_agents; i++) {
         output << "Agent " << i << ": ";
-        for (const auto& t : *paths[i])
+        for (const auto &t : *paths[i])
             output << "("
                    << search_engines[0]->instance.graph->getRowCoordinate(
                           t.location)
@@ -599,7 +624,7 @@ std::vector<std::vector<std::tuple<int, int, double, int>>> PBS::getPaths() {
         if (screen > 0)
             cout << "Agent " << i << ": ";
         bool task_finished = false;
-        for (const auto& t : *paths[i]) {
+        for (const auto &t : *paths[i]) {
             int task_id = -1;
             if (t.location == search_engines[i]->goal_location &&
                 !task_finished) {
@@ -637,8 +662,8 @@ std::vector<std::vector<std::tuple<int, int, double, int>>> PBS::getPaths() {
     return new_mapf_plan;
 }
 
-void PBS::printConflicts(const PBSNode& curr) {
-    for (const auto& conflict : curr.conflicts) {
+void PBS::printConflicts(const PBSNode &curr) {
+    for (const auto &conflict : curr.conflicts) {
         cout << *conflict << endl;
     }
 }
@@ -647,7 +672,7 @@ string PBS::getSolverName() const {
     return "PBS with " + search_engines[0]->getName();
 }
 
-bool PBS::terminate(PBSNode* curr) {
+bool PBS::terminate(PBSNode *curr) {
     runtime = (double)(clock() - start) / CLOCKS_PER_SEC;
     if (curr->conflicts.empty())  // no conflicts
     {                             // found a solution
@@ -732,7 +757,7 @@ bool PBS::generateRoot() {
 
 inline void PBS::releaseNodes() {
     // TODO:: clear open_list
-    for (auto& node : allNodes_table)
+    for (auto &node : allNodes_table)
         delete node;
     allNodes_table.clear();
 }
@@ -821,7 +846,7 @@ void PBS::clear() {
     solution_cost = -2;
 }
 
-void PBS::topologicalSort(list<int>& stack) {
+void PBS::topologicalSort(list<int> &stack) {
     stack.clear();
     vector<bool> visited(num_of_agents, false);
 
@@ -832,7 +857,7 @@ void PBS::topologicalSort(list<int>& stack) {
             topologicalSortUtil(i, visited, stack);
     }
 }
-void PBS::topologicalSortUtil(int v, vector<bool>& visited, list<int>& stack) {
+void PBS::topologicalSortUtil(int v, vector<bool> &visited, list<int> &stack) {
     // Mark the current node as visited.
     visited[v] = true;
 
@@ -845,8 +870,8 @@ void PBS::topologicalSortUtil(int v, vector<bool>& visited, list<int>& stack) {
     // Push current vertex to stack which stores result
     stack.push_back(v);
 }
-void PBS::getHigherPriorityAgents(const list<int>::reverse_iterator& p1,
-                                  set<int>& higher_agents) {
+void PBS::getHigherPriorityAgents(const list<int>::reverse_iterator &p1,
+                                  set<int> &higher_agents) {
     for (auto p2 = std::next(p1); p2 != ordered_agents.rend(); ++p2) {
         if (priority_graph[*p1][*p2]) {
             auto ret = higher_agents.insert(*p2);
@@ -857,8 +882,8 @@ void PBS::getHigherPriorityAgents(const list<int>::reverse_iterator& p1,
         }
     }
 }
-void PBS::getLowerPriorityAgents(const list<int>::iterator& p1,
-                                 set<int>& lower_subplans) {
+void PBS::getLowerPriorityAgents(const list<int>::iterator &p1,
+                                 set<int> &lower_subplans) {
     for (auto p2 = std::next(p1); p2 != ordered_agents.end(); ++p2) {
         if (priority_graph[*p2][*p1]) {
             auto ret = lower_subplans.insert(*p2);
