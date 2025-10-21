@@ -1,11 +1,10 @@
 #include "task_assigners/DistinctOneGoalTaskAssigner.h"
 
-DistinctOneGoalTaskAssigner::DistinctOneGoalTaskAssigner(const SMARTGrid& G,
-                                                         int screen,
-                                                         int num_of_agents,
-                                                         int seed,
-                                                         string task_file)
-    : BasicTaskAssigner(G, screen, num_of_agents, seed, task_file) {
+DistinctOneGoalTaskAssigner::DistinctOneGoalTaskAssigner(
+    const SMARTGrid &G, const shared_ptr<HeuristicTableBase> heuristic_table,
+    int screen, int num_of_agents, int seed, string task_file)
+    : BasicTaskAssigner(G, heuristic_table, screen, num_of_agents, seed,
+                        task_file) {
     this->goal_buffer.resize(num_of_agents, -1);
 
     // Each agent has only one goal at a time
@@ -17,7 +16,7 @@ DistinctOneGoalTaskAssigner::DistinctOneGoalTaskAssigner(const SMARTGrid& G,
 }
 
 void DistinctOneGoalTaskAssigner::updateStartsAndGoals(
-    vector<tuple<double, double, int>>& start_locs,
+    vector<tuple<double, double, int>> &start_locs,
     set<int> finished_tasks_id) {
     // Set new starts
     for (int i = 0; i < this->num_of_agents; i++) {
@@ -170,10 +169,31 @@ int DistinctOneGoalTaskAssigner::sampleUnoccupiedLoc(set<int> to_avoid,
 int DistinctOneGoalTaskAssigner::sampleBackupGoal(set<int> to_avoid,
                                                   int curr_goal, int start_loc,
                                                   int agent_id) {
-    int goal = this->G.free_locations[rand() % this->G.free_locations.size()];
-    // If the sampled goal is occupied, sample again
-    while (to_avoid.find(goal) != to_avoid.end() || goal == curr_goal) {
-        goal = this->G.free_locations[rand() % this->G.free_locations.size()];
+    // According to the heuristic, select the nearest unoccupied free location
+    // as the backup goal.
+    double min_h_val = WEIGHT_MAX;
+    int best_loc = -1;
+    for (int loc : this->G.free_locations) {
+        if (to_avoid.find(loc) == to_avoid.end() && loc != curr_goal) {
+            // Compute heuristic
+            double h_val = this->heuristic_table->get(loc, start_loc);
+            if (h_val < min_h_val) {
+                min_h_val = h_val;
+                best_loc = loc;
+            }
+        }
     }
-    return goal;
+
+    if (best_loc == -1) {
+        spdlog::error("Agent {}: No valid backup goal found.", agent_id);
+        // int goal = this->G.free_locations[rand() %
+        // this->G.free_locations.size()];
+        // // If the sampled goal is occupied, sample again
+        // while (to_avoid.find(goal) != to_avoid.end() || goal == curr_goal) {
+        //     goal = this->G.free_locations[rand() %
+        //     this->G.free_locations.size()];
+        // }
+    }
+
+    return best_loc;
 }

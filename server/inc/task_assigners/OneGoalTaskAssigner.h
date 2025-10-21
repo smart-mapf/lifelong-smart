@@ -7,9 +7,11 @@
 class OneGoalTaskAssigner : public BasicTaskAssigner {
 public:
     OneGoalTaskAssigner() = default;
-    OneGoalTaskAssigner(const SMARTGrid& G, int screen, int num_of_agents,
-                        int seed, string task_file = "");
-    void updateStartsAndGoals(vector<tuple<double, double, int>>& start_locs,
+    OneGoalTaskAssigner(const SMARTGrid &G,
+                        const shared_ptr<HeuristicTableBase> heuristic_table,
+                        int screen, int num_of_agents, int seed,
+                        string task_file = "");
+    void updateStartsAndGoals(vector<tuple<double, double, int>> &start_locs,
                               set<int> finished_tasks_id) override;
 
 private:

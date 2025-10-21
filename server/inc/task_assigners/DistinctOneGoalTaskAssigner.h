@@ -1,4 +1,5 @@
 #pragma once
+#include "heuristics/StateAStarNode.h"
 #include "task_assigners/BasicTaskAssigner.h"
 
 // Assign each agent a distinct goal location, and each agent only has one goal
@@ -8,11 +9,13 @@
 class DistinctOneGoalTaskAssigner : public BasicTaskAssigner {
 public:
     DistinctOneGoalTaskAssigner() = default;
-    DistinctOneGoalTaskAssigner(const SMARTGrid& G, int screen,
-                                int num_of_agents, int seed,
-                                string task_file = "");
-    void updateStartsAndGoals(vector<tuple<double, double, int>>& start_locs,
+    DistinctOneGoalTaskAssigner(
+        const SMARTGrid &G,
+        const shared_ptr<HeuristicTableBase> heuristic_table, int screen,
+        int num_of_agents, int seed, string task_file = "");
+    void updateStartsAndGoals(vector<tuple<double, double, int>> &start_locs,
                               set<int> finished_tasks_id) override;
+
 private:
     // Remember the goals that the agents are attempting to go to, but are
     // occupied by other agents.

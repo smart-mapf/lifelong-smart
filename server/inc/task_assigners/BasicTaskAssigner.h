@@ -1,4 +1,5 @@
 #pragma once
+#include "heuristics/BasicHeuristicTable.h"
 #include "utils/SMARTGraph.h"
 #include "utils/Task.h"
 #include "utils/common.h"
@@ -6,10 +7,12 @@
 class BasicTaskAssigner {
 public:
     BasicTaskAssigner() = default;
-    BasicTaskAssigner(const SMARTGrid& G, int screen, int num_of_agents,
-                      int seed, string task_file = "");
+    BasicTaskAssigner(const SMARTGrid &G,
+                      const shared_ptr<HeuristicTableBase> heuristic_table,
+                      int screen, int num_of_agents, int seed,
+                      string task_file = "");
     virtual void updateStartsAndGoals(
-        vector<tuple<double, double, int>>& start_locs,
+        vector<tuple<double, double, int>> &start_locs,
         set<int> finished_tasks_id) = 0;
     vector<State> getStarts() const {
         return starts;
@@ -32,7 +35,9 @@ protected:
     int sample_task_location();
     int sample_free_location();
 
-    const SMARTGrid& G;
+    const SMARTGrid &G;
+
+    const shared_ptr<HeuristicTableBase> heuristic_table;
 
     // Current start locations of the robots
     vector<State> starts;
@@ -75,10 +80,12 @@ protected:
 class WindowedTaskAssigner : public BasicTaskAssigner {
 public:
     WindowedTaskAssigner() = default;
-    WindowedTaskAssigner(const SMARTGrid& G, int screen, int simulation_window,
-                         int num_of_agents, int seed, string task_file = "");
+    WindowedTaskAssigner(const SMARTGrid &G,
+                         const shared_ptr<HeuristicTableBase> heuristic_table,
+                         int screen, int simulation_window, int num_of_agents,
+                         int seed, string task_file = "");
 
-    void updateStartsAndGoals(vector<tuple<double, double, int>>& start_locs,
+    void updateStartsAndGoals(vector<tuple<double, double, int>> &start_locs,
                               set<int> finished_tasks_id) override;
 
 private:

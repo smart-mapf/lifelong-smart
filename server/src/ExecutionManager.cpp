@@ -19,7 +19,7 @@ ExecutionManager::ExecutionManager(
                            vm["look_ahead_dist"].as<int>())),
       numRobots(vm["num_robots"].as<int>()),
       parser(PlanParser(vm["screen"].as<int>())),
-    //   tick_per_robot(vector<int>(vm["num_robots"].as<int>(), 0)),
+      //   tick_per_robot(vector<int>(vm["num_robots"].as<int>(), 0)),
       curr_tick(0),
       task_assigner_type(vm["task_assigner_type"].as<string>()) {
     spdlog::info("Invoke policy: {}", planner_invoke_policy);
@@ -153,17 +153,26 @@ void ExecutionManager::setupHeuristicTable() {
 
 void ExecutionManager::setupTaskAssigner() {
     spdlog::info("Setting up task assigner...");
+
+    // Make sure that heuristic table is setup
+    if (this->heuristic_table == nullptr) {
+        this->setupHeuristicTable();
+    }
+
     string task_file = this->_vm["task_file"].as<string>();
     if (this->task_assigner_type == "windowed") {
         this->task_assigner = make_shared<WindowedTaskAssigner>(
-            this->G, this->screen, this->_vm["sim_window_timestep"].as<int>(),
-            this->numRobots, this->seed, task_file);
+            this->G, this->heuristic_table, this->screen,
+            this->_vm["sim_window_timestep"].as<int>(), this->numRobots,
+            this->seed, task_file);
     } else if (this->task_assigner_type == "distinct_one_goal") {
         this->task_assigner = make_shared<DistinctOneGoalTaskAssigner>(
-            this->G, this->screen, this->numRobots, this->seed, task_file);
+            this->G, this->heuristic_table, this->screen, this->numRobots,
+            this->seed, task_file);
     } else if (this->task_assigner_type == "one_goal") {
         this->task_assigner = make_shared<OneGoalTaskAssigner>(
-            this->G, this->screen, this->numRobots, this->seed, task_file);
+            this->G, this->heuristic_table, this->screen, this->numRobots,
+            this->seed, task_file);
     } else {
         spdlog::error("Task assigner type {} does not exist!",
                       this->task_assigner_type);

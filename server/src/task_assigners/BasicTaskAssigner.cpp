@@ -1,9 +1,10 @@
 #include "task_assigners/BasicTaskAssigner.h"
 
-BasicTaskAssigner::BasicTaskAssigner(const SMARTGrid& G, int screen,
-                                     int num_of_agents, int seed,
-                                     string task_file)
+BasicTaskAssigner::BasicTaskAssigner(
+    const SMARTGrid &G, const shared_ptr<HeuristicTableBase> heuristic_table,
+    int screen, int num_of_agents, int seed, string task_file)
     : G(G),
+      heuristic_table(heuristic_table),
       screen(screen),
       num_of_agents(num_of_agents),
       seed(seed),
@@ -50,7 +51,7 @@ bool BasicTaskAssigner::load_tasks(string task_file) {
     }
     try {
         this->tasks = read_task_vec(task_file, this->num_of_agents);
-    } catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
         spdlog::error("Error reading task file: {}", e.what());
         return false;
     }
@@ -79,7 +80,7 @@ void BasicTaskAssigner::print_mapf_instance(vector<State> starts_,
         cout << "(" << start_x << ", " << start_y << ", "
              << starts_[i].orientation << ", t = " << starts_[i].timestep
              << ") => ";
-        for (const auto& goal : goals_[i]) {
+        for (const auto &goal : goals_[i]) {
             int goal_x = G.getRowCoordinate(goal.location);
             int goal_y = G.getColCoordinate(goal.location);
             int wait_t = goal.task_wait_time;
@@ -111,16 +112,16 @@ int BasicTaskAssigner::sample_free_location() {
     return this->G.free_locations[idx];
 }
 
-WindowedTaskAssigner::WindowedTaskAssigner(const SMARTGrid& G, int screen,
-                                           int simulation_window,
-                                           int num_of_agents, int seed,
-                                           string task_file)
-    : BasicTaskAssigner(G, screen, num_of_agents, seed),
+WindowedTaskAssigner::WindowedTaskAssigner(
+    const SMARTGrid &G, const shared_ptr<HeuristicTableBase> heuristic_table,
+    int screen, int simulation_window, int num_of_agents, int seed,
+    string task_file)
+    : BasicTaskAssigner(G, heuristic_table, screen, num_of_agents, seed),
       simulation_window(simulation_window) {
 }
 
 void WindowedTaskAssigner::updateStartsAndGoals(
-    vector<tuple<double, double, int>>& start_locs,
+    vector<tuple<double, double, int>> &start_locs,
     set<int> finished_tasks_id) {
     if (start_locs.size() != this->num_of_agents) {
         spdlog::error("WindowedTaskAssigner::updateStartsAndGoals: starts size "
@@ -131,7 +132,7 @@ void WindowedTaskAssigner::updateStartsAndGoals(
     // Remove finished goals
     if (screen > 0) {
         string new_finished_tasks = "New finished tasks: ";
-        for (const auto& _task_id : finished_tasks_id) {
+        for (const auto &_task_id : finished_tasks_id) {
             new_finished_tasks += std::to_string(_task_id) + " ";
         }
         spdlog::info(new_finished_tasks);
@@ -152,7 +153,7 @@ void WindowedTaskAssigner::updateStartsAndGoals(
         for (int i = 0; i < this->num_of_agents; i++) {
             goal_locations[i].erase(
                 remove_if(goal_locations[i].begin(), goal_locations[i].end(),
-                          [](const Task& t) { return t.id == -1; }),
+                          [](const Task &t) { return t.id == -1; }),
                 goal_locations[i].end());
         }
     }
@@ -212,7 +213,7 @@ void WindowedTaskAssigner::updateStartsAndGoals(
         }
         double min_timesteps = 0;
         int prev_loc = curr;
-        for (const auto& g : goal_locations[k]) {
+        for (const auto &g : goal_locations[k]) {
             min_timesteps += G.get_Manhattan_distance(g.location, prev_loc);
             prev_loc = g.location;
         }
@@ -255,7 +256,7 @@ void WindowedTaskAssigner::updateStartsAndGoals(
             // Check for consecutive duplicate goals for each agent
             for (int i = 0; i < this->num_of_agents; i++) {
                 if (goal_locations[i].size() > 1) {
-                    auto& goals = goal_locations[i];
+                    auto &goals = goal_locations[i];
                     for (size_t j = 1; j < goals.size(); j++) {
                         if (goals[j].location == goals[j - 1].location) {
                             spdlog::warn(

@@ -1,9 +1,10 @@
 #include "task_assigners/OneGoalTaskAssigner.h"
 
-OneGoalTaskAssigner::OneGoalTaskAssigner(const SMARTGrid& G, int screen,
-                                         int num_of_agents, int seed,
-                                         string task_file)
-    : BasicTaskAssigner(G, screen, num_of_agents, seed, task_file) {
+OneGoalTaskAssigner::OneGoalTaskAssigner(
+    const SMARTGrid &G, const shared_ptr<HeuristicTableBase> heuristic_table,
+    int screen, int num_of_agents, int seed, string task_file)
+    : BasicTaskAssigner(G, heuristic_table, screen, num_of_agents, seed,
+                        task_file) {
     // Each agent has only one goal at a time
     for (int i = 0; i < num_of_agents; i++) {
         this->goal_locations[i].resize(1);
@@ -13,11 +14,11 @@ OneGoalTaskAssigner::OneGoalTaskAssigner(const SMARTGrid& G, int screen,
 }
 
 void OneGoalTaskAssigner::updateStartsAndGoals(
-    vector<tuple<double, double, int>>& start_locs,
+    vector<tuple<double, double, int>> &start_locs,
     set<int> finished_tasks_id) {
     if (screen > 0) {
         string new_finished_tasks = "New finished tasks: ";
-        for (const auto& _task_id : finished_tasks_id) {
+        for (const auto &_task_id : finished_tasks_id) {
             new_finished_tasks += std::to_string(_task_id) + " ";
         }
         spdlog::info(new_finished_tasks);
