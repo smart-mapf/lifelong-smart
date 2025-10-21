@@ -84,3 +84,5 @@ protected:
     // Type of the SMART grid.
     SMARTGridType grid_type = SMARTGridType::REGULAR;
 };
+
+void print_paths(const std::vector<Path>& paths, const BasicGraph& G);

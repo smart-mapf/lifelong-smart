@@ -19,7 +19,8 @@ ExecutionManager::ExecutionManager(
                            vm["look_ahead_dist"].as<int>())),
       numRobots(vm["num_robots"].as<int>()),
       parser(PlanParser(vm["screen"].as<int>())),
-      tick_per_robot(vector<int>(vm["num_robots"].as<int>(), 0)),
+    //   tick_per_robot(vector<int>(vm["num_robots"].as<int>(), 0)),
+      curr_tick(0),
       task_assigner_type(vm["task_assigner_type"].as<string>()) {
     spdlog::info("Invoke policy: {}", planner_invoke_policy);
     spdlog::info("Look ahead tick: {}", look_ahead_tick);
@@ -43,7 +44,8 @@ bool ExecutionManager::simTickElapsedFromLastInvoke(int ticks) {
 }
 
 int ExecutionManager::getCurrSimStep() {
-    return *min_element(tick_per_robot.begin(), tick_per_robot.end());
+    // return *min_element(tick_per_robot.begin(), tick_per_robot.end());
+    return this->curr_tick;
 }
 
 void ExecutionManager::setupBackupPlanner() {
@@ -159,6 +161,9 @@ void ExecutionManager::setupTaskAssigner() {
     } else if (this->task_assigner_type == "distinct_one_goal") {
         this->task_assigner = make_shared<DistinctOneGoalTaskAssigner>(
             this->G, this->screen, this->numRobots, this->seed, task_file);
+    } else if (this->task_assigner_type == "one_goal") {
+        this->task_assigner = make_shared<OneGoalTaskAssigner>(
+            this->G, this->screen, this->numRobots, this->seed, task_file);
     } else {
         spdlog::error("Task assigner type {} does not exist!",
                       this->task_assigner_type);
@@ -191,18 +196,19 @@ void ExecutionManager::saveStats() {
 
     // Unwrap and add planner stats to results
     json planner_stats_json = json::parse(this->planner_stats);
-    for (auto& [key, value] : planner_stats_json.items()) {
+    for (auto &[key, value] : planner_stats_json.items()) {
         result[key] = value;
     }
 
     // Add ADG statistics
     json adg_stats = adg->getADGStats();
-    for (auto& [key, value] : adg_stats.items()) {
+    for (auto &[key, value] : adg_stats.items()) {
         result[key] = value;
     }
 
     // Print some key statistics to console
-    spdlog::info("Simulation count: {}", this->tick_per_robot[0]);
+    // spdlog::info("Simulation count: {}", this->tick_per_robot[0]);
+    spdlog::info("Simulation count: {}", this->curr_tick);
     // spdlog::info("Number of actual finished tasks: {}",
     //              this->adg->countFinishedTasks());
     // spdlog::info("Average num of rotation per robot: {:.2f}",
@@ -217,7 +223,7 @@ void ExecutionManager::saveStats() {
         "n_rule_based_calls", "mean_avg_rotation", "mean_avg_move",
         "avg_total_actions",  "n_planner_invokes",
     };
-    for (const auto& stat : key_stats) {
+    for (const auto &stat : key_stats) {
         if (result.contains(stat)) {
             spdlog::info("{}: {}", stat, result[stat].dump());
         }
@@ -228,13 +234,12 @@ void ExecutionManager::saveStats() {
         ofstream stats(output_filename);
         stats << result.dump(4);  // Pretty print with 4 spaces
 
-        // cout << "Statistics written to " << output_filename << endl;
         spdlog::info("Statistics written to {}", output_filename);
     }
 }
 
-void ExecutionManager::freezeSimulationIfNecessary(string RobotID) {
-    int robot_id = this->adg->startIndexToRobotID[RobotID];
+void ExecutionManager::freezeSimulationIfNecessary() {
+    // int robot_id = this->adg->startIndexToRobotID[RobotID];
     // Logic 1: freeze the simulation if at least one robot has no actions
     // if (this->adg->getNumUnfinishedActions(robot_id) <= 0) {
     //     this->freeze_simulation = true;
@@ -258,18 +263,15 @@ void ExecutionManager::freezeSimulationIfNecessary(string RobotID) {
     if (sim_step == 0 && this->plannerNeverInvoked()) {
         this->freeze_simulation = true;
         if (this->screen > 0) {
-            spdlog::info(
-                "Robot {} requests to freeze the simulation at the first tick!",
-                robot_id);
+            spdlog::info("Freeze the simulation at the first tick!");
         }
     } else if (this->simTickElapsedFromLastInvoke(this->look_ahead_tick) &&
                this->planner_running && !this->simulationFinished()) {
         this->freeze_simulation = true;
         if (this->screen > 0) {
-            spdlog::info(
-                "Robot {} requests to freeze the simulation at sim step {} "
-                "due to planner not return in time (synchronize)!",
-                robot_id, sim_step);
+            spdlog::info("Freeze the simulation at sim step {} due to planner "
+                         "not return in time (synchronize)!",
+                         sim_step);
         }
     }
 }
@@ -303,7 +305,7 @@ string ExecutionManager::getRobotsLocation() {
     }
 
     // Get the current locations of all robots
-    for (auto& robot : this->curr_robot_states) {
+    for (auto &robot : this->curr_robot_states) {
         if (this->flipped_coord) {
             robots_location.emplace_back(make_tuple(
                 robot.position.second, robot.position.first, robot.orient));
@@ -329,13 +331,22 @@ string ExecutionManager::getRobotsLocation() {
     result_message["mapf_instance"] =
         this->task_assigner->getMAPFInstanceJSON();
 
+    // Write mapf_instance to a file
+    if (this->screen > 1) {
+        int tick = this->getCurrSimStep();
+        // string filename = "mapf_instance_step_" + to_string(tick) + ".json";
+        string filename = "mapf_instance.json";
+        std::ofstream mapf_instance_file(filename);
+        mapf_instance_file << result_message["mapf_instance"].dump(4);
+    }
+
     return result_message.dump();
 }
 
 // Add a new MAPF plan to the ADG. Use backup planner if necessary
 // new_plan: a vector of paths, each path is a vector of (row, col, t, task_id)
 // Raw plan --> points --> Steps --> Actions
-void ExecutionManager::addNewPlan(string& new_plan_json_str) {
+void ExecutionManager::addNewPlan(string &new_plan_json_str) {
     json new_plan_json = json::parse(new_plan_json_str);
 
     // Sanity check for the necessary fields
@@ -364,11 +375,14 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
         vector<Path> guide_paths = this->convertPlanToGuidePaths(new_plan);
 
         // Plan using the backup planner
-        spdlog::info("Planner fails, using backup planner");
+        if (screen > 0)
+            spdlog::info("Planner fails, using backup planner");
         this->backup_planner->clear();
         this->backup_planner->run(starts, goal_locations, guide_paths);
         new_plan = this->backup_planner->convert_path_to_smart(goal_locations);
         congested = this->backup_planner->congested();
+    } else {
+        // Planner is successful. Add additional sanity check for collisions.
     }
 
     // TODO: consider backup planner for the following entries.
@@ -396,7 +410,7 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
     for (int agent_id = 0; agent_id < this->numRobots; agent_id++) {
         vector<Point> points;
         vector<Step> curr_steps;
-        for (auto& step : new_plan[agent_id]) {
+        for (auto &step : new_plan[agent_id]) {
             points.emplace_back(
                 Point(get<0>(step), get<1>(step), get<2>(step), get<3>(step)));
         }
@@ -433,12 +447,12 @@ void ExecutionManager::addNewPlan(string& new_plan_json_str) {
 // Obtain the guide paths. Guide paths are assumed to be
 // non-collision-free solutions from the planner.
 vector<Path> ExecutionManager::convertPlanToGuidePaths(
-    const vector<vector<UserState>>& plan) {
+    const vector<vector<UserState>> &plan) {
     vector<Path> guide_paths(this->numRobots);
     for (int k = 0; k < this->numRobots; k++) {
         Path path;
         auto raw_path = plan[k];
-        for (auto& step : raw_path) {
+        for (auto &step : raw_path) {
             int row = get<0>(step);
             int col = get<1>(step);
             int loc = this->G.getCellId(row, col);
@@ -456,7 +470,7 @@ vector<Path> ExecutionManager::convertPlanToGuidePaths(
     return guide_paths;
 }
 
-string ExecutionManager::actionFinished(string& robot_id_str, int node_ID) {
+string ExecutionManager::actionFinished(string &robot_id_str, int node_ID) {
     if (not this->adg->initialized) {
         spdlog::error(
             "ExecutionManager::actionFinished: ADG is not initialized");
@@ -494,9 +508,14 @@ SIM_PLAN ExecutionManager::obtainActionsFromADG(string RobotID) {
     return this->adg->getPlan(Robot_ID);
 }
 
-void ExecutionManager::updateSimStep(string RobotID) {
-    int Robot_ID = this->adg->startIndexToRobotID[RobotID];
-    this->tick_per_robot[Robot_ID]++;
+void ExecutionManager::updateSimStep() {
+    // int Robot_ID = this->adg->startIndexToRobotID[RobotID];
+    // this->tick_per_robot[Robot_ID]++;
+    if (not this->adg->initialized) {
+        return;
+    }
+
+    this->curr_tick++;
 }
 
 bool ExecutionManager::invokePlanner() {

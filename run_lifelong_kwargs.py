@@ -30,7 +30,7 @@ def run_lifelong_kwargs(kwargs_file):
         map_filepath=map_filepath,
         num_agents=kwargs["num_agents"],
         # headless=kwargs["headless"],
-        headless=False,
+        headless=True,
         argos_config_filepath=argos_config_filepath,
         stats_name=stats_filepath,
         save_stats=kwargs["save_stats"],
@@ -40,7 +40,7 @@ def run_lifelong_kwargs(kwargs_file):
         sim_duration=kwargs["sim_duration"],
         sim_window_tick=kwargs["sim_window_tick"],
         velocity=kwargs["velocity"],
-        look_ahead_dist=kwargs["look_ahead_dist"],
+        # look_ahead_dist=kwargs["look_ahead_dist"],
         planner=kwargs["planner"],
         # container=kwargs["container"],
         container=False,
@@ -74,6 +74,8 @@ def run_lifelong_kwargs(kwargs_file):
         left_w_weight=kwargs["left_w_weight"],
         right_w_weight=kwargs["right_w_weight"],
         grid_type=kwargs["grid_type"],
+        planner_invoke_policy=kwargs["planner_invoke_policy"],
+        task_assigner_type=kwargs["task_assigner_type"],
     )
 
 

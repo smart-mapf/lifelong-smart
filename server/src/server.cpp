@@ -3,9 +3,9 @@
 shared_ptr<ExecutionManager> em = nullptr;
 std::mutex globalMutex;
 
-void freezeSimulationIfNecessary(string RobotID) {
+void freezeSimulationIfNecessary() {
     lock_guard<mutex> guard(globalMutex);
-    em->freezeSimulationIfNecessary(RobotID);
+    em->freezeSimulationIfNecessary();
 }
 
 // Return the simulation freeze status
@@ -19,12 +19,12 @@ string getRobotsLocation() {
     return em->getRobotsLocation();
 }
 
-void addNewPlan(string& new_plan_json_str) {
+void addNewPlan(string &new_plan_json_str) {
     lock_guard<mutex> guard(globalMutex);
     em->addNewPlan(new_plan_json_str);
 }
 
-string actionFinished(string& robot_id_str, int node_ID) {
+string actionFinished(string &robot_id_str, int node_ID) {
     lock_guard<mutex> guard(globalMutex);
     return em->actionFinished(robot_id_str, node_ID);
 }
@@ -39,7 +39,7 @@ bool isInitialized() {
     return em->isADGInitialized();
 }
 
-void closeServer(rpc::server& srv) {
+void closeServer(rpc::server &srv) {
     spdlog::info("Closing server at port {}", em->getRPCPort());
     em->saveStats();
     srv.close_sessions();
@@ -57,10 +57,9 @@ bool simStatus() {
     return em->stopSimulation();
 }
 
-// Return end_sim: true if all robots have finished their simulation steps
-void updateSimStep(string RobotID) {
+void updateSimStep() {
     lock_guard<mutex> guard(globalMutex);
-    em->updateSimStep(RobotID);
+    em->updateSimStep();
 }
 
 bool invokePlanner() {
@@ -73,7 +72,7 @@ void recordStatsPerTick() {
     em->recordStatsPerTick();
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     namespace po = boost::program_options;
     // Declare the supported options.
     po::options_description desc("Allowed options");
@@ -105,7 +104,7 @@ int main(int argc, char** argv) {
             ("num_landmarks", po::value<int>()->default_value(20), "number of landmarks for landmark heuristic (default: 20)")
             ("landmark_selection", po::value<string>()->default_value("workstation+endpt_corners"), "landmark selection strategy: random, workstation+endpt_corners")
             ("save_heuristics_table", po::value<bool>()->default_value(false), "save heuristics table or not")
-            ("task_assigner_type", po::value<string>()->default_value("windowed"), "windowed or distinct_one_goal")
+            ("task_assigner_type", po::value<string>()->default_value("windowed"), "windowed, one_goal, distinct_one_goal")
             ("task_file", po::value<string>()->default_value(""), "task file for the robots (default: empty, meaning random tasks)")
             ;
     // clang-format on

@@ -28,12 +28,15 @@ BasicTaskAssigner::BasicTaskAssigner(const SMARTGrid& G, int screen,
 
     // Initialize workstation/endpiont distribution
     // Uniform distribution
-    vector<double> dist(this->G.endpoints.size(), 1.0);
-    this->endpoint_dist =
-        std::discrete_distribution<int>(dist.begin(), dist.end());
-    dist = vector<double>(this->G.workstations.size(), 1.0);
-    this->workstation_dist =
-        std::discrete_distribution<int>(dist.begin(), dist.end());
+    auto make_uniform_dist = [](size_t n) {
+        return discrete_distribution<int>(n, 0.0, 1.0,
+                                          [](double) { return 1.0; });
+    };
+
+    this->endpoint_dist = make_uniform_dist(this->G.endpoints.size());
+    this->workstation_dist = make_uniform_dist(this->G.workstations.size());
+    this->task_location_dist = make_uniform_dist(this->G.task_locations.size());
+    this->free_location_dist = make_uniform_dist(this->G.free_locations.size());
 }
 
 bool BasicTaskAssigner::load_tasks(string task_file) {
@@ -86,6 +89,26 @@ void BasicTaskAssigner::print_mapf_instance(vector<State> starts_,
         }
         cout << endl;
     }
+}
+
+int BasicTaskAssigner::sample_workstation() {
+    int idx = this->workstation_dist(this->gen);
+    return this->G.workstations[idx];
+}
+
+int BasicTaskAssigner::sample_endpiont() {
+    int idx = this->endpoint_dist(this->gen);
+    return this->G.endpoints[idx];
+}
+
+int BasicTaskAssigner::sample_task_location() {
+    int idx = this->task_location_dist(this->gen);
+    return this->G.task_locations[idx];
+}
+
+int BasicTaskAssigner::sample_free_location() {
+    int idx = this->free_location_dist(this->gen);
+    return this->G.free_locations[idx];
 }
 
 WindowedTaskAssigner::WindowedTaskAssigner(const SMARTGrid& G, int screen,
@@ -279,14 +302,4 @@ int WindowedTaskAssigner::gen_next_goal(int agent_id, bool repeat_last_goal) {
     }
 
     return next;
-}
-
-int WindowedTaskAssigner::sample_workstation() {
-    int idx = this->workstation_dist(this->gen);
-    return this->G.workstations[idx];
-}
-
-int WindowedTaskAssigner::sample_endpiont() {
-    int idx = this->endpoint_dist(this->gen);
-    return this->G.endpoints[idx];
 }

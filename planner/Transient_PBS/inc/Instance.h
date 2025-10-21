@@ -8,7 +8,6 @@ class Instance {
 public:
     int screen = 0;
     shared_ptr<Graph> graph;  // graph representation of the map
-
     Instance() {
     }
     Instance(shared_ptr<Graph> graph, int screen);

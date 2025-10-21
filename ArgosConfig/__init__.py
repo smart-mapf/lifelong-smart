@@ -8,6 +8,7 @@ CONTAINER_PROJECT_ROOT = "/usr/project/lifelong_mapf_argos"
 PROJECT_ROOT = _parent_dir
 SERVER_EXE = "server/build/ExecutionManager"
 PBS_EXE = "planner/PBS/build/pbs"
+TPBS_EXE = "planner/Transient_PBS/build/tpbs"
 RHCR_EXE = "planner/RHCR/build/lifelong"
 MASS_EXE = "planner/MASS/MASS"
 FOOTBOT_DIFFUSION_CONTROLLER_LIB = "client/build/controllers/footbot_diffusion/libfootbot_diffusion"

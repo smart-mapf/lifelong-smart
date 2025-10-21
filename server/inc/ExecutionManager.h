@@ -14,6 +14,7 @@
 #include "heuristics/LazyHeuristicTable.h"
 #include "task_assigners/BasicTaskAssigner.h"
 #include "task_assigners/DistinctOneGoalTaskAssigner.h"
+#include "task_assigners/OneGoalTaskAssigner.h"
 #include "utils/SMARTGraph.h"
 #include "utils/common.h"
 
@@ -38,7 +39,7 @@ public:
     bool simTickElapsedFromLastInvoke(int ticks);
 
     // Update the simulation step tick
-    void updateSimStep(string RobotID);
+    void updateSimStep();
 
     // Return true if we should stop the simulation, either due to congestion or
     // due to the simulation finished
@@ -51,7 +52,7 @@ public:
     void setupTaskAssigner();
 
     // Freeze the simulation if necessary
-    void freezeSimulationIfNecessary(string RobotID);
+    void freezeSimulationIfNecessary();
 
     // Obtain current location of the robots
     string getRobotsLocation();
@@ -59,10 +60,10 @@ public:
     // Add a new MAPF plan to the ADG. Use backup planner if necessary
     // new_plan: a vector of paths, each path is a vector of (row, col, t,
     // task_id) Raw plan --> points --> Steps --> Actions
-    void addNewPlan(string& new_plan_json_str);
+    void addNewPlan(string &new_plan_json_str);
 
     // A robot finished an action, update ADG
-    string actionFinished(string& robot_id_str, int node_ID);
+    string actionFinished(string &robot_id_str, int node_ID);
 
     // Initialize the ExecutionManager with the initial location of a robot
     void init(string RobotID, tuple<int, int> init_loc);
@@ -98,7 +99,7 @@ private:
     void setupSingleAgentPlanner();
 
     // Convert paths from planner to spatial guide paths
-    vector<Path> convertPlanToGuidePaths(const vector<vector<UserState>>& plan);
+    vector<Path> convertPlanToGuidePaths(const vector<vector<UserState>> &plan);
 
     std::shared_ptr<ADG> adg;
     bool flipped_coord = true;
@@ -110,7 +111,8 @@ private:
     int look_ahead_tick;  // Look ahead # in number of simulation ticks
 
     // Status of the simulation
-    vector<int> tick_per_robot;      // Number of ticks each robot has moved
+    int curr_tick = 0;               // Current simulation tick
+    // vector<int> tick_per_robot;      // Number of ticks each robot has moved
     bool freeze_simulation = false;  // Whether to freeze the simulation
     bool congested_sim = false;      // Whether the simulation is congested
     // The last tick when the planner was invoked

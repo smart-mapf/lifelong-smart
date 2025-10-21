@@ -3,10 +3,10 @@ target="$1"
 shift 1
 
 while getopts "c:" flag; do
-  case "$flag" in
-      c) CPLEX_DIR=$OPTARG;;
-      *) echo "Invalid option. ${USAGE}"
-  esac
+    case "$flag" in
+        c) CPLEX_DIR=$OPTARG;;
+        *) echo "Invalid option. ${USAGE}"
+    esac
 done
 
 if [ -z "${CPLEX_DIR}" ]; then
@@ -59,7 +59,17 @@ compile_pbs() {
     cd build
     cmake ..
     make -j $cpuCores
-    sudo find $current_path/planner/PBS/build/pbs -type d -exec chmod o+x {} +
+}
+
+
+compile_tpbs() {
+    echo "Compiling Transient PBS..."
+    cd $current_path/planner/Transient_PBS
+    rm -rf build
+    mkdir build
+    cd build
+    cmake ..
+    make -j $cpuCores
 }
 
 compile_rhcr() {
@@ -92,6 +102,10 @@ if [ "$target" == "pbs" ]; then
     compile_pbs
 fi
 
+if [ "$target" == "tpbs" ]; then
+    compile_tpbs
+fi
+
 if [ "$target" == "rhcr" ]; then
     compile_rhcr
 fi
@@ -106,6 +120,7 @@ if [ "$target" == "all" ]; then
     compile_client
     compile_server
     compile_pbs
+    compile_tpbs
     compile_rhcr
 fi
 
@@ -113,6 +128,7 @@ if [ "$target" == "user" ]; then
     compile_client
     compile_server
     compile_pbs
+    compile_tpbs
     compile_rhcr
     compile_mass
 fi
@@ -122,6 +138,7 @@ if [ "$target" == "clean" ]; then
     rm -rf $current_path/client/build
     rm -rf $current_path/server/build
     rm -rf $current_path/planner/PBS/build
+    rm -rf $current_path/planner/Transient_PBS/build
     rm -rf $current_path/planner/RHCR/build
     rm -rf $current_path/planner/MASS/build
     rm -rf $current_path/client/externalDependencies/rpclib/build

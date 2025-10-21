@@ -27,6 +27,10 @@ protected:
 
     void print_mapf_instance(vector<State> starts_,
                              vector<vector<Task>> goals_) const;
+    int sample_workstation();
+    int sample_endpiont();
+    int sample_task_location();
+    int sample_free_location();
 
     const SMARTGrid& G;
 
@@ -54,6 +58,8 @@ protected:
     mt19937 gen;
     discrete_distribution<int> workstation_dist;
     discrete_distribution<int> endpoint_dist;
+    discrete_distribution<int> task_location_dist;
+    discrete_distribution<int> free_location_dist;
 
     // Remember the next goal type for each agent, "w" for workstation, "e" for
     // endpoint
@@ -76,8 +82,6 @@ public:
                               set<int> finished_tasks_id) override;
 
 private:
-    int sample_workstation();
-    int sample_endpiont();
     int gen_next_goal(int agent_id, bool repeat_last_goal = false);
 
     // Simulation window in number of timesteps

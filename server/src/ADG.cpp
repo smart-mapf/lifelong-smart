@@ -399,6 +399,7 @@ bool ADG::createRobotIDToStartIndexMaps(string& robot_id_str,
                                      static_cast<int>(get<1>(init_loc)));
     this->n_robot_init++;
 
+    // ADG is initialized when all robots are initialized.
     if (this->n_robot_init == num_robots) {
         initialized = true;
         robot_states = init_locs;

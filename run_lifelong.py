@@ -9,8 +9,9 @@ import logging
 import datetime
 
 from typing import List, Tuple
-from lifelong_mapf_argos.ArgosConfig import (SERVER_EXE, PBS_EXE, RHCR_EXE,
-                                             MASS_EXE, CONTAINER_PROJECT_ROOT,
+from lifelong_mapf_argos.ArgosConfig import (SERVER_EXE, PBS_EXE, TPBS_EXE,
+                                             RHCR_EXE, MASS_EXE,
+                                             CONTAINER_PROJECT_ROOT,
                                              PROJECT_ROOT, setup_logging)
 from lifelong_mapf_argos.ArgosConfig.ToArgos import (obstacles, parse_map_file,
                                                      create_Argos)
@@ -115,7 +116,7 @@ def run_lifelong_argos(
     ticks_per_second: int = 10,
     velocity: float = 200.0,
     # look_ahead_dist: int = 10,
-    planner: str = "RHCR",  # ["PBS", "RHCR", "MASS"]
+    planner: str = "RHCR",  # ["PBS", "RHCR", "MASS", "TPBS"]
     container: bool = False,
     seed: int = 42,
     screen: int = 0,
@@ -248,11 +249,13 @@ def run_lifelong_argos(
     if container:
         server_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / SERVER_EXE
         pbs_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / PBS_EXE
+        tpbs_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / TPBS_EXE
         rhcr_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / RHCR_EXE
         mass_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / MASS_EXE
     else:
         server_path = pathlib.Path(PROJECT_ROOT) / SERVER_EXE
         pbs_path = pathlib.Path(PROJECT_ROOT) / PBS_EXE
+        tpbs_path = pathlib.Path(PROJECT_ROOT) / TPBS_EXE
         rhcr_path = pathlib.Path(PROJECT_ROOT) / RHCR_EXE
         mass_path = pathlib.Path(PROJECT_ROOT) / MASS_EXE
 
@@ -294,6 +297,7 @@ def run_lifelong_argos(
             "--no-color",
         ]
 
+        # Standard MAPF PBS
         if planner == "PBS":
             planner_command = [
                 pbs_path,
@@ -303,8 +307,19 @@ def run_lifelong_argos(
                 f"--seed={seed}",
                 f"--screen={screen}",
                 f"--cutoffTime={cutoffTime}",
-                f"--simulation_window={plan_window_ts}",
             ]
+        # Transient MAPF PBS
+        elif planner == "TPBS":
+            planner_command = [
+                tpbs_path,
+                f"--map={map_filepath}",
+                f"--agentNum={num_agents}",
+                f"--portNum={port_num}",
+                f"--seed={seed}",
+                f"--screen={screen}",
+                f"--cutoffTime={cutoffTime}",
+            ]
+        # RHCR, typically windowed PBS
         elif planner == "RHCR":
             # if rotation:
             #     cutoffTime = int(cutoffTime * 10)
@@ -346,6 +361,7 @@ def run_lifelong_argos(
             ]
             if task != "":
                 planner_command.append(f"--task={task}")
+        # MASS, typically PBS with 2nd order dynamics
         elif planner == "MASS":
             planner_command = [
                 mass_path,

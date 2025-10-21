@@ -18,6 +18,46 @@
 #include "PBS.h"
 #include "common.h"
 
+int test_run(boost::program_options::variables_map& vm) {
+    // In test mode, read in a fixed mapf instance and solve it.
+    int screen = vm["screen"].as<int>();
+    string test_instance_path = vm["test_instance"].as<string>();
+    if (test_instance_path.empty()) {
+        spdlog::error("Test instance path is empty. Exit...");
+        exit(1);
+    }
+    json mapf_instance;
+    std::ifstream ifs(test_instance_path);
+    ifs >> mapf_instance;
+    ifs.close();
+
+    // Create a graph, heuristic will be computed only once in the graph
+    auto graph = make_shared<Graph>(vm["map"].as<string>(), screen);
+
+    int n_mapf_calls = 0;        // number of MAPF calls
+    int n_rule_based_calls = 0;  // number of rule-based calls
+
+    Instance instance(graph, screen);
+    instance.loadAgents(mapf_instance);
+    PBS pbs(instance, vm["sipp"].as<bool>(), screen);
+
+    double runtime = 0;
+    bool success = false;
+    double runtime_limit = vm["cutoffTime"].as<double>();
+    int fail_count = 0;
+    n_mapf_calls += 1;
+    success = pbs.solve(runtime_limit);
+    vector<vector<tuple<int, int, double, int>>> new_mapf_plan = pbs.getPaths();
+    if (!success) {
+        n_rule_based_calls += 1;
+    }
+
+    pbs.clearSearchEngines();
+    pbs.clear();
+
+    return 0;
+}
+
 /* Main function */
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
@@ -36,7 +76,9 @@ int main(int argc, char** argv) {
 		("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
 		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
         ("portNum", po::value<int>()->default_value(8080), "port number for the server")
-		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
+		("sipp", po::value<bool>()->default_value(true), "using SIPP as the low-level solver")
+        ("test", po::value<bool>()->default_value(false), "test mode")
+        ("test_instance", po::value<string>()->default_value(""), "input file for test instance")
         ("seed", po::value<int>()->default_value(0), "random seed");
     // clang-format on
     po::variables_map vm;
@@ -56,10 +98,11 @@ int main(int argc, char** argv) {
     auto console_logger = spdlog::default_logger()->clone("Planner");
     spdlog::set_default_logger(console_logger);
 
-    ///////////////////////////////////////////////////////////////////////////
-    // int prev_last_task_id = 0;  // last task id from the previous iteration
-    // vector<Task> prev_goal_locs;
-    set<int> finished_tasks_id;
+    // Test run with a single instance
+    if (vm["test"].as<bool>()) {
+        return test_run(vm);
+    }
+
     int screen = vm["screen"].as<int>();
     int num_agents = vm["agentNum"].as<int>();
 
@@ -70,14 +113,8 @@ int main(int argc, char** argv) {
     int n_mapf_calls = 0;        // number of MAPF calls
     int n_rule_based_calls = 0;  // number of rule-based calls
 
-    // We must have enough empty locations for agents to "wait in queue".
-    // Since we do not consider window in this planner, it is not okay for
-    // agents to have the goal. Therefore when agent j tries to go to a
-    // location which is the goal of agent i, it must go to an empty space
-    // first.
     if (graph->nEmptyLocations() < num_agents) {
-        spdlog::error("Not enough empty locations for agents to wait in queue. "
-                      "Please increase the number of empty locations.");
+        spdlog::error("Not enough empty locations for agents to move.");
         exit(-1);
     }
 
@@ -115,21 +152,20 @@ int main(int argc, char** argv) {
 
         // Obtain the MAPF instance
         if (!result_json.contains("mapf_instance")) {
-            spdlog::error("PBS Driver: mapf_instance not found in the JSON "
+            spdlog::error("TPBS Driver: mapf_instance not found in the JSON "
                           "from server. Exit...");
             exit(1);
         }
 
         if (!result_json["mapf_instance"].contains("starts") ||
             !result_json["mapf_instance"].contains("goals")) {
-            spdlog::error("PBS Driver: starts or goals not found in the "
+            spdlog::error("TPBS Driver: starts or goals not found in the "
                           "mapf_instance from server. Exit...");
             exit(1);
         }
         json mapf_instance = result_json["mapf_instance"];
 
         Instance instance(graph, screen);
-        // instance.loadAgents(commit_cut, new_finished_tasks_id);
         instance.loadAgents(mapf_instance);
         PBS pbs(instance, vm["sipp"].as<bool>(), screen);
         // run

@@ -358,25 +358,25 @@ void CFootBotDiffusion::ControlStep() {
             exec_duration_ms.count(), step_count_);
     }
 
-    // Free simulation if necessary
-    client->call("freeze_simulation_if_necessary", this->robot_id);
+    // // Free simulation if necessary
+    // client->call("freeze_simulation_if_necessary", this->robot_id);
 
-    // Loop until the simulation is defrozen
-    while (client->call("is_simulation_frozen").as<bool>()) {
-        // cout << "Robot " << this->robot_id
-        //           << ": Simulation is frozen, waiting to defrost..."
-        //           << endl;
-        if (screen > 1) {
-            // spdlog::info(
-            //     "Robot {}: Simulation is frozen, waiting to defrost...",
-            //     robot_id);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    // // Loop until the simulation is defrozen
+    // while (client->call("is_simulation_frozen").as<bool>()) {
+    //     // cout << "Robot " << this->robot_id
+    //     //           << ": Simulation is frozen, waiting to defrost..."
+    //     //           << endl;
+    //     if (screen > 1) {
+    //         // spdlog::info(
+    //         //     "Robot {}: Simulation is frozen, waiting to defrost...",
+    //         //     robot_id);
+    //     }
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // }
 
     // Update sim step count in client and server.
     step_count_++;
-    client->call("update_sim_step", robot_id);
+    // client->call("update_sim_step", robot_id);
 }
 
 pair<Real, Real> CFootBotDiffusion::pidAngular(Real error) {
