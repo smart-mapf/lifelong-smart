@@ -67,7 +67,7 @@ BasicHeuristicTable::BasicHeuristicTable(const BasicGraph& G,
                                          bool save_heuristics_table)
     : HeuristicTableBase(G, task_locations, seed, log_dir,
                          save_heuristics_table) {
-    std::cout << "*** Computing heuristics ***" << std::endl;
+    spdlog::info("*** Computing heuristics ***");
     clock_t t = std::clock();
 
     std::ifstream myfile(this->save_path.c_str());
@@ -82,7 +82,7 @@ BasicHeuristicTable::BasicHeuristicTable(const BasicGraph& G,
     }
 
     double runtime = (std::clock() - t) / CLOCKS_PER_SEC;
-    std::cout << "Done! (" << runtime << " s)" << std::endl;
+    spdlog::info("Done! ({} s)", runtime);
 }
 
 double BasicHeuristicTable::get(int goal_location, int start_location) {

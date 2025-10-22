@@ -185,9 +185,8 @@ std::ostream& operator<<(std::ostream& os, const Path& path);
 
 bool isSamePath(const Path& p1, const Path& p2);
 
-typedef vector<vector<TimeInterval>>
-    ReservationTable;  // vector: vertex -> ordered list of occupied time
-                       // intervals
+// vector: vertex -> ordered list of occupied time intervals
+typedef vector<vector<TimeInterval>> ReservationTable;
 
 typedef std::deque<std::pair<int, double>> TimedPath;
 

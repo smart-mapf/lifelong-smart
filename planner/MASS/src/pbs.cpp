@@ -37,7 +37,7 @@ void PBS::clear() {
     while (open_list.size() > 0) {
         open_list.pop();
     }
-    for (auto& node : allNodes_table) {
+    for (auto &node : allNodes_table) {
         node->children.first.reset();
         node->children.second.reset();
         node->parent.reset();
@@ -68,7 +68,7 @@ PBS::~PBS() {
     instance_ptr = nullptr;
 }
 
-bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id,
+bool PBS::SolveSingleAgent(PTNode &node, std::set<int> &rtp, int agent_id,
                            bool log) {
     assert(need_replan[agent_id]);
     ReservationTable rt(instance_ptr->graph->map_size);
@@ -99,9 +99,9 @@ bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id,
         for (auto itt = rt.begin(); itt != rt.end(); ++itt) {
             for (auto itt2 = itt->begin(); itt2 != itt->end(); ++itt2) {
                 // std::cout<<"writting!\n";
-                outputRT.write((char*)&itt2->t_min, sizeof(itt2->t_min));
+                outputRT.write((char *)&itt2->t_min, sizeof(itt2->t_min));
                 outputRT << ',';
-                outputRT.write((char*)&itt2->t_max, sizeof(itt2->t_max));
+                outputRT.write((char *)&itt2->t_max, sizeof(itt2->t_max));
                 outputRT << ',' << itt2->agent_id << ';';
             }
             outputRT << '\n';
@@ -128,7 +128,7 @@ bool PBS::SolveSingleAgent(PTNode& node, std::set<int>& rtp, int agent_id,
  * @param index The index of the agent
  * @return If success return True
  */
-bool PBS::UpdatePlan(PTNode& node, int index) {
+bool PBS::UpdatePlan(PTNode &node, int index) {
     std::list<int> priority_list = node.topologicalSort(index);
     ReservationTable tmp_rt(instance_ptr->graph->map_size);
     std::set<int> higher_agents;
@@ -147,7 +147,7 @@ bool PBS::UpdatePlan(PTNode& node, int index) {
     return true;
 }
 
-bool PBS::initRootNode(std::shared_ptr<PTNode>& root_node) {
+bool PBS::initRootNode(std::shared_ptr<PTNode> &root_node) {
     vector<Path> plan(num_of_agents);
     // int: the id of agent, std::set<int>: the agents with higher priority
     std::map<int, std::set<int>> priority;
@@ -190,9 +190,9 @@ bool PBS::initRootNode(std::shared_ptr<PTNode>& root_node) {
     return true;
 }
 
-void PBS::InsertInitLocation(int agent_id, Instance& instance,
-                             ReservationTable& rt) {
-    for (Agent& tmp_agent : instance.agents) {
+void PBS::InsertInitLocation(int agent_id, Instance &instance,
+                             ReservationTable &rt) {
+    for (Agent &tmp_agent : instance.agents) {
         for (auto entry : tmp_agent.previous_path) {
             TimeInterval tmp_block;
             tmp_block.t_max = entry.leaving_time_tail;
@@ -240,20 +240,20 @@ std::shared_ptr<PTNode> PBS::selectNode() {
     return curr;
 }
 
-shared_ptr<Conflict> PBS::chooseConflict(const PTNode& node) {
+shared_ptr<Conflict> PBS::chooseConflict(const PTNode &node) {
     if (node.conflicts.empty())
         return nullptr;
     return node.conflicts.back();
 }
 
-inline void PBS::pushNode(const std::shared_ptr<PTNode>& node) {
+inline void PBS::pushNode(const std::shared_ptr<PTNode> &node) {
     // update handles
     open_list.push(node);
     allNodes_table.push_back(node);
 }
 
-void PBS::pushNodes(const std::shared_ptr<PTNode>& n1,
-                    const std::shared_ptr<PTNode>& n2) {
+void PBS::pushNodes(const std::shared_ptr<PTNode> &n1,
+                    const std::shared_ptr<PTNode> &n2) {
     if (n1 != nullptr and n2 != nullptr) {
         if (n1->cost < n2->cost) {
             pushNode(n2);
@@ -269,7 +269,7 @@ void PBS::pushNodes(const std::shared_ptr<PTNode>& n1,
     }
 }
 
-void PBS::topologicalSort(list<int>& stack) {
+void PBS::topologicalSort(list<int> &stack) {
     stack.clear();
     vector<bool> visited(num_of_agents, false);
 
@@ -281,7 +281,7 @@ void PBS::topologicalSort(list<int>& stack) {
     }
 }
 
-void PBS::topologicalSortUtil(int v, vector<bool>& visited, list<int>& stack) {
+void PBS::topologicalSortUtil(int v, vector<bool> &visited, list<int> &stack) {
     // Mark the current node as visited.
     visited[v] = true;
 
@@ -295,8 +295,8 @@ void PBS::topologicalSortUtil(int v, vector<bool>& visited, list<int>& stack) {
     stack.push_back(v);
 }
 
-void PBS::getHigherPriorityAgents(const list<int>::reverse_iterator& p1,
-                                  set<int>& higher_agents) {
+void PBS::getHigherPriorityAgents(const list<int>::reverse_iterator &p1,
+                                  set<int> &higher_agents) {
     for (auto p2 = std::next(p1); p2 != ordered_agents.rend(); ++p2) {
         if (priority_graph[*p1][*p2]) {
             auto ret = higher_agents.insert(*p2);
@@ -308,8 +308,8 @@ void PBS::getHigherPriorityAgents(const list<int>::reverse_iterator& p1,
     }
 }
 
-void PBS::getLowerPriorityAgents(const list<int>::iterator& p1,
-                                 set<int>& lower_subplans) {
+void PBS::getLowerPriorityAgents(const list<int>::iterator &p1,
+                                 set<int> &lower_subplans) {
     for (auto p2 = std::next(p1); p2 != ordered_agents.end(); ++p2) {
         if (priority_graph[*p2][*p1]) {
             auto ret = lower_subplans.insert(*p2);
@@ -369,7 +369,7 @@ bool PBS::generateChild(int child_id, std::shared_ptr<PTNode> parent, int low,
     vector<int> topological_orders(
         num_of_agents);  // map agent i to its position in ordered_agents
     auto i = num_of_agents - 1;
-    for (const auto& a : ordered_agents) {
+    for (const auto &a : ordered_agents) {
         topological_orders[a] = i;
         i--;
     }
@@ -394,7 +394,7 @@ bool PBS::generateChild(int child_id, std::shared_ptr<PTNode> parent, int low,
         assert(*p2 == low);
         getLowerPriorityAgents(p2, lower_agents);
 
-        for (const auto& conflict : node->conflicts) {
+        for (const auto &conflict : node->conflicts) {
             int a1 = conflict->a1;
             int a2 = conflict->a2;
             if (a1 == low or a2 == low)
@@ -507,7 +507,7 @@ void PBS::printPriorityGraph() const {
     cout << endl;
 }
 
-void PBS::recursivePrint(const std::shared_ptr<PTNode>& curr_node) {
+void PBS::recursivePrint(const std::shared_ptr<PTNode> &curr_node) {
     std::shared_ptr<PTNode> tmp_node = curr_node;
     cout << "[INFO] ";
     while (tmp_node->parent != nullptr) {
@@ -517,7 +517,7 @@ void PBS::recursivePrint(const std::shared_ptr<PTNode>& curr_node) {
     cout << endl;
 }
 
-bool PBS::solve(const string& outputFileName) {
+bool PBS::solve(const string &outputFileName) {
     // if (screen > 0)  // 1 or 2
     // {
     //     string name = getSolverName();
@@ -573,7 +573,7 @@ bool PBS::solve(const string& outputFileName) {
 void PBS::updateCost() {
     solution_cost = 0;
     if (solution_node != nullptr) {
-        for (auto& tmp_cost : solution_node->solution_cost) {
+        for (auto &tmp_cost : solution_node->solution_cost) {
             solution_cost += tmp_cost;
         }
     }
@@ -582,13 +582,13 @@ void PBS::updateCost() {
     num_LL_generated = sipp_ptr->count_node_generated;
 }
 
-void PBS::saveTimedPath(const string& file_name) const {
+void PBS::saveTimedPath(const string &file_name) const {
     std::ofstream output;
     output.open(file_name);
     solution_node->plan;
     for (int i = 0; i < solution_node->all_agents_timed_path.size(); i++) {
         output << "Agent " << i << ":";
-        for (const auto& state : solution_node->all_agents_timed_path[i])
+        for (const auto &state : solution_node->all_agents_timed_path[i])
             output << "(" << instance_ptr->graph->getRowCoordinate(state.first)
                    << "," << instance_ptr->graph->getColCoordinate(state.first)
                    << "," << state.second << ")->";
@@ -604,16 +604,16 @@ vector<vector<tuple<int, int, double, int>>> PBS::getTimedPath() const {
 
     // Print raw path (without window)
     if (screen > 0) {
-        cout << "Raw path (without simulation window):" << endl;
+        spdlog::info("Raw path (without simulation window):");
         for (int i = 0; i < solution_node->plan.size(); i++) {
             cout << "Agent " << i << ": ";
-            for (const auto& state : solution_node->plan[i]) {
-                cout << "("
+            for (const auto &state : solution_node->plan[i]) {
+                cout << "t=[" << state.arrival_time << ","
+                     << state.leaving_time_tail << "]," << "loc=("
                      << instance_ptr->graph->getRowCoordinate(state.location)
                      << ","
                      << instance_ptr->graph->getColCoordinate(state.location)
-                     << "," << state.arrival_time << ","
-                     << state.leaving_time_tail << ")->";
+                     << ") -> ";
             }
             cout << endl;
         }
@@ -673,12 +673,12 @@ vector<vector<tuple<int, int, double, int>>> PBS::getTimedPath() const {
 
     // Print the final timed path
     if (screen > 0) {
-        cout << "Final timed path:" << endl;
+        spdlog::info("Final timed path:");
         for (int i = 0; i < timed_path.size(); i++) {
             cout << "Agent " << i << ": ";
-            for (const auto& state : timed_path[i]) {
-                cout << "(" << get<0>(state) << "," << get<1>(state) << ","
-                     << get<2>(state) << ")->";
+            for (const auto &state : timed_path[i]) {
+                cout << "t=" << get<2>(state) << ",loc=" << "(" << get<0>(state)
+                     << "," << get<1>(state) << ") -> ";
                 if (get<3>(state) >= 0) {
                     cout << "End of task " << get<3>(state) << " at time "
                          << get<2>(state) << " ";
@@ -691,13 +691,13 @@ vector<vector<tuple<int, int, double, int>>> PBS::getTimedPath() const {
     return timed_path;
 }
 
-void PBS::savePath(const string& file_name) const {
+void PBS::savePath(const string &file_name) const {
     std::ofstream output;
     output.open(file_name);
     solution_node->plan;
     for (int i = 0; i < solution_node->plan.size(); i++) {
         output << "Agent " << i << ":";
-        for (const auto& state : solution_node->plan[i])
+        for (const auto &state : solution_node->plan[i])
             output << "("
                    << instance_ptr->graph->getRowCoordinate(state.location)
                    << ","
@@ -709,8 +709,8 @@ void PBS::savePath(const string& file_name) const {
     output.close();
 }
 
-void PBS::saveResults(int all_agents_solved, const string& fileName,
-                      const string& instanceName) const {
+void PBS::saveResults(int all_agents_solved, const string &fileName,
+                      const string &instanceName) const {
     std::ifstream infile(fileName);
     bool exist = infile.good();
     infile.close();
@@ -808,9 +808,9 @@ void PBS::printPriority(std::map<int, std::set<int>> p) {
                  "____________________\n\n";
 }
 
-bool PBS::checkValid(ReservationTable& rt, Path& path, int agent) {
-    for (auto& path_entry : path) {
-        for (auto& rt_interval : rt[path_entry.location]) {
+bool PBS::checkValid(ReservationTable &rt, Path &path, int agent) {
+    for (auto &path_entry : path) {
+        for (auto &rt_interval : rt[path_entry.location]) {
             assert(rt_interval.agent_id != agent);
             if (path_entry.leaving_time_tail - rt_interval.t_min >= EPSILON and
                 rt_interval.t_max - path_entry.arrival_time >= EPSILON) {

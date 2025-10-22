@@ -67,9 +67,9 @@ int main(int argc, char **argv) {
     int num_agents = vm["agentNum"].as<int>();
     int screen = vm["screen"].as<int>();
     double simulation_window = vm["simulation_window"].as<double>();
-    int simulation_window_ts =
-        static_cast<int>(simulation_window * bot_motion->V_MAX);
-    spdlog::info("Simulation window in time steps: {}", simulation_window_ts);
+    // int simulation_window_ts =
+    //     static_cast<int>(simulation_window * bot_motion->V_MAX);
+    // spdlog::info("Simulation window in time steps: {}", simulation_window_ts);
     int sps_solver_type = vm["solver"].as<int>();
     std::shared_ptr<Graph> graph =
         make_shared<Graph>(vm["map"].as<string>(), screen, bot_motion);

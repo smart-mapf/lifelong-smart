@@ -16,10 +16,11 @@ Instance::Instance(shared_ptr<Graph> graph, shared_ptr<RobotMotion> bot_motion,
     bool succ = loadAgents(mapf_instance);
     if (!succ) {
         spdlog::error("Failed to load agents.");
-        if (num_of_agents > 0) {
-            generateRandomAgents();
-            // saveAgents();
-        }
+        exit(-1);
+        // if (num_of_agents > 0) {
+        //     generateRandomAgents();
+        //     // saveAgents();
+        // }
     }
 }
 
