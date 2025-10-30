@@ -120,7 +120,12 @@ def run_lifelong_argos(
     container: bool = False,
     seed: int = 42,
     screen: int = 0,
+    backup_solver: str = "PIBT",  # ["PIBT", "LRA", "GuidedPIBT"]
+    grid_type: str = "regular",
+    planner_invoke_policy: str = "default",
+    task_assigner_type: str = "windowed",
     # RHCR parameters
+    # TODO: clean up unused or default parameters that requires no changes
     planning_window: int = 10,
     scenario: str = "SMART",
     task: str = "",
@@ -128,7 +133,6 @@ def run_lifelong_argos(
     id: bool = False,
     solver: str = "PBS",  # ["PBS", "PIBT"]
     single_agent_solver: str = "SIPP",
-    backup_solver: str = "PIBT",  # ["PIBT", "LRA"]
     lazyP: bool = False,
     travel_time_window: int = 0,
     potential_function: str = "NONE",
@@ -147,9 +151,6 @@ def run_lifelong_argos(
     save_heuristics_table: bool = False,
     left_w_weight: float = 1.0,
     right_w_weight: float = 1.0,
-    grid_type: str = "regular",
-    planner_invoke_policy: str = "default",
-    task_assigner_type: str = "windowed",
 ):
     """Function to run the lifelong SMART simulator with the given parameters.
 
@@ -181,6 +182,48 @@ def run_lifelong_argos(
             False.
         seed (int, optional): random seed. Defaults to 42.
         screen (int, optional): logging options. Defaults to 0.
+        backup_solver (str, optional): backup solver used in case the MAPF planner fails. Defaults to "PIBT".
+        planner_invoke_policy (str, optional): planner invocation policy, one of ["default", "no_action"]. Defaults to "default", which calls planner periodically. "No_action" only calls planner when a robot has no action to execute.
+        task_assigner_type (str, optional): task assigner, one of ["windowed", "distinct-one-goal", "one-goal"]. Defaults to "windowed".
+        planning_window (int, optional): planning window in timesteps. Defaults to 10. The actual plannng window is the max of this value and the inferred planning window from sim_window_tick.
+        scenario (str, optional): scenario in RHCR. Defaults to "SMART".
+        task (str, optional): task file in RHCR. Defaults to "".
+        cutoffTime (int, optional): time limit of planner in seconds. Defaults to 1.
+        id (bool, optional): ID algorithm of RHCR. Defaults to False.
+        solver (str, optional): solver in RHCR. Defaults to "PBS".
+        lazyP (bool, optional): lazy priority in RHCR. Defaults to False.
+        travel_time_window (int, optional): travel time window in RHCR.
+            Defaults to 0.
+        potential_function (str, optional): potential function in RHCR.
+            Defaults to "NONE".
+        potential_threshold (int, optional): potential threshold in RHCR.
+            Defaults to 0.
+        rotation (bool, optional): whether consider rotatio in RHCR. Defaults
+            to False.
+        rotation_time (int, optional): rotation time in timesteps in RHCR.
+            Defaults to 1.
+        robust (int, optional): k robust model in RHCR. Defaults to 0.
+        CAT (bool, optional): conflict avoidance table in RHCR. Defaults to
+            False.
+        hold_endpoints (bool, optional): whether hold endpoints or not in RHCR.
+            Defaults to False.
+        dummy_paths (bool, optional): whether planning path to dummy home
+            location in RHCR. Defaults to False.
+        prioritize_start (bool, optional): prioritize start in RHCR. Defaults
+            to True.
+        suboptimal_bound (float, optional): suboptimality bound of certain
+            solvers in RHCR. Defaults to 1.
+        log (bool, optional): logging in RHCR. Defaults to False.
+        save_result (bool, optional): save planning results or not in RHCR.
+            Defaults to False.
+        save_solver (bool, optional): save MAPF solver process in RHCR or not.
+            Defaults to False.
+        save_heuristics_table (bool, optional): save heuristic table or not.
+            Defaults to False.
+        left_w_weight (float, optional): left workstation weights in RHCR.
+            Defaults to 1.0.
+        right_w_weight (float, optional): right workstation weights in RHCR.
+            Defaults to 1.0.
     """
     np.random.seed(seed)
     setup_logging()
