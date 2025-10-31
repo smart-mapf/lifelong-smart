@@ -417,6 +417,9 @@ def run_lifelong_argos(
                 f"--cutoffTime={cutoffTime}",
                 f"--saveInstance={False}",
             ]
+        else:
+            logger.error(f"Unknown planner: {planner}")
+            exit(-1)
         run_simulator(
             args=(server_command, client_command, planner_command),
             timeout=10 * sim_duration / ticks_per_second,
