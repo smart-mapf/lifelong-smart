@@ -65,16 +65,16 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
             this->weights[id].resize(5, WEIGHT_MAX);
 
             // All non-obstacle locations are free locations
-            if (line[j] != '@') {
+            if (line[j] != '@' && line[j] != 'T') {
                 this->free_locations.push_back(id);
             }
 
-            if (line[j] == '@')  // obstacle
+            if (line[j] == '@' || line[j] == 'T')  // obstacle
             {
-                this->types[id] = "Obstacle";
+                this->types[id] = CellType::OBSTACLE;
             } else if (line[j] == 'e')  // endpoint
             {
-                this->types[id] = "Endpoint";
+                this->types[id] = CellType::ENDPOINT;
                 this->weights[id][4] = 1;
                 this->endpoints.push_back(id);
                 this->task_locations.push_back(id);
@@ -84,7 +84,7 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
             // Only applies to w mode
             else if (line[j] == 'w')  // workstation
             {
-                this->types[id] = "Workstation";
+                this->types[id] = CellType::WORKSTATION;
                 this->weights[id][4] = 1;
                 this->workstations.push_back(id);
                 this->task_locations.push_back(id);
@@ -104,8 +104,8 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
                 if (!this->useDummyPaths && !this->hold_endpoints) {
                     this->agent_home_locations.push_back(id);
                 }
-            } else {
-                this->types[id] = "Travel";
+            } else if (line[j] == '.') {
+                this->types[id] = CellType::FREE;
                 this->weights[id][4] = 1;
 
                 // Under w mode, and with RHCR, agents can start from
@@ -113,8 +113,19 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
                 if (!this->useDummyPaths && !this->hold_endpoints) {
                     this->agent_home_locations.push_back(id);
                 }
+            } else {
+                spdlog::error(
+                    "SMARTGrid::load_unweighted_map_from_json: unknown cell "
+                    "type '{}' at ({}, {})",
+                    line[j], i, j);
+                exit(1);
             }
         }
+    }
+
+    // If endpoints and workstations are not available, use free_locations as task_locations
+    if (this->endpoints.empty() && this->workstations.empty()) {
+        this->task_locations = this->free_locations;
     }
 
     shuffle(this->agent_home_locations.begin(),
@@ -125,7 +136,7 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
     // all valid edges to have weight of 1. Later we copy over the given
     // weights in the json file.
     for (int i = 0; i < this->cols * this->rows; i++) {
-        if (this->types[i] == "Obstacle") {
+        if (this->types[i] == CellType::OBSTACLE) {
             continue;
         }
         valid_vertices += 1;
@@ -133,7 +144,7 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
             if (0 <= i + this->move[dir] &&
                 i + this->move[dir] < this->cols * this->rows &&
                 get_Manhattan_distance(i, i + this->move[dir]) <= 1 &&
-                this->types[i + this->move[dir]] != "Obstacle") {
+                this->types[i + this->move[dir]] != CellType::OBSTACLE) {
                 valid_edges += 1;
                 this->weights[i][dir] = 1;
             } else
@@ -179,7 +190,7 @@ void SMARTGrid::update_map_weights(std::vector<double>& new_weights) {
         }
 
         // Skip if current vertex is an obstacle
-        if (this->types[i] == "Obstacle") {
+        if (this->types[i] == CellType::OBSTACLE) {
             continue;
         }
 
@@ -307,7 +318,7 @@ void SMARTGrid::analyze_aisle() {
 
             for (const auto& neighbor : get_neighbors(current)) {
                 if (visited.find(neighbor) == visited.end() &&
-                    this->types[neighbor] == "Endpoint") {
+                    this->types[neighbor] == CellType::ENDPOINT) {
                     visited.insert(neighbor);
                     component.insert(neighbor);
                     q.push(neighbor);
@@ -339,7 +350,7 @@ void SMARTGrid::analyze_aisle() {
         // we still need to sample them as tasks
         for (const auto& node : component) {
             if (node != aisle_entry) {
-                // this->types[node] = "Obstacle";
+                // this->types[node] = CellType::OBSTACLE;
 
                 // Change the weights to and from the aisle entry point to
                 // MAX_WEIGHT

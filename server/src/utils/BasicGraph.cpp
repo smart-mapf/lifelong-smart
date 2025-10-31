@@ -8,7 +8,7 @@
 
 void BasicGraph::print_map() const {
     std::cout << "***type***" << std::endl;
-    for (std::string t : types)
+    for (CellType t : types)
         std::cout << t << ",";
     std::cout << std::endl;
 

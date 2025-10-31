@@ -96,6 +96,8 @@ ostream& operator<<(ostream& os, const Conflict& conflict);
 
 ostream& operator<<(ostream& os, const Interval& interval);
 
+ostream &operator<<(ostream &os, CellType dir);
+
 // According to https://stackoverflow.com/a/40854664, we need to add a
 // operator<<() for vector<int> so that boost can automatically cast the
 // default vector parameter value. We need this specifically for the

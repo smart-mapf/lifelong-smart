@@ -131,7 +131,13 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
             int id = this->cols * i + j;
             this->weights[id].clear();
             this->weights[id].resize(5, WEIGHT_MAX);
-            if (line[j] == '@')  // obstacle
+
+            // All non-obstacle locations are free locations
+            if (line[j] != '@' && line[j] != 'T') {
+                this->free_locations.push_back(id);
+            }
+
+            if (line[j] == '@' || line[j] == 'T')  // obstacle
             {
                 this->types[id] = "Obstacle";
             } else if (line[j] == 'e')  // endpoint
@@ -166,7 +172,7 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
                 if (!this->useDummyPaths && !this->hold_endpoints) {
                     this->agent_home_locations.push_back(id);
                 }
-            } else {
+            } else if (line[j] == '.') {
                 this->types[id] = "Travel";
                 this->weights[id][4] = 1;
 
@@ -175,9 +181,21 @@ bool SMARTGrid::load_unweighted_map_from_json(json G_json, double left_w_weight,
                 if (!this->useDummyPaths && !this->hold_endpoints) {
                     this->agent_home_locations.push_back(id);
                 }
+            } else {
+                spdlog::error(
+                    "SMARTGrid::load_unweighted_map_from_json: unknown cell "
+                    "type '{}' at ({}, {})",
+                    line[j], i, j);
+                exit(1);
             }
         }
     }
+
+    // If endpoints and workstations are not available, use free_locations as task_locations
+    if (this->endpoints.empty() && this->workstations.empty()) {
+        this->task_locations = this->free_locations;
+    }
+
 
     shuffle(this->agent_home_locations.begin(),
             this->agent_home_locations.end(), std::default_random_engine());
@@ -567,24 +585,35 @@ void SMARTGrid::preprocessing(bool consider_rotation, std::string log_dir) {
         myfile.close();
     }
     if (!succ) {
-        for (auto endpoint : this->endpoints) {
-            this->heuristics[endpoint] = compute_heuristics(endpoint);
-            this->pebble_motion_heuristics[endpoint] =
-                compute_pebble_motion_heuristics(endpoint);
-        }
+        // Compute heuristics for all endpoints and workstations if they are available
+        if (this->workstations.size() > 0 && this->endpoints.size() > 0) {
+            for (auto endpoint : this->endpoints) {
+                this->heuristics[endpoint] = compute_heuristics(endpoint);
+                this->pebble_motion_heuristics[endpoint] =
+                    compute_pebble_motion_heuristics(endpoint);
+            }
 
-        // Under w mode, home location is endpoints but need additional
-        // heuristics to workstations
-        for (auto workstation : this->workstations) {
-            this->heuristics[workstation] = compute_heuristics(workstation);
-            this->pebble_motion_heuristics[workstation] =
-                compute_pebble_motion_heuristics(workstation);
-        }
+            // Under w mode, home location is endpoints but need additional
+            // heuristics to workstations
+            for (auto workstation : this->workstations) {
+                this->heuristics[workstation] = compute_heuristics(workstation);
+                this->pebble_motion_heuristics[workstation] =
+                    compute_pebble_motion_heuristics(workstation);
+            }
 
-        for (auto aisle_id : this->aisle_entries) {
-            this->heuristics[aisle_id] = compute_heuristics(aisle_id);
-            this->pebble_motion_heuristics[aisle_id] =
-                compute_pebble_motion_heuristics(aisle_id);
+            for (auto aisle_id : this->aisle_entries) {
+                this->heuristics[aisle_id] = compute_heuristics(aisle_id);
+                this->pebble_motion_heuristics[aisle_id] =
+                    compute_pebble_motion_heuristics(aisle_id);
+            }
+        }
+        // Compute heuristics for all free locations
+        else {
+            for (auto free_loc : this->free_locations) {
+                this->heuristics[free_loc] = compute_heuristics(free_loc);
+                this->pebble_motion_heuristics[free_loc] =
+                    compute_pebble_motion_heuristics(free_loc);
+            }
         }
 
         // cout << table_save_path << endl;

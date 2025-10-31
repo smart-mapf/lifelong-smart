@@ -171,7 +171,7 @@ void ReservationTable::insertPath2CT(const Path& path) {
     ++curr;
     while (curr != path.end() && curr->timestep - k_robust <= window) {
         if (prev->location != curr->location) {
-            if (G.types[prev->location] != "Magic")
+            if (G.types[prev->location] != CellType::MAGIC)
                 ct[prev->location].emplace_back(prev->timestep - k_robust,
                                                 curr->timestep + k_robust);
             if (k_robust == 0)  // add edge constraint
@@ -184,7 +184,7 @@ void ReservationTable::insertPath2CT(const Path& path) {
         ++curr;
     }
     if (curr != path.end()) {
-        if (G.types[prev->location] != "Magic")
+        if (G.types[prev->location] != CellType::MAGIC)
             ct[prev->location].emplace_back(prev->timestep - k_robust,
                                             curr->timestep + k_robust);
         if (k_robust == 0)  // add edge constraint
@@ -193,7 +193,7 @@ void ReservationTable::insertPath2CT(const Path& path) {
                 curr->timestep, curr->timestep + 1);
         }
     } else {
-        if (G.types[prev->location] != "Magic")
+        if (G.types[prev->location] != CellType::MAGIC)
             ct[prev->location].emplace_back(
                 prev->timestep - k_robust, path.back().timestep + 1 + k_robust);
         if (k_robust == 0)  // add edge constraint
@@ -202,7 +202,7 @@ void ReservationTable::insertPath2CT(const Path& path) {
                 path.back().timestep, path.back().timestep + 1);
         }
     }
-    if (hold_endpoints && G.types[prev->location] != "Magic")
+    if (hold_endpoints && G.types[prev->location] != CellType::MAGIC)
         ct[path.back().location].emplace_back(path.back().timestep,
                                               INTERVAL_MAX);
 }
@@ -212,7 +212,7 @@ void ReservationTable::addInitialConstraints(
     for (auto con : initial_constraints) {
         if (std::get<0>(con) != current_agent && 0 <= std::get<1>(con) &&
             std::get<1>(con) < G.types.size() &&
-            G.types[std::get<1>(con)] != "Magic")
+            G.types[std::get<1>(con)] != CellType::MAGIC)
             ct[std::get<1>(con)].emplace_back(0, min(window, std::get<2>(con)));
     }
 }
@@ -225,7 +225,7 @@ void ReservationTable::insertPath2CAT(const Path& path) {
     int timestep = 0;
     while (timestep <= max_timestep) {
         int location = path[timestep].location;
-        if (G.types[location] != "Magic") {
+        if (G.types[location] != CellType::MAGIC) {
             for (int t = max(0, timestep - k_robust);
                  t <= min((int)cat.size() - 1, timestep + k_robust); t++) {
                 cat[t][location] = true;
@@ -233,7 +233,7 @@ void ReservationTable::insertPath2CAT(const Path& path) {
         }
         timestep++;
     }
-    if (G.types[path.back().location] != "Magic") {
+    if (G.types[path.back().location] != CellType::MAGIC) {
         // assume that the agent waits at its last location
         while (timestep < (int)cat.size()) {
             cat[timestep][path.back().location] = true;
@@ -312,7 +312,7 @@ void ReservationTable::build(
             // insert_positive_constraint(std::get<1>(con), std::get<3>(con));
             // TODO: insert positive constraints
         } else if (std::get<2>(con) < 0 &&
-                   G.types[std::get<1>(con)] != "Magic")  // vertex constraint
+                   G.types[std::get<1>(con)] != CellType::MAGIC)  // vertex constraint
         {
             ct[std::get<1>(con)].emplace_back(std::get<3>(con),
                                               std::get<3>(con) + 1);
@@ -361,7 +361,7 @@ void ReservationTable::insertConstraints4starts(const vector<Path*>& paths,
         // locations
         else if (i != current_agent) {
             int start = paths[i]->front().location;
-            if (start < 0 || G.types[start] == "Magic")
+            if (start < 0 || G.types[start] == CellType::MAGIC)
                 continue;
             for (auto state : (*paths[i])) {
                 if (state.location != start)  // The agent starts to move

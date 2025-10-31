@@ -49,7 +49,7 @@ public:
     }
 
     int move[4];
-    vector<string> types;
+    vector<CellType> types;
     string map_name;
     int rows;
     int cols;

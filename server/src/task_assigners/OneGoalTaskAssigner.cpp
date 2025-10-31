@@ -79,9 +79,9 @@ int OneGoalTaskAssigner::genGoal(int curr_goal, int start_loc, int agent_id) {
         if (curr_goal == -1) {
             if (screen > 1)
                 spdlog::info("No current goal, generating the first goal.");
-            if (this->G.types[start_loc] == "Workstation") {
+            if (this->G.types[start_loc] == CellType::WORKSTATION) {
                 next_goal = sample_endpiont();
-            } else if (this->G.types[start_loc] == "Endpoint") {
+            } else if (this->G.types[start_loc] == CellType::ENDPOINT) {
                 next_goal = sample_workstation();
             } else {
                 next_goal = this->sample_task_location();
@@ -91,9 +91,9 @@ int OneGoalTaskAssigner::genGoal(int curr_goal, int start_loc, int agent_id) {
         else {
             // If the current goal is a workstation, the next goal is an
             // endpoint
-            if (this->G.types[curr_goal] == "Workstation") {
+            if (this->G.types[curr_goal] == CellType::WORKSTATION) {
                 next_goal = sample_endpiont();
-            } else if (this->G.types[curr_goal] == "Endpoint") {
+            } else if (this->G.types[curr_goal] == CellType::ENDPOINT) {
                 next_goal = sample_workstation();
             } else {
                 spdlog::error(

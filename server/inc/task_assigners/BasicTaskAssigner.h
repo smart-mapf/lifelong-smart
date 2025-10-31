@@ -66,9 +66,8 @@ protected:
     discrete_distribution<int> task_location_dist;
     discrete_distribution<int> free_location_dist;
 
-    // Remember the next goal type for each agent, "w" for workstation, "e" for
-    // endpoint
-    std::vector<string> next_goal_type;
+    // Remember the next goal type for each agent
+    vector<CellType> next_goal_type;
 
     // Remember the tasks that are backup tasks, i.e., the agents are going to
     // these tasks because their original goals are occupied by other agents.

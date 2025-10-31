@@ -23,8 +23,8 @@ bool HeuristicTableBase::load_heuristics_table(std::ifstream& myfile) {
         std::vector<double> h_table(this->G.size());
         for (int j = 0; j < this->G.size(); j++) {
             h_table[j] = atof((*beg).c_str());
-            // if (h_table[j] >= WEIGHT_MAX && this->G.types[j] != "Obstacle") {
-            //     this->G.types[j] = "Obstacle";
+            // if (h_table[j] >= WEIGHT_MAX && this->G.types[j] != CellType::OBSTACLE) {
+            //     this->G.types[j] = CellType::OBSTACLE;
             //     cout << "Obstacle at " << j << endl;
             // }
             beg++;

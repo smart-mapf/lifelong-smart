@@ -405,11 +405,15 @@ int Graph::getDirection(int from, int to) const {
 
 void Graph::computeHeuristics() {
     vector<int> h_locations;
-    // Add free_location and task locations to h_locations
-    h_locations.insert(h_locations.end(), free_locations.begin(),
-                       free_locations.end());
-    h_locations.insert(h_locations.end(), warehouse_task_locs.begin(),
-                       warehouse_task_locs.end());
+
+    // If warehouse locs are available, compute heuristics for them
+    if (!warehouse_task_locs.empty()) {
+        h_locations = warehouse_task_locs;
+    } else {
+        // Otherwise, compute heuristics for all free locations
+        h_locations = empty_locations;
+    }
+
     if (this->screen > 0)
         cout << "Computing heuristics for " << h_locations.size()
              << " free locations." << endl;

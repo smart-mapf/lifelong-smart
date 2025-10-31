@@ -55,7 +55,7 @@ double LazyHeuristicTable::get(int goal_location, int start_location) {
     }
 
     // Check if start location is an obstacle
-    if (this->G.types[start_location] == "Obstacle") {
+    if (this->G.types[start_location] == CellType::OBSTACLE) {
         spdlog::error("Heuristic at {}, which is an obstacle, does not exist.",
                       start_location);
     }

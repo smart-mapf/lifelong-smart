@@ -8,14 +8,14 @@ public:
     vector<int> endpoints;
     vector<int> agent_home_locations;
     vector<int> workstations;
-    vector<int> task_locations;  // basically endpoints + workstations
+    vector<int> task_locations;
     vector<int> free_locations;  // all non-obstacle locations
     vector<double> workstation_weights;
     vector<double> end_points_weights;
 
     bool load_map_from_jsonstr(std::string json_str, double left_w_weight,
                                double right_w_weight) override;
-    void update_map_weights(std::vector<double>& new_weights);
+    void update_map_weights(std::vector<double> &new_weights);
     double get_avg_task_len(
         unordered_map<int, vector<double>> heuristics) const;
     int get_n_valid_edges() const;

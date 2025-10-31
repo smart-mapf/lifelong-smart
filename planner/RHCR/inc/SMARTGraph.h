@@ -14,7 +14,8 @@ public:
 	vector<int> endpoints;
 	vector<int> agent_home_locations;
     vector<int> workstations;
-    vector<int> task_locations; // basically endpoints + workstations
+    vector<int> task_locations;
+    vector<int> free_locations; // all non-obstacle locations
     vector<double> workstation_weights;
     vector<double> end_points_weights;
 

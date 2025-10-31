@@ -30,6 +30,28 @@ ostream& operator<<(ostream& os, const Interval& interval) {
     return os;
 }
 
+std::ostream &operator<<(std::ostream &os, CellType celltype) {
+    switch (celltype) {
+        case CellType::FREE:
+            os << "Travel";
+            break;
+        case CellType::OBSTACLE:
+            os << "Obstacle";
+            break;
+        case CellType::WORKSTATION:
+            os << "Workstation";
+            break;
+        case CellType::ENDPOINT:
+            os << "Endpoint";
+            break;
+        default:
+            os << "Unknown";
+            break;
+    }
+    return os;
+}
+
+
 namespace std {
 ostream& operator<<(ostream& os, const vector<int>& vec) {
     for (auto item : vec) {

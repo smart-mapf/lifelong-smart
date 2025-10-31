@@ -138,10 +138,10 @@ bool PIBT::run(const vector<State> &starts,
             //         this->G.getColCoordinate(loc_b)) {
             //     {
             //         if (this->G.types[loc_a] == this->G.types[loc_b]) {
-            //             if (this->G.types[loc_a] == "Endpoint")
+            //             if (this->G.types[loc_a] == CellType::ENDPOINT)
             //                 return this->G.getRowCoordinate(loc_a) <
             //                        this->G.getRowCoordinate(loc_b);
-            //             else if (this->G.types[loc_a] == "Workstation")
+            //             else if (this->G.types[loc_a] == CellType::WORKSTATION)
             //                 return this->G.getColCoordinate(loc_a) >
             //                        this->G.getColCoordinate(loc_b);
             //         }
@@ -149,8 +149,8 @@ bool PIBT::run(const vector<State> &starts,
             //             // if the types are different, we prioritize the
             //             agent
             //             // in the workstation or endpoint
-            //             return this->G.types[loc_a] == "Workstation" ||
-            //                    this->G.types[loc_a] == "Endpoint";
+            //             return this->G.types[loc_a] == CellType::WORKSTATION ||
+            //                    this->G.types[loc_a] == CellType::ENDPOINT;
             //         }
             //     }
             // }

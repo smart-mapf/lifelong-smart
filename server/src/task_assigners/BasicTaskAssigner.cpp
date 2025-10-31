@@ -174,12 +174,12 @@ void WindowedTaskAssigner::updateStartsAndGoals(
         for (int i = 0; i < this->num_of_agents; i++) {
             int start_loc = this->starts[i].location;
             // If start from workstation, next goal is endpoint
-            if (G.types[start_loc] == "Workstation") {
-                this->next_goal_type.push_back("e");
+            if (G.types[start_loc] == CellType::WORKSTATION) {
+                this->next_goal_type.push_back(CellType::ENDPOINT);
             }
             // If start from endpoint, next goal is workstation
-            else if (G.types[start_loc] == "Endpoint") {
-                this->next_goal_type.push_back("w");
+            else if (G.types[start_loc] == CellType::ENDPOINT) {
+                this->next_goal_type.push_back(CellType::WORKSTATION);
             }
             // Otherwise, randomize the first goal
             else {
@@ -187,10 +187,14 @@ void WindowedTaskAssigner::updateStartsAndGoals(
                 int tmp_goal_loc =
                     G.task_locations[rand() %
                                      static_cast<int>(G.task_locations.size())];
-                if (G.types[tmp_goal_loc] == "Workstation") {
-                    this->next_goal_type.push_back("w");
-                } else if (G.types[tmp_goal_loc] == "Endpoint") {
-                    this->next_goal_type.push_back("e");
+                if (G.types[tmp_goal_loc] == CellType::WORKSTATION) {
+                    this->next_goal_type.push_back(CellType::WORKSTATION);
+                } else if (G.types[tmp_goal_loc] == CellType::ENDPOINT) {
+                    this->next_goal_type.push_back(CellType::ENDPOINT);
+                } else if (G.types[tmp_goal_loc] == CellType::FREE) {
+                    // Randomly choose free location. Usually this is because no
+                    // workstation or endpionts are avaialble
+                    this->next_goal_type.push_back(CellType::FREE);
                 } else {
                     spdlog::error("WindowedTaskAssigner::updateStartsAndGoals: "
                                   "The tile type at start={} should not "
@@ -226,10 +230,11 @@ void WindowedTaskAssigner::updateStartsAndGoals(
         {
             // assign a new task
             Task next;
-            if (G.types[goal.location] == "Endpoint" ||
-                G.types[goal.location] == "Workstation" ||
-                G.types[goal.location] == "Travel") {
+            if (G.types[goal.location] == CellType::ENDPOINT ||
+                G.types[goal.location] == CellType::WORKSTATION ||
+                G.types[goal.location] == CellType::FREE) {
                 next = Task(this->gen_next_goal(k), -1, 0, 0);
+                // Avoid consecutive duplicate goals
                 while (next == goal) {
                     next = Task(this->gen_next_goal(k, true), -1, 0, 0);
                 }
@@ -281,20 +286,23 @@ int WindowedTaskAssigner::gen_next_goal(int agent_id, bool repeat_last_goal) {
     }
 
     // Alternate goal locations between workstations and endpoints
-    if (this->next_goal_type[agent_id] == "w") {
+    if (this->next_goal_type[agent_id] == CellType::WORKSTATION) {
         if (repeat_last_goal) {
             next = this->sample_endpiont();
         } else {
             next = this->sample_workstation();
-            this->next_goal_type[agent_id] = "e";
+            this->next_goal_type[agent_id] = CellType::ENDPOINT;
         }
-    } else if (this->next_goal_type[agent_id] == "e") {
+    } else if (this->next_goal_type[agent_id] == CellType::ENDPOINT) {
         if (repeat_last_goal) {
             next = this->sample_workstation();
         } else {
             next = this->sample_endpiont();
-            this->next_goal_type[agent_id] = "w";
+            this->next_goal_type[agent_id] = CellType::WORKSTATION;
         }
+    } else if (this->next_goal_type[agent_id] == CellType::FREE) {
+        next = this->sample_free_location();
+        // Keep the next goal type as FREE
     } else {
         spdlog::error("WindowedTaskAssigner::gen_next_goal: next goal type is "
                       "not w or e, but {}",
