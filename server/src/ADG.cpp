@@ -690,7 +690,7 @@ json ADG::getADGStats() {
     result["mean_avg_rotation"] = total_rotation / num_robots;
     result["mean_avg_move"] = total_move / num_robots;
     result["avg_total_actions"] = total_actions / num_robots;
-    result["robot_paths"] = robot_paths;
+    // result["robot_paths"] = robot_paths;
 
     // Add per tick stats
     result["stats_per_tick"] = to_json(this->stats_per_tick);
