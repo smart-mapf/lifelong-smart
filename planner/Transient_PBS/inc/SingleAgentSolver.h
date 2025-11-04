@@ -40,10 +40,10 @@ public:
         bool operator()(const LLNode* n1, const LLNode* n2) const {
             // If n1 has visited goal, and n2 has not, prefer n1
             if (n1->visited_goal && !n2->visited_goal)
-                return true;
+                return false;
             // If n2 has visited goal, and n1 has not, prefer n2
             if (n2->visited_goal && !n1->visited_goal)
-                return false;
+                return true;
 
             // Both has visited goal, prefer the one with smaller
             // makespan
