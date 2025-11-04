@@ -711,8 +711,10 @@ bool PBS::generateRoot() {
         if (screen > 2) {
             cout << "Find root path for agent " << i << endl;
         }
+        clock_t t = clock();
         auto new_path =
             search_engines[i]->findOptimalPath(higher_agents, paths, i);
+        double search_time = (double)(clock() - t) / CLOCKS_PER_SEC;
         num_LL_expanded += search_engines[i]->num_expanded;
         num_LL_generated += search_engines[i]->num_generated;
         if (new_path.empty()) {
@@ -722,13 +724,11 @@ bool PBS::generateRoot() {
         root->paths.emplace_back(i, new_path);
         paths.emplace_back(&root->paths.back().second);
         root->makespan = max(root->makespan, new_path.size() - 1);
-        // root->cost += (int)new_path.size() - 1;
-        // cout << "New path sum of cost: " << new_path.back().sum_of_costs
-        //      << endl;
         root->cost += new_path.back().sum_of_costs;
         if (screen > 2) {
-            cout << "Planned root path for agent " << i
-                 << ", sum of cost: " << new_path.back().sum_of_costs << endl;
+            spdlog::info("Planned root path for agent {} , sum of cost: {}, "
+                         "search time: {}",
+                         i, new_path.back().sum_of_costs, search_time);
         }
     }
     auto t = clock();
