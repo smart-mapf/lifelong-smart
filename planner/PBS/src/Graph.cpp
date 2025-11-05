@@ -1,6 +1,6 @@
 #include "Graph.h"
 
-Graph::Graph(const string& map_fname, int screen)
+Graph::Graph(const string &map_fname, int screen)
     : map_fname(map_fname), screen(screen) {
     if (!loadMap()) {
         cerr << "Failed to load map from " << map_fname << endl;
@@ -191,7 +191,7 @@ bool Graph::loadMapFromJson() {
                  i < std::min(10, static_cast<int>(this->weights.size()));
                  i++) {
                 cout << "Weights for location " << i << ": ";
-                for (const auto& weight : this->weights[i]) {
+                for (const auto &weight : this->weights[i]) {
                     cout << weight << " ";
                 }
                 cout << endl;
@@ -236,7 +236,7 @@ void Graph::setDefaultEdgeWeights() {
     }
 }
 
-void Graph::update_map_weights(std::vector<double>& new_weights) {
+void Graph::update_map_weights(std::vector<double> &new_weights) {
     // Read in weights
     // G_json["weights_matrix"] of length rows * cols * 7, where each entry
     // contains the weights of `right`, `down`, `left`, `up`, `wait`, `CR`, and
@@ -404,20 +404,9 @@ int Graph::getDirection(int from, int to) const {
 }
 
 void Graph::computeHeuristics() {
-    vector<int> h_locations;
-
-    // If warehouse locs are available, compute heuristics for them
-    if (!warehouse_task_locs.empty()) {
-        h_locations = warehouse_task_locs;
-    } else {
-        // Otherwise, compute heuristics for all free locations
-        h_locations = empty_locations;
-    }
-
-    if (this->screen > 0)
-        cout << "Computing heuristics for " << h_locations.size()
-             << " free locations." << endl;
-    for (int loc : h_locations) {
+    // We need to compute heuristics for all free locations because there might
+    // be backup goals at any free location.
+    for (int loc : this->free_locations) {
         // Compute heuristics for each free location
         vector<double> heuristics_for_loc;
         vector<int> d_heuristics_for_loc;
@@ -445,26 +434,26 @@ tuple<vector<double>, vector<int>> Graph::computeHeuristicsOneLoc(
         // the following is used to comapre nodes in the OPEN list
         struct compare_node {
             // returns true if n1 > n2 (note -- this gives us *min*-heap).
-            bool operator()(const Node* n1, const Node* n2) const {
+            bool operator()(const Node *n1, const Node *n2) const {
                 return n1->value >= n2->value;
             }
         };  // used by OPEN (heap) to compare nodes (top of the heap has min
             // f-val, and then highest g-val)
 
         struct EqNode {
-            bool operator()(const Node* n1, const Node* n2) const {
+            bool operator()(const Node *n1, const Node *n2) const {
                 return (n1 == n2) || (n1 && n2 && n1->location == n2->location);
             }
         };
 
         // The following is used to generate the hash value of a node
         struct Hasher {
-            std::size_t operator()(const Node* n) const {
+            std::size_t operator()(const Node *n) const {
                 return std::hash<int>()(n->location);
             }
         };
 
-        fibonacci_heap<Node*, compare<Node::compare_node>>::handle_type
+        fibonacci_heap<Node *, compare<Node::compare_node>>::handle_type
             open_handle;
     };
 
@@ -478,8 +467,8 @@ tuple<vector<double>, vector<int>> Graph::computeHeuristicsOneLoc(
     curr_d_heuristics.resize(this->map_size, MAX_TIMESTEP);
 
     // std::cout << "start computing h for loc = "<< root_location <<std::endl;
-    fibonacci_heap<Node*, compare<Node::compare_node>> heap;
-    unordered_set<Node*, Node::Hasher, Node::EqNode> nodes;
+    fibonacci_heap<Node *, compare<Node::compare_node>> heap;
+    unordered_set<Node *, Node::Hasher, Node::EqNode> nodes;
 
     // if(consider_rotation)
     // {
@@ -494,13 +483,13 @@ tuple<vector<double>, vector<int>> Graph::computeHeuristicsOneLoc(
     // }
     // else
     // {
-    Node* root = new Node(root_location, 0, 0);
+    Node *root = new Node(root_location, 0, 0);
     root->open_handle = heap.push(root);  // add root to heap
     nodes.insert(root);                   // add root to hash_table (nodes)
                                           // }
 
     while (!heap.empty()) {
-        Node* curr = heap.top();
+        Node *curr = heap.top();
         heap.pop();
         for (auto next_state : this->getNeighbors(curr->location)) {
             double curr_weight = this->getWeight(next_state, curr->location);
@@ -529,7 +518,7 @@ tuple<vector<double>, vector<int>> Graph::computeHeuristicsOneLoc(
             next_g_val = curr->value + curr_weight;
             next_duration = curr->duration + 1;  // increment duration by 1
             // }
-            Node* next = new Node(next_state, next_g_val, next_duration);
+            Node *next = new Node(next_state, next_g_val, next_duration);
             auto it = nodes.find(next);
             if (it == nodes.end()) {  // add the newly generated node to heap
                                       // and hash table
@@ -539,7 +528,7 @@ tuple<vector<double>, vector<int>> Graph::computeHeuristicsOneLoc(
                       // heap)
                 delete (next);  // not needed anymore -- we already generated it
                                 // before
-                Node* existing_next = *it;
+                Node *existing_next = *it;
                 if (existing_next->value > next_g_val) {
                     existing_next->value = next_g_val;
                     heap.increase(existing_next->open_handle);
@@ -549,7 +538,7 @@ tuple<vector<double>, vector<int>> Graph::computeHeuristicsOneLoc(
     }
     // iterate over all nodes and populate the distances
     for (auto it = nodes.begin(); it != nodes.end(); it++) {
-        Node* s = *it;
+        Node *s = *it;
         curr_heuristics[s->location] =
             std::min(s->value, curr_heuristics[s->location]);
         curr_d_heuristics[s->location] =

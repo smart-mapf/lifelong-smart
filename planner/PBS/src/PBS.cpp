@@ -655,9 +655,6 @@ bool PBS::generateRoot() {
         root->makespan = max(root->makespan, new_path.size() - 1);
         root->cost += (int)new_path.size() - 1;
         if (screen > 2) {
-            // cout << "Planned root path for agent " << i
-            //      << ", sum of cost: " << new_path.back().sum_of_costs <<
-            //      endl;
             spdlog::info("Planned root path for agent {} , sum of cost: {}, "
                          "search time: {}",
                          i, new_path.size() - 1, search_time);
