@@ -422,7 +422,7 @@ def run_lifelong_argos(
             exit(-1)
         run_simulator(
             args=(server_command, client_command, planner_command),
-            timeout=50 * sim_duration / ticks_per_second,
+            timeout=20 * sim_duration / ticks_per_second,
             output_log=output_log,
         )
     except KeyboardInterrupt:
