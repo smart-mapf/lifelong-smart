@@ -17,6 +17,10 @@ static const Real MIN_DISTANCE_SQUARED = MIN_DISTANCE * MIN_DISTANCE;
 /****************************************/
 
 void CTrajectoryLoopFunctions::Init(TConfigurationNode &t_tree) {
+    // Set up logger
+    auto console_logger = spdlog::default_logger()->clone("Argos Client");
+    spdlog::set_default_logger(console_logger);
+
     /*
      * Go through all the robots in the environment
      * and create an entry in the waypoint map for each of them
@@ -38,9 +42,14 @@ void CTrajectoryLoopFunctions::Init(TConfigurationNode &t_tree) {
     TConfigurationNode &portParams = GetNode(t_tree, "port_number");
     GetNodeAttribute(portParams, "value", port_number);
 
-    // Set up logger
-    auto console_logger = spdlog::default_logger()->clone("Argos Client");
-    spdlog::set_default_logger(console_logger);
+    while (!is_port_open("127.0.0.1", port_number)) {
+        spdlog::info("Waiting for server to open at port {}...", port_number);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    this->client = make_shared<rpc::client>("127.0.0.1", port_number);
+    this->is_initialized = true;
+    spdlog::info("Loop func: Connected to server at port {}", port_number);
 }
 
 /****************************************/
@@ -90,21 +99,7 @@ void CTrajectoryLoopFunctions::addMobileVisualization() {
 }
 /****************************************/
 
-void CTrajectoryLoopFunctions::PostStep() {
-    if (not is_initialized) {
-        if (is_port_open("127.0.0.1", port_number)) {
-            client = make_shared<rpc::client>("127.0.0.1", port_number);
-        } else {
-            // cout << "Failed to connect to server. Retrying..." <<
-            // endl; this_thread::sleep_for(std::chrono::seconds(5));
-            // // Wait for 1 second before retrying
-            return;
-        }
-        is_initialized = true;
-        spdlog::info("Connected to server at port {}", port_number);
-    }
-    addMobileVisualization();
-
+void CTrajectoryLoopFunctions::PreStep() {
     // Free simulation if necessary
     client->call("freeze_simulation_if_necessary");
 
@@ -113,6 +108,15 @@ void CTrajectoryLoopFunctions::PostStep() {
         // spdlog::info("Simulation is frozen, waiting to defrost...");
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+}
+
+void CTrajectoryLoopFunctions::PostStep() {
+    if (not is_initialized) {
+        spdlog::error("CTrajectoryLoopFunctions::PostStep: LoopFunctions is "
+                      "not initialized");
+        exit(1);
+    }
+    addMobileVisualization();
 
     // Invoke the server to record per tick stats. We do it here because
     // PostStep function is invoked after each tick.

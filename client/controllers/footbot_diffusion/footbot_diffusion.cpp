@@ -20,9 +20,9 @@ CFootBotDiffusion::CFootBotDiffusion()
 
 /****************************************/
 /****************************************/
-void CFootBotDiffusion::insertActions(const SIM_PLAN& actions) {
+void CFootBotDiffusion::insertActions(const SIM_PLAN &actions) {
     // vector<action> tmp_cache;
-    for (const auto& action : actions) {
+    for (const auto &action : actions) {
         // cout << "not empty init" << endl;
         string action1 = get<3>(action);
         int nodeID = get<1>(action);
@@ -73,7 +73,7 @@ void CFootBotDiffusion::insertActions(const SIM_PLAN& actions) {
     // q.back_insert(q.begin(), tmp_cache.begin(), tmp_cache.end());
 }
 
-void CFootBotDiffusion::Init(TConfigurationNode& t_node) {
+void CFootBotDiffusion::Init(TConfigurationNode &t_node) {
     /*
      * Get sensor/actuator handles
      *
@@ -126,17 +126,31 @@ void CFootBotDiffusion::Init(TConfigurationNode& t_node) {
     m_linearVelocity = 1.22 * m_angularVelocity;
     m_currVelocity = 0.0;
     this->init_pos = m_pcPosSens->GetReading().Position;
-    // CVector3 currPos = m_pcPosSens->GetReading().Position;
-    // robot_id =
-    //     to_string(
-    //         static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetY())))
-    //         +
-    //     "_" +
-    //     to_string(
-    //         static_cast<int>(ChangeCoordinateFromArgosToMap(currPos.GetX())));
-    // spdlog::info("My Robot ID: {}, argos Robot ID: {}", robot_id,
-    //              this->GetId());
     this->robot_id = this->GetId();
+
+    // Wait until the server is ready
+    while (!is_port_open("127.0.0.1", port_number)) {
+        if (screen > 1) {
+            spdlog::info("Waiting for server to be ready at port: {}",
+                         port_number);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
+    this->client = make_shared<rpc::client>("127.0.0.1", this->port_number);
+
+    this->is_initialized = true;
+    auto init_loc = make_tuple(
+        static_cast<int>(ChangeCoordinateFromArgosToMap(this->init_pos.GetY())),
+        static_cast<int>(
+            ChangeCoordinateFromArgosToMap(this->init_pos.GetX())));
+
+    this->client->call("init", robot_id, init_loc);
+    if (screen > 0) {
+        spdlog::info("Robot {} at ({},{}) connected to server at port: {}",
+                     robot_id, get<1>(init_loc), get<0>(init_loc), port_number);
+    }
+    return;
 }
 
 /****************************************/
@@ -181,7 +195,7 @@ void CFootBotDiffusion::updateQueue() {
         q.push_front(first_act);
     }
     if (robot_id == debug_id) {
-        for (auto& tmp_act : q) {
+        for (auto &tmp_act : q) {
             cout << tmp_act.type << ", Goal position: (" << tmp_act.x << ", "
                  << tmp_act.y << ")" << endl;
         }
@@ -191,29 +205,9 @@ void CFootBotDiffusion::updateQueue() {
 
 void CFootBotDiffusion::ControlStep() {
     if (not is_initialized) {
-        if (is_port_open("127.0.0.1", port_number)) {
-            client = make_shared<rpc::client>("127.0.0.1", port_number);
-        } else {
-            cout << "Failed to connect to server. Retrying..." << endl;
-            return;
-        }
-        is_initialized = true;
-        auto init_loc = make_tuple(
-            static_cast<int>(
-                ChangeCoordinateFromArgosToMap(this->init_pos.GetY())),
-            static_cast<int>(
-                ChangeCoordinateFromArgosToMap(this->init_pos.GetX())))
-
-            ;
-        client->call("init", robot_id, init_loc);
-        if (screen > 0) {
-            // cout << "Robot " << robot_id
-            //           << " connected to server at port: " << port_number
-            //           << endl;
-            spdlog::info("Robot {} at ({},{}) connected to server at port: {}",
-                         robot_id, get<1>(init_loc), get<0>(init_loc),
-                         port_number);
-        }
+        spdlog::error(
+            "CFootBotDiffusion::ControlStep: Controller is not initialized");
+        exit(-1);
         return;
     }
 
@@ -442,8 +436,8 @@ double CFootBotDiffusion::getReferenceSpeed(double dist) const {
                            m_fWheelVelocity);
 }
 
-pair<Real, Real> CFootBotDiffusion::Move(const CVector3& targetPos,
-                                         const CVector3& currPos,
+pair<Real, Real> CFootBotDiffusion::Move(const CVector3 &targetPos,
+                                         const CVector3 &currPos,
                                          Real currAngle,
                                          Real tolerance = 1.0f) {
     // Calculate the distance and angle to the target

@@ -25,6 +25,8 @@ public:
 
     virtual void PostStep();
 
+    virtual void PreStep();
+
     void PostExperiment() override;
 
     bool IsExperimentFinished() override;

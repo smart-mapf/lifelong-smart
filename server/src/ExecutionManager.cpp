@@ -266,9 +266,10 @@ void ExecutionManager::freezeSimulationIfNecessary() {
     int sim_step = this->getCurrSimStep();
     // int sim_step = this->time_step_tick;
     // spdlog::info("Checking freeze simulation at sim step {}, "
-    //              "prev_invoke_planner_tick: {}, sim_window_tick: {}",
-    //              sim_step, this->prev_invoke_planner_tick,
-    //              this->sim_window_tick);
+    //              "prev_invoke_planner_tick: {}, sim_window_tick: {}, planner
+    //              " "never invoked: {}", sim_step,
+    //              this->prev_invoke_planner_tick, this->sim_window_tick,
+    //              this->plannerNeverInvoked());
     if (sim_step == 0 && this->plannerNeverInvoked()) {
         this->freeze_simulation = true;
         if (this->screen > 0) {
@@ -443,8 +444,6 @@ void ExecutionManager::addNewPlan(string &new_plan_json_str) {
     if (this->freeze_simulation) {
         this->freeze_simulation = false;
         if (this->screen > 0) {
-            // cout << "Simulation is de-frozen after adding a new plan!"
-            //           << endl;
             spdlog::info("Simulation is de-frozen after adding a new plan!");
         }
     }
@@ -523,6 +522,10 @@ void ExecutionManager::updateSimStep() {
     if (not this->adg->initialized) {
         return;
     }
+
+    // spdlog::info("Updating simulation step tick from {} to {}",
+    // this->curr_tick,
+    //              this->curr_tick + 1);
 
     this->curr_tick++;
 }
