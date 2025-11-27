@@ -256,8 +256,7 @@ std::vector<double> BasicGraph::compute_heuristics(int root_location)
     unordered_set< StateTimeAStarNode*, StateTimeAStarNode::Hasher, StateTimeAStarNode::EqNode> nodes;
 
     State root_state(root_location);
-    // TODO: rotational heuristic is creating issue for some planners (lower
-    // throughput compared to no rotation). Check back later.
+
     if(consider_rotation)
     {
         for (auto neighbor : get_reverse_neighbors(root_state))
