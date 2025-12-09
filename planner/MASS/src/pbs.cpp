@@ -627,7 +627,8 @@ vector<vector<tuple<int, int, double, int>>> PBS::getTimedPath() const {
         // for (const auto& state : solution_node->plan[i]) {
         for (int j = 0; j < solution_node->plan[i].size(); j++) {
             auto state = solution_node->plan[i][j];
-            if (state.arrival_time >= instance_ptr->simulation_window) {
+            if (instance_ptr->simulation_window > 0 &&
+                state.arrival_time >= instance_ptr->simulation_window) {
                 // If the agent arrives after the simulation window, we do not
                 // record it
                 continue;
