@@ -33,3 +33,4 @@ ReservationTable.txt
 save_instance/
 mapf_instance*.json
 instances/
+*png
