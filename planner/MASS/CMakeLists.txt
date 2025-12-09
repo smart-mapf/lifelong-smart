@@ -9,11 +9,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # set base path for cplex directory, change this path if using different version of CPLEX
-SET(CPLEX_BASE_DIR "/home/yulun/Desktop/MAPF_group/surrogate_ggo/CPLEX_Studio2210" CACHE STRING "Path to CPLEX base directory")
+SET(CPLEX_BASE_DIR "<path to CPLEX>" CACHE STRING "Path to CPLEX base directory")
 
 message(STATUS "CPLEX base directory: ${CPLEX_BASE_DIR}")
-
-# set(CPLEX_BASE_DIR  "/home/yulun/Desktop/MAPF_group/surrogate_ggo/CPLEX_Studio2210")
 
 set(CPLEX_INCLUDE_DIRS      "${CPLEX_BASE_DIR}/cplex/include")
 set(CONCERT_INCLUDE_DIRS      "${CPLEX_BASE_DIR}/concert/include")

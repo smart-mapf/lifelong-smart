@@ -567,7 +567,6 @@ SIM_PLAN ADG::getPlan(int agent_id) {
     SIM_PLAN sim_plan;
     vector<int> enque_acts;
     getAvailableNodes(agent_id, enque_acts);
-    // TODO@jingtian: rethink logic here if we have data loss
     for (int enque_id : enque_acts) {
         const Action& action = graph[agent_id][enque_id].action;
         // pair<int, int> intStart = action.start;

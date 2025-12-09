@@ -175,8 +175,6 @@ vector<vector<Action>> PlanParser::StepsToActions(
                 //      << endl;
                 Action processedAction;
                 processedAction.robot_id = (int)i;
-                // @jingtian Note: change action start time, to be consistent
-                // with the continuous case
                 processedAction.time = raw_steps[i][j - 1].time;
                 processedAction.start.first = prev_step_x;
                 processedAction.start.second = prev_step_y;
