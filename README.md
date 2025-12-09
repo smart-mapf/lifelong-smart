@@ -58,12 +58,11 @@ bash compile.sh user
 
 ## Running
 
-#### Running with visualization
-```
-python run_lifelong.py
+#### Running without visualization
+```bash
+python run_lifelong.py maps/kiva_large_w_mode.json --headless True --screen 1 --num_agents 100 --save_stats True --rotation False --planner_invoke_policy default --sim_window_tick 10 --planner RHCR  --backup_solver PIBT --task_assigner_type windowed
 ```
 
-#### Running in headless mode
-```
-python run_lifelong.py --headless=True
-```
+This runs a simulation with 100 agents in the kiva map with the periodic planner invocation policy and windowed-multi-goal instance generator. The agent model is pebble motion. The planner is windowed PBS with planning window 1 second. The fail policy is PIBT.
+
+To enable visualization, use `--headless=False`.
