@@ -126,6 +126,30 @@ void CTrajectoryLoopFunctions::PostStep() {
 
     // Get simulation status, return true if the simulation shall end
     this->end_sim = client->call("sim_status").as<bool>();
+
+    // static int frame_id = 0;
+    // std::stringstream filename_s;
+    // filename_s << "frames/frame_" << std::setw(5) << std::setfill('0')
+    //            << frame_id++ << ".png";
+    // std::string filename = filename_s.str();
+    // argos::CVisualization &cVisualization = GetSimulator().GetVisualization();
+    // // Ensure the visualization is of the expected Qt OpenGL type
+    // auto *pcQtRender = dynamic_cast<argos::CQTOpenGLRender *>(&cVisualization);
+    // if (pcQtRender) {
+    //     // Access the main window
+    //     CQTOpenGLMainWindow &pcMainWindow = pcQtRender->GetMainWindow();
+
+    //     // Capture the current window as a pixmap
+    //     QPixmap pixmap = pcMainWindow.grab();
+
+    //     // Save the pixmap to the specified file
+    //     if (!pixmap.save(QString::fromStdString(filename))) {
+    //         spdlog::error("Failed to save the visualization snapshot to {}",
+    //                       filename);
+    //     }
+    // } else {
+    //     spdlog::error("Qt OpenGL Visualization is not available.");
+    // }
 }
 
 void CTrajectoryLoopFunctions::PostExperiment() {
