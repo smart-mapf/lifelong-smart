@@ -127,6 +127,7 @@ void CTrajectoryLoopFunctions::PostStep() {
     // Get simulation status, return true if the simulation shall end
     this->end_sim = client->call("sim_status").as<bool>();
 
+    // TODO: Add a cmd to capture visualization frames
     // static int frame_id = 0;
     // std::stringstream filename_s;
     // filename_s << "frames/frame_" << std::setw(5) << std::setfill('0')
