@@ -1,0 +1,127 @@
+/* =========================
+   Homepage full-bleed fixes
+   ========================= */
+
+/* Hide both sidebars on the homepage so hero can truly span full width */
+body[data-page-name="index"] .bd-sidebar-primary,
+body[data-page-name="index"] .bd-sidebar-secondary {
+    display: none !important;
+}
+
+/* Remove padding/margins that keep content centered (homepage only) */
+body[data-page-name="index"] .bd-container,
+body[data-page-name="index"] .bd-main,
+body[data-page-name="index"] main.bd-main,
+body[data-page-name="index"] .bd-content,
+body[data-page-name="index"] .bd-article-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: none !important;
+}
+
+/* Avoid horizontal scrollbar from 100vw trick */
+html, body {
+    overflow-x: hidden;
+}
+
+/* =========================
+   Your hero section (kept)
+   ========================= */
+
+/* Full-viewport-width hero container */
+.lsmart-hero {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+  left: 0 !important;
+  right: 0 !important;
+  display: block !important;
+}
+
+/* Video fills the hero */
+.lsmart-hero video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.02); /* helps hide 1px edges sometimes */
+}
+
+/* Dark overlay */
+.lsmart-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* Center logo + buttons */
+.lsmart-hero-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 2rem;
+}
+
+.lsmart-hero-logo {
+    width: min(480px, 70vw);
+    margin-bottom: 1.2rem;
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,0.6));
+}
+
+.lsmart-hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+/* Button styling (works fine with PyData theme / Bootstrap base) */
+.lsmart-btn {
+  display: inline-block;
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.12);
+  color: white !important;
+  backdrop-filter: blur(6px);
+}
+
+.lsmart-btn:hover {
+  background: rgba(255,255,255,0.20);
+  border-color: rgba(255,255,255,0.55);
+}
+
+.lsmart-btn-primary {
+  background: rgba(255,255,255,0.24);
+}
+
+/* Optional: If you ONLY want the main content to be full width on homepage,
+   remove the global rule you had. The homepage-only rules above already do it. */
+
+/* Responsive height */
+@media (max-width: 900px) {
+    .lsmart-hero {
+        height: 80vh;
+    }
+}
+
+/* Works even if data-page-name differs */
+main.bd-main .bd-content {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.bd-sidebar-primary,
+.bd-sidebar-secondary {
+  display: none !important;
+}
