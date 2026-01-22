@@ -33,7 +33,7 @@ ReservationTable.txt
 save_instance/
 mapf_instance*.json
 instances/
-*png
+*img/png
 docs/doxygen/
 docs/source/api_client/
 docs/source/api_server/

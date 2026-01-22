@@ -3,6 +3,12 @@ import os
 import subprocess
 from datetime import date
 
+DOCS_DEV = os.environ.get("DOCS_DEV", "0") == "1"
+
+# `tags` will be defined by Sphinx
+if DOCS_DEV:
+    tags.add("devmode") # type: ignore[name-defined]
+
 # -------------------------------------------------
 # Project info
 # -------------------------------------------------
@@ -17,9 +23,12 @@ version = release = "0.1"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
-    "breathe",
+    # "breathe",
     # "exhale",
 ]
+
+if not DOCS_DEV:
+    extensions += ["breathe"]  # and "exhale" only when generating trees
 
 # Enable Exhale only when generating API stubs
 if os.environ.get("EXHALE_PROJECT", "").strip():
@@ -50,31 +59,34 @@ def run_doxygen():
 
 
 def setup(app):
+    if not DOCS_DEV:
+        app.connect("builder-inited", lambda app: run_doxygen())
     app.add_css_file("custom.css")
-    app.connect("builder-inited", lambda app: run_doxygen())
 
 
 # -------------------------------------------------
 # Breathe (register both XML trees)
 # -------------------------------------------------
-breathe_projects = {
-    "server": os.path.join(DOCS, "doxygen", "server", "xml"),
-    "client": os.path.join(DOCS, "doxygen", "client", "xml"),
-}
-
-breathe_default_project = "server"
+if not DOCS_DEV:
+    breathe_projects = {
+        "server": os.path.join(DOCS, "doxygen", "server", "xml"),
+        "client": os.path.join(DOCS, "doxygen", "client", "xml"),
+    }
+    breathe_default_project = "server"
 
 # -------------------------------------------------
 # Exhale (ONE project per run)
 # -------------------------------------------------
 EXHALE_PROJECT = os.environ.get("EXHALE_PROJECT", "").strip().lower()
 
-if EXHALE_PROJECT:
+if (not DOCS_DEV) and EXHALE_PROJECT in ("server", "client"):
+    extensions.append("exhale")
+    breathe_default_project = EXHALE_PROJECT
     exhale_args = {
         "containmentFolder": f"./api_{EXHALE_PROJECT}",
         "rootFileName": "library_root.rst",
         "rootFileTitle": f"{EXHALE_PROJECT.capitalize()} API",
-        "doxygenStripFromPath": REPO,  # whatever you set REPO root to
+        "doxygenStripFromPath": REPO,
         "createTreeView": True,
         "generateBreatheFileDirectives": True,
         "exhaleExecutesDoxygen": False,
@@ -87,7 +99,7 @@ else:
 # -------------------------------------------------
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
-html_logo = "_static/lsmart-logo-black.png"
+html_logo = "_static/lsmart-logo-black-only.png"
 
 html_theme_options = {
     # Top bar links like pyribs (Paper / Documentation / GitHub)
