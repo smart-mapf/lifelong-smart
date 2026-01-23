@@ -186,3 +186,8 @@ article.bd-article:has(.lsmart-hero--home) section {
   padding-top: 0 !important;
   background-color: var(--pst-color-navbar-background);
 }
+
+/* Length of main content area */
+.bd-main .bd-content .bd-article-container {
+  max-width: 100%;  /* default is 60em */
+}

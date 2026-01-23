@@ -14,7 +14,8 @@ if DOCS_DEV:
 # -------------------------------------------------
 project = "LSMART"
 author = "Yulun Zhang"
-copyright = f"{date.today().year}, {author}"
+arcs_lab = "ARCS Lab, Carnegie Mellon University"
+copyright = f"2026, {arcs_lab}"
 version = release = "0.1"
 
 # -------------------------------------------------
@@ -23,6 +24,7 @@ version = release = "0.1"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
+    "myst_parser",
     # "breathe",
     # "exhale",
 ]
@@ -90,6 +92,10 @@ if (not DOCS_DEV) and EXHALE_PROJECT in ("server", "client"):
         "createTreeView": True,
         "generateBreatheFileDirectives": True,
         "exhaleExecutesDoxygen": False,
+        # "unabridgedOrphanKinds": ["function", "file", "namespace", "class", "struct"],
+        # and importantly:
+        "fullApiSubSectionTitle": "Full API",
+        "contentsDirectives": True,
     }
 else:
     exhale_args = {}
@@ -128,4 +134,9 @@ html_theme_options = {
     "navbar_end": ["navbar-icon-links"],
     "header_links_before_dropdown":
     6,
+    "collapse_navigation": False,
+    
+    # Footer customization
+    "footer_start": ["copyright"],
+    "footer_end": ["sphinx-version"]
 }

@@ -1,10 +1,13 @@
-API Reference
-=============
+.. include:: ../../README.md
+    :parser: myst_parser.sphinx_
 
 .. only:: not devmode
 
+
    .. toctree::
-      :maxdepth: 2
+      :maxdepth: 1
+      :caption: API Reference
+      :hidden:
 
       api_server/library_root
       api_client/library_root

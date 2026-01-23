@@ -24,7 +24,7 @@
    <div class="lsmart-home-content">
 
 **Lifelong Scalable Multi-Agent Realistic Testbed (LSMART)**
-======
+============================================================
 
 .. image:: _static/l-smart-2.0.png
    :alt: LSMART Pipeline
@@ -32,7 +32,7 @@
    :width: 100%
 
 **Paper and Citation**
-==================
+======================
 .. code-block:: bibtex
 
     @article{YanAndZhang2026LSMART,
@@ -48,3 +48,9 @@
 
    </div>
 
+.. toctree::
+    :hidden:
+    :maxdepth: 1
+    :caption: API Reference
+
+    api
