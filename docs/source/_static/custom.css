@@ -51,7 +51,7 @@ article.bd-article:has(.lsmart-hero--home) {
 .lsmart-hero--home {
   position: relative;
   width: 100% !important;      /* because wrappers are full-width now */
-  height: 100vh;
+  height: 75vh;
   min-height: 520px;
   overflow: hidden;
   margin: 0 0 2rem 0;          /* space so the image below is visible */
