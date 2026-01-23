@@ -3,6 +3,7 @@ import os
 import subprocess
 from datetime import date
 
+github_link = "https://github.com/lunjohnzhang/lifelong_mapf_argos"
 DOCS_DEV = os.environ.get("DOCS_DEV", "0") == "1"
 
 # `tags` will be defined by Sphinx
@@ -116,18 +117,18 @@ html_theme_options = {
         },
         {
             "name": "Documentation",
-            "url": ""
+            "url": "api.html"
         },
         {
             "name": "GitHub",
-            "url": "https://github.com/lunjohnzhang/lifelong_mapf_argos"
+            "url": github_link
         },
     ],
     # Right-side icons (optional)
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/lunjohnzhang/lifelong_mapf_argos",
+            "url": github_link,
             "icon": "fa-brands fa-github"
         },
     ],
@@ -135,7 +136,7 @@ html_theme_options = {
     "header_links_before_dropdown":
     6,
     "collapse_navigation": False,
-    
+
     # Footer customization
     "footer_start": ["copyright"],
     "footer_end": ["sphinx-version"]
