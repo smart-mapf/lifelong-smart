@@ -1,5 +1,9 @@
 #include "ExecutionManager.h"
 
+/**
+ * @namespace RPC API functions for external communication with the
+ * MAPF planner and the executor (the robots).
+ */
 namespace rpc_api {
 
 /// @cond DOXYGEN_EXCLUDE
@@ -54,24 +58,119 @@ void recordStatsPerTick() {
 }
 /// @endcond
 
-/// @brief Get the current locations of all robots
-/// @return A string representing the robots' locations
-/// The format of the string can be defined as needed, e.g. JSON
+/**
+ * @brief Get the latest MAPF instance, newly finished task IDs, and
+ * initialization status.
+ *
+ * @return A JSON string with the following schema.
+ * @code{.json}
+ * {
+ *   "initialized": true,
+ *   "mapf_instance": {
+ *     "starts": [ State, ... ],
+ *     "goals":  [ [ Task, ... ], ... ]
+ *   },
+ *   "new_finished_tasks": [ 0, 1, 2, 3 ]
+ * }
+ * @endcode
+ * - `initialized` indicates whether the system has completed initialization.
+ * - `mapf_instance` contains the current MAPF problem state:
+ *   - `starts` is a list of `State` objects describing the current start states
+ * of all agents:
+ *     - Each `State` has the structure:
+ *       @code{.json}
+ *       {
+ *         "location": 42,
+ *         "timestep": 10,
+ *         "orientation": 1
+ *       }
+ *       @endcode
+ *     - `location` is the flattened cell ID.
+ *     - `timestep` is the start timestep, usually `0`.
+ *     - `orientation` is encoded as:
+ *       - `0`: East
+ *       - `1`: North
+ *       - `2`: West
+ *       - `3`: South
+ *   - `goals` is a list of task lists, where each task list corresponds to a
+ *     robot:
+ *     - Each `Task` object has the structure:
+ *       @code{.json}
+ *       {
+ *         "id": 0,
+ *         "location": 84,
+ *         "task_wait_time": 0,
+ *         "orientation": -1
+ *       }
+ *       @endcode
+ *     - `id` is the unique task identifier.
+ *     - `location` is the flattened cell ID of the task location.
+ *     - `task_wait_time` is the number of timesteps the agent should wait at
+ *        the task location, usually `0`.
+ *     - `orientation` is the required orientation at the task location, with
+ *       `-1` indicating no constraint.
+ * - `new_finished_tasks` is a list of task IDs completed since the last query.
+ *
+ */
 string getRobotsLocation() {
     lock_guard<mutex> guard(globalMutex);
     return em->getRobotsLocation();
 }
 
+/**
+ * @brief Add a new MAPF plan to the ADG.
+ *
+ * @details
+ * This function takes a JSON string representing a new MAPF plan and adds it
+ * to the ADG (Action Decision Graph). If necessary, it utilizes the backup
+ * planner to ensure the plan is integrated correctly.
+ *
+ * @param new_plan_json_str A JSON string with a new MAPF plan with the
+ * following schema:
+ * @code{.json}
+ * {
+ *   "success": true,
+ *   "plan": [ [(row, col, timestep, task_id), ... ], ... ],
+ *   "congested": false,
+ *   "stats": { ... }
+ * }
+ * @endcode
+ * - `plan`: a list of lists of tuples, where each outer list
+ *   corresponds to a single robot's path. Each inner list contains tuples of
+ *   the form `(row, col, timestep, task_id)`:
+ *   - `row`: The row index of the robot's position on the grid.
+ *   - `col`: The column index of the robot's position on the grid.
+ *   - `timestep`: The timestep at which the robot should be at the specified
+ * position.
+ *   - `task_id`: The task identifier, or `-1` if no task is associated.
+ * - `success`: indicates whether the planner successfully produced
+ *   collision-free paths for all robots. If `false`, the backup planner is
+ * invoked.
+ * - `congested` **[Optional]**: indicates whether congestion was detected,
+ *   typically defined as more than half of the robots making no progress.
+ * - `stats` **[Optional]**: contains additional planner statistics recorded
+ *   by LSMART.
+ */
 void addNewPlan(string &new_plan_json_str) {
     lock_guard<mutex> guard(globalMutex);
     em->addNewPlan(new_plan_json_str);
 }
 
+/**
+ * @brief Check if the system has been initialized.
+ * @returns a boolean indicating whether the system has been initialized.
+ */
 bool isInitialized() {
     lock_guard<mutex> guard(globalMutex);
     return em->isADGInitialized();
 }
 
+/**
+ * @brief Determine whether to invoke the planner.
+ * @returns a boolean indicating whether the planner should be invoked. In
+ * practice, the MAPF planner can have a while loop checking for this
+ * condition to decide whether to request a new MAPF instance from the system.
+ */
 bool invokePlanner() {
     lock_guard<mutex> guard(globalMutex);
     return em->invokePlanner();
