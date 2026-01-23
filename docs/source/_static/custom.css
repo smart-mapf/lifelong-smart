@@ -191,3 +191,14 @@ article.bd-article:has(.lsmart-hero--home) section {
 .bd-main .bd-content .bd-article-container {
   max-width: 100%;  /* default is 60em */
 }
+
+/* Hide scrollbar in primary sidebar */
+.bd-sidebar-primary {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE/Edge legacy */
+}
+
+.bd-sidebar-primary::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
