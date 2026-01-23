@@ -1,5 +1,7 @@
 #include "ExecutionManager.h"
 
+namespace rpc_api {
+
 shared_ptr<ExecutionManager> em = nullptr;
 std::mutex globalMutex;
 
@@ -14,6 +16,9 @@ bool isSimulationFrozen() {
     return em->isSimulationFrozen();
 }
 
+/// @brief Get the current locations of all robots
+/// @return A string representing the robots' locations
+/// The format of the string can be defined as needed, e.g. JSON
 string getRobotsLocation() {
     lock_guard<mutex> guard(globalMutex);
     return em->getRobotsLocation();
@@ -71,6 +76,7 @@ void recordStatsPerTick() {
     lock_guard<mutex> guard(globalMutex);
     em->recordStatsPerTick();
 }
+}  // namespace rpc_api
 
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
@@ -122,7 +128,7 @@ int main(int argc, char **argv) {
     int seed = vm["seed"].as<int>();
     srand(seed);
 
-    em = make_shared<ExecutionManager>(vm);
+    rpc_api::em = make_shared<ExecutionManager>(vm);
 
     // Set up logger
     auto console_logger = spdlog::default_logger()->clone("ExecutionManager");
@@ -132,19 +138,20 @@ int main(int argc, char **argv) {
     rpc::server srv(port_number);
 
     // Bind the function to the server
-    srv.bind("receive_update", &actionFinished);
-    srv.bind("init", &init);
-    srv.bind("is_initialized", &isInitialized);
-    srv.bind("get_location", &getRobotsLocation);
-    srv.bind("add_plan", &addNewPlan);
-    srv.bind("obtain_actions", &obtainActionsFromADG);
-    srv.bind("update_sim_step", &updateSimStep);
-    srv.bind("invoke_planner", &invokePlanner);
-    srv.bind("close_server", [&srv]() { closeServer(srv); });
-    srv.bind("freeze_simulation_if_necessary", &freezeSimulationIfNecessary);
-    srv.bind("is_simulation_frozen", &isSimulationFrozen);
-    srv.bind("sim_status", &simStatus);
-    srv.bind("record_stats_per_tick", &recordStatsPerTick);
+    srv.bind("receive_update", &rpc_api::actionFinished);
+    srv.bind("init", &rpc_api::init);
+    srv.bind("is_initialized", &rpc_api::isInitialized);
+    srv.bind("get_location", &rpc_api::getRobotsLocation);
+    srv.bind("add_plan", &rpc_api::addNewPlan);
+    srv.bind("obtain_actions", &rpc_api::obtainActionsFromADG);
+    srv.bind("update_sim_step", &rpc_api::updateSimStep);
+    srv.bind("invoke_planner", &rpc_api::invokePlanner);
+    srv.bind("close_server", [&srv]() { rpc_api::closeServer(srv); });
+    srv.bind("freeze_simulation_if_necessary",
+             &rpc_api::freezeSimulationIfNecessary);
+    srv.bind("is_simulation_frozen", &rpc_api::isSimulationFrozen);
+    srv.bind("sim_status", &rpc_api::simStatus);
+    srv.bind("record_stats_per_tick", &rpc_api::recordStatsPerTick);
     srv.run();  // Start the server, blocking call
 
     return 0;
