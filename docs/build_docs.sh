@@ -141,6 +141,7 @@ done
 # ----------------------------
 log "Removing Sphinx doctrees cache"
 rm -rf "${ROOT_DIR}/docs/build/doctrees"
+make clean
 log "Building final Sphinx HTML -> ${SPHINX_OUT}"
 python -m sphinx -b html -E -a "$SPHINX_SRC" "$SPHINX_OUT" -j auto
 
