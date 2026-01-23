@@ -2,6 +2,7 @@
 
 namespace rpc_api {
 
+/// @cond DOXYGEN_EXCLUDE
 shared_ptr<ExecutionManager> em = nullptr;
 std::mutex globalMutex;
 
@@ -16,19 +17,6 @@ bool isSimulationFrozen() {
     return em->isSimulationFrozen();
 }
 
-/// @brief Get the current locations of all robots
-/// @return A string representing the robots' locations
-/// The format of the string can be defined as needed, e.g. JSON
-string getRobotsLocation() {
-    lock_guard<mutex> guard(globalMutex);
-    return em->getRobotsLocation();
-}
-
-void addNewPlan(string &new_plan_json_str) {
-    lock_guard<mutex> guard(globalMutex);
-    em->addNewPlan(new_plan_json_str);
-}
-
 string actionFinished(string &robot_id_str, int node_ID) {
     lock_guard<mutex> guard(globalMutex);
     return em->actionFinished(robot_id_str, node_ID);
@@ -39,11 +27,6 @@ void init(string RobotID, tuple<int, int> init_loc) {
     em->init(RobotID, init_loc);
 }
 
-bool isInitialized() {
-    lock_guard<mutex> guard(globalMutex);
-    return em->isADGInitialized();
-}
-
 void closeServer(rpc::server &srv) {
     spdlog::info("Closing server at port {}", em->getRPCPort());
     em->saveStats();
@@ -51,7 +34,6 @@ void closeServer(rpc::server &srv) {
     srv.stop();
     spdlog::info("Server closed successfully.");
 }
-
 SIM_PLAN obtainActionsFromADG(string RobotID) {
     lock_guard<mutex> guard(globalMutex);
     return em->obtainActionsFromADG(RobotID);
@@ -66,18 +48,38 @@ void updateSimStep() {
     lock_guard<mutex> guard(globalMutex);
     em->updateSimStep();
 }
+void recordStatsPerTick() {
+    lock_guard<mutex> guard(globalMutex);
+    em->recordStatsPerTick();
+}
+/// @endcond
+
+/// @brief Get the current locations of all robots
+/// @return A string representing the robots' locations
+/// The format of the string can be defined as needed, e.g. JSON
+string getRobotsLocation() {
+    lock_guard<mutex> guard(globalMutex);
+    return em->getRobotsLocation();
+}
+
+void addNewPlan(string &new_plan_json_str) {
+    lock_guard<mutex> guard(globalMutex);
+    em->addNewPlan(new_plan_json_str);
+}
+
+bool isInitialized() {
+    lock_guard<mutex> guard(globalMutex);
+    return em->isADGInitialized();
+}
 
 bool invokePlanner() {
     lock_guard<mutex> guard(globalMutex);
     return em->invokePlanner();
 }
 
-void recordStatsPerTick() {
-    lock_guard<mutex> guard(globalMutex);
-    em->recordStatsPerTick();
-}
 }  // namespace rpc_api
 
+/// @cond DOXYGEN_EXCLUDE
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
     // Declare the supported options.
@@ -156,3 +158,5 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+/// @endcond
