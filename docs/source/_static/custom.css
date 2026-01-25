@@ -149,6 +149,62 @@ article.bd-article:has(.lsmart-hero--home) section {
   display: block;
 }
 
+/* Section video styling (inside .lsmart-home-content) */
+.lsmart-scalability-video {
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  height: auto;
+  margin: 1rem auto 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.lsmart-differentiable-drive-video,.lsmart-adg-video {
+  display: block;
+  width: 50%;
+  max-width: 960px;
+  height: auto;
+  margin: 1rem auto 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+
+.lsmart-video-figure-one {
+  margin: 1.5rem auto;
+  text-align: center;
+}
+
+
+.lsmart-video-figure-one figcaption,.lsmart-video-figure-two figcaption {
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
+  color: var(--pst-color-text-muted); /* works nicely with pydata theme */
+}
+
+
+/* Individual video + caption */
+.lsmart-video-figure-two {
+  max-width: 480px;
+  text-align: center;
+}
+
+.lsmart-video-figure-two video {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.lsmart-video-row {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: flex-start;
+  margin: 2rem 0;
+  flex-wrap: wrap; /* stack on small screens */
+}
+
 /* Top navigation bar background */
 .bd-header {
   background-color: #0e253cff !important;  /* pick your color */
