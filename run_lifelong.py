@@ -151,6 +151,7 @@ def run_lifelong_argos(
     save_heuristics_table: bool = False,
     left_w_weight: float = 1.0,
     right_w_weight: float = 1.0,
+    frame_grab: bool = False,
 ):
     """Function to run the lifelong SMART simulator with the given parameters.
 
@@ -255,6 +256,7 @@ def run_lifelong_argos(
         velocity=velocity,
         container=container,
         seed=seed,
+        frame_grab=frame_grab,
     )
     if screen > 0:
         # print("Argos config file created.")
