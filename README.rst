@@ -31,8 +31,7 @@ Real-world Considerations
    <div class="lsmart-video-row">
 
      <figure class="lsmart-video-figure-two">
-       <video class="lsmart-differentiable-drive-video" autoplay muted loop playsinline preload="auto">
-         <source src="readme_assets/differentiable-drive.mp4" type="video/mp4">
+       <video class="lsmart-differentiable-drive-video" autoplay muted loop playsinline preload="auto" src="readme_assets/differentiable-drive.mp4">
        </video>
        <figcaption>
          Differentiable Drive Robot Kinodynamics
