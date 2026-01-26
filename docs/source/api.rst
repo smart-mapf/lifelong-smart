@@ -1,16 +1,24 @@
+.. only:: not devmode
+
 .. include:: ../../README.md
     :parser: myst_parser.sphinx_
 
-.. only:: not devmode
+.. toctree::
+    :maxdepth: 1
+    :caption: Getting Started
+    :hidden:
+
+    Overview <overview>
+    Installation <install>
 
 
-   .. toctree::
-      :maxdepth: 1
-      :caption: API Reference
-      :hidden:
+.. toctree::
+    :maxdepth: 1
+    :caption: API References
+    :hidden:
 
-      api_server/library_root
-      api_client/library_root
+    Planner-EM Communication <api_server/library_root>
+    EM-Executor Communication <api_client/library_root>
 
 .. only:: devmode
 

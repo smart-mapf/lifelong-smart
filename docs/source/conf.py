@@ -2,13 +2,14 @@ from __future__ import annotations
 import os
 import subprocess
 from datetime import date
+from sphinx.util.fileutil import copy_asset
 
 github_link = "https://github.com/lunjohnzhang/lifelong_mapf_argos"
 DOCS_DEV = os.environ.get("DOCS_DEV", "0") == "1"
 
 # `tags` will be defined by Sphinx
 if DOCS_DEV:
-    tags.add("devmode") # type: ignore[name-defined]
+    tags.add("devmode")  # type: ignore[name-defined]
 
 # -------------------------------------------------
 # Project info
@@ -62,8 +63,19 @@ def run_doxygen():
 
 
 def setup(app):
+    # Run Doxygen at start of build (if not in dev mode)
     if not DOCS_DEV:
         app.connect("builder-inited", lambda app: run_doxygen())
+
+    # Copy README assets (logo, video) to output
+    def _copy_readme_assets(app):
+        src = os.path.join(app.srcdir, "readme_assets")
+        dst = os.path.join(app.outdir, "readme_assets")
+        if os.path.isdir(src):
+            copy_asset(src, dst)
+    app.connect("builder-inited", _copy_readme_assets)
+
+    # Add custom CSS
     app.add_css_file("custom.css")
 
 
@@ -106,18 +118,16 @@ else:
 # -------------------------------------------------
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
-html_logo = "_static/lsmart-logo-black-only.png"
+html_logo = "readme_assets/lsmart-logo-black-only.png"
+root_doc = "index"
 
 html_theme_options = {
-    # Top bar links like pyribs (Paper / Documentation / GitHub)
+    # Top bar links like pyribs (Documentation / Paper / GitHub)
+    "navbar_center": ["navbar-nav"],  # this renders the links
     "external_links": [
         {
             "name": "Paper",
             "url": ""
-        },
-        {
-            "name": "Documentation",
-            "url": "api.html"
         },
         {
             "name": "GitHub",
@@ -135,9 +145,15 @@ html_theme_options = {
     "navbar_end": ["navbar-icon-links"],
     "header_links_before_dropdown":
     6,
-    "collapse_navigation": False,
+    "collapse_navigation":
+    False,
 
     # Footer customization
     "footer_start": ["copyright"],
     "footer_end": ["sphinx-version"]
+}
+
+html_sidebars = {
+    # Hide left sidebar on index page
+    "index": [],
 }
