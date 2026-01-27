@@ -19,21 +19,22 @@ Lifelong Scalable Multi-Agent Realistic Testbed (LSMART) is an open-source simul
 
 ## Real-world Considerations
 
-<div class="lsmart-video-row">
-
-  <figure class="lsmart-video-figure-two">
-    <video src="https://github.com/user-attachments/assets/b4504aac-a41e-4b98-bb36-c3fb9f0db369" autoplay muted loop width=480>
-    </video>
-    <p align="center"><em>Differentiable Drive Robot Kinodynamics</em></p>
-  </figure>
-
-  <figure class="lsmart-video-figure-two">
-    <video src="https://github.com/user-attachments/assets/5865ca09-0718-41c6-8cb7-408b24ff86ad" autoplay muted loop width=480>
-    </video>
-    <p align="center"><em>Real-world Execution Uncertainties</em></p>
-  </figure>
-
-</div>
+<table>
+  <tr>
+    <td align="center">
+      <video src="https://github.com/user-attachments/assets/b4504aac-a41e-4b98-bb36-c3fb9f0db369"
+             autoplay muted loop playsinline width="420"></video>
+      <br/>
+      <em>Differentiable Drive Robot Kinodynamics</em>
+    </td>
+    <td align="center">
+      <video src="https://github.com/user-attachments/assets/5865ca09-0718-41c6-8cb7-408b24ff86ad"
+             autoplay muted loop playsinline width="420"></video>
+      <br/>
+      <em>Real-world Execution Uncertainties</em>
+    </td>
+  </tr>
+</table>
 
 Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling them as differentiable drive robots, which can move forward and rotate in place with constraints in maximum velocity and acceleration. This is in contrast to prior works that model AGVs as simple omnidirectional/pebble motion agents. We also simulate real-world execution delays and use Action Dependency Graph (ADG) [2] to ensure collision-free of the executed paths.
 
