@@ -51,7 +51,7 @@ Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling th
     loop
     playsinline
     preload="auto">
-    <source src="readme_assets/warehouse-large.mp4" type="video/mp4">
+    <source src="https://github.com/user-attachments/assets/7345971a-e180-40bc-8a53-e3eff6aea568" type="video/mp4">
   </video>
   <p align="center" font-size="1.5rem"><em>Simulation of 1000 robots in a large warehouse.</em></p>
 </figure>
