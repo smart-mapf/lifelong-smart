@@ -22,13 +22,13 @@ Lifelong Scalable Multi-Agent Realistic Testbed (LSMART) is an open-source simul
 <div class="lsmart-video-row">
 
   <figure class="lsmart-video-figure-two">
-    <video src="https://github.com/user-attachments/assets/b4504aac-a41e-4b98-bb36-c3fb9f0db369" autoplay muted loop>
+    <video src="https://github.com/user-attachments/assets/b4504aac-a41e-4b98-bb36-c3fb9f0db369" autoplay muted loop width=480>
     </video>
     <p align="center"><em>Differentiable Drive Robot Kinodynamics</em></p>
   </figure>
 
   <figure class="lsmart-video-figure-two">
-    <video src="https://github.com/user-attachments/assets/5865ca09-0718-41c6-8cb7-408b24ff86ad" autoplay muted loop>
+    <video src="https://github.com/user-attachments/assets/5865ca09-0718-41c6-8cb7-408b24ff86ad" autoplay muted loop width=480>
     </video>
     <p align="center"><em>Real-world Execution Uncertainties</em></p>
   </figure>
