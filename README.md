@@ -47,14 +47,7 @@ Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling th
 ## Insane Scalability
 
 <figure class="lsmart-video-figure-one">
-  <video
-    class="lsmart-scalability-video"
-    autoplay
-    muted
-    loop
-    playsinline
-    preload="auto">
-    <source src="https://github.com/user-attachments/assets/d0bff71e-d2d4-4f3c-9292-4715b0c8e371" type="video/mp4">
+  <video src="https://github.com/user-attachments/assets/d0bff71e-d2d4-4f3c-9292-4715b0c8e371">
   </video>
   <p align="center" font-size="1.5rem"><em>Simulation of 1000 robots in a large warehouse.</em></p>
 </figure>
