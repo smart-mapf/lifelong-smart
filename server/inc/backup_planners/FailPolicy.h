@@ -6,7 +6,14 @@
 #include "utils/States.h"
 #include "utils/Task.h"
 
-// Base class for MAPF solvers
+
+
+/**
+ * @class FailPolicy
+ * @brief The base class for all fail policies in LSMART.
+ * @details This class defines the interface and common functionality for fail policies used in the LSMART framework. Fail policies are responsible for handling situations where the main MAPF solver fails to find a solution within the given constraints. To implement a new fail policy, inherit from this class and implement the pure virtual methods.
+ */
+
 class FailPolicy {
 public:
     int k_robust;
@@ -39,27 +46,59 @@ public:
     SingleAgentSolver& path_planner;
     shared_ptr<HeuristicTableBase> heuristic_table;
     // Runs the algorithm until the problem is solved or time is exhausted
-    virtual bool run(const vector<State>& starts,
-                     const vector<vector<Task>>& goal_locations,
-                     const vector<Path>& guide_paths = vector<Path>(),
-                     int time_limit = 60,
-                     // The number of timesteps each agent has waited. Used if
-                     // considering tasking wait time
-                     const vector<int>& waited_time = vector<int>()) = 0;
 
+
+    /**
+     * @brief Constructor for the FailPolicy class
+     * @param G Reference to the BasicGraph representing the map
+     * @param path_planner Reference to the SingleAgentSolver used for single agent path planning
+     * @param heuristic_table Shared pointer to the HeuristicTableBase for heuristic calculations
+     * @param vm Boost program options variable map for configuration
+     */
     FailPolicy(const BasicGraph& G, SingleAgentSolver& path_planner,
                shared_ptr<HeuristicTableBase> heuristic_table,
                const boost::program_options::variables_map vm);
     ~FailPolicy();
 
+    /**
+     * @brief Given a MAPF instance, solve it using the fail policy
+     * @param starts Vector of start states for each agent
+     * @param goal_locations Vector of goal locations for each agent
+     * @param guide_paths Optional vector of guide paths for each agent. If the
+     * MAPF solver fails, the guide paths are usually the partial solution
+     * returned by the MAPF solver.
+     * @param time_limit Time limit (in seconds) for the fail policy to find a
+     * solution
+     * @param waited_time Vector of timesteps each agent has already waited.
+     * Used if considering tasking wait time.
+     * @return True if a solution is found, false otherwise
+     */
+    virtual bool run(const vector<State>& starts,
+                     const vector<vector<Task>>& goal_locations,
+                     const vector<Path>& guide_paths = vector<Path>(),
+                     int time_limit = 60,
+                     const vector<int>& waited_time = vector<int>()) = 0;
+
+
     // Save results
+    /**
+     * @brief Save the results of the fail policy to a file.
+     * @details This function can be left unimplemented if not needed.
+     * @param fileName Name of the file to save the results to
+     * @param instanceName Name of the MAPF instance
+     */
     virtual void save_results(const std::string& fileName,
                               const std::string& instanceName) const = 0;
-    virtual void save_search_tree(const std::string& fileName) const = 0;
-    virtual void save_constraints_in_goal_node(
-        const std::string& fileName) const = 0;
+
+    /**
+     * @brief Clear any internal data structures used by the fail policy.
+     */
     virtual void clear() = 0;
 
+    /**
+     * @brief Get the name of the fail policy.
+     * @return Name of the fail policy as a string.
+     */
     virtual string get_name() const = 0;
 
     const BasicGraph& G;
@@ -82,6 +121,13 @@ public:
         this->_is_initialized = initialized;
     }
 
+    /**
+     * @brief Convert the solution of the fail policy from the internal
+     * representation (``vector<Path>``) to SMART path format
+     * (``vector<vector<tuple<int, int, double, int>>>``).
+     * @param goal_locations The goal locations for each agent
+     * @return The converted SMART path format
+     */
     vector<vector<tuple<int, int, double, int>>> convert_path_to_smart(
         const vector<vector<Task>>& goal_locations);
     // void print_mapf_instance(vector<State> starts_,

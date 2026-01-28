@@ -14,11 +14,6 @@ public:
 
     void save_results(const std::string& fileName,
                       const std::string& instanceName) const override;
-    void save_search_tree(const std::string& fileName) const override {
-    }
-    void save_constraints_in_goal_node(
-        const std::string& fileName) const override {
-    }
 
     LRAStar(const BasicGraph& G, SingleAgentSolver& path_planner,
             shared_ptr<HeuristicTableBase> heuristic_table,

@@ -63,7 +63,7 @@ void recordStatsPerTick() {
  * initialization status.
  *
  * @return A JSON string with the following schema.
- * @code{.json}
+ * @code{.text}
  * {
  *   "initialized": true,
  *   "mapf_instance": {
@@ -127,7 +127,7 @@ string getRobotsLocation() {
  *
  * @param new_plan_json_str A JSON string with a new MAPF plan with the
  * following schema:
- * @code{.json}
+ * @code{.text}
  * {
  *   "success": true,
  *   "plan": [ [(row, col, timestep, task_id), ... ], ... ],
