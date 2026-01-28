@@ -165,7 +165,7 @@ def run_lifelong_argos(
             Defaults to ``RHCR``.
         container (bool, optional): whether to run in a `singularity`_ container. Defaults to False.
         seed (int, optional): random seed. Defaults to 42.
-        screen (int, optional): logging options. Defaults to 0.
+        screen (int, optional): logging options. Higher values increase verbosity. Defaults to 0.
         backup_solver (str, optional): backup solver (fail policy) used in case the MAPF planner fails. Options include:
 
             - ``PIBT``: the Priority Inheritance with Backtracking, (`Okumura et al. 2019`_).
@@ -186,7 +186,7 @@ def run_lifelong_argos(
             - ``one-goal``: the one-goal task assigner, which assigns each robot a goal regardless of duplicates. This can only be used with the ``TPBS`` planner.
 
             Defaults to ``windowed``.
-        planning_window (int, optional): planning window in timesteps. The final planning window is the max of this value and the inferred planning window from sim_window_tick.
+        planning_window (int, optional): planning window in timesteps. The final planning window is the max of this value and the inferred planning window from ``sim_window_tick``.
 
             Specifically, given ``sim_window_tick`` and ``ticks_per_second``, we compute the minimal planning window in timesteps required to cover the simulation window as follows:
 
