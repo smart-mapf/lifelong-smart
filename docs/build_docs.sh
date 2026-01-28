@@ -13,11 +13,11 @@ SPHINX_OUT="${DOCS_DIR}/build/html"
 # Controls:
 #   DOCS_DEV=1  -> skip doxygen/exhale (fast)
 #   CLEAN=1     -> clean build/html + doctrees
-#   PORT=8001   -> autobuild port
+#   PORT=8000   -> autobuild port
 #   HOST=127.0.0.1 -> autobuild host
 DOCS_DEV="${DOCS_DEV:-0}"
-CLEAN="${CLEAN:-0}"
-PORT="${PORT:-8001}"
+CLEAN="${CLEAN:-1}"
+PORT="${PORT:-8000}"
 HOST="${HOST:-127.0.0.1}"
 
 # ----------------------------
@@ -151,4 +151,4 @@ python -m sphinx -b html -E -a "$SPHINX_SRC" "$SPHINX_OUT" -j auto
 log "Starting sphinx-autobuild -> http://${HOST}:${PORT}"
 log "Tip (remote server): ssh -N -L ${PORT}:127.0.0.1:${PORT} <user>@<server>"
 cd build/html
-python -m http.server 8001 --bind "$HOST"
+python -m http.server "$PORT" --bind "$HOST"

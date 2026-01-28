@@ -100,6 +100,25 @@ if not DOCS_DEV:
 # -------------------------------------------------
 # Exhale (ONE project per run)
 # -------------------------------------------------
+# Override Exhale's default specificationsForKind to exclude undocumented
+# members
+def specificationsForKind(kind: str):
+    # For classes/structs, DO NOT include undocumented members.
+    if kind in ("class", "struct"):
+        return [
+            ":members:",
+            ":protected-members:",
+            # add ":private-members:" if you want, but still documented-only
+            # ":private-members:",
+        ]
+
+    # For everything else, use Breathe defaults
+    return []
+
+
+# Exhale requires a "picklable" mapping wrapper
+from exhale import utils
+
 EXHALE_PROJECT = os.environ.get("EXHALE_PROJECT", "").strip().lower()
 
 if (not DOCS_DEV) and EXHALE_PROJECT in ("server", "client"):
@@ -117,6 +136,7 @@ if (not DOCS_DEV) and EXHALE_PROJECT in ("server", "client"):
         # and importantly:
         "fullApiSubSectionTitle": "Full API",
         "contentsDirectives": True,
+        "customSpecificationsMapping": utils.makeCustomSpecificationsMapping(specificationsForKind),
     }
 else:
     exhale_args = {}
