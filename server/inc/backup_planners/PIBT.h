@@ -1,10 +1,10 @@
 #pragma once
 #include <ctime>
 
-#include "backup_planners/MAPFSolver.h"
+#include "backup_planners/FailPolicy.h"
 #include "backup_planners/SIPP.h"
 
-class PIBT : public MAPFSolver {
+class PIBT : public FailPolicy {
 public:
     // Runs the algorithm until the problem is solved or time is exhausted
     bool run(const vector<State> &starts,

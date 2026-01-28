@@ -1,7 +1,7 @@
 #pragma once
-#include "backup_planners/MAPFSolver.h"
+#include "backup_planners/FailPolicy.h"
 
-class LRAStar : public MAPFSolver {
+class LRAStar : public FailPolicy {
 public:
     uint64_t num_wait_commands;
     uint64_t num_expanded;

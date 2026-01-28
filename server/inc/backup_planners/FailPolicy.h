@@ -7,7 +7,7 @@
 #include "utils/Task.h"
 
 // Base class for MAPF solvers
-class MAPFSolver {
+class FailPolicy {
 public:
     int k_robust;
     int window;             // planning window
@@ -47,10 +47,10 @@ public:
                      // considering tasking wait time
                      const vector<int>& waited_time = vector<int>()) = 0;
 
-    MAPFSolver(const BasicGraph& G, SingleAgentSolver& path_planner,
+    FailPolicy(const BasicGraph& G, SingleAgentSolver& path_planner,
                shared_ptr<HeuristicTableBase> heuristic_table,
                const boost::program_options::variables_map vm);
-    ~MAPFSolver();
+    ~FailPolicy();
 
     // Save results
     virtual void save_results(const std::string& fileName,

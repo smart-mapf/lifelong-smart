@@ -1,9 +1,9 @@
-#include "backup_planners/MAPFSolver.h"
+#include "backup_planners/FailPolicy.h"
 
 #include <ctime>
 #include <iostream>
 
-MAPFSolver::MAPFSolver(const BasicGraph& G, SingleAgentSolver& path_planner,
+FailPolicy::FailPolicy(const BasicGraph& G, SingleAgentSolver& path_planner,
                        shared_ptr<HeuristicTableBase> heuristic_table,
                        const boost::program_options::variables_map vm)
     : solution_found(false),
@@ -24,10 +24,10 @@ MAPFSolver::MAPFSolver(const BasicGraph& G, SingleAgentSolver& path_planner,
       heuristic_table(heuristic_table) {
 }
 
-MAPFSolver::~MAPFSolver() {
+FailPolicy::~FailPolicy() {
 }
 
-bool MAPFSolver::validate_solution() {
+bool FailPolicy::validate_solution() {
     // Check whether the paths are feasible.
     double soc = 0;
     for (int a1 = 0; a1 < num_of_agents; a1++) {
@@ -85,7 +85,7 @@ bool MAPFSolver::validate_solution() {
     return true;
 }
 
-void MAPFSolver::print_solution() const {
+void FailPolicy::print_solution() const {
     for (int i = 0; i < num_of_agents; i++) {
         cout << "Agent " << i << ":";
         for (const auto& loc : solution[i]) {
@@ -98,7 +98,7 @@ void MAPFSolver::print_solution() const {
     }
 }
 
-vector<vector<tuple<int, int, double, int>>> MAPFSolver::convert_path_to_smart(
+vector<vector<tuple<int, int, double, int>>> FailPolicy::convert_path_to_smart(
     const vector<vector<Task>>& goal_locations) {
     vector<vector<tuple<int, int, double, int>>> new_mapf_plan;
     new_mapf_plan.resize(this->num_of_agents);
@@ -150,7 +150,7 @@ vector<vector<tuple<int, int, double, int>>> MAPFSolver::convert_path_to_smart(
     return new_mapf_plan;
 }
 
-// void MAPFSolver::print_mapf_instance(vector<State> starts_,
+// void FailPolicy::print_mapf_instance(vector<State> starts_,
 //                                      vector<vector<Task>> goals_) const {
 //     for (int i = 0; i < starts_.size(); i++) {
 //         cout << "Agent " << i << ": ";
@@ -171,7 +171,7 @@ vector<vector<tuple<int, int, double, int>>> MAPFSolver::convert_path_to_smart(
 //     }
 // }
 
-bool MAPFSolver::congested() const {
+bool FailPolicy::congested() const {
     // Count the number of agents that are not making progress in the current
     int wait_agents = 0;
     for (const auto& path : this->solution) {

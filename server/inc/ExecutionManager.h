@@ -145,7 +145,7 @@ private:
     // Backup planner related
     SMARTGrid G;
     shared_ptr<SingleAgentSolver> path_planner = nullptr;
-    shared_ptr<MAPFSolver> backup_planner = nullptr;
+    shared_ptr<FailPolicy> backup_planner = nullptr;
     shared_ptr<HeuristicTableBase> heuristic_table = nullptr;
     bool save_stats = false;
     boost::program_options::variables_map _vm;

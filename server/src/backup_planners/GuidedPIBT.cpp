@@ -3,7 +3,7 @@
 GuidedPIBT::GuidedPIBT(const BasicGraph &G, SingleAgentSolver &path_planner,
                        shared_ptr<HeuristicTableBase> heuristic_table,
                        const boost::program_options::variables_map vm)
-    : MAPFSolver(G, path_planner, heuristic_table, vm) {
+    : FailPolicy(G, path_planner, heuristic_table, vm) {
 }
 
 bool GuidedPIBT::run(const vector<State> &starts,
