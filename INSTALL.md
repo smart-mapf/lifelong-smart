@@ -52,15 +52,3 @@ While developing, you may compile server, client, and MAPF planners using:
 ```bash
 bash compile.sh user
 ```
-<!-- 
-## Usage
-
-#### Running with visualization
-```
-python run_lifelong.py
-```
-
-#### Running in headless mode
-```
-python run_lifelong.py --headless=True
-``` -->

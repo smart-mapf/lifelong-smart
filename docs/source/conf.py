@@ -1,8 +1,13 @@
 from __future__ import annotations
 import os
 import subprocess
+import sys
+from pathlib import Path
 from datetime import date
 from sphinx.util.fileutil import copy_asset
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
 
 github_link = "https://github.com/lunjohnzhang/lifelong_mapf_argos"
 DOCS_DEV = os.environ.get("DOCS_DEV", "0") == "1"
@@ -27,6 +32,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "myst_parser",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
     # "breathe",
     # "exhale",
 ]
@@ -73,6 +80,7 @@ def setup(app):
         dst = os.path.join(app.outdir, "readme_assets")
         if os.path.isdir(src):
             copy_asset(src, dst)
+
     app.connect("builder-inited", _copy_readme_assets)
 
     # Add custom CSS
@@ -157,3 +165,13 @@ html_sidebars = {
     # Hide left sidebar on index page
     "index": [],
 }
+
+# For generating py docs
+autosummary_generate = True
+
+# Optional but useful:
+# show type hints in text instead of signature
+autodoc_typehints = "description"
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
+autodoc_mock_imports = ["fire", "numpy", "lifelong_mapf_argos"]

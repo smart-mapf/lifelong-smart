@@ -10,6 +10,9 @@
      <div class="lsmart-hero-content">
        <div>
          <img class="lsmart-hero-logo" src="readme_assets/lsmart-logo-black.png" alt="LSMART logo">
+        <p class="lsmart-hero-tagline">
+            An open-source simulator to evaluate any lifelong Multi-Agent Path Finding algorithms with real-world kinodynamics and execution uncertainties.
+        </p>
          <div class="lsmart-hero-buttons">
            <a class="lsmart-btn lsmart-btn-primary" href="install.html">Install</a>
            <a class="lsmart-btn" href="api.html">Documentation</a>
@@ -25,27 +28,19 @@
 
    <div class="lsmart-home-content">
 
-**Lifelong Scalable Multi-Agent Realistic Testbed (LSMART)**
-============================================================
+**Modular Design**
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. image:: readme_assets/l-smart-2.0.png
+.. figure:: readme_assets/l-smart-2.0.png
    :alt: LSMART Pipeline
    :align: center
-   :width: 100%
+   :width: 90%
 
+   Detailed Architecture of LSMART
 
-Introduction
-+++++++++++++++++
+LSMART encapsulates key design choices of a real-world Fleet Management System (FMS) in separate modules. Red boxes highlight the user customizable modules.
 
-Lifelong Scalable Multi-Agent Realistic Testbed (LSMART) is an open-source simulator to evaluate any Multi-Agent Path Finding (MAPF) algorithm in a Fleet Management System (FMS) with Automated Guided Vehicles (AGVs) under lifelong MAPF (LMAPF) settings. MAPF aims to move a group of agents from their corresponding starting locations to their goals. Lifelong MAPF (LMAPF) is a variant of MAPF that continuously assigns new goals for agents to reach. LMAPF applications, such as autonomous warehouses, often require a centralized, lifelong system to coordinate the movement of a fleet of robots, typically AGVs. However, existing works on MAPF and LMAPF often assume simplified kinodynamic models, such as pebble motion, as well as perfect execution and communication for AGVs. LSMART encapsulates key design choices of a real-world FMS in separate modules. These include:
-
-1. **an invocation policy**: given the current states of the robots, it determines if the planner should be invoked.
-2. **a MAPF problem instance generator**: given the current states of the robots, it returns the a MAPF problem instance.
-3. **a MAPF planner**: given a MAPF problem instance with start and goal locations, it returns collision-free paths.
-4. **a fail policy**: if the MAPF planner fails to return collision-free paths, it recovers the system from failure.
-
-
-Real-world Considerations
+**Real-world Considerations**
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. raw:: html
@@ -73,7 +68,7 @@ Real-world Considerations
 
 Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling them as differentiable drive robots, which can move forward and rotate in place with constraints in maximum velocity and acceleration. This is in contrast to prior works that model AGVs as simple omnidirectional/pebble motion agents. We also simulate real-world execution delays and use Action Dependency Graph (ADG) [2] to ensure collision-free of the executed paths.
 
-Insane Scalability
+**Insane Scalability**
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 .. raw:: html
 
@@ -95,7 +90,7 @@ Insane Scalability
 
 LSMART is highly scalable in terms of the number of robots and the size of the map. Here we show a simulation of 1000 robots in the *warehouse-10-20-10-2-1* map from the MAPF benchmark [3]. We use PIBT [4] as the underlying MAPF planner and plan windowed paths every 1 simulation second. The simulation runs for 600 simulation seconds and takes 268 seconds to finish with a AMD Ryzen 9 9950X 16-Core Processor.
 
-References
+**References**
 ++++++++++++++++++++++++++++++
 
 
@@ -107,7 +102,7 @@ References
 
 [4] Okumura, K.; Machida, M.; Défago, X.; and Tamura, Y. 2019. Priority Inheritance with Backtracking for Iterative Multi-agent Path Finding. In Proceedings of the International Joint Conference on Artificial Intelligence (IJCAI), 535-542.
 
-Paper and Citation
+**Paper and Citation**
 ++++++++++++++++++++++++++++++++
 
 .. code-block:: bibtex

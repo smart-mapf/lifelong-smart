@@ -101,6 +101,19 @@ article.bd-article:has(.lsmart-hero--home) {
   justify-content: center;
 }
 
+/* Tagline styling */
+.lsmart-hero-tagline {
+  max-width: 75%;
+  margin: 1rem auto 1.5rem auto;
+  font-size: 1.5rem;
+  line-height: 1.45;
+  opacity: 0.95;
+  backdrop-filter: blur(10px);
+  color: white !important;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+}
+
+
 /* Buttons */
 .lsmart-btn {
   display: inline-block;
@@ -162,7 +175,7 @@ article.bd-article:has(.lsmart-hero--home) section {
 
 .lsmart-differentiable-drive-video,.lsmart-adg-video {
   display: block;
-  width: 50%;
+  width: 45%;
   max-width: 960px;
   height: auto;
   margin: 1rem auto 2rem;
@@ -179,7 +192,7 @@ article.bd-article:has(.lsmart-hero--home) section {
 
 .lsmart-video-figure-one figcaption,.lsmart-video-figure-two figcaption {
   margin-top: 0.5rem;
-  font-size: 1.5rem;
+  font-size: 1.05rem;
   color: var(--pst-color-text-muted); /* works nicely with pydata theme */
 }
 
@@ -248,13 +261,3 @@ article.bd-article:has(.lsmart-hero--home) section {
   max-width: 100%;  /* default is 60em */
 }
 
-/* Hide scrollbar in primary sidebar */
-.bd-sidebar-primary {
-  scrollbar-width: none;      /* Firefox */
-  -ms-overflow-style: none;   /* IE/Edge legacy */
-}
-
-.bd-sidebar-primary::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
