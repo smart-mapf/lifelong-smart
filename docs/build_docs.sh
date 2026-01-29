@@ -19,6 +19,7 @@ DOCS_DEV="${DOCS_DEV:-0}"
 CLEAN="${CLEAN:-1}"
 PORT="${PORT:-8000}"
 HOST="${HOST:-127.0.0.1}"
+CI="${CI:-0}"
 
 # ----------------------------
 # Projects (ADD NEW ONES HERE)
@@ -69,6 +70,9 @@ run_doxygen() {
         rm -rf "$outdir"
     fi
     
+    # create the output directory
+    mkdir -p "$outdir"
+    
     log "Running doxygen: $doxyfile"
     (cd "$DOCS_DIR" && doxygen "$doxyfile")
     
@@ -84,15 +88,15 @@ run_exhale_only() {
     local api_dir="$2"   # docs/source/api_<project>
     
     log "Generating Exhale RST stubs for: $project -> $api_dir"
-    
     rm -rf "$api_dir"
     
     local tmp_out
     tmp_out="$(mktemp -d)"
-    trap 'rm -rf "$tmp_out"' EXIT
     
     EXHALE_PROJECT="$project" \
     python -m sphinx -b html "$SPHINX_SRC" "$tmp_out" -j auto -q
+    
+    rm -rf "$tmp_out"
 }
 
 # ----------------------------
@@ -141,14 +145,17 @@ done
 # ----------------------------
 log "Removing Sphinx doctrees cache"
 rm -rf "${ROOT_DIR}/docs/build/doctrees"
-make clean
 log "Building final Sphinx HTML -> ${SPHINX_OUT}"
 python -m sphinx -b html -E -a "$SPHINX_SRC" "$SPHINX_OUT" -j auto
 
 # ----------------------------
 # 4) Start dev server
 # ----------------------------
+if [[ "${CI}" == "1" ]]; then
+    log "CI=1 -> skipping local http.server"
+    exit 0
+fi
 log "Starting sphinx-autobuild -> http://${HOST}:${PORT}"
 log "Tip (remote server): ssh -N -L ${PORT}:127.0.0.1:${PORT} <user>@<server>"
-cd build/html
+cd "$SPHINX_OUT"
 python -m http.server "$PORT" --bind "$HOST"
