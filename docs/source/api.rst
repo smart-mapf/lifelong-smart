@@ -54,13 +54,13 @@ The AGVs and the `ARGoS3`_ simulator run in parallel with the planner. Each AGV 
     Planner Invocation Policy Integration <tutorials/invocation_policy>
     Fail Policy Integration <tutorials/fail_policy>
 
-.. toctree::
-    :maxdepth: 1
-    :caption: API References
-    :hidden:
+.. .. toctree::
+..     :maxdepth: 1
+..     :caption: API References
+..     :hidden:
 
-    Planner-EM Communication <api_server/library_root>
-    EM-Executor Communication <api_client/library_root>
+..     Planner-EM Communication <api_server/library_root>
+.. EM-Executor Communication <api_client/library_root>
 
 .. only:: devmode
 

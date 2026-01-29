@@ -16,7 +16,7 @@
          <div class="lsmart-hero-buttons">
            <a class="lsmart-btn lsmart-btn-primary" href="install.html">Install</a>
            <a class="lsmart-btn" href="api.html">Documentation</a>
-           <a class="lsmart-btn" href="https://github.com/lunjohnzhang/lifelong_mapf_argos">GitHub</a>
+           <a class="lsmart-btn" href="https://github.com/smart-mapf/lifelong-smart">GitHub</a>
          </div>
        </div>
      </div>

@@ -9,7 +9,7 @@ from sphinx.util.fileutil import copy_asset
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-github_link = "https://github.com/lunjohnzhang/lifelong_mapf_argos"
+github_link = "https://github.com/smart-mapf/lifelong-smart"
 DOCS_DEV = os.environ.get("DOCS_DEV", "0") == "1"
 
 # `tags` will be defined by Sphinx
