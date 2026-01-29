@@ -27,18 +27,13 @@ def get_current_time() -> str:
 def init_start_locations(
     map_str: List[str],
     num_agents: int,
-    grid_type: str = "regular",
 ) -> List[Tuple[str, str]]:
-    if grid_type == "regular":
-        non_starts = obstacles
-    elif grid_type == "one_bot_per_aisle":
-        non_starts = obstacles + ["e"]
     # Get free locations
     h, w = len(map_str), len(map_str[0])
     free_locations = []
     for i in range(h):
         for j in range(w):
-            if map_str[i][j] not in non_starts:
+            if map_str[i][j] not in obstacles:
                 free_locations.append(i * w + j)
     if len(free_locations) < num_agents:
         logger.error(
@@ -115,100 +110,108 @@ def run_lifelong_argos(
     sim_window_tick: int = 20,
     ticks_per_second: int = 10,
     velocity: float = 200.0,
-    # look_ahead_dist: int = 10,
-    planner: str = "RHCR",  # ["PBS", "RHCR", "MASS", "TPBS"]
+    planner: str = "RHCR",
     container: bool = False,
     seed: int = 42,
     screen: int = 0,
-    backup_solver: str = "PIBT",  # ["PIBT", "LRA", "GuidedPIBT"]
-    grid_type: str = "regular",
+    backup_solver: str = "PIBT",
     planner_invoke_policy: str = "default",
     task_assigner_type: str = "windowed",
-    # RHCR parameters
-    # TODO: clean up unused or default parameters that requires no changes
     planning_window: int = 10,
-    scenario: str = "SMART",
-    task: str = "",
+    frame_grab: bool = False,
     cutoffTime: int = 1,
-    id: bool = False,
-    solver: str = "PBS",  # ["PBS", "PIBT"]
+    # RHCR parameters
+    solver: str = "PBS",
     single_agent_solver: str = "SIPP",
-    lazyP: bool = False,
-    travel_time_window: int = 0,
-    potential_function: str = "NONE",
-    potential_threshold: int = 0,
     rotation: bool = False,
     rotation_time: int = 1,
-    robust: int = 0,
-    CAT: bool = False,
-    hold_endpoints: bool = False,
-    dummy_paths: bool = False,
     prioritize_start: bool = True,
     suboptimal_bound: float = 1,
     log: bool = False,
     save_result: bool = False,
     save_solver: bool = False,
     save_heuristics_table: bool = False,
-    left_w_weight: float = 1.0,
-    right_w_weight: float = 1.0,
 ):
-    """Function to run the lifelong SMART simulator with the given parameters.
+    """Function to run the LSMART simulator with the given parameters.
 
     Args:
-        map_filepath (str, optional): file path to map..
+        map_filepath (str, optional): file path to map. Example maps are in the ``maps`` directory. If maps contains workstations (``w``) and endpoints (``e``), robots' tasks will be assigned alternately between workstations and endpoints. If not, robots' tasks will be randomly generated from the empty spaces. Defaults to ``maps/kiva_large_w_mode.json``.
         num_agents (int, optional): number of robots. Defaults to 32.
-        headless (bool, optional): whether run with visualization. Defaults to
-            False.
+        headless (bool, optional): whether run in headless mode. If False, a visualization will be generated. Defaults to False.
         argos_config_filepath (str, optional): file path to write the generated
             Argos config file. Defaults to "output.argos".
         stats_name (str, optional): file path to store the stats from the
-            simulator. Defaults to "stats.csv".
+            simulator. Defaults to "stats.json".
         save_stats (bool , optional): whether to save the stats. Defaults to
             False.
         output_log (str, optional): file path to store the stdout from the
             simulator. If None, the output will not be saved to a file.
-            Defaults to None
+            Defaults to None.
         port_num (int, optional): port number of RPC server. Defaults to 8182.
         n_threads (int, optional): number of threads to run Argos. Defaults to 1.
+        ticks_per_second (int, optional): the simulator runs in ``ticks``. The states of the robots are updated per tick. ``ticks_per_second`` specifies the number of ticks per simulation second used by the simulator. Defaults to 10.
         sim_duration (int, optional): number of simulation ticks to run the
-            simulator. Defaults to 1800*10.
-        sim_window_tick (int, optional): number of ticks to invoke the planner.
-        ticks_per_second (int, optional): number of updates (ticks) per
-            simulation second
+            simulator. Defaults to 1800 * 10, meaning 1800 seconds.
+        sim_window_tick (int, optional): number of ticks to invoke the planner. Only applies to the periodic invocation policy. Defaults to 20 ticks.
         velocity (float, optional): velocity of the robots in cm/s. Defaults to
             200.0 cm/s.
-        planner (str, optional): planner to use. Defaults to "RHCR".
-        container (bool, optional): whether to run in a container. Defaults to
-            False.
+        planner (str, optional): planner to use. Options include:
+
+            - ``RHCR``: the Rolling Horizon Collision Resolution planner, (`Li et al. 2021`_). RHCR plans for windowed paths for all robots.
+            - ``MASS``: the MAPF-SSIPP-SPS planner, (`Yan et al. 2025`_). MASS plans for full-horizon paths with 2nd order dynamics for all robots.
+            - ``PBS``: the Priority-Based Search planner (`Ma et al. 2019`_). PBS plans for full-horizon paths for all robots.
+            - ``TPBS``: the `Transient` Priority-Based Search planner (`Morag et al. 2025`_). TPBS plans for full-horizon paths for all robots even if there are duplicate goals.
+
+            Defaults to ``RHCR``.
+        container (bool, optional): whether to run in a `singularity`_ container. Defaults to False.
         seed (int, optional): random seed. Defaults to 42.
-        screen (int, optional): logging options. Defaults to 0.
-        backup_solver (str, optional): backup solver used in case the MAPF planner fails. Defaults to "PIBT".
-        planner_invoke_policy (str, optional): planner invocation policy, one of ["default", "no_action"]. Defaults to "default", which calls planner periodically. "No_action" only calls planner when a robot has no action to execute.
-        task_assigner_type (str, optional): task assigner, one of ["windowed", "distinct-one-goal", "one-goal"]. Defaults to "windowed".
-        planning_window (int, optional): planning window in timesteps. Defaults to 10. The actual plannng window is the max of this value and the inferred planning window from sim_window_tick.
-        scenario (str, optional): scenario in RHCR. Defaults to "SMART".
-        task (str, optional): task file in RHCR. Defaults to "".
-        cutoffTime (int, optional): time limit of planner in seconds. Defaults to 1.
-        id (bool, optional): ID algorithm of RHCR. Defaults to False.
-        solver (str, optional): solver in RHCR. Defaults to "PBS".
-        lazyP (bool, optional): lazy priority in RHCR. Defaults to False.
-        travel_time_window (int, optional): travel time window in RHCR.
-            Defaults to 0.
-        potential_function (str, optional): potential function in RHCR.
-            Defaults to "NONE".
-        potential_threshold (int, optional): potential threshold in RHCR.
-            Defaults to 0.
-        rotation (bool, optional): whether consider rotatio in RHCR. Defaults
-            to False.
+        screen (int, optional): logging options. Higher values increase verbosity. Defaults to 0.
+        backup_solver (str, optional): backup solver (fail policy) used in case the MAPF planner fails. Options include:
+
+            - ``PIBT``: the Priority Inheritance with Backtracking, (`Okumura et al. 2019`_).
+            - ``LRA``: the Local Repair Guided Waits, (`Li et al. 2021`_).
+            - ``GuidedPIBT``: Guided PIBT, (`Chen et al. 2024`_).
+
+            Defaults to ``PIBT``.
+        planner_invoke_policy (str, optional): planner invocation policy, options include:
+
+            - ``default``: the periodic policy where the planner is invoked periodically every ``sim_window_tick`` ticks.
+            - ``no_action``: the event-based policy where the planner is invoked when at least one robot has no action to execute in the ADG (`Hönig et al. 2019`_).
+
+            Defaults to ``default``.
+        task_assigner_type (str, optional): task assigner (MAPF problem instance generator) used to generate problem instances. Options include:
+
+            - ``windowed``: the windowed task assigner (`Li et al. 2021`_), which assigns tasks within the planning window. This can only be used with the ``RHCR`` planner.
+            - ``distinct-one-goal``: the distinct one-goal task assigner, which assigns each robot a distinct goal. This can only be used with the ``PBS`` and ``MASS`` planners.
+            - ``one-goal``: the one-goal task assigner, which assigns each robot a goal regardless of duplicates. This can only be used with the ``TPBS`` planner.
+
+            Defaults to ``windowed``.
+        planning_window (int, optional): planning window in timesteps. The final planning window is the max of this value and the inferred planning window from ``sim_window_tick``.
+
+            Specifically, given ``sim_window_tick`` and ``ticks_per_second``, we compute the minimal planning window in timesteps required to cover the simulation window as follows:
+
+            .. math::
+                planning\_window\_ts = \\lceil \\frac{sim\_window\_tick}{ticks\_per\_second} \\times \\frac{velocity}{100} \\rceil
+
+            Then given the user-specified ``planning_window``, the final planning window is:
+
+            .. math::
+                planning\_window = max(planning\_window\_ts, planning\_window)
+
+            Defaults to 10.
+
+        cutoffTime (int, optional): time limit of the planner in seconds. With the periodic invocation policy (``default``), the ``cutoffTime`` should be less than or equal to the simulation window in seconds (:math:`\\frac{sim\_window\_tick}{ticks\_per\_second}`). Defaults to 1.
+        frame_grab (bool, optional): whether to enable frame grabber in Argos.
+            If enabled, the simulator will save screenshots to the ``frames``
+            folder. The screenshots can be combined into a video using external
+            tools. Defaults to False.
+        solver (str, optional): MAPF solver in RHCR. Options include ``PBS`` (`Ma et al. 2019`_) and ``PIBT`` (`Okumura et al. 2019`_). Defaults to ``PBS``.
+        single_agent_solver (str, optional): single agent solver in RHCR.
+            Options include ``SIPP`` (`Phillips et al. 2011`_) and ``ASTAR``.
+            Defaults to ``SIPP``.
+        rotation (bool, optional): whether the single-agent planning consider rotation in RHCR. Defaults to False.
         rotation_time (int, optional): rotation time in timesteps in RHCR.
             Defaults to 1.
-        robust (int, optional): k robust model in RHCR. Defaults to 0.
-        CAT (bool, optional): conflict avoidance table in RHCR. Defaults to
-            False.
-        hold_endpoints (bool, optional): whether hold endpoints or not in RHCR.
-            Defaults to False.
-        dummy_paths (bool, optional): whether planning path to dummy home
-            location in RHCR. Defaults to False.
         prioritize_start (bool, optional): prioritize start in RHCR. Defaults
             to True.
         suboptimal_bound (float, optional): suboptimality bound of certain
@@ -220,21 +223,23 @@ def run_lifelong_argos(
             Defaults to False.
         save_heuristics_table (bool, optional): save heuristic table or not.
             Defaults to False.
-        left_w_weight (float, optional): left workstation weights in RHCR.
-            Defaults to 1.0.
-        right_w_weight (float, optional): right workstation weights in RHCR.
-            Defaults to 1.0.
+
+    .. _Li et al. 2021: https://arxiv.org/abs/2005.07371
+    .. _Yan et al. 2025: https://arxiv.org/abs/2412.13359
+    .. _Ma et al. 2019: https://arxiv.org/abs/1812.06356
+    .. _Morag et al. 2025: https://ojs.aaai.org/index.php/SOCS/article/view/35998
+    .. _Okumura et al. 2019: https://arxiv.org/abs/1901.11282
+    .. _Chen et al. 2024: https://arxiv.org/abs/2308.11234
+    .. _Hönig et al. 2019: https://ieeexplore.ieee.org/document/8620328
+    .. _Phillips et al. 2011: https://www.cs.cmu.edu/~maxim/files/sipp_icra11.pdf
+    .. _singularity: https://sylabs.io/singularity/
     """
     np.random.seed(seed)
     setup_logging()
-    # print(f"Map Name: {map_filepath}")
     map_data, width, height = parse_map_file(map_filepath)
 
     # Transform the map and scen to Argos config file, obstacles: '@', 'T'
-    # if screen > 0:
-    #     # print("Creating Argos config file ...")
-    #     logger.info("Creating Argos config file ...")
-    robot_init_pos = init_start_locations(map_data, num_agents, grid_type)
+    robot_init_pos = init_start_locations(map_data, num_agents)
 
     # Use absolute path for argos config
     argos_config_filepath = os.path.abspath(argos_config_filepath)
@@ -255,9 +260,9 @@ def run_lifelong_argos(
         velocity=velocity,
         container=container,
         seed=seed,
+        frame_grab=frame_grab,
     )
     if screen > 0:
-        # print("Argos config file created.")
         logger.info(f"Argos config file created at {argos_config_filepath}.")
 
     # Infer look_ahead_dist from cutoffTime
@@ -326,7 +331,7 @@ def run_lifelong_argos(
             f"--backup_planner={backup_solver}",
             f"--backup_single_agent_solver={single_agent_solver}",
             f"--map={map_filepath}",
-            f"--grid_type={grid_type}",
+            f"--grid_type=regular",
             f"--rotation={str(rotation).lower()}",
             f"--rotation_time={rotation_time}",
             f"--save_heuristics_table={str(save_heuristics_table).lower()}",
@@ -364,46 +369,29 @@ def run_lifelong_argos(
             ]
         # RHCR, typically windowed PBS
         elif planner == "RHCR":
-            # if rotation:
-            #     cutoffTime = int(cutoffTime * 10)
             planner_command = [
                 rhcr_path,
                 f"--map={map_filepath}",
-                # f"--task={task}",
                 f"--agentNum={num_agents}",
                 f"--port_number={port_num}",
                 f"--seed={seed}",
                 f"--screen={screen}",
                 f"--planning_window={plan_window_ts}",
                 f"--simulation_window={plan_window_ts}",
-                f"--scenario={scenario}",
+                f"--scenario=SMART",
                 f"--cutoffTime={cutoffTime}",
                 f"--rotation={rotation}",
                 f"--solver={solver}",
-                f"--id={str(id).lower()}",
                 f"--single_agent_solver={single_agent_solver}",
                 f"--backup_solver={backup_solver}",
-                f"--lazyP={str(lazyP).lower()}",
-                f"--travel_time_window={travel_time_window}",
-                f"--potential_function={potential_function}",
-                f"--potential_threshold={potential_threshold}",
                 f"--rotation_time={rotation_time}",
-                f"--robust={robust}",
-                f"--CAT={str(CAT).lower()}",
-                f"--hold_endpoints={str(hold_endpoints).lower()}",
-                f"--dummy_paths={str(dummy_paths).lower()}",
                 f"--prioritize_start={str(prioritize_start).lower()}",
                 f"--suboptimal_bound={suboptimal_bound}",
                 f"--log={str(log).lower()}",
                 f"--save_result={str(save_result).lower()}",
                 f"--save_solver={str(save_solver).lower()}",
                 f"--save_heuristics_table={str(save_heuristics_table).lower()}",
-                f"--left_w_weight={left_w_weight}",
-                f"--right_w_weight={right_w_weight}",
-                f"--grid_type={grid_type}",
             ]
-            if task != "":
-                planner_command.append(f"--task={task}")
         # MASS, typically PBS with 2nd order dynamics
         elif planner == "MASS":
             planner_command = [

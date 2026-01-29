@@ -1,7 +1,7 @@
 #pragma once
-#include "backup_planners/MAPFSolver.h"
+#include "backup_planners/FailPolicy.h"
 
-class LRAStar : public MAPFSolver {
+class LRAStar : public FailPolicy {
 public:
     uint64_t num_wait_commands;
     uint64_t num_expanded;
@@ -14,11 +14,6 @@ public:
 
     void save_results(const std::string& fileName,
                       const std::string& instanceName) const override;
-    void save_search_tree(const std::string& fileName) const override {
-    }
-    void save_constraints_in_goal_node(
-        const std::string& fileName) const override {
-    }
 
     LRAStar(const BasicGraph& G, SingleAgentSolver& path_planner,
             shared_ptr<HeuristicTableBase> heuristic_table,

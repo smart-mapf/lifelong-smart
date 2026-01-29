@@ -3,7 +3,7 @@
 LRAStar::LRAStar(const BasicGraph &G, SingleAgentSolver &path_planner,
                  shared_ptr<HeuristicTableBase> heuristic_table,
                  const boost::program_options::variables_map vm)
-    : MAPFSolver(G, path_planner, heuristic_table, vm),
+    : FailPolicy(G, path_planner, heuristic_table, vm),
       num_expanded(0),
       num_generated(0) {
 }

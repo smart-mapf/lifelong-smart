@@ -4,25 +4,54 @@
 #include "utils/Task.h"
 #include "utils/common.h"
 
+/**
+ * @class BasicTaskAssigner
+ * @brief An abstract class for task assigners.
+ * @details This class provides the interface for task assigners. It contains
+ * methods for updating start and goal locations, loading tasks from a file,
+ * and getting the current start and goal locations. It also provides methods
+ * for sampling locations from the map.
+ */
 class BasicTaskAssigner {
 public:
     BasicTaskAssigner() = default;
+
+    /**
+     * @brief Constructor for BasicTaskAssigner.
+     * @param G The SMARTGrid representing the map.
+     * @param heuristic_table A shared pointer to the heuristic table.
+     * @param screen The screen number for logging.
+     * @param num_of_agents The number of robots.
+     * @param seed The random seed.
+     * @param task_file The file containing the tasks. If empty, tasks are
+     * randomly generated.
+     */
     BasicTaskAssigner(const SMARTGrid &G,
                       const shared_ptr<HeuristicTableBase> heuristic_table,
                       int screen, int num_of_agents, int seed,
                       string task_file = "");
+
+    /**
+     * @brief Virtual function to update start and goal locations.
+     * @param start_locs A vector of tuples representing the start locations.
+     * @param finished_tasks_id A set of finished task IDs.
+     */
     virtual void updateStartsAndGoals(
         vector<tuple<double, double, int>> &start_locs,
         set<int> finished_tasks_id) = 0;
+
     vector<State> getStarts() const {
         return starts;
     }
+
     vector<vector<Task>> getGoalLocations() const {
         return goal_locations;
     }
+
     set<int> getBackupTasks() const {
         return backup_tasks;
     }
+
     json getMAPFInstanceJSON() const;
 
 protected:

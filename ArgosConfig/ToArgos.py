@@ -54,7 +54,8 @@ def create_Argos(map_data: List[str],
                  screen: int = 0,
                  velocity: float = 200.0,
                  container: bool = False,
-                 seed: int = 42):
+                 seed: int = 42,
+                 frame_grab: bool = False):
     """Create an Argos configuration file based on the provided map data and robot initial positions.
 
     Args:
@@ -286,6 +287,19 @@ def create_Argos(map_data: List[str],
             look_at=f"{map_center_x},{map_center_y},0",
             up="1,0,0",
             lens_focal_length="15")
+
+        if frame_grab:
+            # Frame grabbing
+            ET.SubElement(qt_opengl,
+                          "frame_grabbing",
+                          directory="frames",
+                          base_name="frame_",
+                          format="png",
+                          quality="100",
+                          headless_grabbing="true",
+                          headless_frame_size="1920x1080",
+                          headless_frame_rate="1")
+
     xml_str = prettify(argos_config)
     with open(output_file_path, "w") as f:
         f.write(xml_str)
