@@ -1,0 +1,3 @@
+[submodule "planner/MDPIBT"]
+	path = planner/MDPIBT
+	url = git@github.com:lunjohnzhang/winPIBTPro.git
