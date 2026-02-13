@@ -79,6 +79,13 @@ compile_rhcr() {
     bash compile.sh
 }
 
+compile_mdpibt() {
+    echo "Compiling MD-PIBT..."
+    cd $current_path/planner/MDPIBT
+    rm -rf build
+    bash compile.sh
+}
+
 compile_mass() {
     echo "Compiling MASS..."
     cd $current_path/planner/MASS
@@ -114,6 +121,10 @@ if [ "$target" == "mass" ]; then
     compile_mass
 fi
 
+if [ "$target" == "mdpibt" ]; then
+    compile_mdpibt
+fi
+
 if [ "$target" == "all" ]; then
     compile_rpclib
     compile_mass
@@ -122,6 +133,7 @@ if [ "$target" == "all" ]; then
     compile_pbs
     compile_tpbs
     compile_rhcr
+    compile_mdpibt
 fi
 
 if [ "$target" == "user" ]; then
@@ -131,6 +143,7 @@ if [ "$target" == "user" ]; then
     compile_tpbs
     compile_rhcr
     compile_mass
+    compile_mdpibt
 fi
 
 if [ "$target" == "clean" ]; then
@@ -141,6 +154,7 @@ if [ "$target" == "clean" ]; then
     rm -rf $current_path/planner/Transient_PBS/build
     rm -rf $current_path/planner/RHCR/build
     rm -rf $current_path/planner/MASS/build
+    rm -rf $current_path/planner/MDPIBT/build
     rm -rf $current_path/client/externalDependencies/rpclib/build
     echo "Cleanup complete."
 fi

@@ -10,7 +10,7 @@ import datetime
 
 from typing import List, Tuple
 from lifelong_mapf_argos.ArgosConfig import (SERVER_EXE, PBS_EXE, TPBS_EXE,
-                                             RHCR_EXE, MASS_EXE,
+                                             RHCR_EXE, MASS_EXE, MDPIBT_EXE,
                                              CONTAINER_PROJECT_ROOT,
                                              PROJECT_ROOT, setup_logging)
 from lifelong_mapf_argos.ArgosConfig.ToArgos import (obstacles, parse_map_file,
@@ -131,6 +131,17 @@ def run_lifelong_argos(
     save_result: bool = False,
     save_solver: bool = False,
     save_heuristics_table: bool = False,
+    # MDPIBT parameters
+    pibt_max_replan: int = 5,
+    pibt_order_strategy: str = "distance_to_goal",
+    epibt_use_winpibt_revisit_inc: bool = False,
+    winpibt_max_bump_agents: int = 5,
+    winpibt_get_path_mode: str = "avoid_visited",
+    winpibt_allow_replan_l2h: bool = True,
+    winpibt_allow_multi_hard_fail: bool = False,
+    winpibt_add_soft_edges: bool = True,
+    winpibt_SF_parent_selection: str = "latest",
+    winpibt_HF_parent_selection: str = "earliest",
 ):
     """Function to run the LSMART simulator with the given parameters.
 
@@ -391,6 +402,42 @@ def run_lifelong_argos(
                 f"--save_result={str(save_result).lower()}",
                 f"--save_solver={str(save_solver).lower()}",
                 f"--save_heuristics_table={str(save_heuristics_table).lower()}",
+            ]
+        elif planner == "MDPIBT":
+            breakpoint()
+            planner_command = [
+                MDPIBT_EXE,
+                f"--map={map_filepath}",
+                "--scenario=SMART",
+                f"--agentNum={num_agents}",
+                f"--port_number={port_num}",
+                f"--cutoffTime={cutoffTime}",
+                f"--seed={seed}",
+                f"--screen={screen}",
+                f"--solver={solver}",
+                f"--single_agent_solver={single_agent_solver}",
+                f"--simulation_window={plan_window_ts}",
+                f"--planning_window={plan_window_ts}",
+                f"--rotation={rotation}",
+                "--force_new_logdir=true",
+                "--save_config=false",
+                "--save_paths=false",
+                f"--log={str(log).lower()}",
+                f"--save_result={str(save_result).lower()}",
+                f"--save_solver={str(save_solver).lower()}",
+                f"--save_heuristics_table={str(save_heuristics_table).lower()}",
+                f"--rotation_time={rotation_time}",
+                f"--pibt_window_size={plan_window_ts}",
+                f"--pibt_max_replan={pibt_max_replan}",
+                f"--pibt_order_strategy={pibt_order_strategy}",
+                f"--epibt_use_winpibt_revisit_inc={epibt_use_winpibt_revisit_inc}",
+                f"--winpibt_max_bump_agents={winpibt_max_bump_agents}",
+                f"--winpibt_get_path_mode={winpibt_get_path_mode}",
+                f"--winpibt_allow_replan_l2h={winpibt_allow_replan_l2h}",
+                f"--winpibt_allow_multi_hard_fail={winpibt_allow_multi_hard_fail}",
+                f"--winpibt_add_soft_edges={winpibt_add_soft_edges}",
+                f"--winpibt_SF_parent_selection={winpibt_SF_parent_selection}",
+                f"--winpibt_HF_parent_selection={winpibt_HF_parent_selection}",
             ]
         # MASS, typically PBS with 2nd order dynamics
         elif planner == "MASS":
