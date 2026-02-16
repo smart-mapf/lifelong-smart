@@ -132,8 +132,10 @@ def run_lifelong_argos(
     save_solver: bool = False,
     save_heuristics_table: bool = False,
     # MDPIBT parameters
-    pibt_max_replan: int = 5,
+    pibt_max_replan: int = 10,
     pibt_order_strategy: str = "distance_to_goal",
+    pibt_window_size: int = 3,
+    pibt_sim_window: int = 1,
     epibt_use_winpibt_revisit_inc: bool = False,
     winpibt_max_bump_agents: int = 5,
     winpibt_get_path_mode: str = "avoid_visited",
@@ -311,12 +313,14 @@ def run_lifelong_argos(
         tpbs_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / TPBS_EXE
         rhcr_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / RHCR_EXE
         mass_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / MASS_EXE
+        mdpibt_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / MDPIBT_EXE
     else:
         server_path = pathlib.Path(PROJECT_ROOT) / SERVER_EXE
         pbs_path = pathlib.Path(PROJECT_ROOT) / PBS_EXE
         tpbs_path = pathlib.Path(PROJECT_ROOT) / TPBS_EXE
         rhcr_path = pathlib.Path(PROJECT_ROOT) / RHCR_EXE
         mass_path = pathlib.Path(PROJECT_ROOT) / MASS_EXE
+        mdpibt_path = pathlib.Path(PROJECT_ROOT) / MDPIBT_EXE
 
     try:
         # print("Running simulator ...")
@@ -404,9 +408,8 @@ def run_lifelong_argos(
                 f"--save_heuristics_table={str(save_heuristics_table).lower()}",
             ]
         elif planner == "MDPIBT":
-            breakpoint()
             planner_command = [
-                MDPIBT_EXE,
+                mdpibt_path,
                 f"--map={map_filepath}",
                 "--scenario=SMART",
                 f"--agentNum={num_agents}",
@@ -427,7 +430,8 @@ def run_lifelong_argos(
                 f"--save_solver={str(save_solver).lower()}",
                 f"--save_heuristics_table={str(save_heuristics_table).lower()}",
                 f"--rotation_time={rotation_time}",
-                f"--pibt_window_size={plan_window_ts}",
+                f"--pibt_window_size={pibt_window_size}",
+                f"--pibt_sim_window={pibt_sim_window}",
                 f"--pibt_max_replan={pibt_max_replan}",
                 f"--pibt_order_strategy={pibt_order_strategy}",
                 f"--epibt_use_winpibt_revisit_inc={epibt_use_winpibt_revisit_inc}",
