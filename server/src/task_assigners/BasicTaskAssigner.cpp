@@ -235,7 +235,7 @@ void WindowedTaskAssigner::updateStartsAndGoals(
                 G.types[goal.location] == CellType::FREE) {
                 next = Task(this->gen_next_goal(k), -1, 0, 0);
                 // Avoid consecutive duplicate goals
-                while (next == goal) {
+                while (next.location == goal.location) {
                     next = Task(this->gen_next_goal(k, true), -1, 0, 0);
                 }
             } else {
