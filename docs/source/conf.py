@@ -155,7 +155,7 @@ html_theme_options = {
     "external_links": [
         {
             "name": "Paper",
-            "url": ""
+            "url": "http://arxiv.org/abs/2602.15721"
         },
         {
             "name": "GitHub",

@@ -111,7 +111,7 @@ LSMART is highly scalable in terms of the number of robots and the size of the m
         author    = {Jingtian Yan, Yulun Zhang, Zhenting Liu, Han Zhang, He Jiang, Jingkai Chen, Stephen F. Smith and Jiaoyang Li},
         title     = {Lifelong Scalable Multi-Agent Realistic Testbed and A Comprehensive Study on Design Choices in Lifelong AGV Fleet Management Systems},
         journal   = {ArXiv},
-        volume    = {},
+        volume    = {abs/2602.15721},
         year      = {2026}
     }
 
