@@ -4,7 +4,7 @@ import logging
 
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 _parent_dir = os.path.dirname(_current_dir)
-CONTAINER_PROJECT_ROOT = "/usr/project/lifelong_mapf_argos"
+CONTAINER_PROJECT_ROOT = "/usr/project"
 PROJECT_ROOT = _parent_dir
 SERVER_EXE = "server/build/ExecutionManager"
 PBS_EXE = "planner/PBS/build/pbs"

@@ -38,3 +38,8 @@ docs/doxygen/
 docs/source/api_client/
 docs/source/api_server/
 frames/
+web/
+argos3_simulator-3.0.0-x86_64-beta59.deb
+singularity/container/
+singularity/container.sif
+CPLEX_Studio2210

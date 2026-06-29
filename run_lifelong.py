@@ -9,12 +9,9 @@ import logging
 import datetime
 
 from typing import List, Tuple
-from lifelong_mapf_argos.ArgosConfig import (SERVER_EXE, PBS_EXE, TPBS_EXE,
-                                             RHCR_EXE, MASS_EXE,
-                                             CONTAINER_PROJECT_ROOT,
-                                             PROJECT_ROOT, setup_logging)
-from lifelong_mapf_argos.ArgosConfig.ToArgos import (obstacles, parse_map_file,
-                                                     create_Argos)
+from ArgosConfig import (SERVER_EXE, PBS_EXE, TPBS_EXE, RHCR_EXE, MASS_EXE,
+                         CONTAINER_PROJECT_ROOT, PROJECT_ROOT, setup_logging)
+from ArgosConfig.ToArgos import (obstacles, parse_map_file, create_Argos)
 
 logger = logging.getLogger(__name__)
 
