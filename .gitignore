@@ -38,3 +38,5 @@ docs/doxygen/
 docs/source/api_client/
 docs/source/api_server/
 frames/
+node_modules/
+dist/

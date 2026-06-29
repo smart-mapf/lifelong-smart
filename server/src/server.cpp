@@ -1,4 +1,5 @@
 #include "ExecutionManager.h"
+#include "visualization_events.h"
 
 /**
  * @namespace RPC API functions for external communication with the
@@ -23,17 +24,51 @@ bool isSimulationFrozen() {
 
 string actionFinished(string &robot_id_str, int node_ID) {
     lock_guard<mutex> guard(globalMutex);
-    return em->actionFinished(robot_id_str, node_ID);
+    auto result = em->actionFinished(robot_id_str, node_ID);
+
+    // Emit exec_progress after action is finished
+    int agent_id = em->adg->startIndexToRobotID[robot_id_str];
+    emit_event({
+        {"type", "exec_progress"},
+        {"agent", agent_id},
+        {"finished", em->adg->finished_node_idx[agent_id] + 1},
+        {"total", em->adg->getGraphSize(agent_id)}
+    });
+
+    return result;
 }
 
 void init(string RobotID, tuple<int, int> init_loc) {
     lock_guard<mutex> guard(globalMutex);
     em->init(RobotID, init_loc);
+
+    // Emit state_change: initialized for this agent
+    int agent_id = em->adg->startIndexToRobotID[RobotID];
+    emit_event({
+        {"type", "state_change"},
+        {"agent", agent_id},
+        {"value", "initialized"}
+    });
 }
 
 void closeServer(rpc::server &srv) {
     spdlog::info("Closing server at port {}", em->getRPCPort());
-    em->saveStats();
+
+    // Emit state_change: finished for all agents
+    int num_robots = em->adg->numRobots();
+    for (int i = 0; i < num_robots; ++i) {
+        emit_event({
+            {"type", "state_change"},
+            {"agent", i},
+            {"value", "finished"}
+        });
+    }
+
+    // Emit stats from the final statistics payload
+    json stats = em->saveStats();
+    stats["type"] = "stats";
+    emit_event(stats);
+
     srv.close_sessions();
     srv.stop();
     spdlog::info("Server closed successfully.");

@@ -180,7 +180,7 @@ void ExecutionManager::setupTaskAssigner() {
     }
 }
 
-void ExecutionManager::saveStats() {
+json ExecutionManager::saveStats() {
     auto end = std::chrono::steady_clock::now();
     auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
         end - this->start_time);
@@ -245,6 +245,8 @@ void ExecutionManager::saveStats() {
 
         spdlog::info("Statistics written to {}", output_filename);
     }
+
+    return result;
 }
 
 void ExecutionManager::freezeSimulationIfNecessary() {

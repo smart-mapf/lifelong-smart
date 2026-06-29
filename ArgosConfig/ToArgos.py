@@ -5,10 +5,9 @@ import xml.etree.ElementTree as ET
 
 from xml.dom import minidom
 from typing import List, Tuple
-from lifelong_mapf_argos.ArgosConfig import (PROJECT_ROOT,
-                                             CONTAINER_PROJECT_ROOT,
-                                             FOOTBOT_DIFFUSION_CONTROLLER_LIB,
-                                             TRAJECTORY_LOOP_FUNCTIONS_LIB)
+from . import (PROJECT_ROOT, CONTAINER_PROJECT_ROOT,
+               FOOTBOT_DIFFUSION_CONTROLLER_LIB,
+               TRAJECTORY_LOOP_FUNCTIONS_LIB)
 
 obstacles = ['@', 'T']
 
@@ -49,6 +48,7 @@ def create_Argos(map_data: List[str],
                  port_num: int,
                  n_threads: int,
                  visualization: bool = False,
+                 external_visualization: bool = False,
                  sim_duration: int = 1200,
                  ticks_per_second: int = 10,
                  screen: int = 0,
@@ -69,6 +69,9 @@ def create_Argos(map_data: List[str],
         port_num (int): port number for the server/client communication.
         n_threads (int): number of threads for the simulation.
         visualization (bool, optional): whether run with visualization.
+            Defaults to False.
+        external_visualization (bool, optional): use external web visualizer
+            instead of Qt/OpenGL. Only applies when visualization=True.
             Defaults to False.
         sim_duration (int, optional): duration of the simulation in number of
             ticks. Defaults to 1200. With a tick rate of 10 (ticks per second),
@@ -244,8 +247,12 @@ def create_Argos(map_data: List[str],
 
     agent_count = 0
     for x, y in robot_init_pos:
-        # foot_bot = ET.SubElement(arena, "foot-bot", id=f"fb_{x}_{y}")
-        foot_bot = ET.SubElement(arena, "foot-bot", id=f"{agent_count}")
+        # Add index attribute for external visualizer stable ordering
+        if external_visualization:
+            foot_bot = ET.SubElement(
+                arena, "foot-bot", id=f"{agent_count}", index=f"{agent_count}")
+        else:
+            foot_bot = ET.SubElement(arena, "foot-bot", id=f"{agent_count}")
         x, y = -int(y), -int(x)
         body = ET.SubElement(foot_bot,
                              "body",
@@ -264,41 +271,56 @@ def create_Argos(map_data: List[str],
     media = ET.SubElement(argos_config, "media")
     if visualization:
         # Visualization
-        visualization = ET.SubElement(argos_config, "visualization")
-        # qt_opengl = ET.SubElement(visualization, "qt-opengl", autoplay="true")
-        qt_opengl = ET.SubElement(visualization, "qt-opengl")
+        viz_section = ET.SubElement(argos_config, "visualization")
 
-        goal_loc = ET.SubElement(qt_opengl,
-                                 "user_functions",
-                                 library=str(trajectory_loop_functions_lib),
-                                 label="trajectory_qtuser_functions")
+        if external_visualization:
+            # External web visualizer mode
+            ET.SubElement(viz_section, "external_visualizer")
 
-        # autoplay = ET.SubElement(qt_opengl, "autoplay",
-        #                           autoplay="true")
-        # Camera
-        camera = ET.SubElement(qt_opengl, "camera")
-        placements = ET.SubElement(camera, "placements")
-        # TODO@jingitan: Modify this visualize to fit large maps
-        placement = ET.SubElement(
-            placements,
-            "placement",
-            index="0",
-            position=f"{map_center_x},{map_center_y},{max(width,height)/2.35}",
-            look_at=f"{map_center_x},{map_center_y},0",
-            up="1,0,0",
-            lens_focal_length="15")
+            # Camera for external visualizer
+            camera = ET.SubElement(viz_section, "camera")
+            placements = ET.SubElement(camera, "placements")
+            placement = ET.SubElement(
+                placements,
+                "placement",
+                index="0",
+                position=f"{map_center_x},{map_center_y},{max(width,height)/2.35}",
+                look_at=f"{map_center_x},{map_center_y},0",
+                up="1,0,0",
+                lens_focal_length="15")
+        else:
+            # Qt/OpenGL mode (current default)
+            qt_opengl = ET.SubElement(viz_section, "qt-opengl")
 
-        if frame_grab:
-            # Frame grabbing
-            ET.SubElement(qt_opengl,
-                          "frame_grabbing",
-                          directory="frames",
-                          base_name="frame_",
-                          format="png",
-                          quality="100",
-                          headless_grabbing="true",
-                          headless_frame_size="1920x1080",
-                          headless_frame_rate="1")
+            goal_loc = ET.SubElement(qt_opengl,
+                                     "user_functions",
+                                     library=str(trajectory_loop_functions_lib),
+                                     label="trajectory_qtuser_functions")
+
+            # Camera
+            camera = ET.SubElement(qt_opengl, "camera")
+            placements = ET.SubElement(camera, "placements")
+            # TODO@jingitan: Modify this visualize to fit large maps
+            placement = ET.SubElement(
+                placements,
+                "placement",
+                index="0",
+                position=f"{map_center_x},{map_center_y},{max(width,height)/2.35}",
+                look_at=f"{map_center_x},{map_center_y},0",
+                up="1,0,0",
+                lens_focal_length="15")
+
+            if frame_grab:
+                # Frame grabbing
+                ET.SubElement(qt_opengl,
+                              "frame_grabbing",
+                              directory="frames",
+                              base_name="frame_",
+                              format="png",
+                              quality="100",
+                              headless_grabbing="true",
+                              headless_frame_size="1920x1080",
+                              headless_frame_rate="1")
 
     xml_str = prettify(argos_config)
     with open(output_file_path, "w") as f:

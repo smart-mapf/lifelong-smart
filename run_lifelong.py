@@ -3,18 +3,16 @@ import sys
 import pathlib
 import subprocess
 import time
+import signal
 import fire
 import numpy as np
 import logging
 import datetime
 
-from typing import List, Tuple
-from lifelong_mapf_argos.ArgosConfig import (SERVER_EXE, PBS_EXE, TPBS_EXE,
-                                             RHCR_EXE, MASS_EXE,
-                                             CONTAINER_PROJECT_ROOT,
-                                             PROJECT_ROOT, setup_logging)
-from lifelong_mapf_argos.ArgosConfig.ToArgos import (obstacles, parse_map_file,
-                                                     create_Argos)
+from typing import List, Tuple, Union
+from ArgosConfig import (SERVER_EXE, PBS_EXE, TPBS_EXE, RHCR_EXE, MASS_EXE,
+                         CONTAINER_PROJECT_ROOT, PROJECT_ROOT, setup_logging)
+from ArgosConfig.ToArgos import obstacles, parse_map_file, create_Argos
 
 logger = logging.getLogger(__name__)
 
@@ -57,42 +55,72 @@ def check_file(file_path: str):
 def run_simulator(args, timeout: float = None, output_log: str = None):
     server_command, client_command, planner_command = args
     f = open(output_log, 'w') if output_log else None
+    server_process = None
+    client_process = None
+    planner_process = None
 
-    # Start the server process
-    server_process = subprocess.Popen(server_command, stdout=f, stderr=f)
+    def terminate_process_group(process: Union[subprocess.Popen, None]):
+        if process is None or process.poll() is not None:
+            return
 
-    # Wait for a short period to ensure the server has started
-    time.sleep(1)
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        except Exception:
+            process.kill()
 
-    # Start the client process
-    client_process = subprocess.Popen(client_command, stdout=f, stderr=f)
+    def cleanup_processes():
+        terminate_process_group(planner_process)
+        terminate_process_group(client_process)
+        terminate_process_group(server_process)
 
-    # Wait for the client process to complete
-    # time.sleep(5)
-    planner_process = subprocess.Popen(planner_command, stdout=f, stderr=f)
+    def handle_termination(signum, _frame):
+        logger.info("Received signal %s, terminating simulator processes...",
+                    signum)
+        cleanup_processes()
+        raise SystemExit(128 + signum)
 
-    # The client process will call the server to end, then the client end. The
-    # planner will detect the end of the server and end itself.
+    previous_handlers = {
+        sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)
+    }
+    for sig in previous_handlers:
+        signal.signal(sig, handle_termination)
+
     try:
+        # Start the server process (new session for clean process-group kill)
+        server_process = subprocess.Popen(server_command, stdout=f, stderr=f,
+                                          start_new_session=True)
+
+        # Wait for a short period to ensure the server has started
+        time.sleep(1)
+
+        # Start the client process
+        client_process = subprocess.Popen(client_command, stdout=f, stderr=f,
+                                          start_new_session=True)
+
+        # Wait for the client process to complete
+        planner_process = subprocess.Popen(planner_command, stdout=f, stderr=f,
+                                           start_new_session=True)
+
+        # The client process will call the server to end, then the client end.
+        # The planner will detect the end of the server and end itself.
         client_process.wait(timeout=timeout)
         print(f"[{get_current_time()}] [Py] Client process finished.", file=f)
 
         server_process.wait(timeout=timeout)
-        # planner_process.wait()
         print(f"[{get_current_time()}] [Py] Server process finished.", file=f)
 
-        planner_process.kill()
+        terminate_process_group(planner_process)
         print(f"[{get_current_time()}] [Py] Planner process finished.", file=f)
     except subprocess.TimeoutExpired:
-        # print("Timeout expired, killing processes...")
         logger.info("Timeout expired, killing processes...")
-        client_process.kill()
-        server_process.kill()
-        planner_process.kill()
     finally:
+        cleanup_processes()
+        for sig, previous_handler in previous_handlers.items():
+            signal.signal(sig, previous_handler)
         if f:
             f.close()
-        # print("Processes killed.")
         logger.info("Processes killed.")
 
 
@@ -119,6 +147,7 @@ def run_lifelong_argos(
     task_assigner_type: str = "windowed",
     planning_window: int = 10,
     frame_grab: bool = False,
+    external_visualization: bool = False,
     cutoffTime: int = 1,
     # RHCR parameters
     solver: str = "PBS",
@@ -191,16 +220,16 @@ def run_lifelong_argos(
             Specifically, given ``sim_window_tick`` and ``ticks_per_second``, we compute the minimal planning window in timesteps required to cover the simulation window as follows:
 
             .. math::
-                planning\_window\_ts = \\lceil \\frac{sim\_window\_tick}{ticks\_per\_second} \\times \\frac{velocity}{100} \\rceil
+                planning_window_ts = \\lceil \\frac{sim_window_tick}{ticks_per_second} \\times \\frac{velocity}{100} \\rceil
 
             Then given the user-specified ``planning_window``, the final planning window is:
 
             .. math::
-                planning\_window = max(planning\_window\_ts, planning\_window)
+                planning_window = max(planning_window_ts, planning_window)
 
             Defaults to 10.
 
-        cutoffTime (int, optional): time limit of the planner in seconds. With the periodic invocation policy (``default``), the ``cutoffTime`` should be less than or equal to the simulation window in seconds (:math:`\\frac{sim\_window\_tick}{ticks\_per\_second}`). Defaults to 1.
+        cutoffTime (int, optional): time limit of the planner in seconds. With the periodic invocation policy (``default``), the ``cutoffTime`` should be less than or equal to the simulation window in seconds (:math:`\\frac{sim_window_tick}{ticks_per_second}`). Defaults to 1.
         frame_grab (bool, optional): whether to enable frame grabber in Argos.
             If enabled, the simulator will save screenshots to the ``frames``
             folder. The screenshots can be combined into a video using external
@@ -254,6 +283,7 @@ def run_lifelong_argos(
         port_num=port_num,
         n_threads=n_threads,
         visualization=not headless,
+        external_visualization=external_visualization,
         sim_duration=sim_duration,
         ticks_per_second=ticks_per_second,
         screen=screen,

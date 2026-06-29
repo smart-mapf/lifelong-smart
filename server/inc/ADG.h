@@ -145,6 +145,14 @@ public:
 
     int getNumUnfinishedActions(int agent_id);
 
+    // Return the total number of nodes in agent's graph for exec_progress
+    int getGraphSize(int agent_id) const {
+        if (agent_id < 0 || agent_id >= static_cast<int>(graph.size())) {
+            return 0;
+        }
+        return static_cast<int>(graph[agent_id].size());
+    }
+
     int getLookAheadDist() const {
         return look_ahead_dist;
     }

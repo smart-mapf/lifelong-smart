@@ -1,0 +1,38 @@
+cmake_minimum_required(VERSION 3.10)
+project(external_visualizer)
+
+find_package(fmt REQUIRED)
+find_package(ARGoS REQUIRED)
+
+include_directories(/usr/include/lua5.3)
+include_directories(/usr/include/argos3)
+link_directories(/usr/lib/argos3)
+
+find_library(ARGOS_FOOTBOT_LIB
+    NAMES argos3plugin_simulator_footbot
+    PATHS /usr/lib/argos3/
+)
+
+find_package(Qt6 QUIET COMPONENTS Widgets)
+if(Qt6_FOUND)
+    set(QT_VERSION 6)
+    set(QT_PACKAGE_PREFIX Qt6)
+else()
+    find_package(Qt5 REQUIRED COMPONENTS Widgets)
+    set(QT_VERSION 5)
+    set(QT_PACKAGE_PREFIX Qt5)
+endif()
+
+message(STATUS "Using Qt${QT_VERSION}")
+
+add_library(${PROJECT_NAME} SHARED
+    ExternalVisualizer.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+    fmt::fmt
+    ${ARGOS_LIBRARIES}
+    ${ARGOS_LDFLAGS}
+    ${ARGOS_FOOTBOT_LIB}
+    ${QT_PACKAGE_PREFIX}::Widgets
+)

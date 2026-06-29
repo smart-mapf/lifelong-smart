@@ -194,4 +194,4 @@ autosummary_generate = True
 autodoc_typehints = "description"
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
-autodoc_mock_imports = ["fire", "numpy", "lifelong_mapf_argos"]
+autodoc_mock_imports = ["fire", "numpy"]

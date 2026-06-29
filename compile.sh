@@ -86,6 +86,16 @@ compile_mass() {
     bash compile.sh ${CPLEX_DIR_ARGS}
 }
 
+compile_extviz() {
+    echo "Compiling external visualizer plugin..."
+    cd $current_path/plugins/visualizers/external_visualizer
+    rm -rf build
+    mkdir build
+    cd build
+    cmake ..
+    make -j $cpuCores
+}
+
 if [ "$target" == "rpclib" ]; then
     compile_rpclib
 fi
@@ -112,6 +122,10 @@ fi
 
 if [ "$target" == "mass" ]; then
     compile_mass
+fi
+
+if [ "$target" == "extviz" ]; then
+    compile_extviz
 fi
 
 if [ "$target" == "all" ]; then
