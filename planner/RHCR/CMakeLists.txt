@@ -3,10 +3,6 @@ project(lifelong)
 
 set(CMAKE_CXX_STANDARD 11)
 
-# Find Python 3.8 with development components
-find_package(Python 3.8 EXACT COMPONENTS Interpreter Development REQUIRED)
-include_directories(${Python_INCLUDE_DIRS})
-
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RELEASE")
 endif()

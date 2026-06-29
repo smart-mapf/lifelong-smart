@@ -1,6 +1,7 @@
 # Compile everything in the project
 target="$1"
 shift 1
+CPLEX_DIR="${CPLEX_DIR:-}"
 
 while getopts "c:" flag; do
     case "$flag" in
@@ -8,12 +9,6 @@ while getopts "c:" flag; do
         *) echo "Invalid option. ${USAGE}"
     esac
 done
-
-if [ -z "${CPLEX_DIR}" ]; then
-    CPLEX_DIR_ARGS=""
-else
-    CPLEX_DIR_ARGS="-c ${CPLEX_DIR}"
-fi
 
 echo "In lifelong argos: Using CPLEX directory: ${CPLEX_DIR}"
 
@@ -81,9 +76,18 @@ compile_rhcr() {
 
 compile_mass() {
     echo "Compiling MASS..."
+    mass_cplex_dir="${CPLEX_DIR}"
+    if [ -z "${mass_cplex_dir}" ]; then
+        mass_cplex_dir="$current_path/CPLEX_Studio2210"
+    fi
+    # ponytail: MASS depends on CPLEX; skip it when the SDK is absent.
+    if [ ! -d "${mass_cplex_dir}" ]; then
+        echo "Skipping MASS because no CPLEX directory was found at ${mass_cplex_dir}."
+        return 0
+    fi
     cd $current_path/planner/MASS
     rm -rf build
-    bash compile.sh ${CPLEX_DIR_ARGS}
+    bash compile.sh -c "${mass_cplex_dir}"
 }
 
 compile_extviz() {

@@ -1,0 +1,100 @@
+Bootstrap: docker
+
+From: ubuntu:20.04
+
+%setup
+    ROOTFS="${APPTAINER_ROOTFS:-$SINGULARITY_ROOTFS}"
+    if [ -d CPLEX_Studio2210 ]; then
+        mkdir -p "${ROOTFS}/usr/project"
+        cp -a CPLEX_Studio2210 "${ROOTFS}/usr/project/CPLEX_Studio2210"
+    fi
+
+%files
+    argos3_simulator-3.0.0-x86_64-beta59.deb /usr/project/argos3_simulator-3.0.0-x86_64-beta59.deb
+    planner/ /usr/project/planner
+    server/ /usr/project/server
+    client/ /usr/project/client
+    compile.sh /usr/project/compile.sh
+    requirement.txt /usr/project/requirement.txt
+
+%post
+    echo "Hello from inside the container"
+
+    echo "deb http://cz.archive.ubuntu.com/ubuntu focal main universe"
+
+    export DEBIAN_FRONTEND=noninteractive
+
+    apt-get update
+
+    apt-get install -y --no-install-recommends tzdata
+    apt-get install -y build-essential
+
+    apt-get install -y \
+        libboost-all-dev \
+        cmake \
+        sudo \
+        wget \
+        git \
+        libeigen3-dev \
+        python3.8 \
+        python3-pip \
+        libfreeimage-dev \
+        libfreeimageplus-dev \
+        qt5-default \
+        freeglut3-dev \
+        libxi-dev \
+        libxmu-dev \
+        liblua5.3-dev \
+        lua5.3 \
+        doxygen \
+        graphviz \
+        libgraphviz-dev \
+        asciidoc \
+        libtiff-dev \
+        python-is-python3 \
+        libtbb-dev \
+        libspdlog-dev \
+        clang \
+
+    # Project
+    PROJECT_ROOT=/usr/project
+    mkdir -p $PROJECT_ROOT
+
+    # Argos
+    dpkg -i $PROJECT_ROOT/argos3_simulator-3.0.0-x86_64-beta59.deb || apt-get install -f -y
+    python3 -m pip install --no-cache-dir -r $PROJECT_ROOT/requirement.txt
+
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+
+
+%environment
+    # echo "Setting environment variables..."
+    export PROJECT_ROOT=/usr/project
+
+    # Set X11 display for GUI output
+    export DISPLAY=":1"
+
+    # Set numpy to be single-threaded
+    export OPENBLAS_NUM_THREADS=1
+
+    # Detect package
+    export PYTHONPATH=$PROJECT_ROOT:$PYTHONPATH
+    export PYTHONPATH=$PROJECT_ROOT/pybind11:$PYTHONPATH
+    export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.8/dist-packages
+    export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.8/site-packages
+    # For some reason we have to add docplex egg manually.
+    export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.8/site-packages/docplex-2.23.221-py3.8.egg
+
+    # Trim memory aggressively
+    # https://github.com/dask/distributed/issues/5279
+    export MALLOC_TRIM_THRESHOLD_=0
+
+    export DEBIAN_FRONTEND=noninteractive
+    export TZ=America/New_York
+
+%runscript
+    # Argos
+    cd $PROJECT_ROOT
+    cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
+    bash compile.sh all -c "${PROJECT_ROOT}/CPLEX_Studio2210"

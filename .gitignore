@@ -40,3 +40,8 @@ docs/source/api_server/
 frames/
 node_modules/
 dist/
+web/
+argos3_simulator-3.0.0-x86_64-beta59.deb
+singularity/container/
+singularity/container.sif
+CPLEX_Studio2210
