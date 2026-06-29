@@ -12,7 +12,7 @@
     between server and clients.
     Please install rpc using:
     ```bash
-    bash compile.sh rpc
+    bash compile.sh rpclib
     ```
 
 1.  Install the minimal Python dependencies for `run_lifelong.py`.
