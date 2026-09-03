@@ -2,6 +2,7 @@
 
 #include <argos3/core/simulator/entity/composable_entity.h>
 #include <argos3/core/simulator/entity/embodied_entity.h>
+#include <argos3/core/simulator/loop_functions.h>
 #include <argos3/core/simulator/simulator.h>
 #include <argos3/core/utility/configuration/argos_configuration.h>
 #include <argos3/core/utility/math/vector3.h>
@@ -78,6 +79,7 @@ void ExternalVisualizer::Execute() {
         }
         instance.UpdateSpace();
     }
+    instance.GetLoopFunctions().PostExperiment();
 }
 
 REGISTER_VISUALIZATION(

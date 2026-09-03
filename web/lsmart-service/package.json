@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "bun run dev.ts",
     "dev:backend": "bun run --watch index.ts",
-    "start": "bun run index.ts"
+    "start": "bun run index.ts",
+    "test": "bun test config.test.ts"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

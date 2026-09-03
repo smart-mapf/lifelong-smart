@@ -232,6 +232,7 @@ int main(int argc, char **argv) {
             ("sim_window_timestep", po::value<int>()->default_value(5), "invoke planner every sim_window_timestep (default: 5)")
             ("plan_window_timestep", po::value<int>()->default_value(5), "plan for this many timesteps (default: 5)")
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
+            ("stop_at_congestion", po::value<bool>()->default_value(true), "stop the simulation when congestion is detected")
             ("ticks_per_second,f", po::value<int>()->default_value(10), "ticks per second for the simulation (default: 10)")
             ("look_ahead_dist,l", po::value<int>()->default_value(5), "look ahead # of actions for the robot to query its location")
             ("look_ahead_tick,m", po::value<int>()->default_value(5), "look ahead tick for the robot to query its location")

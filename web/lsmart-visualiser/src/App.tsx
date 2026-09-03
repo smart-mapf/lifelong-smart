@@ -25,10 +25,12 @@ const STATUS_COLORS: Record<string, string> = {
 
 function ControlPanel({
   started,
-  setStarted,
+  connected,
+  startSimulation,
 }: {
   started: boolean;
-  setStarted: (value: boolean) => void;
+  connected: boolean;
+  startSimulation: () => void;
 }) {
   const meta = useAtomValue(metaAtom);
   const stats = useAtomValue(statsAtom);
@@ -46,6 +48,9 @@ function ControlPanel({
   const [minimized, setMinimized] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const maxFrame = Math.max(frames.length - 1, 0);
+  const playbackFinished =
+    stats !== null && frames.length > 0 && currentFrame >= maxFrame;
+  const config = meta?.effective_config;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,15 +98,21 @@ function ControlPanel({
             <div style={styles.sectionBody}>
               <button
                 type="button"
-                onClick={() => setStarted(true)}
-                disabled={started}
+                onClick={startSimulation}
+                disabled={started || !connected || !meta}
                 style={
-                  started
+                  started || !connected || !meta
                     ? { ...styles.primaryBtn, ...styles.disabledBtn }
                     : styles.primaryBtn
                 }
               >
-                {started ? "Simulation Started" : "Start Simulation"}
+                {started
+                  ? "Simulation Started"
+                  : !connected
+                    ? "Connecting..."
+                    : !meta
+                      ? "Loading Configuration..."
+                      : "Start Simulation"}
               </button>
               {error && <div style={styles.errorText}>{error}</div>}
             </div>
@@ -119,7 +130,7 @@ function ControlPanel({
                 <span style={styles.infoValue}>{meta?.planner || "—"}</span>
               </div>
               <div style={styles.infoRow}>
-                <span style={styles.infoLabel}>Assigner</span>
+                <span style={styles.infoLabel}>Task assigner</span>
                 <span style={styles.infoValue}>
                   {meta?.task_assigner_type || "—"}
                 </span>
@@ -127,6 +138,64 @@ function ControlPanel({
               <div style={styles.infoRow}>
                 <span style={styles.infoLabel}>Agents</span>
                 <span style={styles.infoValue}>{agentCount}</span>
+              </div>
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Duration</span>
+                <span style={styles.infoValue}>
+                  {config
+                    ? `${config.sim_duration / config.ticks_per_second} s`
+                    : "—"}
+                </span>
+              </div>
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Simulation window</span>
+                <span style={styles.infoValue}>
+                  {config
+                    ? `${config.sim_window_tick / config.ticks_per_second} s`
+                    : "—"}
+                </span>
+              </div>
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Planning window</span>
+                <span style={styles.infoValue}>
+                  {config ? `${config.planning_window} timesteps` : "—"}
+                </span>
+              </div>
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Planner cutoff</span>
+                <span style={styles.infoValue}>
+                  {config ? `${config.cutoffTime} s` : "—"}
+                </span>
+              </div>
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Solver</span>
+                <span style={styles.infoValue}>
+                  {config?.planner === "RHCR"
+                    ? `${config.solver} / ${config.single_agent_solver}`
+                    : "—"}
+                </span>
+              </div>
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Velocity</span>
+                <span style={styles.infoValue}>
+                  {config ? `${config.velocity / 100} m/s` : "—"}
+                </span>
+              </div>
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Seed</span>
+                <span style={styles.infoValue}>{config?.seed ?? "—"}</span>
+              </div>
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Planner considers rotation</span>
+                <span style={styles.infoValue}>
+                  {config ? (config.rotation ? "Yes" : "No") : "—"}
+                </span>
+              </div>
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>ARGoS threads</span>
+                <span style={styles.infoValue}>
+                  {config?.n_threads ?? "—"}
+                </span>
               </div>
             </div>
           </details>
@@ -145,7 +214,10 @@ function ControlPanel({
                 min={0}
                 max={maxFrame}
                 value={currentFrame}
-                onChange={(e) => setCurrentFrame(Number(e.target.value))}
+                onChange={(e) => {
+                  setPlaying(false);
+                  setCurrentFrame(Number(e.target.value));
+                }}
                 style={styles.slider}
               />
               <div style={styles.controlsRow}>
@@ -207,7 +279,9 @@ function ControlPanel({
               ) : (
                 Array.from({ length: agentCount }, (_, i) => {
                   const state = agentStates[i];
-                  const status = state?.status || "unknown";
+                  const status = playbackFinished
+                    ? "finished"
+                    : state?.status || "unknown";
                   const progress = state?.progress;
 
                   return (
@@ -255,14 +329,21 @@ function ControlPanel({
 
 export default function App() {
   const [started, setStarted] = useState(false);
+  const { connected, startSimulation } = useSimulation();
 
-  useSimulation(started);
+  const start = () => {
+    if (startSimulation()) setStarted(true);
+  };
 
   return (
     <div style={styles.container}>
       <Scene />
       <div style={styles.overlay}>
-        <ControlPanel started={started} setStarted={setStarted} />
+        <ControlPanel
+          started={started}
+          connected={connected}
+          startSimulation={start}
+        />
       </div>
     </div>
   );

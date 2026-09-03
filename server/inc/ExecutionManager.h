@@ -117,6 +117,7 @@ private:
     // vector<int> tick_per_robot;      // Number of ticks each robot has moved
     bool freeze_simulation = false;  // Whether to freeze the simulation
     bool congested_sim = false;      // Whether the simulation is congested
+    bool stop_at_congestion = true;  // Whether congestion ends the simulation
     // The last tick when the planner was invoked
     int prev_invoke_planner_tick = -1;
     bool planner_running = false;  // Whether the planner is currently running

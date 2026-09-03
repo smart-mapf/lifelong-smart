@@ -1,5 +1,6 @@
-import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useRef } from "react";
+import { atom, useSetAtom } from "jotai";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { RunConfig } from "../../lsmart-service/types";
 
 // ─── Event Types ────────────────────────────────────────────────────────────
 
@@ -47,6 +48,7 @@ export interface MetaEvent {
   planner: string;
   task_assigner_type: string;
   backup_solver: string;
+  effective_config: RunConfig;
 }
 
 export interface StatsEvent {
@@ -140,7 +142,7 @@ export function parseLsmartMap(mapContents: {
 
 // ─── WebSocket Hook ─────────────────────────────────────────────────────────
 
-export function useSimulation(autoPlay = false) {
+export function useSimulation() {
   const setMapData = useSetAtom(mapDataAtom);
   const setAgentCount = useSetAtom(agentCountAtom);
   const setMeta = useSetAtom(metaAtom);
@@ -152,12 +154,7 @@ export function useSimulation(autoPlay = false) {
   const setLogs = useSetAtom(logsAtom);
   const setError = useSetAtom(errorAtom);
   const wsRef = useRef<WebSocket | null>(null);
-  const autoPlayRef = useRef(autoPlay);
-
-  useEffect(() => {
-    autoPlayRef.current = autoPlay;
-    setPlaying(autoPlay);
-  }, [autoPlay, setPlaying]);
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -176,13 +173,14 @@ export function useSimulation(autoPlay = false) {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        setConnected(true);
         setFrames([]);
         setCurrentFrame(0);
         setAgentStates({});
         setStats(null);
         setLogs([]);
         setError(null);
-        setPlaying(autoPlayRef.current);
+        setPlaying(false);
       };
 
       ws.onmessage = (event) => {
@@ -225,6 +223,10 @@ export function useSimulation(autoPlay = false) {
                 break;
 
               case "state_change":
+                // The backend emits "finished" when its live run ends, which can
+                // be well ahead of the browser replaying the buffered frames.
+                // The UI derives that terminal state from playback position.
+                if (evt.value === "finished") break;
                 setAgentStates((prev) => {
                   const next = { ...prev };
                   if (!next[evt.agent]) {
@@ -240,7 +242,6 @@ export function useSimulation(autoPlay = false) {
 
               case "stats":
                 setStats(evt);
-                setPlaying(false);
                 break;
 
               case "message":
@@ -266,6 +267,7 @@ export function useSimulation(autoPlay = false) {
       };
 
       ws.onclose = () => {
+        setConnected(false);
         if (cancelled) {
           return;
         }
@@ -284,4 +286,31 @@ export function useSimulation(autoPlay = false) {
       wsRef.current?.close();
     };
   }, []);
+
+  const startSimulation = useCallback(() => {
+    if (wsRef.current?.readyState !== WebSocket.OPEN) {
+      setError("Visualizer service is not connected");
+      return false;
+    }
+
+    setFrames([]);
+    setCurrentFrame(0);
+    setAgentStates({});
+    setStats(null);
+    setLogs([]);
+    setError(null);
+    setPlaying(true);
+    wsRef.current.send(JSON.stringify({ type: "start" }));
+    return true;
+  }, [
+    setAgentStates,
+    setCurrentFrame,
+    setError,
+    setFrames,
+    setLogs,
+    setPlaying,
+    setStats,
+  ]);
+
+  return { connected, startSimulation };
 }

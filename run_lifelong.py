@@ -135,6 +135,7 @@ def run_lifelong_argos(
     port_num: int = 8182,
     n_threads: int = 1,
     sim_duration: int = 600 * 10,
+    stop_at_congestion: bool = True,
     sim_window_tick: int = 20,
     ticks_per_second: int = 10,
     velocity: float = 200.0,
@@ -165,7 +166,7 @@ def run_lifelong_argos(
 
     Args:
         map_filepath (str, optional): file path to map. Example maps are in the ``maps`` directory. If maps contains workstations (``w``) and endpoints (``e``), robots' tasks will be assigned alternately between workstations and endpoints. If not, robots' tasks will be randomly generated from the empty spaces. Defaults to ``maps/kiva_large_w_mode.json``.
-        num_agents (int, optional): number of robots. Defaults to 32.
+        num_agents (int, optional): number of robots. Defaults to 100.
         headless (bool, optional): whether run in headless mode. If False, a visualization will be generated. Defaults to False.
         argos_config_filepath (str, optional): file path to write the generated
             Argos config file. Defaults to "output.argos".
@@ -180,7 +181,10 @@ def run_lifelong_argos(
         n_threads (int, optional): number of threads to run Argos. Defaults to 1.
         ticks_per_second (int, optional): the simulator runs in ``ticks``. The states of the robots are updated per tick. ``ticks_per_second`` specifies the number of ticks per simulation second used by the simulator. Defaults to 10.
         sim_duration (int, optional): number of simulation ticks to run the
-            simulator. Defaults to 1800 * 10, meaning 1800 seconds.
+            simulator. Defaults to 600 * 10 ticks, meaning 600 seconds at the
+            default rate of 10 ticks per second.
+        stop_at_congestion (bool, optional): whether to stop the simulation
+            when congestion is detected. Defaults to True.
         sim_window_tick (int, optional): number of ticks to invoke the planner. Only applies to the periodic invocation policy. Defaults to 20 ticks.
         velocity (float, optional): velocity of the robots in cm/s. Defaults to
             200.0 cm/s.
@@ -192,13 +196,14 @@ def run_lifelong_argos(
             - ``TPBS``: the `Transient` Priority-Based Search planner (`Morag et al. 2025`_). TPBS plans for full-horizon paths for all robots even if there are duplicate goals.
 
             Defaults to ``RHCR``.
-        container (bool, optional): whether to run in a `singularity`_ container. Defaults to False.
+        container (bool, optional): whether to use the container installation
+            paths. Defaults to False.
         seed (int, optional): random seed. Defaults to 42.
         screen (int, optional): logging options. Higher values increase verbosity. Defaults to 0.
         backup_solver (str, optional): backup solver (fail policy) used in case the MAPF planner fails. Options include:
 
             - ``PIBT``: the Priority Inheritance with Backtracking, (`Okumura et al. 2019`_).
-            - ``LRA``: the Local Repair Guided Waits, (`Li et al. 2021`_).
+            - ``LRAStar``: the Local Repair Guided Waits, (`Li et al. 2021`_).
             - ``GuidedPIBT``: Guided PIBT, (`Chen et al. 2024`_).
 
             Defaults to ``PIBT``.
@@ -211,8 +216,8 @@ def run_lifelong_argos(
         task_assigner_type (str, optional): task assigner (MAPF problem instance generator) used to generate problem instances. Options include:
 
             - ``windowed``: the windowed task assigner (`Li et al. 2021`_), which assigns tasks within the planning window. This can only be used with the ``RHCR`` planner.
-            - ``distinct-one-goal``: the distinct one-goal task assigner, which assigns each robot a distinct goal. This can only be used with the ``PBS`` and ``MASS`` planners.
-            - ``one-goal``: the one-goal task assigner, which assigns each robot a goal regardless of duplicates. This can only be used with the ``TPBS`` planner.
+            - ``distinct_one_goal``: the distinct one-goal task assigner, which assigns each robot a distinct goal. This can only be used with the ``PBS`` and ``MASS`` planners.
+            - ``one_goal``: the one-goal task assigner, which assigns each robot a goal regardless of duplicates. This can only be used with the ``TPBS`` planner.
 
             Defaults to ``windowed``.
         planning_window (int, optional): planning window in timesteps. The final planning window is the max of this value and the inferred planning window from ``sim_window_tick``.
@@ -261,7 +266,6 @@ def run_lifelong_argos(
     .. _Chen et al. 2024: https://arxiv.org/abs/2308.11234
     .. _Hönig et al. 2019: https://ieeexplore.ieee.org/document/8620328
     .. _Phillips et al. 2011: https://www.cs.cmu.edu/~maxim/files/sipp_icra11.pdf
-    .. _singularity: https://sylabs.io/singularity/
     """
     np.random.seed(seed)
     setup_logging()
@@ -350,6 +354,7 @@ def run_lifelong_argos(
             f"--save_stats={str(save_stats).lower()}",
             f"--screen={screen}",
             f"--total_sim_step_tick={sim_duration}",
+            f"--stop_at_congestion={str(stop_at_congestion).lower()}",
             f"--ticks_per_second={ticks_per_second}",
             f"--look_ahead_dist={look_ahead_dist}",
             f"--look_ahead_tick={look_ahead_tick}",

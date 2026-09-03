@@ -214,8 +214,7 @@ private:
     Real integral_turn_error = 0.0;
     Real kp_turn_ = 0.8;
     Real ki_turn_ = 0.0;
-    Real kd_turn_ = 0.1;
-
+    Real kd_turn_ = 0.025;
     // Hyper-Parameter for PID::Move
     Real prevLeftVelocity_ = 0.0;
     Real prevRightVelocity_ = 0.0;

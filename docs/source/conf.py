@@ -23,7 +23,8 @@ project = "LSMART"
 author = "Yulun Zhang"
 arcs_lab = "ARCS Lab, Carnegie Mellon University"
 copyright = f"2026, {arcs_lab}"
-version = release = "0.1"
+version = "0.1"
+release = "0.1.0"
 
 # -------------------------------------------------
 # Extensions

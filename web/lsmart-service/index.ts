@@ -1,9 +1,18 @@
-import { spawn, type Subprocess } from "bun";
+#!/usr/bin/env bun
+
+import { spawn, type ReadableSubprocess } from "bun";
 import { load } from "js-yaml";
-import { readFileSync, existsSync } from "fs";
+import { existsSync } from "fs";
 import { createServer } from "net";
 import { join, resolve } from "path";
 import type { ServerWebSocket } from "bun";
+import {
+  HELP,
+  loadMap,
+  parseRunConfig,
+  type MapContents,
+  type RunConfig,
+} from "./config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -41,7 +50,7 @@ type Stats = {
 
 type MetaEvent = {
   type: "meta";
-  map_contents: unknown;
+  map_contents: MapContents;
   map_format: "lsmart-json";
   map_path: string;
   agent_count: number;
@@ -50,6 +59,7 @@ type MetaEvent = {
   planner: string;
   task_assigner_type: string;
   backup_solver: string;
+  effective_config: RunConfig;
 };
 
 type Output =
@@ -62,31 +72,20 @@ type Output =
   | { type: "error"; error: string };
 
 type ActiveRun = {
-  proc: Subprocess;
+  proc: ReadableSubprocess;
   cancelled: boolean;
   simulatorPort: number;
 };
 
-// ─── Default Run Config ─────────────────────────────────────────────────────
-
 const REPO_ROOT = resolve(import.meta.dir, "../..");
 
-const DEFAULT_RUN = {
-  mapPath: "maps/kiva_large_w_mode.json",
-  numAgents: 50,
-  planner: "RHCR",
-  plannerInvokePolicy: "default",
-  taskAssignerType: "windowed",
-  backupSolver: "PIBT",
-  simDuration: 600,
-  simWindowTick: 20,
-  ticksPerSecond: 10,
-  velocity: 200.0,
-  seed: 42,
-  rotation: false,
-};
+type SocketState =
+  | { status: "ready" }
+  | { status: "starting" }
+  | { status: "running"; run: ActiveRun }
+  | { status: "finished" };
 
-const activeRuns = new WeakMap<ServerWebSocket<unknown>, ActiveRun>();
+const socketStates = new WeakMap<ServerWebSocket<unknown>, SocketState>();
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -206,37 +205,9 @@ function parseOutputLine(
 
 async function runSimulation(
   ws: ServerWebSocket<unknown>,
-  config: typeof DEFAULT_RUN
+  config: RunConfig,
+  mapPath: string
 ) {
-  const mapPath = join(REPO_ROOT, config.mapPath);
-  if (!existsSync(mapPath)) {
-    ws.send(
-      JSON.stringify({
-        type: "error",
-        error: `Map file not found: ${config.mapPath}`,
-      })
-    );
-    return;
-  }
-
-  // Read map contents for meta event
-  const mapContents = JSON.parse(readFileSync(mapPath, "utf-8"));
-
-  // Send meta event first
-  const meta: MetaEvent = {
-    type: "meta",
-    map_contents: mapContents,
-    map_format: "lsmart-json",
-    map_path: config.mapPath,
-    agent_count: config.numAgents,
-    ticks_per_second: config.ticksPerSecond,
-    sim_duration: config.simDuration,
-    planner: config.planner,
-    task_assigner_type: config.taskAssignerType,
-    backup_solver: config.backupSolver,
-  };
-  ws.send(JSON.stringify(meta));
-
   let simulatorPort: number;
   try {
     simulatorPort = await getAvailablePort();
@@ -247,6 +218,7 @@ async function runSimulation(
         error: `Failed to allocate a simulator RPC port: ${String(err)}`,
       },
     ]);
+    socketStates.set(ws, { status: "finished" });
     return;
   }
   sendOutputs(ws, [
@@ -257,6 +229,7 @@ async function runSimulation(
   ]);
 
   if (ws.readyState !== WebSocket.OPEN) {
+    socketStates.set(ws, { status: "finished" });
     return;
   }
 
@@ -265,30 +238,47 @@ async function runSimulation(
     REPO_ROOT,
     "plugins/visualizers/external_visualizer/build"
   );
+  const argosConfigPath = join("/tmp", `lsmart-${simulatorPort}.argos`);
   const args = [
     "run_lifelong.py",
-    `--map_filepath=${config.mapPath}`,
-    `--num_agents=${config.numAgents}`,
+    `--map_filepath=${mapPath}`,
+    `--argos_config_filepath=${argosConfigPath}`,
+    `--num_agents=${config.num_agents}`,
+    `--n_threads=${config.n_threads}`,
     `--planner=${config.planner}`,
-    `--planner_invoke_policy=${config.plannerInvokePolicy}`,
-    `--task_assigner_type=${config.taskAssignerType}`,
-    `--backup_solver=${config.backupSolver}`,
-    `--sim_duration=${config.simDuration}`,
-    `--sim_window_tick=${config.simWindowTick}`,
-    `--ticks_per_second=${config.ticksPerSecond}`,
+    `--planner_invoke_policy=${config.planner_invoke_policy}`,
+    `--task_assigner_type=${config.task_assigner_type}`,
+    `--backup_solver=${config.backup_solver}`,
+    `--sim_duration=${config.sim_duration}`,
+    `--stop_at_congestion=${config.stop_at_congestion}`,
+    `--sim_window_tick=${config.sim_window_tick}`,
+    `--ticks_per_second=${config.ticks_per_second}`,
     `--velocity=${config.velocity}`,
     `--seed=${config.seed}`,
+    `--screen=${config.screen}`,
+    `--planning_window=${config.planning_window}`,
+    `--cutoffTime=${config.cutoffTime}`,
+    `--rotation=${config.rotation}`,
     `--port_num=${simulatorPort}`,
+    `--container=True`,
     `--external_visualization=True`,
     `--headless=False`,
-    `--screen=0`,
     `--save_stats=False`,
   ];
+  if (config.planner === "RHCR") {
+    args.push(
+      `--solver=${config.solver}`,
+      `--single_agent_solver=${config.single_agent_solver}`,
+      `--rotation_time=${config.rotation_time}`,
+      `--prioritize_start=${config.prioritize_start}`,
+      `--suboptimal_bound=${config.suboptimal_bound}`
+    );
+  }
 
-  let proc: Subprocess;
+  let proc: ReadableSubprocess;
   try {
     proc = spawn({
-      cmd: ["/home/yulun/miniconda3/envs/surrogate_ggo/bin/python", ...args],
+      cmd: ["python3", ...args],
       cwd: REPO_ROOT,
       stdout: "pipe",
       stderr: "pipe",
@@ -304,6 +294,7 @@ async function runSimulation(
         error: `Failed to start simulation: ${String(err)}`,
       },
     ]);
+    socketStates.set(ws, { status: "finished" });
     return;
   }
 
@@ -312,14 +303,14 @@ async function runSimulation(
     cancelled: false,
     simulatorPort,
   };
-  activeRuns.set(ws, runState);
+  socketStates.set(ws, { status: "running", run: runState });
 
   if (ws.readyState !== WebSocket.OPEN) {
     runState.cancelled = true;
     try {
       proc.kill();
     } catch {}
-    activeRuns.delete(ws);
+    socketStates.set(ws, { status: "finished" });
     return;
   }
 
@@ -358,7 +349,7 @@ async function runSimulation(
   } catch (err) {
     sendOutputs(ws, [{ type: "error", error: String(err) }]);
   } finally {
-    activeRuns.delete(ws);
+    socketStates.set(ws, { status: "finished" });
     try {
       if (!exited) {
         proc.kill();
@@ -369,69 +360,133 @@ async function runSimulation(
 
 // ─── HTTP + WebSocket Server ────────────────────────────────────────────────
 
-const PORT = parseInt(process.env.PORT || "3000");
-const frontendDevServerUrl = process.env.LSMART_VISUALIZER_DEV_URL?.replace(
-  /\/+$/,
-  ""
-);
+export function startServer(config: RunConfig) {
+  const { mapPath, mapContents } = loadMap(config.map_filepath, REPO_ROOT);
+  const meta: MetaEvent = {
+    type: "meta",
+    map_contents: mapContents,
+    map_format: "lsmart-json",
+    map_path: config.map_filepath,
+    agent_count: config.num_agents,
+    ticks_per_second: config.ticks_per_second,
+    sim_duration: config.sim_duration,
+    planner: config.planner,
+    task_assigner_type: config.task_assigner_type,
+    backup_solver: config.backup_solver,
+    effective_config: config,
+  };
 
-// Try to serve static frontend files
-const staticDir = join(import.meta.dir, "../lsmart-visualiser/dist");
+  const port = Number(process.env.PORT || "3000");
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("PORT must be an integer in range 1..65535");
+  }
+  const frontendDevServerUrl = process.env.LSMART_VISUALIZER_DEV_URL?.replace(
+    /\/+$/,
+    ""
+  );
+  const staticDir = join(import.meta.dir, "../lsmart-visualiser/dist");
 
-Bun.serve({
-  port: PORT,
-  async fetch(req, server) {
-    const url = new URL(req.url);
+  const server = Bun.serve({
+    port,
+    async fetch(req, server) {
+      const url = new URL(req.url);
 
-    // Only the simulation stream should upgrade to websocket.
-    if (url.pathname === "/ws") {
-      if (server.upgrade(req)) {
-        return;
+      if (url.pathname === "/ws") {
+        if (server.upgrade(req)) return;
+        return new Response("WebSocket upgrade required", { status: 426 });
       }
 
-      return new Response("WebSocket upgrade required", { status: 426 });
-    }
-
-    if (frontendDevServerUrl) {
-      return Response.redirect(
-        `${frontendDevServerUrl}${url.pathname}${url.search}`,
-        307
-      );
-    }
-
-    // Serve static files
-    let path = url.pathname;
-    if (path === "/") path = "/index.html";
-
-    const filePath = join(staticDir, path);
-    if (existsSync(filePath)) {
-      return new Response(Bun.file(filePath));
-    }
-
-    return new Response("Not Found", { status: 404 });
-  },
-  websocket: {
-    open(ws) {
-      console.log("[lsmart-service] Client connected, starting simulation...");
-      void runSimulation(ws, DEFAULT_RUN);
-    },
-    close(ws) {
-      console.log("[lsmart-service] Client disconnected");
-      const runState = activeRuns.get(ws);
-      if (!runState) {
-        return;
+      if (frontendDevServerUrl) {
+        return Response.redirect(
+          `${frontendDevServerUrl}${url.pathname}${url.search}`,
+          307
+        );
       }
 
-      runState.cancelled = true;
-      try {
-        runState.proc.kill();
-      } catch {}
-      activeRuns.delete(ws);
+      let path = url.pathname;
+      if (path === "/") path = "/index.html";
+      const filePath = join(staticDir, path);
+      if (existsSync(filePath)) return new Response(Bun.file(filePath));
+      return new Response("Not Found", { status: 404 });
     },
-    message(ws, message) {
-      // Handle client messages if needed (e.g., custom run config)
-    },
-  },
-});
+    websocket: {
+      open(ws) {
+        console.log("[lsmart-service] Client connected, waiting to start...");
+        socketStates.set(ws, { status: "ready" });
+        ws.send(JSON.stringify(meta));
+      },
+      close(ws) {
+        console.log("[lsmart-service] Client disconnected");
+        const state = socketStates.get(ws);
+        if (state?.status === "running") {
+          state.run.cancelled = true;
+          try {
+            state.run.proc.kill();
+          } catch {}
+        }
+        socketStates.delete(ws);
+      },
+      message(ws, message) {
+        let input: unknown;
+        try {
+          const text =
+            typeof message === "string"
+              ? message
+              : new TextDecoder().decode(message);
+          input = JSON.parse(text);
+        } catch {
+          sendOutputs(ws, [
+            { type: "error", error: "Expected JSON message {\"type\":\"start\"}" },
+          ]);
+          return;
+        }
 
-console.log(`[lsmart-service] Running on http://localhost:${PORT}`);
+        if (
+          typeof input !== "object" ||
+          input === null ||
+          (input as { type?: unknown }).type !== "start" ||
+          Object.keys(input).length !== 1
+        ) {
+          sendOutputs(ws, [
+            { type: "error", error: "Expected message {\"type\":\"start\"}" },
+          ]);
+          return;
+        }
+
+        if (socketStates.get(ws)?.status !== "ready") {
+          sendOutputs(ws, [
+            { type: "error", error: "Simulation has already been started" },
+          ]);
+          return;
+        }
+
+        socketStates.set(ws, { status: "starting" });
+        sendOutputs(ws, [
+          { type: "message", content: "[lsmart-service] Starting simulation" },
+        ]);
+        void runSimulation(ws, config, mapPath);
+      },
+    },
+  });
+
+  console.log(`[lsmart-service] Running on http://localhost:${port}`);
+  console.log(`[lsmart-service] Configuration: ${JSON.stringify(config)}`);
+  return server;
+}
+
+if (import.meta.main) {
+  try {
+    const parsed = parseRunConfig(Bun.argv.slice(2));
+    if (parsed.help) {
+      console.log(HELP);
+    } else {
+      startServer(parsed.config);
+    }
+  } catch (error) {
+    console.error(
+      `[lsmart-service] ${error instanceof Error ? error.message : String(error)}`
+    );
+    console.error("Run lsmart-viz --help for supported options.");
+    process.exit(2);
+  }
+}
