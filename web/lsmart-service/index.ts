@@ -37,6 +37,14 @@ type ExecProgress = {
   total: number;
 };
 
+type GoalReached = {
+  type: "goal_reached";
+  agent: number;
+  clock: number;
+  col: number;
+  row: number;
+};
+
 type StateChange = {
   type: "state_change";
   agent: number;
@@ -65,6 +73,7 @@ type MetaEvent = {
 type Output =
   | Step
   | ExecProgress
+  | GoalReached
   | StateChange
   | Stats
   | MetaEvent

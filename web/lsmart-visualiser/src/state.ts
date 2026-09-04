@@ -27,6 +27,14 @@ export interface ExecProgressEvent {
   total: number;
 }
 
+export interface GoalReachedEvent {
+  type: "goal_reached";
+  agent: number;
+  clock: number;
+  col: number;
+  row: number;
+}
+
 export interface StateChangeEvent {
   type: "state_change";
   agent: number;
@@ -62,6 +70,7 @@ export interface StatsEvent {
 export type OutputEvent =
   | TickEvent
   | ExecProgressEvent
+  | GoalReachedEvent
   | StateChangeEvent
   | MetaEvent
   | StatsEvent
@@ -97,6 +106,7 @@ export const framesAtom = atom<Frame[]>([]);
 export const currentFrameAtom = atom<number>(0);
 export const playingAtom = atom<boolean>(false);
 export const speedAtom = atom<number>(1);
+export const goalArrivalsAtom = atom<GoalReachedEvent[]>([]);
 
 // ─── Per-Agent State ────────────────────────────────────────────────────────
 
@@ -149,6 +159,7 @@ export function useSimulation() {
   const setFrames = useSetAtom(framesAtom);
   const setCurrentFrame = useSetAtom(currentFrameAtom);
   const setPlaying = useSetAtom(playingAtom);
+  const setGoalArrivals = useSetAtom(goalArrivalsAtom);
   const setAgentStates = useSetAtom(agentStatesAtom);
   const setStats = useSetAtom(statsAtom);
   const setLogs = useSetAtom(logsAtom);
@@ -176,6 +187,7 @@ export function useSimulation() {
         setConnected(true);
         setFrames([]);
         setCurrentFrame(0);
+        setGoalArrivals([]);
         setAgentStates({});
         setStats(null);
         setLogs([]);
@@ -220,6 +232,10 @@ export function useSimulation() {
                   };
                   return next;
                 });
+                break;
+
+              case "goal_reached":
+                setGoalArrivals((prev) => [...prev, evt]);
                 break;
 
               case "state_change":
@@ -295,6 +311,7 @@ export function useSimulation() {
 
     setFrames([]);
     setCurrentFrame(0);
+    setGoalArrivals([]);
     setAgentStates({});
     setStats(null);
     setLogs([]);
@@ -307,6 +324,7 @@ export function useSimulation() {
     setCurrentFrame,
     setError,
     setFrames,
+    setGoalArrivals,
     setLogs,
     setPlaying,
     setStats,

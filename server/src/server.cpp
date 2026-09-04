@@ -24,10 +24,25 @@ bool isSimulationFrozen() {
 
 string actionFinished(string &robot_id_str, int node_ID) {
     lock_guard<mutex> guard(globalMutex);
+    int agent_id = em->adg->startIndexToRobotID[robot_id_str];
+    bool reached_goal =
+        node_ID > em->adg->finished_node_idx[agent_id] &&
+        em->adg->isTaskCompletionNode(agent_id, node_ID);
+    auto goal = reached_goal ? em->adg->getActionGoal(agent_id, node_ID)
+                             : make_pair(0.0, 0.0);
     auto result = em->actionFinished(robot_id_str, node_ID);
 
+    if (reached_goal) {
+        emit_event({
+            {"type", "goal_reached"},
+            {"agent", agent_id},
+            {"clock", em->getCurrSimStep()},
+            {"col", goal.first},
+            {"row", goal.second}
+        });
+    }
+
     // Emit exec_progress after action is finished
-    int agent_id = em->adg->startIndexToRobotID[robot_id_str];
     emit_event({
         {"type", "exec_progress"},
         {"agent", agent_id},

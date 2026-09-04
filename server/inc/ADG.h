@@ -92,7 +92,7 @@ public:
     pair<double, double> getRobotPosition(int agent_id) {
         return robot_states[agent_id].position;
     }
-    bool isTaskNode(int robot_id, int node_id);
+    bool isTaskCompletionNode(int robot_id, int node_id);
 
     pair<double, double> getActionGoal(int agent_id, int node_id) {
         return make_pair(graph[agent_id][node_id].action.goal.first,

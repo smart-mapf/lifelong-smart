@@ -40,14 +40,6 @@ docs/source/api_server/
 frames/
 node_modules/
 dist/
-web/
-!web/
-web/*
-!web/lsmart-service/
-web/lsmart-service/*
-!web/lsmart-service/config.ts
-!web/lsmart-service/config.test.ts
-!web/lsmart-service/types.ts
 argos3_simulator-3.0.0-x86_64-beta59.deb
 singularity/container/
 singularity/container.sif

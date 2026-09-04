@@ -9,6 +9,8 @@ import {
   playingAtom,
   speedAtom,
   statsAtom,
+  goalArrivalsAtom,
+  metaAtom,
 } from "./state";
 import type { TickAgent } from "./state";
 import {
@@ -198,6 +200,48 @@ function DomainBase() {
       />
       <meshStandardMaterial color="#cccccc" map={texture} />
     </mesh>
+  );
+}
+
+function GoalHighlights() {
+  const mapData = useAtomValue(mapDataAtom);
+  const frames = useAtomValue(framesAtom);
+  const currentFrame = useAtomValue(currentFrameAtom);
+  const arrivals = useAtomValue(goalArrivalsAtom);
+  const ticksPerSecond = useAtomValue(metaAtom)?.ticks_per_second ?? 10;
+
+  if (!mapData) return null;
+  const clock = frames[currentFrame]?.clock;
+  if (clock === undefined) return null;
+
+  const visibleCells = new Map<string, { col: number; row: number }>();
+  for (const arrival of arrivals) {
+    if (arrival.clock <= clock && clock < arrival.clock + ticksPerSecond) {
+      visibleCells.set(`${arrival.col},${arrival.row}`, arrival);
+    }
+  }
+
+  return (
+    <group>
+      {[...visibleCells.values()].map(({ col, row }) => {
+        const pos = gridCellToScenePosition(col, row, mapData);
+        return (
+          <mesh
+            key={`${col},${row}`}
+            rotation={[-Math.PI / 2, 0, 0]}
+            position={[pos.x, 0.005, pos.z]}
+          >
+            <planeGeometry args={[1, 1]} />
+            <meshBasicMaterial
+              color="#ff0000"
+              transparent
+              opacity={0.25}
+              depthWrite={false}
+            />
+          </mesh>
+        );
+      })}
+    </group>
   );
 }
 
@@ -403,6 +447,7 @@ export default function Scene() {
       <SceneLights />
       <SceneCamera />
       <DomainBase />
+      <GoalHighlights />
       <Obstacles />
       <Agents />
       <PlaybackController />
