@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 
 import { spawn, type ReadableSubprocess } from "bun";
-import { load } from "js-yaml";
 import { existsSync } from "fs";
 import { createServer } from "net";
 import { join, resolve } from "path";
@@ -203,7 +202,7 @@ function parseOutputLine(
     return parseStructuredOutput(JSON.parse(line));
   } catch {
     try {
-      return parseStructuredOutput(load(line));
+      return parseStructuredOutput(Bun.YAML.parse(line));
     } catch {
       return [{ type: "message", content: line }];
     }

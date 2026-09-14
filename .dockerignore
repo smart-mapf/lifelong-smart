@@ -13,6 +13,7 @@
 **/dist
 **/node_modules
 CPLEX_Studio2210
+lsmart-*.tar
 singularity/container/
 singularity/*.sif
 docs/doxygen

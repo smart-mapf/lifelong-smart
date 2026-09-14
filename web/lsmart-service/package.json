@@ -9,11 +9,7 @@
     "start": "bun run index.ts",
     "test": "bun test config.test.ts"
   },
-  "dependencies": {
-    "js-yaml": "^4.1.0"
-  },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/js-yaml": "^4.0.9"
+    "@types/bun": "latest"
   }
 }

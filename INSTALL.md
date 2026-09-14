@@ -1,50 +1,50 @@
-
 ## Installation
-1.  Install Argos 3. Please refer to this [Link](https://www.argos-sim.info/core.php) for instruction.
 
-    You can verify the correctness of the compilation by running:
-    ```bash
-    argos3 --version
-    ```
+1. Install Argos 3. Please refer to this [Link](https://www.argos-sim.info/core.php) for instruction.
 
-1.  Install RPC
-    This repo requires [RPC](https://github.com/rpclib/rpclib) for communication
-    between server and clients.
-    Please install rpc using:
-    ```bash
-    bash compile.sh rpclib
-    ```
+   You can verify the correctness of the compilation by running:
 
-1.  Install the minimal Python dependencies for `run_lifelong.py`.
-    ```bash
-    python -m pip install -r requirement.txt
-    ```
+   ```bash
+   argos3 --version
+   ```
+2. Install RPC
+   This repo requires [RPC](https://github.com/rpclib/rpclib) for communication
+   between server and clients.
+   Please install rpc using:
 
-1.  Compile client.
-    ```bash
-    bash compile.sh client
-    ```
+   ```bash
+   bash compile.sh rpclib
+   ```
+3. Install the minimal Python dependencies for `run_lifelong.py`.
 
-    To produce debuggable code (slow), type:
+   ```bash
+   python -m pip install -r requirement.txt
+   ```
+4. Compile client.
 
-    ```bash
-    cd client
-    cmake -DCMAKE_BUILD_TYPE=Debug ..
-    make
-    cd ..
-    ```
+   ```bash
+   bash compile.sh client
+   ```
 
+   To produce debuggable code (slow), type:
 
-1.  Compile server.
-    ```bash
-    bash compile.sh server
-    ```
+   ```bash
+   cd client
+   cmake -DCMAKE_BUILD_TYPE=Debug ..
+   make
+   cd ..
+   ```
+5. Compile server.
 
-1.  Compile MAPF planner. For now we support PBS and RHCR.
-    ```bash
-    bash compile.sh pbs
-    bash compile.sh rhcr
-    ```
+   ```bash
+   bash compile.sh server
+   ```
+6. Compile MAPF planner. For now we support PBS and RHCR.
+
+   ```bash
+   bash compile.sh pbs
+   bash compile.sh rhcr
+   ```
 
 Alternatively, you may compile rpc, server, client, and MAPF planners using:
 
@@ -84,11 +84,9 @@ ARGoS package is `amd64`-only.
    Docker's
    [Linux post-installation instructions](https://docs.docker.com/engine/install/linux-postinstall/)
    or run the Docker commands with `sudo`.
-
 2. Download `argos3_simulator-3.0.0-x86_64-beta59.deb` from
    [ARGoS](https://www.argos-sim.info/core.php) and place it in the repository
    root. This untracked file is required during the build.
-
 3. From the repository root, build and install the local image:
 
    ```bash
@@ -205,7 +203,6 @@ The container build expects **Argos3** to already exist in the repository
 root because `singularity/container.def` copies it into the image:
 
 1. `argos3_simulator-3.0.0-x86_64-beta59.deb`: Download it from [Argos3](https://www.argos-sim.info/core.php).
-
 2. Install CPLEX at `CPLEX_Studio2210/`: If it exists in the repository root, the container
    build also copies it into the image and compiles the MASS planner. If it is missing, the
    container still builds, but skips MASS.
