@@ -15,7 +15,7 @@ Our Provided Fail Policies
 We provide three fail policies, including:
 
 - **PIBT** (`Okumura et al. 2019`_): the Priority Inheritance with Backtracking.
-- **LRA** (`Li et al. 2021`_): the Local Repair Guided Waits.
+- **LRAStar (LRA*)** (`Li et al. 2021`_): the Local Repair Guided Waits.
 - **GuidedPIBT** (`Chen et al. 2024`_): Guided PIBT.
 
 Add New Fail Policies

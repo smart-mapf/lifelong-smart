@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://arxiv.org/abs/2602.15721"><img src="https://img.shields.io/badge/arXiv-2602.15721-b31b1b.svg" alt="arXiv paper"></a>
   <a href="https://hub.docker.com/r/lunjohnzhang/lsmart"><img src="https://img.shields.io/docker/v/lunjohnzhang/lsmart?sort=semver&amp;label=Docker%20Hub" alt="Docker Hub image"></a>
+  <a href="https://github.com/smart-mapf/lifelong-smart/actions/workflows/docs.yml"><img src="https://github.com/smart-mapf/lifelong-smart/actions/workflows/docs.yml/badge.svg?branch=master" alt="Documentation build status"></a>
   <a href="LICENSE.txt"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT license"></a>
 </p>
 
@@ -65,7 +66,7 @@ Lifelong Scalable Multi-Agent Realistic Testbed (LSMART) is an open-source simul
   </tr>
 </table>
 
-Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling them as differentiable drive robots, which can move forward and rotate in place with constraints in maximum velocity and acceleration. This is in contrast to prior works that model AGVs as simple omnidirectional/pebble motion agents. We also simulate real-world execution delays and use Action Dependency Graph (ADG) [2] to ensure collision-free of the executed paths.
+Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling them as differential-drive robots, which can move forward and rotate in place with constraints on maximum velocity and acceleration. This is in contrast to prior works that model AGVs as simple omnidirectional/pebble-motion agents. We also simulate real-world execution delays and use an Action Dependency Graph (ADG) [2] to ensure collision-free execution of the planned paths.
 
 The browser visualizer is implemented based on the [SMART visualizer](https://github.com/smart-mapf/visualiser).
 

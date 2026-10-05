@@ -172,7 +172,7 @@ string getRobotsLocation() {
  *
  * @details
  * This function takes a JSON string representing a new MAPF plan and adds it
- * to the ADG (Action Decision Graph). If necessary, it utilizes the backup
+ * to the ADG (Action Dependency Graph). If necessary, it utilizes the backup
  * planner to ensure the plan is integrated correctly.
  *
  * @param new_plan_json_str A JSON string with a new MAPF plan with the

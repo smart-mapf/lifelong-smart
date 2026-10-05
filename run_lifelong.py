@@ -212,7 +212,7 @@ def run_lifelong_argos(
         planner_invoke_policy (str, optional): planner invocation policy, options include:
 
             - ``default``: the periodic policy where the planner is invoked periodically every ``sim_window_tick`` ticks.
-            - ``no_action``: the event-based policy where the planner is invoked when at least one robot has no action to execute in the ADG (`Hönig et al. 2019`_).
+            - ``no_action``: the event-based policy where the planner is invoked when at least one robot's number of unfinished ADG actions is less than or equal to the ADG look-ahead distance (`Hönig et al. 2019`_).
 
             Defaults to ``default``.
         task_assigner_type (str, optional): task assigner (MAPF problem instance generator) used to generate problem instances. Options include:

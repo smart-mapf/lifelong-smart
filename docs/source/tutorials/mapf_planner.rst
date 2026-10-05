@@ -16,7 +16,7 @@ Our Provided Planners
 We provide several built-in MAPF planners, including:
 
 * **RHCR** (`Li et al. 2021`_): the Rolling Horizon Collision Resolution planner. RHCR plans for windowed paths for all robots. It supports planning with the pebble motion model and rotational motion model. RHCR is the default planner in LSMART.
-* **MASS** (`Yan et al. 2025`_): the MAPF-SSIPP-SPS planner. MASS plans for full-horizon paths with 2nd order dynamics for all robots.
+* **MASS** (`Yan et al. 2025`_): the MAPF-SSIPP-SPS planner. MASS plans for full-horizon paths with 2nd order dynamics for all robots. MASS requires IBM CPLEX and is therefore not included in the published Docker image or the Docker-derived Singularity image. It is available in a source build configured with CPLEX.
 * **PBS** (`Ma et al. 2019`_): the Priority-Based Search planner . PBS plans for full-horizon paths for all robots. It supports planning with the pebble motion model.
 * **TPBS** (`Morag et al. 2025`_): the `Transient` Priority-Based Search planner . TPBS plans for full-horizon paths for all robots even if there are duplicate goals. It supports planning with the pebble motion model.
 
@@ -34,15 +34,37 @@ Add New Planners
 The MAPF planners use RPC to communicate with other modules in LSMART. Specifically, the planner shall implement an RPC client that connects to the RPC server in LSMART. The planner shall receive a MAPF problem instance and a time limit from LSMART, and return collision-free paths within that time limit.
 
 Check LSMART Initialization and Invocation Status
--------------------------------------------
+-------------------------------------------------
 
-Since RPC is a one-way communication protocol, the MAPF planner shall first check with the RPC server in LSMART whether the system is initialized and whether the planner should be invoked before attempting to receive a MAPF problem instance.
+The MAPF planner acts as an RPC client and polls LSMART's request/response
+endpoints. Endpoint names are part of the wire protocol and must be used
+exactly as shown below.
 
-To check if other modules of LSMART are initialized, the MAPF planner shall use a RPC client to invoke the following function:
+.. list-table:: Planner RPC protocol
+   :header-rows: 1
+   :widths: 22 18 60
+
+   * - Endpoint
+     - Result
+     - Purpose
+   * - ``is_initialized``
+     - Boolean
+     - Reports whether LSMART has initialized the simulation and ADG.
+   * - ``invoke_planner``
+     - Boolean
+     - Reports whether LSMART is requesting a new plan.
+   * - ``get_location``
+     - JSON string
+     - Returns the current MAPF problem instance.
+   * - ``add_plan``
+     - No value
+     - Submits one JSON-encoded planning result to LSMART.
+
+Before requesting an instance, call ``is_initialized`` and then
+``invoke_planner``. These endpoints are implemented by the following server
+handlers:
 
 .. doxygenfunction:: rpc_api::isInitialized()
-
-To check if the planner should be invoked, the MAPF planner shall use a RPC client to invoke the following function:
 
 .. doxygenfunction:: rpc_api::invokePlanner()
 
@@ -50,13 +72,17 @@ To check if the planner should be invoked, the MAPF planner shall use a RPC clie
 Receive MAPF Problem Instances
 ---------------------------------
 
-The MAPF planner shall use a RPC client to invoke the :doc:`getRobotsLocation <../api_server/function_server_8cpp_1ada05a9e324eac12ef00d03c8dbbd879a>` to receive a MAPF problem instance from LSMART.
+When ``invoke_planner`` returns true, call ``get_location`` to receive a MAPF
+problem instance from LSMART. Its JSON schema is documented by the following
+server handler:
 
 .. doxygenfunction:: rpc_api::getRobotsLocation()
 
 Return Plan Results
 ----------------------------
 
-After planning, no matter success or failure, the MAPF planner shall use a RPC client to invoke the following function to return the plan results to LSMART:
+After planning, call ``add_plan`` with the JSON-encoded result whether planning
+succeeded or failed. Its input schema is documented by the following server
+handler:
 
 .. doxygenfunction:: rpc_api::addNewPlan(string&)
