@@ -96,7 +96,13 @@ compile_extviz() {
     rm -rf build
     mkdir build
     cd build
-    cmake ..
+    fmt_cmake_dir="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/cmake/fmt"
+    if [ -f "${fmt_cmake_dir}/fmt-config.cmake" ]; then
+        # Match the system ARGoS build even when a Conda environment is active.
+        cmake -Dfmt_DIR="${fmt_cmake_dir}" ..
+    else
+        cmake ..
+    fi
     make -j $cpuCores
 }
 

@@ -330,6 +330,7 @@ function PlaybackController() {
   const playing = useAtomValue(playingAtom);
   const speed = useAtomValue(speedAtom);
   const stats = useAtomValue(statsAtom);
+  const ticksPerSecond = useAtomValue(metaAtom)?.ticks_per_second ?? 10;
   const setCurrentFrame = useSetAtom(currentFrameAtom);
   const setPlaying = useSetAtom(playingAtom);
   const accRef = useRef(0);
@@ -341,7 +342,7 @@ function PlaybackController() {
       return;
     }
 
-    accRef.current += delta * speed * 10; // 10 ticks per second base
+    accRef.current += delta * speed * ticksPerSecond;
     const steps = Math.floor(accRef.current);
     accRef.current -= steps;
 

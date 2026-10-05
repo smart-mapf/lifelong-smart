@@ -127,7 +127,7 @@ def run_simulator(args, timeout: float = None, output_log: str = None):
 def run_lifelong_argos(
     map_filepath: str = "maps/kiva_large_w_mode.json",
     num_agents: int = 100,
-    headless: bool = False,
+    visualizer: str = "argos",
     argos_config_filepath: str = "output.argos",
     stats_name: str = "stats.json",
     save_stats: bool = False,
@@ -148,7 +148,6 @@ def run_lifelong_argos(
     task_assigner_type: str = "windowed",
     planning_window: int = 10,
     frame_grab: bool = False,
-    external_visualization: bool = False,
     cutoffTime: int = 1,
     # RHCR parameters
     solver: str = "PBS",
@@ -167,7 +166,10 @@ def run_lifelong_argos(
     Args:
         map_filepath (str, optional): file path to map. Example maps are in the ``maps`` directory. If maps contains workstations (``w``) and endpoints (``e``), robots' tasks will be assigned alternately between workstations and endpoints. If not, robots' tasks will be randomly generated from the empty spaces. Defaults to ``maps/kiva_large_w_mode.json``.
         num_agents (int, optional): number of robots. Defaults to 100.
-        headless (bool, optional): whether run in headless mode. If False, a visualization will be generated. Defaults to False.
+        visualizer (str, optional): visualization mode. Options are ``none``
+            for headless execution, ``argos`` for the native Qt/OpenGL
+            visualizer, and ``web`` for the external event-stream visualizer
+            used by ``lsmart-viz``. Defaults to ``argos``.
         argos_config_filepath (str, optional): file path to write the generated
             Argos config file. Defaults to "output.argos".
         stats_name (str, optional): file path to store the stats from the
@@ -267,6 +269,10 @@ def run_lifelong_argos(
     .. _Hönig et al. 2019: https://ieeexplore.ieee.org/document/8620328
     .. _Phillips et al. 2011: https://www.cs.cmu.edu/~maxim/files/sipp_icra11.pdf
     """
+    visualizer = visualizer.lower()
+    if visualizer not in {"none", "web", "argos"}:
+        raise ValueError("visualizer must be one of: none, web, argos")
+
     np.random.seed(seed)
     setup_logging()
     map_data, width, height = parse_map_file(map_filepath)
@@ -286,8 +292,7 @@ def run_lifelong_argos(
         curr_num_agent=num_agents,
         port_num=port_num,
         n_threads=n_threads,
-        visualization=not headless,
-        external_visualization=external_visualization,
+        visualizer=visualizer,
         sim_duration=sim_duration,
         ticks_per_second=ticks_per_second,
         screen=screen,
@@ -352,6 +357,7 @@ def run_lifelong_argos(
             f"--port_number={port_num}",
             f"--output_file={stats_name}",
             f"--save_stats={str(save_stats).lower()}",
+            f"--visualizer={visualizer}",
             f"--screen={screen}",
             f"--total_sim_step_tick={sim_duration}",
             f"--stop_at_congestion={str(stop_at_congestion).lower()}",

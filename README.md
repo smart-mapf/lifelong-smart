@@ -3,8 +3,37 @@
 # Lifelong Scalable Multi-Agent Realistic Testbed (LSMART)
 
 <p align="center">
+  <a href="https://arxiv.org/abs/2602.15721"><img src="https://img.shields.io/badge/arXiv-2602.15721-b31b1b.svg" alt="arXiv paper"></a>
+  <a href="https://hub.docker.com/r/lunjohnzhang/lsmart"><img src="https://img.shields.io/docker/v/lunjohnzhang/lsmart?sort=semver&amp;label=Docker%20Hub" alt="Docker Hub image"></a>
+  <a href="LICENSE.txt"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT license"></a>
+</p>
+
+
+<p align="center">
+  <img src="readme_assets/lsmart-logo-black.png" alt="LSMART Pipeline" width="40%">
+</p>
+
+<p align="center">
   <img src="readme_assets/l-smart-2.0.png" alt="LSMART Pipeline" width="100%">
 </p>
+
+## Get started
+
+The quickest way to run LSMART is to pull the prebuilt `linux/amd64` image
+from [Docker Hub](https://hub.docker.com/r/lunjohnzhang/lsmart):
+
+```bash
+docker pull --platform linux/amd64 lunjohnzhang/lsmart:latest
+docker run --rm --init --platform linux/amd64 \
+  -p 3000:3000 \
+  lunjohnzhang/lsmart:latest
+```
+
+Open [http://localhost:3000](http://localhost:3000) to use the browser
+visualizer. LSMART also supports Singularity/Apptainer by converting the same
+Docker image into a SIF image. See [INSTALL.md](INSTALL.md) for Docker,
+Singularity/Apptainer, headless, native-visualizer, and source-build
+instructions.
 
 ## Introduction
 
@@ -37,6 +66,8 @@ Lifelong Scalable Multi-Agent Realistic Testbed (LSMART) is an open-source simul
 </table>
 
 Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling them as differentiable drive robots, which can move forward and rotate in place with constraints in maximum velocity and acceleration. This is in contrast to prior works that model AGVs as simple omnidirectional/pebble motion agents. We also simulate real-world execution delays and use Action Dependency Graph (ADG) [2] to ensure collision-free of the executed paths.
+
+The browser visualizer is implemented based on the [SMART visualizer](https://github.com/smart-mapf/visualiser).
 
 ---
 

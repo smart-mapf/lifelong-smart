@@ -1,100 +1,40 @@
-Bootstrap: docker
+Bootstrap: {{ bootstrap }}
+From: {{ docker_image }}
 
-From: ubuntu:20.04
+%arguments
+    bootstrap=docker
+    docker_image=lunjohnzhang/lsmart:latest
+    version=dev
 
-%setup
-    ROOTFS="${APPTAINER_ROOTFS:-$SINGULARITY_ROOTFS}"
-    if [ -d CPLEX_Studio2210 ]; then
-        mkdir -p "${ROOTFS}/usr/project"
-        cp -a CPLEX_Studio2210 "${ROOTFS}/usr/project/CPLEX_Studio2210"
-    fi
+%labels
+    org.opencontainers.image.title LSMART
+    org.opencontainers.image.version {{ version }}
+    org.opencontainers.image.source https://github.com/smart-mapf/lifelong-smart
+    org.opencontainers.image.description LSMART converted from its canonical Docker image
 
-%files
-    argos3_simulator-3.0.0-x86_64-beta59.deb /usr/project/argos3_simulator-3.0.0-x86_64-beta59.deb
-    planner/ /usr/project/planner
-    server/ /usr/project/server
-    client/ /usr/project/client
-    compile.sh /usr/project/compile.sh
-    requirement.txt /usr/project/requirement.txt
-
-%post
-    echo "Hello from inside the container"
-
-    echo "deb http://cz.archive.ubuntu.com/ubuntu focal main universe"
-
-    export DEBIAN_FRONTEND=noninteractive
-
-    apt-get update
-
-    apt-get install -y --no-install-recommends tzdata
-    apt-get install -y build-essential
-
-    apt-get install -y \
-        libboost-all-dev \
-        cmake \
-        sudo \
-        wget \
-        git \
-        libeigen3-dev \
-        python3.8 \
-        python3-pip \
-        libfreeimage-dev \
-        libfreeimageplus-dev \
-        qt5-default \
-        freeglut3-dev \
-        libxi-dev \
-        libxmu-dev \
-        liblua5.3-dev \
-        lua5.3 \
-        doxygen \
-        graphviz \
-        libgraphviz-dev \
-        asciidoc \
-        libtiff-dev \
-        python-is-python3 \
-        libtbb-dev \
-        libspdlog-dev \
-        clang \
-
-    # Project
-    PROJECT_ROOT=/usr/project
-    mkdir -p $PROJECT_ROOT
-
-    # Argos
-    dpkg -i $PROJECT_ROOT/argos3_simulator-3.0.0-x86_64-beta59.deb || apt-get install -f -y
-    python3 -m pip install --no-cache-dir -r $PROJECT_ROOT/requirement.txt
-
-    apt-get clean
-    rm -rf /var/lib/apt/lists/*
-
-
-%environment
-    # echo "Setting environment variables..."
-    export PROJECT_ROOT=/usr/project
-
-    # Set X11 display for GUI output
-    export DISPLAY=":1"
-
-    # Set numpy to be single-threaded
-    export OPENBLAS_NUM_THREADS=1
-
-    # Detect package
-    export PYTHONPATH=$PROJECT_ROOT:$PYTHONPATH
-    export PYTHONPATH=$PROJECT_ROOT/pybind11:$PYTHONPATH
-    export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.8/dist-packages
-    export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.8/site-packages
-    # For some reason we have to add docplex egg manually.
-    export PYTHONPATH=$PYTHONPATH:/usr/lib/python3.8/site-packages/docplex-2.23.221-py3.8.egg
-
-    # Trim memory aggressively
-    # https://github.com/dask/distributed/issues/5279
-    export MALLOC_TRIM_THRESHOLD_=0
-
-    export DEBIAN_FRONTEND=noninteractive
-    export TZ=America/New_York
+%test
+    test -x /usr/project/server/build/ExecutionManager
+    test -x /usr/project/planner/PBS/build/pbs
+    test -x /usr/project/planner/Transient_PBS/build/tpbs
+    test -x /usr/project/planner/RHCR/build/lifelong
+    test -f /usr/project/plugins/visualizers/external_visualizer/build/libexternal_visualizer.so
+    test -f /usr/project/web/lsmart-visualiser/dist/index.html
+    test "$(python3 -c 'import sys; print(sys.version_info[:2])')" = "(3, 8)"
+    lsmart-viz --help >/dev/null
 
 %runscript
-    # Argos
-    cd $PROJECT_ROOT
-    cpuCores=`cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'`
-    bash compile.sh all -c "${PROJECT_ROOT}/CPLEX_Studio2210"
+    exec /usr/local/bin/lsmart-viz "$@"
+
+%help
+    This SIF is a direct conversion of the LSMART Docker image.
+
+    Run the web visualizer:
+      apptainer run container.sif
+
+    Run without visualization:
+      apptainer exec container.sif python3 /usr/project/run_lifelong.py \
+        /usr/project/maps/kiva_large_w_mode.json --visualizer none --container True
+
+    Run the native ARGoS visualizer from a graphical session:
+      apptainer exec container.sif python3 /usr/project/run_lifelong.py \
+        /usr/project/maps/kiva_large_w_mode.json --visualizer argos --container True

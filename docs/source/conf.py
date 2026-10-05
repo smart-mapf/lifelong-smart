@@ -23,8 +23,8 @@ project = "LSMART"
 author = "Yulun Zhang"
 arcs_lab = "ARCS Lab, Carnegie Mellon University"
 copyright = f"2026, {arcs_lab}"
-version = "0.1"
-release = "0.1.0"
+release = (REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip()
+version = ".".join(release.split(".")[:2])
 
 # -------------------------------------------------
 # Extensions

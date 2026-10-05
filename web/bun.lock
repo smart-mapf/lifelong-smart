@@ -7,14 +7,12 @@
     },
     "lsmart-service": {
       "name": "lsmart-service",
-      "version": "0.1.0",
       "devDependencies": {
         "@types/bun": "latest",
       },
     },
     "lsmart-visualiser": {
       "name": "lsmart-visualiser",
-      "version": "0.1.0",
       "dependencies": {
         "@react-three/drei": "^9.114.0",
         "@react-three/fiber": "^8.17.0",

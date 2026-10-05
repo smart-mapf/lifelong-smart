@@ -1,12 +1,11 @@
 {
   "name": "lsmart-service",
-  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run dev.ts",
-    "dev:backend": "bun run --watch index.ts",
     "start": "bun run index.ts",
+    "dev": "bun run dev.ts",
+    "dev:docker": "bash ../../docker/build_image.sh lsmart:dev && docker run --rm --init --platform linux/amd64 -p 3000:3000 lsmart:dev",
     "test": "bun test config.test.ts"
   },
   "devDependencies": {

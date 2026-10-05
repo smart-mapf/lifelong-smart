@@ -241,6 +241,7 @@ int main(int argc, char **argv) {
             ("port_number,n", po::value<int>()->default_value(8080), "rpc port number")
             ("output_file,o", po::value<string>()->default_value("stats.json"), "output statistic filename")
             ("save_stats,s", po::value<bool>()->default_value(false), "write to files some detailed statistics")
+            ("visualizer", po::value<string>()->default_value("none"), "visualizer: none, web, or argos")
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
             ("planner_invoke_policy", po::value<string>()->default_value("default"), "planner invoke policy: default or no_action")
             ("sim_window_tick,w", po::value<int>()->default_value(50), "invoke planner every sim_window_tick (default: 50)")
@@ -274,6 +275,13 @@ int main(int argc, char **argv) {
         return 1;
     }
     po::notify(vm);
+    string visualizer = vm["visualizer"].as<string>();
+    if (visualizer != "none" && visualizer != "web" &&
+        visualizer != "argos") {
+        cerr << "visualizer must be one of: none, web, argos" << endl;
+        return 1;
+    }
+    set_visualization_events_enabled(visualizer == "web");
     string filename = "none";
     int port_number = vm["port_number"].as<int>();
 

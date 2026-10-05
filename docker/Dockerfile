@@ -64,11 +64,13 @@ RUN bash compile.sh all \
 FROM ubuntu:20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
+ARG LSMART_VERSION=dev
 
 ENV TZ=America/New_York \
     PROJECT_ROOT=/usr/project \
     PYTHONPATH=/usr/project \
     ARGOS_PLUGIN_PATH=/usr/project/plugins/visualizers/external_visualizer/build \
+    LSMART_CONTAINER=true \
     OPENBLAS_NUM_THREADS=1 \
     MALLOC_TRIM_THRESHOLD_=0 \
     PORT=3000
@@ -97,12 +99,14 @@ RUN apt-get update \
 
 WORKDIR /usr/project
 
+COPY LICENSE.txt /usr/share/doc/lsmart/LICENSE.txt
 COPY ArgosConfig ./ArgosConfig
 COPY maps ./maps
 COPY run_lifelong.py run_lifelong_kwargs.py ./
 COPY web/lsmart-service ./web/lsmart-service
 COPY --from=build /usr/bin/argos3 /usr/bin/argos3
 COPY --from=build /usr/lib/argos3 /usr/lib/argos3
+COPY --from=build /usr/doc/argos3/licenses /usr/share/doc/argos3/licenses
 COPY --from=build /etc/ld.so.conf.d/argos3.conf /etc/ld.so.conf.d/argos3.conf
 COPY --from=build /usr/local/lib/python3.8/dist-packages /usr/local/lib/python3.8/dist-packages
 COPY --from=build /usr/project/client/build ./client/build
@@ -119,6 +123,11 @@ RUN useradd --create-home --uid 1000 --shell /bin/bash lsmart \
     && chmod +x /usr/project/web/lsmart-service/index.ts \
     && ln -s /usr/project/web/lsmart-service/index.ts /usr/local/bin/lsmart-viz \
     && chown -R lsmart:lsmart /usr/project /workspace
+
+LABEL org.opencontainers.image.title="LSMART" \
+      org.opencontainers.image.version="${LSMART_VERSION}" \
+      org.opencontainers.image.source="https://github.com/smart-mapf/lifelong-smart" \
+      org.opencontainers.image.licenses="MIT"
 
 USER lsmart
 

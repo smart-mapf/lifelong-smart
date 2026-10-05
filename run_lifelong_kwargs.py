@@ -29,8 +29,7 @@ def run_lifelong_kwargs(kwargs_file):
     run_lifelong_argos(
         map_filepath=map_filepath,
         num_agents=kwargs["num_agents"],
-        # headless=kwargs["headless"],
-        headless=True,
+        visualizer="none",
         argos_config_filepath=argos_config_filepath,
         stats_name=stats_filepath,
         save_stats=kwargs["save_stats"],

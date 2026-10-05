@@ -86,6 +86,7 @@ type ActiveRun = {
 };
 
 const REPO_ROOT = resolve(import.meta.dir, "../..");
+const RUNS_IN_CONTAINER = process.env.LSMART_CONTAINER === "true";
 
 type SocketState =
   | { status: "ready" }
@@ -268,9 +269,8 @@ async function runSimulation(
     `--cutoffTime=${config.cutoffTime}`,
     `--rotation=${config.rotation}`,
     `--port_num=${simulatorPort}`,
-    `--container=True`,
-    `--external_visualization=True`,
-    `--headless=False`,
+    `--container=${RUNS_IN_CONTAINER ? "True" : "False"}`,
+    `--visualizer=web`,
     `--save_stats=False`,
   ];
   if (config.planner === "RHCR") {
