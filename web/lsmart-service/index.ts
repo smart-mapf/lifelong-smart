@@ -95,6 +95,7 @@ type SocketState =
   | { status: "finished" };
 
 const socketStates = new WeakMap<ServerWebSocket<unknown>, SocketState>();
+const activeRuns = new Set<ActiveRun>();
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -311,6 +312,7 @@ async function runSimulation(
     cancelled: false,
     simulatorPort,
   };
+  activeRuns.add(runState);
   socketStates.set(ws, { status: "running", run: runState });
 
   if (ws.readyState !== WebSocket.OPEN) {
@@ -318,6 +320,8 @@ async function runSimulation(
     try {
       proc.kill();
     } catch {}
+    await proc.exited;
+    activeRuns.delete(runState);
     socketStates.set(ws, { status: "finished" });
     return;
   }
@@ -361,8 +365,10 @@ async function runSimulation(
     try {
       if (!exited) {
         proc.kill();
+        await proc.exited;
       }
     } catch {}
+    activeRuns.delete(runState);
   }
 }
 
@@ -488,7 +494,29 @@ if (import.meta.main) {
     if (parsed.help) {
       console.log(HELP);
     } else {
-      startServer(parsed.config);
+      const server = startServer(parsed.config);
+      let shuttingDown = false;
+
+      for (const signal of ["SIGINT", "SIGTERM"] as const) {
+        process.on(signal, async () => {
+          if (shuttingDown) return;
+          shuttingDown = true;
+
+          const runs = [...activeRuns];
+          for (const run of runs) {
+            run.cancelled = true;
+            if (run.proc.exitCode === null) {
+              try {
+                run.proc.kill("SIGTERM");
+              } catch {}
+            }
+          }
+
+          server.stop(true);
+          await Promise.allSettled(runs.map((run) => run.proc.exited));
+          process.exit(signal === "SIGINT" ? 130 : 143);
+        });
+      }
     }
   } catch (error) {
     console.error(
