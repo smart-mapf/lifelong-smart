@@ -92,7 +92,7 @@ public:
     pair<double, double> getRobotPosition(int agent_id) {
         return robot_states[agent_id].position;
     }
-    bool isTaskNode(int robot_id, int node_id);
+    bool isTaskCompletionNode(int robot_id, int node_id);
 
     pair<double, double> getActionGoal(int agent_id, int node_id) {
         return make_pair(graph[agent_id][node_id].action.goal.first,
@@ -144,6 +144,14 @@ public:
     }
 
     int getNumUnfinishedActions(int agent_id);
+
+    // Return the total number of nodes in agent's graph for exec_progress
+    int getGraphSize(int agent_id) const {
+        if (agent_id < 0 || agent_id >= static_cast<int>(graph.size())) {
+            return 0;
+        }
+        return static_cast<int>(graph[agent_id].size());
+    }
 
     int getLookAheadDist() const {
         return look_ahead_dist;

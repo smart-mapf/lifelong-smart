@@ -8,6 +8,7 @@ ExecutionManager::ExecutionManager(
       screen(vm["screen"].as<int>()),
       port(vm["port_number"].as<int>()),
       total_sim_step_tick(vm["total_sim_step_tick"].as<int>()),
+      stop_at_congestion(vm["stop_at_congestion"].as<bool>()),
       ticks_per_second(vm["ticks_per_second"].as<int>()),
       sim_window_tick(vm["sim_window_tick"].as<int>()),
       look_ahead_tick(vm["look_ahead_tick"].as<int>()),
@@ -29,7 +30,8 @@ ExecutionManager::ExecutionManager(
 }
 
 bool ExecutionManager::stopSimulation() {
-    return this->congested_sim || this->simulationFinished();
+    return (this->stop_at_congestion && this->congested_sim) ||
+           this->simulationFinished();
 }
 
 bool ExecutionManager::plannerNeverInvoked() {
@@ -180,7 +182,7 @@ void ExecutionManager::setupTaskAssigner() {
     }
 }
 
-void ExecutionManager::saveStats() {
+json ExecutionManager::saveStats() {
     auto end = std::chrono::steady_clock::now();
     auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
         end - this->start_time);
@@ -245,6 +247,8 @@ void ExecutionManager::saveStats() {
 
         spdlog::info("Statistics written to {}", output_filename);
     }
+
+    return result;
 }
 
 void ExecutionManager::freezeSimulationIfNecessary() {

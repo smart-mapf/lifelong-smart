@@ -22,8 +22,8 @@ class ExecutionManager {
 public:
     ExecutionManager(const boost::program_options::variables_map vm);
 
-    // Compute and save stats
-    void saveStats();
+    // Compute and save stats, returning the final statistics JSON
+    json saveStats();
 
     // Get the current simulation step (tick) as the min of all robots' ticks
     int getCurrSimStep();
@@ -91,6 +91,9 @@ public:
         return this->port;
     }
 
+    // ADG instance for direct read access by event emission
+    std::shared_ptr<ADG> adg;
+
 private:
     // Setup the heuristic table
     void setupHeuristicTable();
@@ -101,7 +104,6 @@ private:
     // Convert paths from planner to spatial guide paths
     vector<Path> convertPlanToGuidePaths(const vector<vector<UserState>> &plan);
 
-    std::shared_ptr<ADG> adg;
     bool flipped_coord = true;
     int screen = 0;
     int port;             // RPC port number
@@ -115,6 +117,7 @@ private:
     // vector<int> tick_per_robot;      // Number of ticks each robot has moved
     bool freeze_simulation = false;  // Whether to freeze the simulation
     bool congested_sim = false;      // Whether the simulation is congested
+    bool stop_at_congestion = true;  // Whether congestion ends the simulation
     // The last tick when the planner was invoked
     int prev_invoke_planner_tick = -1;
     bool planner_running = false;  // Whether the planner is currently running

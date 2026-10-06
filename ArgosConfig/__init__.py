@@ -13,6 +13,7 @@ RHCR_EXE = "planner/RHCR/build/lifelong"
 MASS_EXE = "planner/MASS/MASS"
 FOOTBOT_DIFFUSION_CONTROLLER_LIB = "client/build/controllers/footbot_diffusion/libfootbot_diffusion"
 TRAJECTORY_LOOP_FUNCTIONS_LIB = "client/build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions"
+EXTERNAL_VISUALIZER_PLUGIN_DIR = "plugins/visualizers/external_visualizer/build"
 
 
 def setup_logging(level: int = logging.INFO):

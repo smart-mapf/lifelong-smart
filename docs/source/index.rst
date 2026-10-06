@@ -66,7 +66,7 @@ LSMART encapsulates key design choices of a real-world Fleet Management System (
 
    </div>
 
-Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling them as differentiable drive robots, which can move forward and rotate in place with constraints in maximum velocity and acceleration. This is in contrast to prior works that model AGVs as simple omnidirectional/pebble motion agents. We also simulate real-world execution delays and use Action Dependency Graph (ADG) [2] to ensure collision-free of the executed paths.
+Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling them as differential-drive robots, which can move forward and rotate in place with constraints in maximum velocity and acceleration. This is in contrast to prior works that model AGVs as simple omnidirectional/pebble motion agents. We also simulate real-world execution delays and use Action Dependency Graph (ADG) [2] to ensure collision-free execution of the planned paths.
 
 **Insane Scalability**
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

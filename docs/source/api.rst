@@ -21,7 +21,7 @@ Lifelong Scalable Multi-Agent Realistic Testbed (LSMART) is an open-source simul
 3. **a MAPF planner**: given a MAPF problem instance with start and goal locations, it returns collision-free paths.
 4. **a fail policy**: if the MAPF planner fails to return collision-free paths, it recovers the system from failure.
 5. **an ADG**: an Action Dependency Graph (ADG) that ensures collision-free execution of the planned paths.
-6. **a fleet of AGVs**: each AGV is modeled as a differentiable drive robot with realistic kinodynamics and execution uncertainties.
+6. **a fleet of AGVs**: each AGV is modeled as a differential-drive robot with realistic kinodynamics and execution uncertainties.
 7. **an** `ARGoS3`_ **simulator**: the underlying physics engine that simulates the robots and the environment.
 
 A simulation starts by using the planner invocation policy to determine whether the MAPF planner should be invoked. If so, LSMART first uses the instance generator to generate the next MAPF problem instance by computing a commit cut in the ADG to find the start states, assigning goals to AGVs, and refining the goals if necessary. At the start of the simulation, the start locations of the AGVs are randomly generated and their orientation always faces north. The instance is passed to the MAPF planner. If the planner solves it successfully, the collision-free paths are returned directly to the ADG. If it fails, the fail policy replans or resolves the collisions. Depending on the fail policy, the MAPF planner may not be required to send colliding paths to the fail policy. The paths are then converted and added to the ADG, which records a sequence of actions for each AGV with their passing orders in each location.

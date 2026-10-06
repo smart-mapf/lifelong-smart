@@ -1,4 +1,5 @@
 #include "ExecutionManager.h"
+#include "visualization_events.h"
 
 /**
  * @namespace RPC API functions for external communication with the
@@ -23,17 +24,66 @@ bool isSimulationFrozen() {
 
 string actionFinished(string &robot_id_str, int node_ID) {
     lock_guard<mutex> guard(globalMutex);
-    return em->actionFinished(robot_id_str, node_ID);
+    int agent_id = em->adg->startIndexToRobotID[robot_id_str];
+    bool reached_goal =
+        node_ID > em->adg->finished_node_idx[agent_id] &&
+        em->adg->isTaskCompletionNode(agent_id, node_ID);
+    auto goal = reached_goal ? em->adg->getActionGoal(agent_id, node_ID)
+                             : make_pair(0.0, 0.0);
+    auto result = em->actionFinished(robot_id_str, node_ID);
+
+    if (reached_goal) {
+        emit_event({
+            {"type", "goal_reached"},
+            {"agent", agent_id},
+            {"clock", em->getCurrSimStep()},
+            {"col", goal.first},
+            {"row", goal.second}
+        });
+    }
+
+    // Emit exec_progress after action is finished
+    emit_event({
+        {"type", "exec_progress"},
+        {"agent", agent_id},
+        {"finished", em->adg->finished_node_idx[agent_id] + 1},
+        {"total", em->adg->getGraphSize(agent_id)}
+    });
+
+    return result;
 }
 
 void init(string RobotID, tuple<int, int> init_loc) {
     lock_guard<mutex> guard(globalMutex);
     em->init(RobotID, init_loc);
+
+    // Emit state_change: initialized for this agent
+    int agent_id = em->adg->startIndexToRobotID[RobotID];
+    emit_event({
+        {"type", "state_change"},
+        {"agent", agent_id},
+        {"value", "initialized"}
+    });
 }
 
 void closeServer(rpc::server &srv) {
     spdlog::info("Closing server at port {}", em->getRPCPort());
-    em->saveStats();
+
+    // Emit state_change: finished for all agents
+    int num_robots = em->adg->numRobots();
+    for (int i = 0; i < num_robots; ++i) {
+        emit_event({
+            {"type", "state_change"},
+            {"agent", i},
+            {"value", "finished"}
+        });
+    }
+
+    // Emit stats from the final statistics payload
+    json stats = em->saveStats();
+    stats["type"] = "stats";
+    emit_event(stats);
+
     srv.close_sessions();
     srv.stop();
     spdlog::info("Server closed successfully.");
@@ -122,7 +172,7 @@ string getRobotsLocation() {
  *
  * @details
  * This function takes a JSON string representing a new MAPF plan and adds it
- * to the ADG (Action Decision Graph). If necessary, it utilizes the backup
+ * to the ADG (Action Dependency Graph). If necessary, it utilizes the backup
  * planner to ensure the plan is integrated correctly.
  *
  * @param new_plan_json_str A JSON string with a new MAPF plan with the
@@ -191,12 +241,14 @@ int main(int argc, char **argv) {
             ("port_number,n", po::value<int>()->default_value(8080), "rpc port number")
             ("output_file,o", po::value<string>()->default_value("stats.json"), "output statistic filename")
             ("save_stats,s", po::value<bool>()->default_value(false), "write to files some detailed statistics")
+            ("visualizer", po::value<string>()->default_value("none"), "visualizer: none, web, or argos")
             ("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
             ("planner_invoke_policy", po::value<string>()->default_value("default"), "planner invoke policy: default or no_action")
             ("sim_window_tick,w", po::value<int>()->default_value(50), "invoke planner every sim_window_tick (default: 50)")
             ("sim_window_timestep", po::value<int>()->default_value(5), "invoke planner every sim_window_timestep (default: 5)")
             ("plan_window_timestep", po::value<int>()->default_value(5), "plan for this many timesteps (default: 5)")
             ("total_sim_step_tick,t", po::value<int>()->default_value(1200), "total simulation step tick (default: 1)")
+            ("stop_at_congestion", po::value<bool>()->default_value(true), "stop the simulation when congestion is detected")
             ("ticks_per_second,f", po::value<int>()->default_value(10), "ticks per second for the simulation (default: 10)")
             ("look_ahead_dist,l", po::value<int>()->default_value(5), "look ahead # of actions for the robot to query its location")
             ("look_ahead_tick,m", po::value<int>()->default_value(5), "look ahead tick for the robot to query its location")
@@ -223,6 +275,13 @@ int main(int argc, char **argv) {
         return 1;
     }
     po::notify(vm);
+    string visualizer = vm["visualizer"].as<string>();
+    if (visualizer != "none" && visualizer != "web" &&
+        visualizer != "argos") {
+        cerr << "visualizer must be one of: none, web, argos" << endl;
+        return 1;
+    }
+    set_visualization_events_enabled(visualizer == "web");
     string filename = "none";
     int port_number = vm["port_number"].as<int>();
 

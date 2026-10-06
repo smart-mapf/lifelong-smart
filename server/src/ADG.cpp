@@ -495,14 +495,9 @@ bool ADG::updateFinishedNode(int robot_id, int node_id) {
     }
 }
 
-bool ADG::isTaskNode(int robot_id, int node_id) {
-    if (not graph.empty()) {
-        if (graph[robot_id][node_id].action.type == 'S' or
-            graph[robot_id][node_id].action.type == 'P') {
-            return true;
-        }
-    }
-    return false;
+bool ADG::isTaskCompletionNode(int robot_id, int node_id) {
+    return not graph.empty() &&
+           graph[robot_id][node_id].action.task_id >= 0;
 }
 
 // void ADG::setEnqueueNodes(int robot_id, vector<int>& enqueue_nodes) {

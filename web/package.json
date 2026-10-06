@@ -1,0 +1,9 @@
+{
+  "name": "lsmart-web",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "lsmart-service",
+    "lsmart-visualiser"
+  ]
+}

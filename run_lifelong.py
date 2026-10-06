@@ -3,12 +3,13 @@ import sys
 import pathlib
 import subprocess
 import time
+import signal
 import fire
 import numpy as np
 import logging
 import datetime
 
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from ArgosConfig import (SERVER_EXE, PBS_EXE, TPBS_EXE, RHCR_EXE, MASS_EXE,
                          CONTAINER_PROJECT_ROOT, PROJECT_ROOT, setup_logging)
 from ArgosConfig.ToArgos import (obstacles, parse_map_file, create_Argos)
@@ -54,49 +55,79 @@ def check_file(file_path: str):
 def run_simulator(args, timeout: float = None, output_log: str = None):
     server_command, client_command, planner_command = args
     f = open(output_log, 'w') if output_log else None
+    server_process = None
+    client_process = None
+    planner_process = None
 
-    # Start the server process
-    server_process = subprocess.Popen(server_command, stdout=f, stderr=f)
+    def terminate_process_group(process: Union[subprocess.Popen, None]):
+        if process is None or process.poll() is not None:
+            return
 
-    # Wait for a short period to ensure the server has started
-    time.sleep(1)
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        except Exception:
+            process.kill()
 
-    # Start the client process
-    client_process = subprocess.Popen(client_command, stdout=f, stderr=f)
+    def cleanup_processes():
+        terminate_process_group(planner_process)
+        terminate_process_group(client_process)
+        terminate_process_group(server_process)
 
-    # Wait for the client process to complete
-    # time.sleep(5)
-    planner_process = subprocess.Popen(planner_command, stdout=f, stderr=f)
+    def handle_termination(signum, _frame):
+        logger.info("Received signal %s, terminating simulator processes...",
+                    signum)
+        cleanup_processes()
+        raise SystemExit(128 + signum)
 
-    # The client process will call the server to end, then the client end. The
-    # planner will detect the end of the server and end itself.
+    previous_handlers = {
+        sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)
+    }
+    for sig in previous_handlers:
+        signal.signal(sig, handle_termination)
+
     try:
+        # Start the server process (new session for clean process-group kill)
+        server_process = subprocess.Popen(server_command, stdout=f, stderr=f,
+                                          start_new_session=True)
+
+        # Wait for a short period to ensure the server has started
+        time.sleep(1)
+
+        # Start the client process
+        client_process = subprocess.Popen(client_command, stdout=f, stderr=f,
+                                          start_new_session=True)
+
+        # Wait for the client process to complete
+        planner_process = subprocess.Popen(planner_command, stdout=f, stderr=f,
+                                           start_new_session=True)
+
+        # The client process will call the server to end, then the client end.
+        # The planner will detect the end of the server and end itself.
         client_process.wait(timeout=timeout)
         print(f"[{get_current_time()}] [Py] Client process finished.", file=f)
 
         server_process.wait(timeout=timeout)
-        # planner_process.wait()
         print(f"[{get_current_time()}] [Py] Server process finished.", file=f)
 
-        planner_process.kill()
+        terminate_process_group(planner_process)
         print(f"[{get_current_time()}] [Py] Planner process finished.", file=f)
     except subprocess.TimeoutExpired:
-        # print("Timeout expired, killing processes...")
         logger.info("Timeout expired, killing processes...")
-        client_process.kill()
-        server_process.kill()
-        planner_process.kill()
     finally:
+        cleanup_processes()
+        for sig, previous_handler in previous_handlers.items():
+            signal.signal(sig, previous_handler)
         if f:
             f.close()
-        # print("Processes killed.")
         logger.info("Processes killed.")
 
 
 def run_lifelong_argos(
     map_filepath: str = "maps/kiva_large_w_mode.json",
     num_agents: int = 100,
-    headless: bool = False,
+    visualizer: str = "argos",
     argos_config_filepath: str = "output.argos",
     stats_name: str = "stats.json",
     save_stats: bool = False,
@@ -104,6 +135,7 @@ def run_lifelong_argos(
     port_num: int = 8182,
     n_threads: int = 1,
     sim_duration: int = 600 * 10,
+    stop_at_congestion: bool = True,
     sim_window_tick: int = 20,
     ticks_per_second: int = 10,
     velocity: float = 200.0,
@@ -133,8 +165,11 @@ def run_lifelong_argos(
 
     Args:
         map_filepath (str, optional): file path to map. Example maps are in the ``maps`` directory. If maps contains workstations (``w``) and endpoints (``e``), robots' tasks will be assigned alternately between workstations and endpoints. If not, robots' tasks will be randomly generated from the empty spaces. Defaults to ``maps/kiva_large_w_mode.json``.
-        num_agents (int, optional): number of robots. Defaults to 32.
-        headless (bool, optional): whether run in headless mode. If False, a visualization will be generated. Defaults to False.
+        num_agents (int, optional): number of robots. Defaults to 100.
+        visualizer (str, optional): visualization mode. Options are ``none``
+            for headless execution, ``argos`` for the native Qt/OpenGL
+            visualizer, and ``web`` for the external event-stream visualizer
+            used by ``lsmart-viz``. Defaults to ``argos``.
         argos_config_filepath (str, optional): file path to write the generated
             Argos config file. Defaults to "output.argos".
         stats_name (str, optional): file path to store the stats from the
@@ -148,7 +183,10 @@ def run_lifelong_argos(
         n_threads (int, optional): number of threads to run Argos. Defaults to 1.
         ticks_per_second (int, optional): the simulator runs in ``ticks``. The states of the robots are updated per tick. ``ticks_per_second`` specifies the number of ticks per simulation second used by the simulator. Defaults to 10.
         sim_duration (int, optional): number of simulation ticks to run the
-            simulator. Defaults to 1800 * 10, meaning 1800 seconds.
+            simulator. Defaults to 600 * 10 ticks, meaning 600 seconds at the
+            default rate of 10 ticks per second.
+        stop_at_congestion (bool, optional): whether to stop the simulation
+            when congestion is detected. Defaults to True.
         sim_window_tick (int, optional): number of ticks to invoke the planner. Only applies to the periodic invocation policy. Defaults to 20 ticks.
         velocity (float, optional): velocity of the robots in cm/s. Defaults to
             200.0 cm/s.
@@ -160,27 +198,28 @@ def run_lifelong_argos(
             - ``TPBS``: the `Transient` Priority-Based Search planner (`Morag et al. 2025`_). TPBS plans for full-horizon paths for all robots even if there are duplicate goals.
 
             Defaults to ``RHCR``.
-        container (bool, optional): whether to run in a `singularity`_ container. Defaults to False.
+        container (bool, optional): whether to use the container installation
+            paths. Defaults to False.
         seed (int, optional): random seed. Defaults to 42.
         screen (int, optional): logging options. Higher values increase verbosity. Defaults to 0.
         backup_solver (str, optional): backup solver (fail policy) used in case the MAPF planner fails. Options include:
 
             - ``PIBT``: the Priority Inheritance with Backtracking, (`Okumura et al. 2019`_).
-            - ``LRA``: the Local Repair Guided Waits, (`Li et al. 2021`_).
+            - ``LRAStar``: the Local Repair Guided Waits, (`Li et al. 2021`_).
             - ``GuidedPIBT``: Guided PIBT, (`Chen et al. 2024`_).
 
             Defaults to ``PIBT``.
         planner_invoke_policy (str, optional): planner invocation policy, options include:
 
             - ``default``: the periodic policy where the planner is invoked periodically every ``sim_window_tick`` ticks.
-            - ``no_action``: the event-based policy where the planner is invoked when at least one robot has no action to execute in the ADG (`Hönig et al. 2019`_).
+            - ``no_action``: the event-based policy where the planner is invoked when at least one robot's number of unfinished ADG actions is less than or equal to the ADG look-ahead distance (`Hönig et al. 2019`_).
 
             Defaults to ``default``.
         task_assigner_type (str, optional): task assigner (MAPF problem instance generator) used to generate problem instances. Options include:
 
             - ``windowed``: the windowed task assigner (`Li et al. 2021`_), which assigns tasks within the planning window. This can only be used with the ``RHCR`` planner.
-            - ``distinct-one-goal``: the distinct one-goal task assigner, which assigns each robot a distinct goal. This can only be used with the ``PBS`` and ``MASS`` planners.
-            - ``one-goal``: the one-goal task assigner, which assigns each robot a goal regardless of duplicates. This can only be used with the ``TPBS`` planner.
+            - ``distinct_one_goal``: the distinct one-goal task assigner, which assigns each robot a distinct goal. This can only be used with the ``PBS`` and ``MASS`` planners.
+            - ``one_goal``: the one-goal task assigner, which assigns each robot a goal regardless of duplicates. This can only be used with the ``TPBS`` planner.
 
             Defaults to ``windowed``.
         planning_window (int, optional): planning window in timesteps. The final planning window is the max of this value and the inferred planning window from ``sim_window_tick``.
@@ -188,16 +227,16 @@ def run_lifelong_argos(
             Specifically, given ``sim_window_tick`` and ``ticks_per_second``, we compute the minimal planning window in timesteps required to cover the simulation window as follows:
 
             .. math::
-                planning\_window\_ts = \\lceil \\frac{sim\_window\_tick}{ticks\_per\_second} \\times \\frac{velocity}{100} \\rceil
+                planning_window_ts = \\lceil \\frac{sim_window_tick}{ticks_per_second} \\times \\frac{velocity}{100} \\rceil
 
             Then given the user-specified ``planning_window``, the final planning window is:
 
             .. math::
-                planning\_window = max(planning\_window\_ts, planning\_window)
+                planning_window = max(planning_window_ts, planning_window)
 
             Defaults to 10.
 
-        cutoffTime (int, optional): time limit of the planner in seconds. With the periodic invocation policy (``default``), the ``cutoffTime`` should be less than or equal to the simulation window in seconds (:math:`\\frac{sim\_window\_tick}{ticks\_per\_second}`). Defaults to 1.
+        cutoffTime (int, optional): time limit of the planner in seconds. With the periodic invocation policy (``default``), the ``cutoffTime`` should be less than or equal to the simulation window in seconds (:math:`\\frac{sim_window_tick}{ticks_per_second}`). Defaults to 1.
         frame_grab (bool, optional): whether to enable frame grabber in Argos.
             If enabled, the simulator will save screenshots to the ``frames``
             folder. The screenshots can be combined into a video using external
@@ -229,8 +268,11 @@ def run_lifelong_argos(
     .. _Chen et al. 2024: https://arxiv.org/abs/2308.11234
     .. _Hönig et al. 2019: https://ieeexplore.ieee.org/document/8620328
     .. _Phillips et al. 2011: https://www.cs.cmu.edu/~maxim/files/sipp_icra11.pdf
-    .. _singularity: https://sylabs.io/singularity/
     """
+    visualizer = visualizer.lower()
+    if visualizer not in {"none", "web", "argos"}:
+        raise ValueError("visualizer must be one of: none, web, argos")
+
     np.random.seed(seed)
     setup_logging()
     map_data, width, height = parse_map_file(map_filepath)
@@ -250,7 +292,7 @@ def run_lifelong_argos(
         curr_num_agent=num_agents,
         port_num=port_num,
         n_threads=n_threads,
-        visualization=not headless,
+        visualizer=visualizer,
         sim_duration=sim_duration,
         ticks_per_second=ticks_per_second,
         screen=screen,
@@ -315,8 +357,10 @@ def run_lifelong_argos(
             f"--port_number={port_num}",
             f"--output_file={stats_name}",
             f"--save_stats={str(save_stats).lower()}",
+            f"--visualizer={visualizer}",
             f"--screen={screen}",
             f"--total_sim_step_tick={sim_duration}",
+            f"--stop_at_congestion={str(stop_at_congestion).lower()}",
             f"--ticks_per_second={ticks_per_second}",
             f"--look_ahead_dist={look_ahead_dist}",
             f"--look_ahead_tick={look_ahead_tick}",

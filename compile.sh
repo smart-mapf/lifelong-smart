@@ -90,6 +90,22 @@ compile_mass() {
     bash compile.sh -c "${mass_cplex_dir}"
 }
 
+compile_extviz() {
+    echo "Compiling external visualizer plugin..."
+    cd $current_path/plugins/visualizers/external_visualizer
+    rm -rf build
+    mkdir build
+    cd build
+    fmt_cmake_dir="/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/cmake/fmt"
+    if [ -f "${fmt_cmake_dir}/fmt-config.cmake" ]; then
+        # Match the system ARGoS build even when a Conda environment is active.
+        cmake -Dfmt_DIR="${fmt_cmake_dir}" ..
+    else
+        cmake ..
+    fi
+    make -j $cpuCores
+}
+
 if [ "$target" == "rpclib" ]; then
     compile_rpclib
 fi
@@ -116,6 +132,10 @@ fi
 
 if [ "$target" == "mass" ]; then
     compile_mass
+fi
+
+if [ "$target" == "extviz" ]; then
+    compile_extviz
 fi
 
 if [ "$target" == "all" ]; then
