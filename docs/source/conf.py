@@ -86,6 +86,8 @@ def setup(app):
 
     # Add custom CSS
     app.add_css_file("custom.css")
+    if not DOCS_DEV:
+        app.add_js_file("analytics.js", loading_method="defer")
 
 
 # -------------------------------------------------
@@ -181,6 +183,11 @@ html_theme_options = {
     "footer_start": ["copyright"],
     "footer_end": ["sphinx-version"]
 }
+
+if not DOCS_DEV:
+    html_theme_options["analytics"] = {
+        "google_analytics_id": "G-YPX3G9Y7TB",
+    }
 
 html_sidebars = {
     # Hide left sidebar on index page

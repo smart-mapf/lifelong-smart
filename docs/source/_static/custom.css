@@ -168,6 +168,16 @@ article.bd-article:has(.lsmart-hero--home) section {
 }
 
 /* Section video styling (inside .lsmart-home-content) */
+.lsmart-tutorial-video {
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  aspect-ratio: 16 / 9;
+  margin: 1rem auto 2rem;
+  border: 0;
+  border-radius: 12px;
+}
+
 .lsmart-scalability-video {
   display: block;
   width: 100%;

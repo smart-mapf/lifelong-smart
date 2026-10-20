@@ -4,7 +4,8 @@
 
 <p align="center">
   <a href="https://arxiv.org/abs/2602.15721"><img src="https://img.shields.io/badge/arXiv-2602.15721-b31b1b.svg" alt="arXiv paper"></a>
-  <a href="https://hub.docker.com/r/lunjohnzhang/lsmart"><img src="https://img.shields.io/docker/v/lunjohnzhang/lsmart?sort=semver&amp;label=Docker%20Hub" alt="Docker Hub image"></a>
+  <a href="https://hub.docker.com/r/lunjohnzhang/lsmart"><img src="https://img.shields.io/docker/v/lunjohnzhang/lsmart?sort=semver&amp;label=Docker%20Hub&amp;logo=docker&amp;logoColor=white&amp;color=2496ED" alt="Docker Hub image"></a>
+  <a href="https://youtu.be/EkfmFfDh9N0?t=6735"><img src="https://img.shields.io/badge/YouTube-Tutorial-FF0000?logo=youtube&amp;logoColor=white" alt="YouTube tutorial"></a>
   <a href="https://github.com/smart-mapf/lifelong-smart/actions/workflows/docs.yml"><img src="https://github.com/smart-mapf/lifelong-smart/actions/workflows/docs.yml/badge.svg?branch=master" alt="Documentation build status"></a>
   <a href="LICENSE.txt"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT license"></a>
 </p>
@@ -35,6 +36,11 @@ visualizer. LSMART also supports Singularity/Apptainer by converting the same
 Docker image into a SIF image. See [INSTALL.md](INSTALL.md) for Docker,
 Singularity/Apptainer, headless, native-visualizer, and source-build
 instructions.
+
+## Tutorial
+
+Watch the [LSMART tutorial on YouTube (starts at 1:52:15)](https://youtu.be/EkfmFfDh9N0?t=6735)
+and follow along with the [tutorial slides](https://sites.google.com/view/iros-26-mapf-tutorial/slides).
 
 ## Introduction
 

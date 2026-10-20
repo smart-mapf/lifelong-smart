@@ -14,9 +14,11 @@
             An open-source simulator to evaluate any lifelong Multi-Agent Path Finding algorithms with real-world kinodynamics and execution uncertainties.
         </p>
          <div class="lsmart-hero-buttons">
-           <a class="lsmart-btn lsmart-btn-primary" href="install.html">Install</a>
-           <a class="lsmart-btn" href="api.html">Documentation</a>
-           <a class="lsmart-btn" href="https://github.com/smart-mapf/lifelong-smart">GitHub</a>
+           <a class="lsmart-btn lsmart-btn-primary" href="install.html"><i class="fa-solid fa-download fa-fw" aria-hidden="true"></i> Install</a>
+           <a class="lsmart-btn" href="api.html"><i class="fa-solid fa-book fa-fw" aria-hidden="true"></i> Documentation</a>
+           <a class="lsmart-btn" href="https://hub.docker.com/r/lunjohnzhang/lsmart"><i class="fa-brands fa-docker fa-fw" aria-hidden="true"></i> Docker Hub</a>
+           <a class="lsmart-btn" href="https://github.com/smart-mapf/lifelong-smart"><i class="fa-brands fa-github fa-fw" aria-hidden="true"></i> GitHub</a>
+           <a class="lsmart-btn" href="https://youtu.be/EkfmFfDh9N0?t=6735"><i class="fa-brands fa-youtube fa-fw" aria-hidden="true"></i> Youtube Tutorial</a>
          </div>
        </div>
      </div>
@@ -90,6 +92,24 @@ Built on top of SMART [1], we consider realistic AGV kinodynamics by modeling th
 
 LSMART is highly scalable in terms of the number of robots and the size of the map. Here we show a simulation of 1000 robots in the *warehouse-10-20-10-2-1* map from the MAPF benchmark [3]. We use PIBT [4] as the underlying MAPF planner and plan windowed paths every 1 simulation second. The simulation runs for 600 simulation seconds and takes 268 seconds to finish with a AMD Ryzen 9 9950X 16-Core Processor.
 
+**Tutorial**
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. raw:: html
+
+   <iframe
+     class="lsmart-tutorial-video"
+     src="https://www.youtube-nocookie.com/embed/EkfmFfDh9N0?start=6735&amp;enablejsapi=1"
+     title="LSMART tutorial — starts at 1:52:15"
+     loading="lazy"
+     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+     referrerpolicy="strict-origin-when-cross-origin"
+     allowfullscreen>
+   </iframe>
+
+The video starts at the LSMART tutorial (1:52:15). Follow along with the
+`tutorial slides <https://sites.google.com/view/iros-26-mapf-tutorial/slides>`_.
+
 **References**
 ++++++++++++++++++++++++++++++
 
@@ -116,6 +136,7 @@ LSMART is highly scalable in terms of the number of robots and the size of the m
     }
 
 .. raw:: html
+
    </div> <!-- .lsmart-home-content -->
 
 
